@@ -1,0 +1,255 @@
+%\VignetteIndexEntry{Getting Started DECIPHERing}
+%\VignettePackage{DECIPHER}
+
+\documentclass[10pt]{article}
+
+\usepackage{times}
+\usepackage{hyperref}
+\usepackage{underscore}
+\usepackage{enumerate}
+\usepackage{graphics}
+
+\textwidth=6.5in
+\textheight=8.5in
+%\parskip=.3cm
+\oddsidemargin=-.1in
+\evensidemargin=-.1in
+\headheight=-.3in
+
+\newcommand{\scscst}{\scriptscriptstyle}
+\newcommand{\scst}{\scriptstyle}
+
+\newcommand{\R}{{\textsf{R}}}
+\newcommand{\C}{{\textsf{C}}}
+\newcommand{\code}[1]{{\texttt{#1}}}
+\newcommand{\term}[1]{{\emph{#1}}}
+\newcommand{\Rpackage}[1]{\textsf{#1}}
+\newcommand{\Rfunction}[1]{\texttt{#1}}
+\newcommand{\Robject}[1]{\texttt{#1}}
+\newcommand{\Rclass}[1]{{\textit{#1}}}
+\newcommand{\Rmethod}[1]{{\textit{#1}}}
+\newcommand{\Rfunarg}[1]{{\textit{#1}}}
+
+\bibliographystyle{plainnat}
+
+\begin{document}
+%\setkeys{Gin}{width=0.55\textwidth}
+
+\title{Getting Started DECIPHERing}
+\author{Erik S. Wright \\
+  Civil \& Environmental Engineering \\
+  University of Wisconsin \\
+  Madison, WI}
+\date{\today}
+\maketitle
+
+\tableofcontents
+
+%------------------------------------------------------------
+\section{About DECIPHER}
+%------------------------------------------------------------
+
+\term{D}atabase \term{E}nabled \term{C}ode for \term{I}deal \term{P}robe \term{H}ybridization \term{E}mploying \term{R} (\Rpackage{DECIPHER}) is a software toolset that can be used for deciphering and managing DNA sequences efficiently using the \R{} statistical programming language.  The project originally sprang to life as a program for developing hybridization probes for a variety of applications using 16S rRNA sequences.  Although the program's functionality has expanded since its conception, it still maintains the name \Rpackage{DECIPHER} to this day.  \Rpackage{DECIPHER} is available under the terms of the GNU Public License version 3 (\url{http://www.gnu.org/copyleft/gpl.html}).
+
+%------------------------------------------------------------
+\section{Design Philosophy}
+%------------------------------------------------------------
+
+\subsection{Curators Protect the Originals}
+
+One of the core principles of \Rpackage{DECIPHER} is the idea of the non-destructive workflow.  This revolves around the concept that the original sequence information should never be altered:  sequences are exported looking identical to how they were when they were first imported.  Essentially, the sequence information in the database is thought of as a backup of the original sequence file and no function is able to directly alter the sequence data.  All of the workflows simply \term{add} information to the database, which can be used to maintain, analyze, and decipher the sequences.  When it comes time to export all or part of the sequences they are preserved in their original state without alteration.
+
+\subsection{Don't Reinvent the Wheel}
+
+\Rpackage{DECIPHER} makes use of the \Rpackage{Biostrings} package that is a core part of the Bioconductor suite (\url{http://www.bioconductor.org/}).  This package contains numerous functions for common operations such as searching, aligning, and reverse complementing sequences.  Furthermore, \Rpackage{DECIPHER} makes use of the \Rpackage{Biostrings} interface for handling DNA sequence data so that sequences are stored in a \Robject{DNAStringSet}.  These objects are compatible with many useful packages in the Bioconductor suite.
+
+A wide variety of user objectives necessitates that \Rpackage{DECIPHER} be extensible to customized projects.  \R{} provides a simple way to place the power of thousands of packages at your fingertips.  Likewise, \R{} enables direct access to the speed and efficiency of the programming language \C{} while maintaining the utility of a scripting language.  Therefore, minimal coding skill is required to solve complex new problems.  Best of all, the \R{} statistical programming language is open source, and maintains a thriving user community so that direct collaboration with other \R{} users is available on several Internet forums \url{https://stat.ethz.ch/mailman/listinfo}.
+
+\subsection{That Which is the Most Difficult, Make Fastest}
+
+A core objective of \Rpackage{DECIPHER} is to make massive tasks feasible in minimal time.  To this end, many of the most time consuming functions are parallelized to make use of multiple processors.  For example, the function \Rfunction{DistanceMatrix} gets almost a 1x speed boost for each processor core.  A modern processor with 8 cores can see a factor of close to eight times speed improvement.  Similar speedups can be achieved when clustering the resulting distance matrix using \Rfunction{IdClusters}.  This is all made possible through the integration of OpenMp, which is currently supported by default on most major platforms expect Windows (see installation \ref{sec:Installation}).
+
+Other time consuming tasks are handled efficiently.  The function \Rfunction{FindChimeras} can uncover sequence chimeras by searching through a reference database of over a million sequences for thousands of 30-mer fragments in a number of minutes.  This incredible feat is accomplished by using the \Rclass{PDict} class provided by \Rpackage{Biostrings}.  Similarly, the \Rfunction{SearchDB} function can obtain the one-in-a-million sequences that match a targeted query in a matter of seconds.  Such high-speed functions enable the user to find solutions to problems that previously would have been extremely difficult or nearly impossible to solve using antiquated methods.
+
+\subsection{Stay Organized}
+
+It is no longer necessary to store related data in several different files.  \Rpackage{DECIPHER} is enabled by \Rpackage{RSQLite}, which is an \R{} interface to \term{SQLite} databases \url{http://www.sqlite.org/}.  \Rpackage{DECIPHER} creates an organized collection of sequences and their associated information known as a sequence database.  \term{SQLite} databases are flat files, meaning they can be handled just like any other file.  There is no setup required since \term{SQLite} does not require a server, unlike other client database engines.  These attributes of \term{SQLite} databases make sharing, backing-up, and storing sequence databases relatively straightforward.
+
+Separate projects can be stored in distinct tables in the same sequence database.  Each new table is structured to include every sequence's description, identifier, and a unique key called the \term{row_name} all in one place.  The sequences are referenced by their \term{row_names} or \term{identifier} throughout most functions in the package.  New information created using \Rfunction{DECIPHER} functions is added as additional database columns to its respective sequences' \term{row_names}.  To prevent the database from seeming like a black box there is a function named \Rfunction{BrowseDB} that facilitates viewing of the database contents in a web browser.  A similar function is available to view sequences called \Rfunction{BrowseSequences}.
+
+The amount of DNA sequence information available is currently increasing at a phenomenal rate.  \Rpackage{DECIPHER} stores individual sequences using \term{gzip} compression so that the database file takes up much less drive space than a standard text file of sequences.  The compressed sequences are stored in a hidden table that is linked to the information table.  Storing the sequences in a separate table greatly improves access speed when there is a large amount of sequence information.  Separating projects into distinct tables further increases query speed over that of storing every project in a single table.
+
+\section{Installation}
+
+\label{sec:Installation}
+\subsection{Release Version}
+
+\begin{enumerate}
+\item Install \R{} (version >= 2.13.0) from \url{http://www.r-project.org/}.
+\item Install \Rpackage{DECIPHER} in R by entering:
+\begin{Schunk}
+\begin{Sinput}
+> source("http://bioconductor.org/biocLite.R")
+> biocLite("DECIPHER")
+\end{Sinput}
+\end{Schunk}
+\end{enumerate}
+
+\subsection{Development Version}
+
+\subsubsection{All platforms}
+
+\begin{enumerate}
+\item Install \R{} (version >= 2.13.0) from \url{http://www.r-project.org/}.
+\item Install \Rpackage{Biostrings} in R by entering:
+\begin{Schunk}
+\begin{Sinput}
+> source("http://bioconductor.org/biocLite.R")
+> biocLite("Biostrings")
+\end{Sinput}
+\end{Schunk}
+\item Install \Rpackage{RSQLite} in R by entering:
+\begin{Schunk}
+\begin{Sinput}
+> source("http://bioconductor.org/biocLite.R")
+> biocLite("RSQLite")
+\end{Sinput}
+\end{Schunk}
+\item Download \Rpackage{DECIPHER} from \url{http://DECIPHER.cee.wisc.edu}.
+\end{enumerate}
+
+\subsubsection{Mac OS X}
+\begin{Schunk}
+\begin{Sinput}
+> install.packages("<<path to Mac OS X DECIPHER.tgz>>", repos=NULL)
+\end{Sinput}
+\end{Schunk}
+
+\subsubsection{Linux}
+In a shell enter:
+\begin{Schunk}
+\begin{Sinput}
+R CMD build --no-vignettes "<<path to DECIPHER source>>"
+R CMD INSTALL "<<path to newly built DECIPHER.tar.gz>>"
+\end{Sinput}
+\end{Schunk}
+
+\subsubsection{Windows}
+Two options are available:  the first is simpler but does not have support for making use of multiple processors.
+
+\begin{enumerate}
+\item First Option (simplest but no parallelization):
+\begin{Schunk}
+\begin{Sinput}
+> install.packages("<<path to Windows DECIPHER.zip>>", repos=NULL)
+\end{Sinput}
+\end{Schunk}
+\item Second Option (more difficult but enables parallelization):
+\begin{enumerate}[(a)]
+\item Download pcthreadsGC2.dll from \url{http://sourceware.org/pthreads-win32/}.
+\item Place pcthreadsGC2.dll in a place where R will find it such as the R/bin/ folder inside Program Files.
+\item Install Rtools from \url{http://www.murdoch-sutherland.com/Rtools/}.   Be sure to check the box that says edit PATH during installation.
+\item Open the DECIPHER source folder.  Add a text file named "Makevars.win" into the "src" folder with the following two lines:
+\begin{Schunk}
+\begin{Sinput}
+PKG_CFLAGS=-fopenmp
+PKG_LIBS=-mthreads -lgomp -lpthreadGC2
+\end{Sinput}
+\end{Schunk}
+\item Open a MS-DOS command prompt by clicking Start -> All Programs -> Accessories >- Command Prompt.
+\item In the command prompt, enter:
+\begin{Schunk}
+\begin{Sinput}
+R CMD build --no-vignettes "<<path to DECIPHER source>>"
+R CMD INSTALL "<<path to newly built DECIPHER.zip>>"
+\end{Sinput}
+\end{Schunk}
+\end{enumerate}
+\end{enumerate}
+
+\section{Example Workflow}
+
+To get started we need to load the \Rpackage{DECIPHER} package, which automatically loads several other required packages:
+%
+<<startup,results=hide>>=
+library(DECIPHER)
+@
+
+Help for any function can be accessed through a command such as:
+\begin{Schunk}
+\begin{Sinput}
+> ? DECIPHER
+\end{Sinput}
+\end{Schunk}
+
+To begin we can import a GenBank file of sequences into a sequence database.  We need to provide an arbitrary sequence \term{identifier} to \Rfunction{Seqs2DB}, which we will call "Bacteria".  The \term{identifier} is used by many \Rpackage{DECIPHER} functions to reference a specific set of sequences in the database:
+<<expr1>>=
+# access a sequence file included in the package:
+gen <- system.file("extdata", "Bacteria_175seqs.gen", package="DECIPHER")
+
+# connect to a database:
+dbConn <- dbConnect(SQLite(), ":memory:")
+
+# import the sequences into the sequence database
+Seqs2DB(gen, "GenBank", dbConn, "Bacteria")
+@
+
+Now we can view the table of information we just added to the database in a web browser:
+<<expr2>>=
+BrowseDB(dbConn)
+@
+
+Suppose we wanted to count the number of bases in each sequence and add that information to the database:
+<<expr3>>=
+l <- IdLengths(dbConn)
+head(l)
+Add2DB(l, dbConn)
+BrowseDB(dbConn, maxChars=20)
+@
+
+Next let's identify our sequences by phylum and update this information in the database:
+<<expr4>>=
+r <- IdentifyByRank(dbConn, add2tbl=TRUE)
+BrowseDB(dbConn, maxChars=20)
+@
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=1\textwidth]{BrowseDBOutput}
+\caption{\label{f1} Database table shown in web browser}
+\end{center}
+\end{figure}
+
+We can now look at only those sequences that belong to the phylum \term{Firmicutes}:
+<<expr5>>=
+dna <- SearchDB(dbConn, id="Firmicutes")
+BrowseSequences(subseq(dna, 140, 240), colorBases=TRUE)
+@
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=1\textwidth]{BrowseSequencesOutput}
+\caption{\label{f2} Sequences shown in web browser}
+\end{center}
+\end{figure}
+
+Let's construct a phylogenetic tree from the \term{Firmicutes} sequences:
+<<expr6,fig=TRUE,height=3.5,width=6>>=
+d <- DistanceMatrix(dna, verbose=FALSE)
+c <- IdClusters(d, method="complete", cutoff=.02, showPlot=TRUE, verbose=FALSE)
+@
+
+Finally, we should disconnect from the database connection.  Since the sequence database was created in temporary memory, all of the information will be erased:
+<<expr7>>=
+dbDisconnect(dbConn)
+@
+
+\section{Session Information}
+All of the output in this vignette was produced under the following
+conditions:
+
+<<sessinfo,echo=FALSE,results=tex>>=
+toLatex(sessionInfo(), locale=FALSE)
+@
+
+\end{document}

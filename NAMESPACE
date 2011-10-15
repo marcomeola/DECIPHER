@@ -1,0 +1,19 @@
+useDynLib(DECIPHER)
+
+import(Biostrings)
+import(IRanges) # for unique
+
+export(
+# functions for interacting with a database:
+Add2DB, Seqs2DB, SearchDB, DB2FASTA,
+# functions for assigning an identifier:
+FormGroups, IdentifyByRank,
+# functions that can write info to a DB:
+IdLengths, IdClusters, IdConsensus, FindChimeras,
+# functions that return info:
+ConsensusSequence, DistanceMatrix, CreateChimeras,
+# functions that deal with terminal gaps:
+TerminalChar,
+# functions for viewing information:
+BrowseSequences, BrowseDB
+)
