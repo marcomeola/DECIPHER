@@ -20,7 +20,9 @@
 #include <math.h>
 
 // for OpenMP parallel processing
+#ifdef SUPPORT_OPENMP
 #include <omp.h>
+#endif
 
 /*
  * Biostrings_interface.h is needed for the DNAencode(), get_XString_asRoSeq(),
