@@ -14,9 +14,9 @@ Package: \tab DECIPHER\cr
 Type: \tab Package\cr
 Version: \tab 1.3.5\cr
 Date: \tab 2011-07-22\cr
-Depends: \tab R (>= 2.13.0), Biostrings (>= 2.16), RSQLite (>= 0.9), IRanges, stats\cr
-Imports: \tab Biostrings, RSQLite, IRanges, stats\cr
-LinkingTo: \tab Biostrings, RSQLite, IRanges, stats\cr
+Depends: \tab R (>= 2.13.0), BiocGenerics, Biostrings (>= 2.16), RSQLite (>= 0.9), stats\cr
+Imports: \tab BiocGenerics, Biostrings, RSQLite, stats\cr
+LinkingTo: \tab IRanges, Biostrings, RSQLite, stats\cr
 License: \tab GPL-3\cr
 LazyLoad: \tab yes\cr
 }

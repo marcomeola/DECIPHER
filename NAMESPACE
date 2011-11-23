@@ -1,7 +1,7 @@
 useDynLib(DECIPHER)
 
+import(BiocGenerics)
 import(Biostrings)
-import(IRanges) # for unique
 
 export(
 # functions for interacting with a database:
