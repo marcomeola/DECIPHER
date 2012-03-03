@@ -16,6 +16,9 @@
  */
 #include <R_ext/Rdynload.h>
 
+/* for R_CheckUserInterrupt */
+#include <R_ext/Utils.h>
+
 // for math functions
 #include <math.h>
 
@@ -395,7 +398,7 @@ SEXP clusterUPGMA(SEXP x, SEXP cutoff, SEXP method, SEXP verbose, SEXP pBar)
 				before = *rPercentComplete;
 			}
 		} else {
-			void R_CheckUserInterrupt(void);
+			R_CheckUserInterrupt();
 		}
 	}
 	

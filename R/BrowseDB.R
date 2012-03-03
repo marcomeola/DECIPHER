@@ -1,5 +1,5 @@
 BrowseDB <- function(dbFile,
-	htmlFile=file.path(tempdir(),"db.html"),
+	htmlFile=paste(tempdir(),"/db.html",sep=""),
 	tblName="DNA",
 	identifier="",
 	limit=-1,

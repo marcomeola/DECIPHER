@@ -64,7 +64,10 @@ FormGroups <- function(dbFile,
 							# paste(searchResult$id[w[w1]],
 								# collapse=", "),
 							# ".",
-							#sep="")										# mark for later inclusion					counts <- sum(searchResult$count[w])					if (counts < minGroupSize) {						searchResult$count[w] <- -counts						if (j > 3)							searchResult$oneup[w] <- lineage[j - 1]					} else if (j > 3) {						# try to include a little more						w2 <- which(searchResult$count < 0)						w3 <- c()						if (length(w2) > 0)							w3 <- which(grepl(lineage[j - 1], searchResult$oneup[w2], fixed=TRUE))						if (length(w3) > 0) {							searchResult$count[w2[w3]] <- -1*searchResult$count[w2[w3]]							w <- c(w, w2[w3])						}					}										# record origin before lineage					origin <- unlist(strsplit(as.character(searchResult$rank[i]),						lineage[j],						fixed=TRUE))[1]
+							#sep="")										# mark for later inclusion					counts <- sum(searchResult$count[w])					if (counts < minGroupSize) {						searchResult$count[w] <- -counts						if (j > 3)							searchResult$oneup[w] <- lineage[j - 1]					} else if (j > 3) {						# try to include a little more						w2 <- which(searchResult$count < 0)						w3 <- c()						if (length(w2) > 0)							w3 <- which(grepl(lineage[j - 1], searchResult$oneup[w2], fixed=TRUE))						if (length(w3) > 0) {
+							if ((counts + sum(-1*searchResult$count[w2[w3]])) < maxGroupSize) {
+								# total group size will be less than than the maximum								searchResult$count[w2[w3]] <- -1*searchResult$count[w2[w3]]								w <- c(w, w2[w3])
+							}						}					}										# record origin before lineage					origin <- unlist(strsplit(as.character(searchResult$rank[i]),						lineage[j],						fixed=TRUE))[1]
 					if (substr(origin,
 						nchar(origin),
 						nchar(origin))=='"')
@@ -78,7 +81,12 @@ FormGroups <- function(dbFile,
 							# paste(searchResult$id[w[w1]],
 								# collapse=", "),
 							# ".",
-							# sep="")										# try to include a little more					if (j > 3) {						w2 <- which(searchResult$count < 0)						w3 <- c()						if (length(w2) > 0)							w3 <- which(grepl(lineage[j - 1], searchResult$oneup[w2], fixed=TRUE))						if (length(w3) > 0) {							searchResult$count[w2[w3]] <- -1*searchResult$count[w2[w3]]							w <- c(w, w2[w3])						}					}										# record origin before lineage					origin <- unlist(strsplit(as.character(searchResult$rank[i]),						lineage[j],						fixed=TRUE))[1]
+							# sep="")										# try to include a little more					if (j > 3) {						w2 <- which(searchResult$count < 0)						w3 <- c()						if (length(w2) > 0)							w3 <- which(grepl(lineage[j - 1], searchResult$oneup[w2], fixed=TRUE))						if (length(w3) > 0) {
+							if ((counts + sum(-1*searchResult$count[w2[w3]])) < maxGroupSize) {
+								# total group size will be less than than the maximum
+								searchResult$count[w2[w3]] <- -1*searchResult$count[w2[w3]]
+								w <- c(w, w2[w3])
+							}						}					}										# record origin before lineage					origin <- unlist(strsplit(as.character(searchResult$rank[i]),						lineage[j],						fixed=TRUE))[1]
 					if (substr(origin,
 						nchar(origin),
 						nchar(origin))=='"')

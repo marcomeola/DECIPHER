@@ -1,19 +1,23 @@
 useDynLib(DECIPHER)
 
-import(BiocGenerics)
 import(Biostrings)
+import(IRanges)
 
 export(
 # functions for interacting with a database:
 Add2DB, Seqs2DB, SearchDB, DB2FASTA,
 # functions for assigning an identifier:
 FormGroups, IdentifyByRank,
-# functions that can write info to a DB:
-IdLengths, IdClusters, IdConsensus, FindChimeras,
-# functions that return info:
-ConsensusSequence, DistanceMatrix, CreateChimeras,
-# functions that deal with terminal gaps:
-TerminalChar,
+# useful functions:
+IdLengths, TerminalChar,
+# functions for grouping sequences:
+DistanceMatrix, IdClusters,
+# functions for forming consensus:
+ConsensusSequence, IdConsensus,
+# function for chimeras:
+FindChimeras, CreateChimeras,
+# functions for microarrays:
+CalculateEfficiencyArray,
 # functions for viewing information:
 BrowseSequences, BrowseDB
 )

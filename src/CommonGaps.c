@@ -16,16 +16,6 @@
  */
 #include <R_ext/Rdynload.h>
 
-// for math functions
-#include <math.h>
-
-/*
- * Biostrings_interface.h is needed for the DNAencode(), get_XString_asRoSeq(),
- * init_match_reporting(), report_match() and reported_matches_asSEXP()
- * protoypes, and for the COUNT_MRMODE and START_MRMODE constant symbols.
- */
-#include "Biostrings_interface.h"
-
 // DECIPHER header file
 #include "DECIPHER.h"
 

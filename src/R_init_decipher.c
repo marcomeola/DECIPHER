@@ -40,6 +40,7 @@ static const R_CallMethodDef callMethods[] = { // method call, pointer, num args
 	{"replaceChars", (DL_FUNC) &replaceChars, 2},
 	{"replaceChar", (DL_FUNC) &replaceChar, 3},
 	{"trimChar", (DL_FUNC) &trimChar, 2},
+	{"calculateDeltaG", (DL_FUNC) &calculateDeltaG, 3},
 	{NULL, NULL, 0}
 };
 

@@ -39,3 +39,7 @@ SEXP replaceChars(SEXP x, SEXP r);
 SEXP replaceChar(SEXP x, SEXP c, SEXP r);
 
 SEXP trimChar(SEXP x, SEXP y);
+
+// CalculateDeltaG.c
+
+SEXP calculateDeltaG(SEXP p, SEXP t, SEXP deltaGrules);

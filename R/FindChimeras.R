@@ -11,6 +11,7 @@ FindChimeras <- function(dbFile,
 	minSuspectFragments=6,
 	showPercentCoverage=FALSE,
 	add2tbl=FALSE,
+	maxGroupSize=-1,
 	verbose=TRUE) {
 	
 	# error checking
@@ -48,6 +49,12 @@ FindChimeras <- function(dbFile,
 		stop("minSuspectFragments must be a numeric.")
 	if (minSuspectFragments < 0)
 		stop("minSuspectFragments must be positive or zero.")
+	if (!is.numeric(maxGroupSize))
+		stop("maxGroupSize must be a numeric.")
+	if (maxGroupSize == 0)
+		stop("maxGroupSize must be non-zero.")
+	if (maxGroupSize != floor(maxGroupSize))
+		stop("maxGroupSize must be an integer.")
 	
 	if (verbose)
 		time.1 <- Sys.time()
@@ -119,11 +126,13 @@ FindChimeras <- function(dbFile,
 			group_dna <- SearchDB(dbConn2,
 				id=group,
 				verbose=FALSE,
+				limit=maxGroupSize,
 				...="nonbases < 20")
 		else
 			group_dna <- SearchDB(dbConn2,
 				id=group,
 				verbose=FALSE,
+				limit=maxGroupSize,
 				...="chimera is NULL and nonbases < 20")
 		numG <- length(group_dna)
 		
@@ -380,11 +389,13 @@ FindChimeras <- function(dbFile,
 					other_dna <- SearchDB(dbConn2,
 						id=other,
 						verbose=FALSE,
+						limit=maxGroupSize,
 						...="nonbases < 20")
 				else
 					other_dna <- SearchDB(dbConn2,
 						id=other,
 						verbose=FALSE,
+						limit=maxGroupSize,
 						...="nonbases < 20 and chimera is NULL")
 				
 				if (length(other_dna) <= multiplier)

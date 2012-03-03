@@ -124,7 +124,8 @@ Next we need to determine which groups are present in the reference database and
 <<expr3,eval=FALSE>>=
 dbRef <- dbConnect(SQLite(), '<<path to reference database>>')
 t <- dbGetQuery(dbRef, "select distinct rank, id from DNA group by rank")
-y <- dbGetQuery(dbRef, paste("select distinct id, count(*) as count from DNA", "where chimera is null group by id"))
+y <- dbGetQuery(dbRef, paste("select distinct id,
+	count(*) as count from DNA", "where chimera is null group by id"))
 
 t$count <- 0
 for (i in 1:dim(t)[1])
@@ -227,9 +228,11 @@ Finally, we can use the \Rfunction{FindChimeras} function to search for chimeras
 
 <<expr7,eval=FALSE>>=
 # full-length sequences
-chimeras <- FindChimeras(dbConn, dbFileReference=dbRef, add2tbl=TRUE)
-# OR for short sequences
-chimeras <- FindChimeras(dbConn, dbFileReference=dbRef, minLength=40, minSuspectFragments=2, add2tbl=TRUE)
+chimeras <- FindChimeras(dbConn, dbFileReference=dbRef, add2tbl=TRUE,
+	maxGroupSize=1e4)
+# OR for short-length sequences
+chimeras <- FindChimeras(dbConn, dbFileReference=dbRef, minLength=40,
+	minSuspectFragments=2, add2tbl=TRUE, maxGroupSize=1e4)
 @
 
 \begin{Schunk}

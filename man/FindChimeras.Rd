@@ -20,6 +20,7 @@ FindChimeras(dbFile,
              minSuspectFragments = 6,
              showPercentCoverage = FALSE,
              add2tbl = FALSE,
+             maxGroupSize = -1,
              verbose = TRUE)
 }
 \arguments{
@@ -62,6 +63,9 @@ Logical indicating whether to list the percent coverage of suspect fragments in 
   \item{add2tbl}{
 Logical or a character string specifying the table name in which to add the result.
 }
+  \item{maxGroupSize}{
+Maximum number of sequences searched in a group.  A value of less than 0 means the search is unlimited.
+}
   \item{verbose}{
 Logical indicating whether to display progress.
 }
@@ -81,7 +85,7 @@ For non-16S sequences it may be necessary to optimize the parameters for the par
 A \code{data.frame} containing only the sequences that meet the specifications for being chimeric.  The chimera column contains information on the chimeric region and to which group it belongs.  The \code{row.names} of the \code{data.frame} correspond to those of the sequences in \code{dbFile}.
 }
 \references{
-Coming Soon!
+ES Wright et al. (2011) "DECIPHER: A Search-Based Approach to Chimera Identification for 16S rRNA Sequences." Applied and Environmental Microbiology, doi:10.1128/AEM.06516-11.
 }
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}

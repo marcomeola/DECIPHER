@@ -16,6 +16,9 @@
  */
 #include <R_ext/Rdynload.h>
 
+/* for R_CheckUserInterrupt */
+#include <R_ext/Utils.h>
+
 // for math functions
 #include <math.h>
 
@@ -214,7 +217,7 @@ SEXP distMatrix(SEXP x, SEXP terminalGaps, SEXP penalizeGapGaps, SEXP penalizeGa
 					before = *rPercentComplete;
 				}
 			} else {
-				void R_CheckUserInterrupt(void);
+				R_CheckUserInterrupt();
 			}
 		}
 		// set the last element of the diagonal to zero
