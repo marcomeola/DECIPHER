@@ -8,7 +8,7 @@ Opens an html file in a web browser to show the contents of a table in a databas
 }
 \usage{
 BrowseDB(dbFile,
-         htmlFile = paste(tempdir(), "/db.html", sep = ""),
+         htmlFile=file.path(tempdir(), "db.html"),
          tblName = "DNA",
          identifier = "",
          limit = -1,
