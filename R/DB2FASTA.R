@@ -138,36 +138,30 @@ DB2FASTA <- function(file,
 	
 	# build a list based on the database
 	fields <- names(searchResult)
-	numFields <- length(fields)
 	l <- length(searchResult2$sequence)
 	if (l <= 0)
 		stop("No sequences found!")
 	
-	# build a list compatible with writeFASTA
-	fasta <- lapply(seq_len(l), function(k) {
-		desc <- searchResult$description[k]
-		if (comments) {
+	# build a named BStringSet object
+	bstringset <- BStringSet(sapply(seq_len(l),
+		function(k) searchResult2$sequence[k]))
+	names(bstringset) <- sapply(seq_len(l),
+		function(k) {
+			desc <- searchResult$description[k]
+			if (!comments)
+				return(desc)
 			desc <- paste(desc, ";", sep="")
-			for (i in 1:numFields) {
-				if (fields[i]!="description" &&
-					fields[i]!="sequence") {
-					desc <- paste(desc,
-						searchResult[[fields[i]]][k],
-						sep=paste(" ",
-							fields[i],
-							"=",
-							sep=""))
-				}
-			}
-		}
-		seq <- searchResult2$sequence[k]
-		list(desc=desc, seq=seq)
-	})
+			fields0 <- c("description", "sequence")
+			fields1 <- fields[!(fields %in% fields0)]
+			for (field in fields1)
+			    desc <- paste(desc,
+					  searchResult[[field]][k],
+					  sep=paste(" ", field, "=", sep=""))
+			desc
+		})
 	if (verbose)
 		cat("\nWriting FASTA file...")
-	writeFASTA(fasta,
-		file=file,
-		append=append)
+	writeXStringSet(bstringset, filepath=file, append=append)
 	
 	if (verbose) {
 		time.2 <- Sys.time()
