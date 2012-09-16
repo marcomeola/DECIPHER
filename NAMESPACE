@@ -1,0 +1,25 @@
+useDynLib(DECIPHER)
+
+import(Biostrings)
+import(IRanges)
+
+export(
+# functions for interacting with a database:
+Add2DB, Seqs2DB, SearchDB, DB2FASTA,
+# functions for assigning an identifier:
+FormGroups, IdentifyByRank,
+# useful functions:
+IdLengths, TerminalChar,
+# functions for grouping sequences:
+DistanceMatrix, IdClusters,
+# functions for forming consensus:
+ConsensusSequence, IdConsensus, TileSeqs,
+# function for chimeras:
+FindChimeras, CreateChimeras,
+# functions for microarrays:
+CalculateEfficiencyArray,
+# functions for primers:
+CalculateEfficiencyPCR, DesignPrimers,
+# functions for viewing information:
+BrowseSequences, BrowseDB
+)
