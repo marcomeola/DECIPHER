@@ -1,0 +1,425 @@
+%\VignetteIndexEntry{Design Group-Specific Primers}
+%\VignettePackage{DECIPHER}
+
+\documentclass[10pt]{article}
+
+\usepackage{times}
+\usepackage{hyperref}
+\usepackage{underscore}
+
+\textwidth=6.5in
+\textheight=8.5in
+%\parskip=.3cm
+\oddsidemargin=-.1in
+\evensidemargin=-.1in
+\headheight=-.3in
+
+\newcommand{\scscst}{\scriptscriptstyle}
+\newcommand{\scst}{\scriptstyle}
+
+\newcommand{\R}{{\textsf{R}}}
+\newcommand{\code}[1]{{\texttt{#1}}}
+\newcommand{\term}[1]{{\emph{#1}}}
+\newcommand{\Rpackage}[1]{\textsf{#1}}
+\newcommand{\Rfunction}[1]{\texttt{#1}}
+\newcommand{\Robject}[1]{\texttt{#1}}
+\newcommand{\Rclass}[1]{{\textit{#1}}}
+\newcommand{\Rmethod}[1]{{\textit{#1}}}
+\newcommand{\Rfunarg}[1]{{\textit{#1}}}
+
+\bibliographystyle{plainnat}
+
+\begin{document}
+%\setkeys{Gin}{width=0.55\textwidth}
+
+\title{Design Group-Specific Primers}
+\author{Erik S. Wright \\
+  University of Wisconsin \\
+  Madison, WI}
+\date{\today}
+\maketitle
+
+\tableofcontents
+
+%------------------------------------------------------------
+\section{Introduction}
+%------------------------------------------------------------
+
+This document describes how to design group-specific primers using the \Rpackage{DECIPHER} package through the use of the \Rfunction{DesignPrimers} function.  As a case study, this tutorial focuses on the Internal Transcribed Spacer (ITS) of fully sequenced genomes belonging to different species of the genus \textit{Streptomyces}.  The ITS resides on the chromosome between the prokaryotic genes coding for the 16S and 23S ribosomal RNA.  The examples in this document are directed towards finding primers that target a single species of \textit{Streptomyces} amongst a number of closely related \textit{Streptomyces} species.  However, a similar strategy could be used with any set of aligned sequences that are separated into groups.  For example, genus-specific primers targeting the 16S gene that have been designed with this program are provided online at \url{http://DECIPHER.cee.wisc.edu}.
+
+A database of aligned DNA sequences separated into groups is used as input to the program.  First the function \Rfunction{TileSeqs} is used to pre-process the sequences into overlapping tiles, which will serve as the template DNA for primer design.  Second, the \Rfunction{DesignPrimers} function determines the set of all possible primers that meet certain design constraints, such as the ability to amplify the group of interest under specified experimental conditions.  Next, the complete set of primers is scored for its predicted potential to cross-amplify with DNA belonging to other groups.  Finally, the optimal set of forward and reverse primers is chosen that could be used in a PCR experiment to enrich for the DNA of interest in a sample containing DNA from multiple groups.
+
+%------------------------------------------------------------
+\section{The Objective of Primer Design}
+%------------------------------------------------------------
+
+The objective of primer design is straightforward:  to determine a set of forward the reverse primers that will amplify one group of sequences (the target) but no others (the non-targets).  If such a primer set is unattainable then the goal becomes to accurately predict potential cross-amplification with non-target groups.  This knowledge enables an educated assessment of the different primer options that could be used to minimize non-target interference.  The chosen primers could then be synthesized and experimentally characterized with PCR or quantitative PCR (qPCR).  Possible applications include allele specific PCR, quantifying a subset of organisms in a sample, or enriching for the DNA of a target group before downstream sequencing.
+
+Improved specificity to the target group is achieved in two ways:  first by decreasing hybridization efficiency and second by minimizing elongation efficiency of the primer with non-target DNA.  Hybridization efficiency is a theoretical variable that represents the fraction of DNA template bound to primer during the annealing step of PCR thermal cycling.  In this manner, mismatches between the primer and DNA templates are utilized to lower the affinity of the primers to non-target DNA.  Elongation efficiency represents the efficiency of the DNA polymerase at initiating extension of the DNA template from a mismatched 3' primer terminus, and is measured relative to the perfectly matched primer's ability to elongate.  Mismatches near the 3' end of the primer are utilized to hinder extension of non-target DNA templates thereby increasing specificity of the primers to target DNA.  Therefore, this model of terminal mismatches offers the dual benefits of decreased hybridization and elongation efficiency, which allows for more accurate predictions of amplification efficiency and increased specificity to the target group.
+
+%------------------------------------------------------------
+\section{Getting Started}
+%------------------------------------------------------------
+
+\subsection{Installing UNAFold}
+
+The program UNAFold (\url{http://mfold.rna.albany.edu/?q=DINAMelt/software}) is used to predict hybridization efficiency and must be installed in a location accessible by the system.  For example, the following code should print the installed UNAFold version when executed from the \term{R} console:
+
+<<expr0,eval=FALSE>>=
+system("hybrid -V")
+@
+
+\begin{Schunk}
+\begin{Sinput}
+hybrid (UNAFold) 3.8
+By Nicholas R. Markham and Michael Zuker
+Copyright (C) 2006
+Rensselaer Polytechnic Institute
+Troy, NY 12810-3590 USA
+\end{Sinput}
+\end{Schunk}
+
+\subsection{Startup}
+
+To get started we need to load the \Rpackage{DECIPHER} package, which automatically loads several other required packages.
+%
+<<startup,results=hide>>=
+library(DECIPHER)
+@
+
+Help for the \Rfunction{DesignPrimers} function can be accessed through:
+\begin{Schunk}
+\begin{Sinput}
+> ? DesignPrimers
+\end{Sinput}
+\end{Schunk}
+
+If this vignette was installed on your system then the code in each example can be obtained by:
+\begin{Schunk}
+\begin{Sinput}
+> browseVignettes("DECIPHER")
+\end{Sinput}
+\end{Schunk}
+
+\subsection{Creating a Sequence Database}
+
+We begin with a set of aligned sequences belonging to the Internal Transcribed Spacer (ITS) of several \textit{Streptomyces} chromosomes.  We wish to determine if the ITS region has enough variability to be used for distinguishing between these closely related species with qPCR.  This example uses a FASTA sequence file included as part of the \Rpackage{DECIPHER} package, but you could follow along with your own FASTA file of aligned sequences.  Be sure to change the path names to those on your system by replacing all of the text inside quotes labeled ``$<<$path to ...$>>$'' with the actual path on your system.
+
+<<expr1,eval=TRUE>>=
+# specify the path to your sequence file:
+fas <- "<<path to FASTA file>>"
+# OR find the example sequence file used in this tutorial:
+fas <- system.file("extdata", "Streptomyces_ITS_aligned.fas", package="DECIPHER")
+@
+
+Next, there are two options for importing the sequences into a database:  either save a database file or maintain the database in memory.  Here we will build the database in memory because it is a small set of sequences and we do not intend to use the database later:
+
+<<expr2,eval=TRUE>>=
+# specify a path for where to write the sequence database
+dbConn <- "<<path to write sequence database>>"
+# OR create the sequence database in memory
+dbConn <- dbConnect(SQLite(), ":memory:")
+Seqs2DB(fas, "FASTA", dbConn, "Streptomyces")
+@
+
+\subsection{Defining Groups}
+
+At this point we need to define groups of related sequences in the database we just created.  In this case we wish to define a group for the sequences of each species of \textit{Streptomyces}.  In order to accomplish this we make use of the information contained in the description of each FASTA sequence record that we just imported.
+
+<<expr3,eval=TRUE>>=
+# get the FASTA record description
+desc <- dbGetQuery(dbConn, "select description from DNA")
+# parse the sequence description to obtain the species name
+desc <- unlist(lapply(strsplit(desc$description, "Streptomyces ", fixed=TRUE),
+	function(x) return(x[length(x)])))
+desc <- gsub("sp. ", "", desc, perl=TRUE)
+desc <- gsub("sp_", "", desc, perl=TRUE)
+desc <- unlist(lapply(strsplit(desc, " ", fixed=TRUE), function(x) return(x[1])))
+unique(desc)
+@
+
+Now that we have our 19 different species names, we must add them to the database as the identifier of each sequence.
+
+<<expr4,eval=TRUE>>=
+Add2DB(data.frame(id=desc), dbConn)
+@
+
+%------------------------------------------------------------
+\section{Primer Design Steps}
+%------------------------------------------------------------
+
+\subsection{Tiling Sequences}
+
+We continue by creating a set of k-mers, known as ``tiles'', that represents the sequences in each group.  Here we must make several decisions that will affect primer design in the future.  The defaults are to create tiles of length 26-27 base pairs with up to 10 permutations that represent at least 90\% of the permutations present in each target site.  These parameters will generally fit most primer designs, but it is recommended to read the help file for the \Rfunction{TileSeqs} function to make sure that it is doing what is desired.  We will save the resulting tiles back to the database as a new table named ``Tiles'' in case we wish to access them in the future.
+
+<<expr5,eval=FALSE>>=
+tiles <- TileSeqs(dbConn, add2tbl="Tiles")
+@
+
+\begin{Schunk}
+\begin{Sinput}
+  |===============================================================================| 100%
+
+Time difference of 102.9 secs
+\end{Sinput}
+\end{Schunk}
+
+Now we can examine the first few tiles by using the \Rfunction{head} command.  Here we see that some tiles have been flagged as \code{misprime=TRUE}, which in this case was caused by some permutations of this target site containing degenerate bases (N's).  Ambiguity codes are not used in primer design and are thus excluded from consideration as potential target sites for primers.  Other reasons for mispriming include runs of a single base and di-nucleotide repeats, which increase primer entropy and could result in non-specific annealing.  If at least a \Rfunarg{minCoverage} fraction of the group could not be represented in \Rfunarg{maxPermutations} then \code{misprime} is also marked as \code{TRUE}.
+
+<<expr6,eval=FALSE>>=
+head(tiles)
+@
+
+\begin{Schunk}
+\begin{Sinput}
+  row_names start end start_aligned end_aligned misprime width    id coverage
+1         1     1  27             1          28     TRUE   627 albus      0.6
+2         2     2  28             2          29     TRUE   627 albus      0.6
+3         3     3  29             3          30     TRUE   627 albus      0.6
+4         4     4  30             4          31     TRUE   627 albus      0.6
+5         5     5  31             5          32    FALSE   627 albus        1
+6         6     6  32             6          33    FALSE   627 albus        1
+  groupCoverage                 target_site
+1           0.6 TGTACACACCGCCCGTCACGTCACGAA
+2           0.6 GTACACACCGCCCGTCACGTCACGAAA
+3           0.6 TACACACCGCCCGTCACGTCACGAAAG
+4           0.6 ACACACCGCCCGTCACGTCACGAAAGT
+5             1 CACACCGCCCGTCACGTCACGAAAGTC
+6             1 ACACCGCCCGTCACGTCACGAAAGTCG
+\end{Sinput}
+\end{Schunk}
+
+\subsection{Designing All Possible Primers}
+
+Next we wish to design primers for \textit{S. avermitilis}.  As an example, we will begin by designing primers for every possible target site that meet certain design criteria.  For example, the default reagent conditions are defined as:  3 mM [dNTPs], 70 mM [$K^{+}$], 3 mM [$Mg^{2+}$], and a primer concentration of 400 nM.  Also, the defaults specify that up to 4 forward or reverse primers should be used so long as they cover 90\% of the permutations present in their target site.  In this case we wish to encompass 100\% of each species' sequences, so we will use \code{minCoverage = 1} and \code{minGroupCoverage = 1} rather than the default 90\% and 20\%, respectively.  Other default parameters include an annealing temperature of $64^{\circ}C$, and a minimum and maximum product size of 75 and 1,200 base pairs, respectively.
+
+It is worth noting that the estimates of elongation efficiency are applicable to standard \textit{Taq} DNA Polymerase, and do not apply to high-fidelity polymerases.  Such polymerases, commonly used in cloning and sequencing applications, have a 3' to 5' exonuclease activity that will attempt to remove mismatches located at the primer's 3' terminus.  If you intend to use a high-fidelity polymerase then you should specify \Rfunarg{taqEfficiency=FALSE} when issuing commands to \Rfunction{DesignPrimers} or \Rfunction{CalculateEfficiencyPCR}.  In this case elongation efficiency will not be included in the estimate of amplification efficiency and only hybridization efficiency will be used.
+
+<<expr7,eval=FALSE>>=
+primers <- DesignPrimers(tiles, identifier="avermitilis",
+	minCoverage=1, minGroupCoverage=1)
+@
+
+\begin{Schunk}
+\begin{Sinput}
+avermitilis (499):
+  |===============================================================================| 100%
+
+Time difference of 20 secs
+\end{Sinput}
+\end{Schunk}
+
+Let's examine the first primer that is available, out of 499 potential target sites.  We can see that only one permutation was required to cover 100\% of the species in this target site.  However, the score of this primer is relatively bad (negative) because it has a high efficiency of amplification predicted with other groups (i.e., species).  Furthermore, note that only a single permutation of each primer was required to target all of the sequences in the group.
+
+<<expr8,eval=FALSE>>=
+primers[1,]
+@
+
+\begin{Schunk}
+\begin{Sinput}
+   identifier start_forward start_reverse start_aligned_forward start_aligned_reverse
+1 avermitilis             1            27                     1                    28
+  permutations_forward permutations_reverse score_forward score_reverse
+1                    1                    1  -13.5861....  -15.0868....
+   forward_primer.1 forward_primer.2 forward_primer.3 forward_primer.4  reverse_primer.1
+1 GCCCGTCACGTCACGAA             <NA>             <NA>             <NA> GACGGGCGGTGTGTACA
+  reverse_primer.2 reverse_primer.3 reverse_primer.4 forward_efficiency.1
+1             <NA>             <NA>             <NA>            0.8441239
+  forward_efficiency.2 forward_efficiency.3 forward_efficiency.4 reverse_efficiency.1
+1                   NA                   NA                   NA            0.8874629
+  reverse_efficiency.2 reverse_efficiency.3 reverse_efficiency.4 forward_coverage.1
+1                   NA                   NA                   NA                  1
+  forward_coverage.2 forward_coverage.3 forward_coverage.4 reverse_coverage.1
+1                 NA                 NA                 NA                  1
+  reverse_coverage.2 reverse_coverage.3 reverse_coverage.4
+1                 NA                 NA                 NA
+                                                                                                                                                                                                                                                                                   mismatches_forward
+1 albus (84.4%) clavuligerus (84.4%) ghanaensis (84.4%) griseoflavus (84.4%) lividans
+(84.4%) pristinaespiralis (84.4%) Mg1 (84.4%) AA4 (8.02%) SPB74 (84.4%) SirexAA-E
+(84.4%) scabiei (84.4%) griseus (84.4%) coelicolor (84.4%) cattleya (84.4%)
+bingchenggensis (84.4%) C (84.4%) Tu6071 (84.4%) 
+                                                                                                                                                                                                                                                                                   mismatches_reverse
+1 albus (88.7%) clavuligerus (88.7%) ghanaensis (88.7%) griseoflavus (88.7%) lividans
+(88.7%) pristinaespiralis (88.7%) Mg1 (88.7%) AA4 (88.7%) SPB74 (88.7%) SirexAA-E
+(88.7%) scabiei (88.7%) griseus (88.7%) coelicolor (88.7%) cattleya (88.7%)
+bingchenggensis (88.7%) C (88.7%) Tu6071 (88.7%)
+\end{Sinput}
+\end{Schunk}
+
+The predicted forward and reverse primer efficiencies are respectively 84.4\% and 88.7\% at the default annealing temperature of $64^{\circ}C$.  The efficiency metric is useful because it indicates the fraction of available templates that will be copied in each cycle of PCR.  The overall amplification efficiency can be approximated as the geometric mean of the forward and reverse efficiencies:
+
+<<expr9,eval=FALSE>>=
+sqrt(mean(primers[,"forward_efficiency"],
+		na.rm=TRUE)*
+	mean(primers[,"reverse_efficiency"],
+		na.rm=TRUE))*100
+@
+
+\begin{Schunk}
+\begin{Sinput}
+[1] 90.45494
+\end{Sinput}
+\end{Schunk}
+
+Thus we anticipate a 90.5\% amplification efficiency when these two primers are used together with their target DNA template.  In the \code{mismatches_forward} and \code{mismatches_reverse} fields the predicted amplification efficiency of using the primers with each other group is shown.  Here we can see that most non-target groups have the same predicted efficiency as the target, because they have DNA that perfectly matches the primer sequences.
+
+\subsection{Designing the Best Possible Primer Set}
+
+We could potentially examine all primers one-by-one to find the best forward and reverse primers to amplify only the target group.  Another option is to allow the program to find the best primer sets by searching the entire set of primers.  To do this we simply change the parameter \Rfunarg{numPrimerSets} to a positive number from its default of zero.  In doing so the \Rfunction{DesignPrimers} function will search through the best forward and reverse primers to find the option that minimizes forward and reverse primer overlap.  Furthermore, the program will search all potential target sites where the primer might bind upstream and downstream of its target site in the alignment.
+
+<<expr10,eval=FALSE>>=
+primers <- DesignPrimers(tiles, identifier="avermitilis", minCoverage=1,
+	minGroupCoverage=1, numPrimerSets=5)
+@
+
+\begin{Schunk}
+\begin{Sinput}
+avermitilis (499):
+  |===============================================================================| 100%
+Determining Best Primer Pairs:
+  |===============================================================================| 100%
+
+Time difference of 50 secs
+\end{Sinput}
+\end{Schunk}
+
+Examining the output we see that several sets of forward and reverse primers are predicted to only amplify \textit{S. avermitilis}, and not any other species as shown in the column \textit{mismatches_set}.
+
+<<expr11,eval=FALSE>>=
+head(primers)
+@
+
+\begin{Schunk}
+\begin{Sinput}
+   identifier start_forward start_reverse product_size start_aligned_forward
+1 avermitilis           242           329           88                   247
+2 avermitilis           244           329           86                   249
+3 avermitilis           243           329           87                   248
+4 avermitilis           245           329           85                   250
+5 avermitilis           250           329           80                   255
+  start_aligned_reverse permutations_forward permutations_reverse score_forward
+1                   344                    1                    1             0
+2                   344                    1                    1             0
+3                   344                    1                    1  -1.72184....
+4                   344                    1                    1  -2.06189....
+5                   344                    1                    1  -0.00027....
+  score_reverse score_set         forward_primer.1 forward_primer.2 forward_primer.3
+1  -0.00032....         0 CGTTGATTATTCGGCACACTCGAC             <NA>             <NA>
+2  -0.00032....         0      TATTCGGCACACTCGACCT             <NA>             <NA>
+3  -0.00032....         0    GATTATTCGGCACACTCGACC             <NA>             <NA>
+4  -0.00032....         0        TCGGCACACTCGACCTG             <NA>             <NA>
+5  -0.00032....         0      GCACACTCGACCTGCTCAG             <NA>             <NA>
+  forward_primer.4   reverse_primer.1 reverse_primer.2 reverse_primer.3 reverse_primer.4
+1             <NA> GCCCTCCCATGTTCGCTT             <NA>             <NA>             <NA>
+2             <NA> GCCCTCCCATGTTCGCTT             <NA>             <NA>             <NA>
+3             <NA> GCCCTCCCATGTTCGCTT             <NA>             <NA>             <NA>
+4             <NA> GCCCTCCCATGTTCGCTT             <NA>             <NA>             <NA>
+5             <NA> GCCCTCCCATGTTCGCTT             <NA>             <NA>             <NA>
+  forward_efficiency.1 forward_efficiency.2 forward_efficiency.3 forward_efficiency.4
+1         0.954290....                   NA                   NA                   NA
+2         0.804031....                   NA                   NA                   NA
+3         0.815524....                   NA                   NA                   NA
+4         0.844134....                   NA                   NA                   NA
+5         0.879531....                   NA                   NA                   NA
+  reverse_efficiency.1 reverse_efficiency.2 reverse_efficiency.3 reverse_efficiency.4
+1         0.951957....                   NA                   NA                   NA
+2         0.951957....                   NA                   NA                   NA
+3         0.951957....                   NA                   NA                   NA
+4         0.951957....                   NA                   NA                   NA
+5         0.951957....                   NA                   NA                   NA
+  forward_coverage.1 forward_coverage.2 forward_coverage.3 forward_coverage.4
+1                  1                 NA                 NA                 NA
+2                  1                 NA                 NA                 NA
+3                  1                 NA                 NA                 NA
+4                  1                 NA                 NA                 NA
+5                  1                 NA                 NA                 NA
+  reverse_coverage.1 reverse_coverage.2 reverse_coverage.3 reverse_coverage.4
+1                  1                 NA                 NA                 NA
+2                  1                 NA                 NA                 NA
+3                  1                 NA                 NA                 NA
+4                  1                 NA                 NA                 NA
+5                  1                 NA                 NA                 NA
+  mismatches_forward mismatches_reverse mismatches_set
+1                                                     
+2                                                     
+3                                                     
+4                                                     
+5                                                     
+\end{Sinput}
+\end{Schunk}
+
+%------------------------------------------------------------
+\section{Additional Primer Analysis}
+%------------------------------------------------------------
+
+\subsection{Denaturation Plot}
+
+After choosing forward and reverse primers we can graph their melt curves in order to predict how they will behave at different annealing temperatures.  Recall that in this example there is only a single forward or reverse primer permutation necessary to cover the entire group.
+
+<<expr12,eval=FALSE>>=
+temp_range <- 60:75
+ps <- c("CGTTGATTATTCGGCACACTCGAC", "GCCCTCCCATGTTCGCTT") # forward and reverse
+f <- function(temp) {
+	CalculateEfficiencyPCR(ps, reverseComplement(DNAStringSet(ps)),
+		temp, P=4e-7, ions=.225)
+}
+efficiency <- matrix(unlist(lapply(temp_range, f)), ncol=2, byrow=TRUE)
+plot(temp_range, efficiency[,1], ylim=c(0,1), ylab="Hybridization Efficiency",
+	xlab=expression(paste("Temperature (", degree, "C)", sep="")),
+	type="l", lwd=2, col="Blue", main="Denaturation Plot")
+lines(temp_range, efficiency[,2], col="Red", lwd=2)
+abline(h=0.5, lty=2, lwd=2, col="Orange")
+abline(v=64, lty=2, lwd=2, col="Green")
+legend("topright", legend=c("Forward Primer", "Reverse Primer", "50% Efficiency",
+	"Annealing Temperature"), col=c("Blue", "Red", "Orange", "Green"),
+	lwd=c(2, 2, 2, 2), lty=c(1, 1, 2, 2))
+@
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=.5\textwidth]{DenaturationPlot}
+\caption{\label{f1} Melt curves for the forward and reverse primers}
+\end{center}
+\end{figure}
+
+We originally designed the primers to have at least 80\% \code{minEfficiency} at the annealing temperature of $64^{\circ}C$, and it is clear from the graph that both primers are predicted to have similarly high efficiencies at this temperature.  However, it appears that the forward primer will denature more quickly than the reverse primer as the temperature is increased.  This is due to the fact that these primers have different enthalpy and entropy, but similar free energies of duplex formation near the annealing temperature where their melt curves intersect.
+
+\subsection{Visualizing the Target Sites}
+
+Often it is useful to visualize the sequence region where the primers will anneal on both the target and non-targets side by side.  We can accomplish this by looking at the amplicon sequences and highlighting the region of both primers.  First we query the database for the sequences of interest and proceed to crop them to the region around the amplicon given by the \code{start_aligned_forward} and \code{start_aligned_reverse} outputs of \Rfunction{DesignPrimers}.  Next we name and order the unique sequences in the set such that the target (\textit{S. avermitilis}) appears at the top.
+
+<<expr13,eval=TRUE>>=
+dna <- SearchDB(dbConn)
+amplicon <- subseq(dna, 247, 344)
+names(amplicon) <- desc
+amplicon <- unique(amplicon)
+# move the target group to the top
+w <- which(names(amplicon)=="avermitilis")
+amplicon <- c(amplicon[w], amplicon[-w])
+@
+
+Then we can use the function \Rfunction{BrowseSequences} to visualize the target site for each primer in the amplicon.  This command will open a new window in the default web browser.  The top sequence shows the target (\textit{S. avermitilis}), and each primer's target site is colored.  It is clear why this target site was chosen, because all other \textit{Streptomyces} species have multiple mismatches to both the forward and reverse primers.  The non-target mismatches, especially those located nearest the 3' end (towards the center of the amplicon), will act to lower both hybridization and elongation efficiency of non-target amplification.
+
+<<expr14,eval=FALSE>>=
+BrowseSequences(amplicon, color=c(4, 27, 67, 89))
+@
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=1\textwidth]{BrowseAmpliconOutput}
+\caption{\label{f1} Amplicon with the target site for each primer colored}
+\end{center}
+\end{figure}
+
+\subsection{Finishing Up}
+
+Finally, we can order the forward and reverse primers for synthesis and try them out in a PCR reaction!  The forward and reverse primers should be synthesized in the same orientation and sense that they are listed in the output.  Initially it may be useful to perform a temperature gradient PCR reaction with the target DNA in order to experimentally determine the melt point.  For example, in this case we would run several reactions with the target species at increasing temperature, from about $56^{\circ}C$ to $72^{\circ}C$.  As the annealing temperature is increased the hybridization efficiency will eventually decrease until no amplification is observed.  In subsequent experiments the annealing temperature should be set just below the highest temperature where significant amplification was observed.
+
+\section{Session Information}
+All of the output in this vignette was produced under the following conditions:
+
+<<sessinfo,echo=FALSE,results=tex>>=
+toLatex(sessionInfo(), locale=FALSE)
+@
+
+\end{document}
