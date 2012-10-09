@@ -146,7 +146,7 @@ DB2FASTA <- function(file,
 	
 	if (verbose)
 		cat("\nWriting FASTA file...")
-	write.XStringSet(myDNAStringSet,
+	writeXStringSet(myDNAStringSet,
 		file=file,
 		append=append)
 	
