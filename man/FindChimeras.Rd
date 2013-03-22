@@ -9,6 +9,7 @@ Finds chimeras present in a database of sequences.  Makes use of a reference dat
 \usage{
 FindChimeras(dbFile,
              tblName = "DNA",
+             identifier = "",
              dbFileReference,
              batchSize = 100,
              minNumFragments = 20000,
@@ -30,6 +31,9 @@ A SQLite connection object or a character string specifying the path to the data
 }
   \item{tblName}{
 Character string specifying the table in which to check for chimeras.
+}
+  \item{identifier}{
+Optional character string used to narrow the search results to those matching a specific identifier.  If "" then all identifiers are selected.
 }
   \item{dbFileReference}{
 A SQLite connection object or a character string specifying the path to the reference database file of (presumed to be) good quality sequences.  A 16S reference database is available from \url{DECIPHER.cee.wisc.edu}.

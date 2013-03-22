@@ -1,5 +1,6 @@
 FindChimeras <- function(dbFile,
 	tblName="DNA",
+	identifier="",
 	dbFileReference,
 	batchSize=100,
 	minNumFragments=20000,
@@ -18,6 +19,8 @@ FindChimeras <- function(dbFile,
 	# error checking
 	if (!is.character(tblName))
 		stop("tblName must be a character string.")
+	if (!is.character(identifier))
+		stop("identifier must be a character string.")
 	if (!is.numeric(batchSize))
 		stop("batchSize must be a numeric.")
 	if (!is.numeric(minNumFragments))
@@ -104,8 +107,19 @@ FindChimeras <- function(dbFile,
 	myGroups <- searchResult$id
 	dbClearResult(rs)
 	
-	w <- (myGroups %in% groups)
-	myGroups <- myGroups[w]
+	if (identifier[1] != "") {
+		w <- which(!(identifier %in% groups))
+		if (length(w) > 0) {
+			warning("Identifier(s) not found in dbFile: ", paste(unique(identifier[w]), sep=", "))
+			identifier <- identifier[-w]
+		}
+		myGroups <- unique(identifier)
+	}
+	w <- which(!(myGroups %in% groups))
+	if (length(w) > 0) {
+		warning("Identifier(s) not found in dbFileReference: ", paste(unique(myGroups[w]), sep=", "))
+		myGroups <- myGroups[-w]
+	}
 	
 	# determine if the reference db contains a chimera column
 	f <- dbListFields(dbConn2, "DNA")
@@ -121,39 +135,41 @@ FindChimeras <- function(dbFile,
 	all_hits_in <- integer()
 	all_results <- NULL
 	percentCoverage <- ""
+	m <- integer()
+	rns <- integer()
 	
 	for (group in myGroups) {
-	
 		if (group=="unclassified_Bacteria" ||
 			group=="unclassified_Root" ||
 			group=="unclassified_Archaea")
 			next # won't allow a chimera
 		
-		if (firstRound2)
+		if (firstRound2) {
 			group_dna <- SearchDB(dbConn2,
 				identifier=group,
 				verbose=FALSE,
 				limit=maxGroupSize,
 				...="nonbases < 20")
-		else
+		} else {
 			group_dna <- SearchDB(dbConn2,
 				identifier=group,
 				verbose=FALSE,
 				limit=maxGroupSize,
 				...="chimera is NULL and nonbases < 20")
+		}
 		numG <- length(group_dna)
 		
 		if (numG < minGroupSize) # too small
 			next
 		
-		if (firstRound1)
+		if (firstRound1) {
 			dna <- SearchDB(dbConn1,
 				tblName=tblName,
 				identifier=group,
 				replaceChar="",
 				removeGaps="all",
 				verbose=FALSE)
-		else
+		} else {
 			dna <- SearchDB(dbConn1,
 				tblName=tblName,
 				identifier=group,
@@ -161,15 +177,23 @@ FindChimeras <- function(dbFile,
 				removeGaps="all",
 				verbose=FALSE,
 				...="chimera is NULL")
-		numF <- length(dna)
+		}
 		
 		if (verbose) {
-			cat("\n",group," (",numF,"):\n",sep="")
+			cat("\n", group, " (", length(dna), "):\n", sep="")
 			flush.console()
 			pBar <- txtProgressBar(style=3)
 		}
 		
-		batches <- seq(1,numF,batchSize)
+		# reduce to the set of unique dna sequences
+		u_dna <- unique(dna)
+		names(u_dna) <- names(dna)[match(u_dna, dna)]
+		m <- c(m, as.integer(names(u_dna)[match(dna, u_dna)]))
+		rns <- c(rns, as.integer(names(dna)))
+		dna <- u_dna
+		numF <- length(dna)
+		
+		batches <- seq(1, numF, batchSize)
 		
 		# for every sequence
 		for (j in batches) {
@@ -221,9 +245,11 @@ FindChimeras <- function(dbFile,
 			
 			if (length(temp_fragments) > 0) {
 				
-				pdict <- PDict(temp_fragments,
-						algorithm="ACtree2",
-						tb.end=tb.width)
+				u_temp_fragments <- unique(temp_fragments)
+				m_fragments <- match(temp_fragments, u_temp_fragments)
+				pdict <- PDict(u_temp_fragments,
+					algorithm="ACtree2",
+					tb.end=tb.width)
 				
 				if (numG <= 3000) { # search whole group
 					# count number of hits in group
@@ -232,12 +258,13 @@ FindChimeras <- function(dbFile,
 						max.mismatch=1,
 						fixed=FALSE)
 					counts <- unlist(counts)
-				
+					
 					# tabulate counts
 					if (length(counts) > 0) { # hits
-						hits_in <- tabulate(counts)
-						if (length(hits_in) < length(temp_fragments))
-							hits_in[(length(hits_in) + 1):length(temp_fragments)] <- 0
+						t <- tabulate(counts)
+						if (length(t) < length(u_temp_fragments))
+							t[(length(t) + 1):length(u_temp_fragments)] <- 0
+						hits_in <- t[m_fragments]
 						
 						# remove fragments with too many hits in group
 						w <- which(hits_in < 5)
@@ -255,10 +282,11 @@ FindChimeras <- function(dbFile,
 					
 					# tabulate counts
 					if (length(counts) > 0) { # hits
-						hits_in <- tabulate(counts)
-						if (length(hits_in) < length(temp_fragments))
-							hits_in[(length(hits_in) + 1):length(temp_fragments)] <- 0
-					
+						t <- tabulate(counts)
+						if (length(t) < length(u_temp_fragments))
+							t[(length(t) + 1):length(u_temp_fragments)] <- 0
+						hits_in <- t[m_fragments]
+						
 						# remove fragments with too many hits in group
 						w <- which(hits_in < 5)
 					} else { # no hits
@@ -270,8 +298,11 @@ FindChimeras <- function(dbFile,
 					temp_fragments <- temp_fragments[w]
 					
 					if (length(temp_fragments) > 0) {
+						u_temp_fragments <- unique(temp_fragments)
+						m_fragments <- match(temp_fragments, u_temp_fragments)
+						
 						# count number of hits in group
-						pdict <- PDict(temp_fragments,
+						pdict <- PDict(u_temp_fragments,
 							algorithm="ACtree2",
 							tb.end=tb.width)
 						counts <- vwhichPDict(pdict,
@@ -282,9 +313,10 @@ FindChimeras <- function(dbFile,
 						
 						# tabulate counts
 						if (length(counts) > 0) { # hits
-							hits_in2 <- tabulate(counts)
-							if (length(hits_in2) < length(temp_fragments))
-								hits_in2[(length(hits_in2) + 1):length(temp_fragments)] <- 0
+							t <- tabulate(counts)
+							if (length(t) < length(u_temp_fragments))
+								t[(length(t) + 1):length(u_temp_fragments)] <- 0
+							hits_in2 <- t[m_fragments]
 							hits_in <- hits_in + hits_in2
 						
 							# remove fragments with too many hits in group
@@ -300,10 +332,12 @@ FindChimeras <- function(dbFile,
 			
 			if (length(w) > 0) {
 				temp_fragments <- temp_fragments[w]
+				u_temp_fragments <- unique(temp_fragments)
+				m_fragments <- match(temp_fragments, u_temp_fragments)
 				hits_in <- hits_in[w]
 				
 				# count number of lenient hits in group
-				pdict <- PDict(temp_fragments,
+				pdict <- PDict(u_temp_fragments,
 					algorithm="ACtree2",
 					tb.start=tb.width + 1,
 					tb.end=2*tb.width)
@@ -317,9 +351,10 @@ FindChimeras <- function(dbFile,
 				if (length(counts)==0) { # no hits
 					w <- integer() # should never occurr
 				} else { # hits
-					lenient_hits_in <- tabulate(counts)
-					if (length(lenient_hits_in) < length(temp_fragments))
-						lenient_hits_in[(length(lenient_hits_in) + 1):length(temp_fragments)] <- 0
+					t <- tabulate(counts)
+					if (length(t) < length(u_temp_fragments))
+						t[(length(t) + 1):length(u_temp_fragments)] <- 0
+					lenient_hits_in <- t[m_fragments]
 					
 					# remove fragments with too many lenient hits in group
 					w <- which(lenient_hits_in < 10)
@@ -327,12 +362,57 @@ FindChimeras <- function(dbFile,
 			}
 			
 			if (length(w) > 0) {
-				fragments <- c(fragments, temp_fragments[w])
-				all_hits_in <- c(all_hits_in, hits_in[w])
+				# remove fragments that would not meet requirements for a chimera
+				name.position.width <- unlist(strsplit(names(temp_fragments[w]),
+					".",
+					fixed=TRUE))
+				l <- length(name.position.width)
+				
+				# get the sequences of origin
+				name <- name.position.width[seq(2, l, 4)]
+				unique_name <- unique(name)
+				
+				# get the fragment positions
+				position <- as.numeric(name.position.width[seq(3, l, 4)])
+				
+				# get the original sequence widths
+				widths <- as.numeric(name.position.width[seq(4, l, 4)])
+				
+				remove <- character()
+				for (i in unique_name) {
+					w1 <- which(name==i)
+					
+					if (length(w1) < minSuspectFragments) {
+						remove <- c(remove, i)
+						next # chimeras need at least minSuspectFragments fragments
+					}
+					
+					start <- ((position[w1[1]] - 1)*offset + 1)
+					end <- ((position[w1[length(w1)]] - 1)*offset + 30)
+					
+					# chimeric section needs to be at least minLength long
+					if ((end - start + 1) < minLength) {
+						remove <- c(remove, i)
+						next
+					}
+					
+					# chimeric section must overlap ends
+					if (!(end > (widths[w1[1]] - overlap)) &&
+						!(start < overlap))
+						remove <- c(remove, i)
+				}
+				
+				if (length(remove) > 0)
+					w <- w[-which(name %in% remove)]
+				
+				if (length(w) > 0) {
+					fragments <- c(fragments, temp_fragments[w])
+					all_hits_in <- c(all_hits_in, hits_in[w])
+				}
 			}
 			
 			# keep adding fragments until above minimum
-			if (length(fragments) < minNumFragments &&
+			if (length(unique(fragments)) < minNumFragments &&
 				(!(j==batches[length(batches)] && group==myGroups[length(myGroups)])
 				|| length(fragments)==0)) # and not the last batch
 				next
@@ -384,7 +464,9 @@ FindChimeras <- function(dbFile,
 				if (length(h)==0)
 					next
 				
-				pdict <- PDict(fragments[h],
+				u_fragments <- unique(fragments[h])
+				m_fragments <- match(fragments[h], u_fragments)
+				pdict <- PDict(u_fragments,
 					algorithm="ACtree2",
 					tb.end=tb.width)
 				
@@ -392,18 +474,19 @@ FindChimeras <- function(dbFile,
 				#gc(verbose=FALSE)
 				
 				# search for the fragments
-				if (firstRound2)
+				if (firstRound2) {
 					other_dna <- SearchDB(dbConn2,
 						identifier=other,
 						verbose=FALSE,
 						limit=maxGroupSize,
 						...="nonbases < 20")
-				else
+				} else {
 					other_dna <- SearchDB(dbConn2,
 						identifier=other,
 						verbose=FALSE,
 						limit=maxGroupSize,
 						...="nonbases < 20 and chimera is NULL")
+				}
 				
 				if (length(other_dna) <= multiplier)
 					next # not enough sequences
@@ -417,9 +500,10 @@ FindChimeras <- function(dbFile,
 				# tabulate counts
 				if (length(counts)==0) # no hits
 					next
-				hits_out <- tabulate(counts)
-				if (length(hits_out) < length(h))
-					hits_out[(length(hits_out) + 1):length(h)] <- 0
+				t <- tabulate(counts)
+				if (length(t) < length(u_fragments))
+					t[(length(t) + 1):length(u_fragments)] <- 0
+				hits_out <- t[m_fragments]
 				
 				# mark fragments with hits out of group greater than
 				# multiplier times the number of hits in group
@@ -581,6 +665,16 @@ FindChimeras <- function(dbFile,
 		# free up available memory
 		#gc(verbose=FALSE)
 	
+	}
+	
+	# expand results to include duplicated sequences
+	rows <- match(m, as.integer(rownames(all_results)))
+	w <- which(!is.na(rows))
+	if (length(w) > 0) {
+		rows <- rows[w]
+		if (length(rows) > dim(all_results)[1])
+			all_results <- data.frame(chimera=I(all_results$chimera[rows]),
+				row.names=as.character(rns[w]))
 	}
 	
 	if ((is.character(add2tbl) || add2tbl) && !is.null(all_results))

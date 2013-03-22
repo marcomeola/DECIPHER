@@ -86,28 +86,28 @@ DistanceMatrix <- function(myDNAStringSet,
 	
 	if (verbose) {
 		close(pBar)
-		if (removeDuplicates)
-			cat("\nRemoved", nRemoved, "exact duplicate sequences.")
-		if (includeTerminalGaps==TRUE & penalizeGapGapMatches==FALSE)
-			cat("\nCompared the union of internal ranges.",
-				"\nGap-gap matches not included in distance.")
-		if (includeTerminalGaps==FALSE & penalizeGapGapMatches==FALSE)
-			cat("\nCompared the intersection of internal ranges.",
-				"\nGap-gap matches not included in distance.")
-		if (includeTerminalGaps==TRUE & penalizeGapGapMatches==TRUE)
-			cat("\nCompared the entire sequence length.",
-				"\nConsidered gap-gap matches as mis-matches.")
-		if (includeTerminalGaps==FALSE & penalizeGapGapMatches==TRUE)
-			cat("\nCompared the intersection of internal ranges.",
-				"\nConsidered gap-gap matches as mis-matches.")
-		if (penalizeGapLetterMatches)
-			cat("\nConsidered gap-letter matches as mis-matches.")
-		else
-			cat("\nGap-letter matches not included in distance.")
-		if (correction==2)
-			cat("\nApplied Jukes-Cantor correction.")
-		else if (correction==3)
-			cat("\nApplied Huber-Hugenholtz correction.")
+		#if (removeDuplicates)
+		#	cat("\nRemoved", nRemoved, "exact duplicate sequences.")
+		#if (includeTerminalGaps==TRUE & penalizeGapGapMatches==FALSE)
+		#	cat("\nCompared the union of internal ranges.",
+		#		"\nGap-gap matches not included in distance.")
+		#if (includeTerminalGaps==FALSE & penalizeGapGapMatches==FALSE)
+		#	cat("\nCompared the intersection of internal ranges.",
+		#		"\nGap-gap matches not included in distance.")
+		#if (includeTerminalGaps==TRUE & penalizeGapGapMatches==TRUE)
+		#	cat("\nCompared the entire sequence length.",
+		#		"\nConsidered gap-gap matches as mis-matches.")
+		#if (includeTerminalGaps==FALSE & penalizeGapGapMatches==TRUE)
+		#	cat("\nCompared the intersection of internal ranges.",
+		#		"\nConsidered gap-gap matches as mis-matches.")
+		#if (penalizeGapLetterMatches)
+		#	cat("\nConsidered gap-letter matches as mis-matches.")
+		#else
+		#	cat("\nGap-letter matches not included in distance.")
+		#if (correction==2)
+		#	cat("\nApplied Jukes-Cantor correction.")
+		#else if (correction==3)
+		#	cat("\nApplied Huber-Hugenholtz correction.")
 		time.2 <- Sys.time()
 		cat("\n")
 		print(round(difftime(time.2,

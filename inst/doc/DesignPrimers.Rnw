@@ -61,17 +61,17 @@ Improved specificity to the target group is achieved in two ways:  first by decr
 \section{Getting Started}
 %------------------------------------------------------------
 
-\subsection{Installing UNAFold}
+\subsection{Installing OligoArrayAux}
 
-The program UNAFold (\url{http://mfold.rna.albany.edu/?q=DINAMelt/software}) is used to predict hybridization efficiency and must be installed in a location accessible by the system.  For example, the following code should print the installed UNAFold version when executed from the \term{R} console:
+The program OligoArrayAux (\url{http://mfold.rna.albany.edu/?q=DINAMelt/OligoArrayAux}) is used to predict hybridization efficiency and must be installed in a location accessible by the system.  For example, the following code should print the installed OligoArrayAux version when executed from the \term{R} console:
 
 <<expr0,eval=FALSE>>=
-system("hybrid -V")
+system("hybrid-min -V")
 @
 
 \begin{Schunk}
 \begin{Sinput}
-hybrid (UNAFold) 3.8
+hybrid-min (OligoArrayAux) 3.8
 By Nicholas R. Markham and Michael Zuker
 Copyright (C) 2006
 Rensselaer Polytechnic Institute
@@ -124,7 +124,7 @@ Seqs2DB(fas, "FASTA", dbConn, "Streptomyces")
 
 \subsection{Defining Groups}
 
-At this point we need to define groups of related sequences in the database we just created.  In this case we wish to define a group for the sequences of each species of \textit{Streptomyces}.  In order to accomplish this we make use of the information contained in the description of each FASTA sequence record that we just imported.
+At this point we need to define groups of related sequences in the database we just created.  In this case we wish to define a group for the sequences of each species of \textit{Streptomyces}.  In order to accomplish this we make use of the information contained in the description of each FASTA sequence record that we just imported.  Alternatively we could use the functions \Rfunction{IdentifyByRank}, \Rfunction{FormGroups}, or \Rfunction{IdClusters} to define groups.
 
 <<expr3,eval=TRUE>>=
 # get the FASTA record description
@@ -191,7 +191,7 @@ head(tiles)
 
 \subsection{Designing All Possible Primers}
 
-Next we wish to design primers for \textit{S. avermitilis}.  As an example, we will begin by designing primers for every possible target site that meet certain design criteria.  For example, the default reagent conditions are defined as:  3 mM [dNTPs], 70 mM [$K^{+}$], 3 mM [$Mg^{2+}$], and a primer concentration of 400 nM.  Also, the defaults specify that up to 4 forward or reverse primers should be used so long as they cover 90\% of the permutations present in their target site.  In this case we wish to encompass 100\% of each species' sequences, so we will use \code{minCoverage = 1} and \code{minGroupCoverage = 1} rather than the default 90\% and 20\%, respectively.  Other default parameters include an annealing temperature of $64^{\circ}C$, and a minimum and maximum product size of 75 and 1,200 base pairs, respectively.
+Next we wish to design primers for \textit{S. avermitilis}.  As an example, we will begin by designing primers for every possible target site that meet certain design criteria.  For example, the default reagent conditions are defined as:  3 mM [dNTPs], 70 mM [$K^{+}$], 3 mM [$Mg^{2+}$], and a primer concentration of 400 nM.  Also, the defaults specify that up to 4 forward or reverse primers should be used so long as they cover 90\% of the permutations present in their target site.  In this case we wish to encompass 100\% of each species' sequences, so we will use \code{minCoverage = 1} and \code{minGroupCoverage = 1} rather than the default 90\% and 20\%, respectively.  Other default parameters include an annealing temperature of $64^{\circ}C$, and a minimum and maximum product size of 75 and 1,200 base pairs, respectively.  Note that the input parameters to \Rfunction{DesignPrimers} should be carefully considered in order adequately represent the actual PCR conditions that will be used.
 
 It is worth noting that the estimates of elongation efficiency are applicable to standard \textit{Taq} DNA Polymerase, and do not apply to high-fidelity polymerases.  Such polymerases, commonly used in cloning and sequencing applications, have a 3' to 5' exonuclease activity that will attempt to remove mismatches located at the primer's 3' terminus.  If you intend to use a high-fidelity polymerase then you should specify \Rfunarg{taqEfficiency=FALSE} when issuing commands to \Rfunction{DesignPrimers} or \Rfunction{CalculateEfficiencyPCR}.  In this case elongation efficiency will not be included in the estimate of amplification efficiency and only hybridization efficiency will be used.
 
@@ -249,27 +249,27 @@ bingchenggensis (88.7%) C (88.7%) Tu6071 (88.7%)
 The predicted forward and reverse primer efficiencies are respectively 84.4\% and 88.7\% at the default annealing temperature of $64^{\circ}C$.  The efficiency metric is useful because it indicates the fraction of available templates that will be copied in each cycle of PCR.  The overall amplification efficiency can be approximated as the geometric mean of the forward and reverse efficiencies:
 
 <<expr9,eval=FALSE>>=
-sqrt(mean(primers[,"forward_efficiency"],
+sqrt(mean(primers[1, "forward_efficiency"],
 		na.rm=TRUE)*
-	mean(primers[,"reverse_efficiency"],
+	mean(primers[1, "reverse_efficiency"],
 		na.rm=TRUE))*100
 @
 
 \begin{Schunk}
 \begin{Sinput}
-[1] 90.45494
+[1] 86.55222
 \end{Sinput}
 \end{Schunk}
 
-Thus we anticipate a 90.5\% amplification efficiency when these two primers are used together with their target DNA template.  In the \code{mismatches_forward} and \code{mismatches_reverse} fields the predicted amplification efficiency of using the primers with each other group is shown.  Here we can see that most non-target groups have the same predicted efficiency as the target, because they have DNA that perfectly matches the primer sequences.
+Thus we anticipate a 86.5\% amplification efficiency when these two primers are used together with their target DNA template.  In the \code{mismatches_forward} and \code{mismatches_reverse} fields the predicted amplification efficiency of using the primers with each other group is shown.  Here we can see that most non-target groups have the same predicted efficiency as the target, because they have DNA that perfectly matches the primer sequences.
 
 \subsection{Designing the Best Possible Primer Set}
 
-We could potentially examine all primers one-by-one to find the best forward and reverse primers to amplify only the target group.  Another option is to allow the program to find the best primer sets by searching the entire set of primers.  To do this we simply change the parameter \Rfunarg{numPrimerSets} to a positive number from its default of zero.  In doing so the \Rfunction{DesignPrimers} function will search through the best forward and reverse primers to find the option that minimizes forward and reverse primer overlap.  Furthermore, the program will search all potential target sites where the primer might bind upstream and downstream of its target site in the alignment.
+We could potentially examine all primers one-by-one to find the best forward and reverse primers to amplify only the target group.  Another option is to allow the program to find the best primer sets by searching the entire set of primers.  To do this we simply change the parameter \Rfunarg{numPrimerSets} to a positive number from its default of zero.  In doing so the \Rfunction{DesignPrimers} function will search through the best forward and reverse primers to find the option that minimizes forward and reverse primer overlap.  Furthermore, the program will search potential target sites within 20 nucleotides where the primer might bind upstream and downstream of its target site in the alignment.
 
 <<expr10,eval=FALSE>>=
 primers <- DesignPrimers(tiles, identifier="avermitilis", minCoverage=1,
-	minGroupCoverage=1, numPrimerSets=5)
+	minGroupCoverage=1, numPrimerSets=5, maxSearchSize=20)
 @
 
 \begin{Schunk}
@@ -292,41 +292,41 @@ head(primers)
 \begin{Schunk}
 \begin{Sinput}
    identifier start_forward start_reverse product_size start_aligned_forward
-1 avermitilis           242           329           88                   247
-2 avermitilis           244           329           86                   249
-3 avermitilis           243           329           87                   248
-4 avermitilis           245           329           85                   250
-5 avermitilis           250           329           80                   255
+1 avermitilis           242           335           94                   247
+2 avermitilis           243           335           93                   248
+3 avermitilis           246           335           90                   251
+4 avermitilis           244           335           92                   249
+5 avermitilis           245           335           91                   250
   start_aligned_reverse permutations_forward permutations_reverse score_forward
-1                   344                    1                    1             0
-2                   344                    1                    1             0
-3                   344                    1                    1  -1.72184....
-4                   344                    1                    1  -2.06189....
-5                   344                    1                    1  -0.00027....
+1                   350                    1                    1             0
+2                   350                    1                    1  -1.13878....
+3                   350                    1                    1  -0.00013....
+4                   350                    1                    1  -0.00762....
+5                   350                    1                    1  -0.01713....
   score_reverse score_set         forward_primer.1 forward_primer.2 forward_primer.3
-1  -0.00032....         0 CGTTGATTATTCGGCACACTCGAC             <NA>             <NA>
-2  -0.00032....         0      TATTCGGCACACTCGACCT             <NA>             <NA>
-3  -0.00032....         0    GATTATTCGGCACACTCGACC             <NA>             <NA>
-4  -0.00032....         0        TCGGCACACTCGACCTG             <NA>             <NA>
-5  -0.00032....         0      GCACACTCGACCTGCTCAG             <NA>             <NA>
-  forward_primer.4   reverse_primer.1 reverse_primer.2 reverse_primer.3 reverse_primer.4
-1             <NA> GCCCTCCCATGTTCGCTT             <NA>             <NA>             <NA>
-2             <NA> GCCCTCCCATGTTCGCTT             <NA>             <NA>             <NA>
-3             <NA> GCCCTCCCATGTTCGCTT             <NA>             <NA>             <NA>
-4             <NA> GCCCTCCCATGTTCGCTT             <NA>             <NA>             <NA>
-5             <NA> GCCCTCCCATGTTCGCTT             <NA>             <NA>             <NA>
+1  -0.00142....         0 CGTTGATTATTCGGCACACTCGAC             <NA>             <NA>
+2  -0.00142....         0    GATTATTCGGCACACTCGACC             <NA>             <NA>
+3  -0.00142....         0        CGGCACACTCGACCTGC             <NA>             <NA>
+4  -0.00142....         0      TATTCGGCACACTCGACCT             <NA>             <NA>
+5  -0.00142....         0        TCGGCACACTCGACCTG             <NA>             <NA>
+  forward_primer.4  reverse_primer.1 reverse_primer.2 reverse_primer.3 reverse_primer.4
+1             <NA> CCCTCGCCCTCCCATGT             <NA>             <NA>             <NA>
+2             <NA> CCCTCGCCCTCCCATGT             <NA>             <NA>             <NA>
+3             <NA> CCCTCGCCCTCCCATGT             <NA>             <NA>             <NA>
+4             <NA> CCCTCGCCCTCCCATGT             <NA>             <NA>             <NA>
+5             <NA> CCCTCGCCCTCCCATGT             <NA>             <NA>             <NA>
   forward_efficiency.1 forward_efficiency.2 forward_efficiency.3 forward_efficiency.4
 1         0.954290....                   NA                   NA                   NA
-2         0.804031....                   NA                   NA                   NA
-3         0.815524....                   NA                   NA                   NA
-4         0.844134....                   NA                   NA                   NA
-5         0.879531....                   NA                   NA                   NA
+2         0.815524....                   NA                   NA                   NA
+3         0.894378....                   NA                   NA                   NA
+4         0.804031....                   NA                   NA                   NA
+5         0.844134....                   NA                   NA                   NA
   reverse_efficiency.1 reverse_efficiency.2 reverse_efficiency.3 reverse_efficiency.4
-1         0.951957....                   NA                   NA                   NA
-2         0.951957....                   NA                   NA                   NA
-3         0.951957....                   NA                   NA                   NA
-4         0.951957....                   NA                   NA                   NA
-5         0.951957....                   NA                   NA                   NA
+1         0.925497....                   NA                   NA                   NA
+2         0.925497....                   NA                   NA                   NA
+3         0.925497....                   NA                   NA                   NA
+4         0.925497....                   NA                   NA                   NA
+5         0.925497....                   NA                   NA                   NA
   forward_coverage.1 forward_coverage.2 forward_coverage.3 forward_coverage.4
 1                  1                 NA                 NA                 NA
 2                  1                 NA                 NA                 NA
@@ -339,12 +339,18 @@ head(primers)
 3                  1                 NA                 NA                 NA
 4                  1                 NA                 NA                 NA
 5                  1                 NA                 NA                 NA
-  mismatches_forward mismatches_reverse mismatches_set
-1                                                     
-2                                                     
-3                                                     
-4                                                     
-5                                                     
+                                                                                                          mismatches_forward
+1                                                                                                                           
+2                                                                                                                           
+3                                                                                                                           
+4 lividans (0.368%,TATTCGGCACACTCGA-CCT/AGGATCAAGTGTGCCGAGT-) coelicolor (0.368%,TATTCGGCACACTCGA-CCT/AGGATCAAGTGTGCCGAGT-) 
+5         lividans (0.856%,TCGGCACACTCGA-CCTG/CAGGATCAAGTGTGCCGA) coelicolor (0.856%,TCGGCACACTCGA-CCTG/CAGGATCAAGTGTGCCGA) 
+  mismatches_reverse mismatches_set
+1                                  
+2                                  
+3                                  
+4                                  
+5
 \end{Sinput}
 \end{Schunk}
 
@@ -358,7 +364,7 @@ After choosing forward and reverse primers we can graph their melt curves in ord
 
 <<expr12,eval=FALSE>>=
 temp_range <- 60:75
-ps <- c("CGTTGATTATTCGGCACACTCGAC", "GCCCTCCCATGTTCGCTT") # forward and reverse
+ps <- c("CGTTGATTATTCGGCACACTCGAC", "CCCTCGCCCTCCCATGT") # forward and reverse
 f <- function(temp) {
 	CalculateEfficiencyPCR(ps, reverseComplement(DNAStringSet(ps)),
 		temp, P=4e-7, ions=.225)
@@ -392,16 +398,19 @@ Often it is useful to visualize the sequence region where the primers will annea
 dna <- SearchDB(dbConn)
 amplicon <- subseq(dna, 247, 344)
 names(amplicon) <- desc
-amplicon <- unique(amplicon)
+# only show unique sequences
+u_amplicon <- unique(amplicon)
+names(u_amplicon) <- names(amplicon)[match(u_amplicon, amplicon)]
+amplicon <- u_amplicon
 # move the target group to the top
 w <- which(names(amplicon)=="avermitilis")
 amplicon <- c(amplicon[w], amplicon[-w])
 @
 
-Then we can use the function \Rfunction{BrowseSequences} to visualize the target site for each primer in the amplicon.  This command will open a new window in the default web browser.  The top sequence shows the target (\textit{S. avermitilis}), and each primer's target site is colored.  It is clear why this target site was chosen, because all other \textit{Streptomyces} species have multiple mismatches to both the forward and reverse primers.  The non-target mismatches, especially those located nearest the 3' end (towards the center of the amplicon), will act to lower both hybridization and elongation efficiency of non-target amplification.
+Then we can use the function \Rfunction{BrowseSequences} to visualize the target site for each primer in the amplicon.  This command will open a new window in the default web browser.  The top sequence shows the target (\textit{S. avermitilis}), and each primer's target site is colored.  We can highlight the target sequence so that only mismatches are colored in the non-target sequences.  It is clear why this target site was chosen, because all other \textit{Streptomyces} species have multiple mismatches to both the forward and reverse primers.  The non-target mismatches, especially those located nearest the 3' end (towards the center of the amplicon), will act to lower both hybridization and elongation efficiency of non-target amplification.
 
 <<expr14,eval=FALSE>>=
-BrowseSequences(amplicon, color=c(4, 27, 67, 89))
+BrowseSequences(amplicon, color=c(4, 27, 76, 94), highlight=1)
 @
 
 \begin{figure}

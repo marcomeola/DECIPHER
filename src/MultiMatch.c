@@ -16,6 +16,12 @@
  */
 #include <R_ext/Rdynload.h>
 
+/* for R_CheckUserInterrupt */
+#include <R_ext/Utils.h>
+
+// for math functions
+#include <math.h>
+
 // for OpenMP parallel processing
 #ifdef SUPPORT_OPENMP
 #include <omp.h>

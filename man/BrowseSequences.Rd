@@ -9,7 +9,8 @@ Opens an html file in a web browser to show the sequences in a \code{DNAStringSe
 \usage{
 BrowseSequences(myDNAStringSet,
                 htmlFile = paste(tempdir(), "/dna.html", sep = ""),
-                colorBases=FALSE,
+                colorBases=TRUE,
+                highlight=0,
                 ...)
 }
 \arguments{
@@ -21,6 +22,9 @@ Character string giving the location where the html file should be written.
 }
   \item{colorBases}{
 Logical specifying whether to color each type of base (A, C, G, and T) the same color.
+}
+  \item{highlight}{
+Numeric specifying which sequence in the set to use for comparison or \code{0} to color every sequence (default).
 }
   \item{\dots}{
 Additional arguments to be passed directly to \code{ConsensusSequence}.

@@ -99,7 +99,7 @@ In order to assign new sequences to a group in the reference database, it is nec
 
 <<expr1,eval=FALSE>>=
 output.file <- tempfile()
-command <- paste("java -jar '",
+command <- paste("java -Xmx1g -jar '",
 "<<path to multiclassifier.jar>>",
 "' --hier_outfile=/dev/null --conf=0 --assign_outfile='",
 output.file,

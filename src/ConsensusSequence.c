@@ -69,7 +69,7 @@ static int endTerminalGaps(const cachedCharSeq *P)
 	return gaps;
 }
 
-static void alphabetFrequency(const cachedCharSeq *P, double *bits, int seqLength, int degeneracy, int ignore, int start, int end)
+static void alphabetFrequency(const cachedCharSeq *P, double *bits, int seqLength, int degeneracy, int ignore, int start, int end, double weight)
 {
 	int j;
 	const char *p;
@@ -80,67 +80,67 @@ static void alphabetFrequency(const cachedCharSeq *P, double *bits, int seqLengt
 	{
 		if (degeneracy==1) { // include degeneracy codes
 			// another base counted
-			*(bits + 6*seqLength + j) += 1;
+			*(bits + 6*seqLength + j) += weight;
 			
 			// tally the bases into the encoded array
 			switch (*p) {
 				case 1: // A
-					*(bits + 0*seqLength + j) += 1;
+					*(bits + 0*seqLength + j) += weight;
 					break;
 				case 2: // C
-					*(bits + 1*seqLength + j) += 1;
+					*(bits + 1*seqLength + j) += weight;
 					break;
 				case 3: // M
-					*(bits + 0*seqLength + j) += .5; *(bits + 1*seqLength + j) += .5; // AC
+					*(bits + 0*seqLength + j) += .5*weight; *(bits + 1*seqLength + j) += .5*weight; // AC
 					break;
 				case 4: // G
-					*(bits + 2*seqLength + j) += 1;
+					*(bits + 2*seqLength + j) += weight;
 					break;
 				case 5: // R
-					*(bits + 0*seqLength + j) += .5; *(bits + 2*seqLength + j) += .5; // AG
+					*(bits + 0*seqLength + j) += .5*weight; *(bits + 2*seqLength + j) += .5*weight; // AG
 					break;
 				case 6: // S
-					*(bits + 1*seqLength + j) += .5; *(bits + 2*seqLength + j) += .5; // CG
+					*(bits + 1*seqLength + j) += .5*weight; *(bits + 2*seqLength + j) += .5*weight; // CG
 					break;
 				case 7: // V
-					*(bits + 0*seqLength + j) += (double)1/3; *(bits + 1*seqLength + j) += (double)1/3; *(bits + 2*seqLength + j) += (double)1/3; // ACG
+					*(bits + 0*seqLength + j) += (double)1/3*weight; *(bits + 1*seqLength + j) += (double)1/3*weight; *(bits + 2*seqLength + j) += (double)1/3*weight; // ACG
 					break;
 				case 8: // T
-					*(bits + 3*seqLength + j) += 1;
+					*(bits + 3*seqLength + j) += weight;
 					break;
 				case 9: // W
-					*(bits + 0*seqLength + j) += .5; *(bits + 3*seqLength + j) += .5; // AT
+					*(bits + 0*seqLength + j) += .5*weight; *(bits + 3*seqLength + j) += .5*weight; // AT
 					break;
 				case 10: // Y
-					*(bits + 1*seqLength + j) += .5; *(bits + 3*seqLength + j) += .5; // CT
+					*(bits + 1*seqLength + j) += .5*weight; *(bits + 3*seqLength + j) += .5*weight; // CT
 					break;
 				case 11: // H
-					*(bits + 0*seqLength + j) += (double)1/3; *(bits + 1*seqLength + j) += (double)1/3; *(bits + 3*seqLength + j) += (double)1/3; // ACT
+					*(bits + 0*seqLength + j) += (double)1/3*weight; *(bits + 1*seqLength + j) += (double)1/3*weight; *(bits + 3*seqLength + j) += (double)1/3*weight; // ACT
 					break;
 				case 12: // K
-					*(bits + 2*seqLength + j) += .5; *(bits + 3*seqLength + j) += .5; // GT
+					*(bits + 2*seqLength + j) += .5*weight; *(bits + 3*seqLength + j) += .5*weight; // GT
 					break;
 				case 13: // D
-					*(bits + 0*seqLength + j) += (double)1/3; *(bits + 2*seqLength + j) += (double)1/3; *(bits + 3*seqLength + j) += (double)1/3; // AGT
+					*(bits + 0*seqLength + j) += (double)1/3*weight; *(bits + 2*seqLength + j) += (double)1/3*weight; *(bits + 3*seqLength + j) += (double)1/3*weight; // AGT
 					break;
 				case 14: // B
-					*(bits + 1*seqLength + j) += (double)1/3; *(bits + 2*seqLength + j) += (double)1/3; *(bits + 3*seqLength + j) += (double)1/3; // CGT
+					*(bits + 1*seqLength + j) += (double)1/3*weight; *(bits + 2*seqLength + j) += (double)1/3*weight; *(bits + 3*seqLength + j) += (double)1/3*weight; // CGT
 					break;
 				case 15: // N
-					*(bits + 0*seqLength + j) += .25; *(bits + 1*seqLength + j) += .25; *(bits + 2*seqLength + j) += .25; *(bits + 3*seqLength + j) += .25; // ACGT
+					*(bits + 0*seqLength + j) += .25*weight; *(bits + 1*seqLength + j) += .25*weight; *(bits + 2*seqLength + j) += .25*weight; *(bits + 3*seqLength + j) += .25*weight; // ACGT
 					break;
 				case 16: // -
 					if (ignore==1) { // don't include gaps
-						*(bits + 6*seqLength + j) -= 1;
+						*(bits + 6*seqLength + j) -= weight;
 					} else { // include gaps
-						*(bits + 4*seqLength + j) += 1;
+						*(bits + 4*seqLength + j) += weight;
 					}
 					break;
 				case 32: // +
 					if (ignore==1) { // don't include masks
-						*(bits + 6*seqLength + j) -= 1;
+						*(bits + 6*seqLength + j) -= weight;
 					} else { // include masks
-						*(bits + 5*seqLength + j) += 1;
+						*(bits + 5*seqLength + j) += weight;
 					}
 					break;
 				default:
@@ -150,28 +150,28 @@ static void alphabetFrequency(const cachedCharSeq *P, double *bits, int seqLengt
 		} else { // don't include degeneracy codes
 			switch (*p) {
 				case 1: // A
-					*(bits + 0*seqLength + j) += 1;
-					*(bits + 6*seqLength + j) += 1;
+					*(bits + 0*seqLength + j) += weight;
+					*(bits + 6*seqLength + j) += weight;
 					break;
 				case 2: // C
-					*(bits + 1*seqLength + j) += 1;
-					*(bits + 6*seqLength + j) += 1;
+					*(bits + 1*seqLength + j) += weight;
+					*(bits + 6*seqLength + j) += weight;
 					break;
 				case 4: // G
-					*(bits + 2*seqLength + j) += 1;
-					*(bits + 6*seqLength + j) += 1;
+					*(bits + 2*seqLength + j) += weight;
+					*(bits + 6*seqLength + j) += weight;
 					break;
 				case 8: // T
-					*(bits + 3*seqLength + j) += 1;
-					*(bits + 6*seqLength + j) += 1;
+					*(bits + 3*seqLength + j) += weight;
+					*(bits + 6*seqLength + j) += weight;
 					break;
 				case 16: // -
-					*(bits + 4*seqLength + j) += 1;
-					*(bits + 6*seqLength + j) += 1;
+					*(bits + 4*seqLength + j) += weight;
+					*(bits + 6*seqLength + j) += weight;
 					break;
 				case 32: // +
-					*(bits + 5*seqLength + j) += 1;
-					*(bits + 6*seqLength + j) += 1;
+					*(bits + 5*seqLength + j) += weight;
+					*(bits + 6*seqLength + j) += weight;
 					break;
 			}
 		}
@@ -427,7 +427,7 @@ static void makeConsensus(double *bits, char *seq, int seqLength, int x_length, 
 	}
 }
 
-//ans_start <- .Call("distMatrix", myDNAStringSet, threshold, ambiguity, minInformation, ignoreNonLetters, terminalGaps, PACKAGE="DECIPHER")
+//ans_start <- .Call("consensusSequence", myDNAStringSet, threshold, ambiguity, minInformation, ignoreNonLetters, terminalGaps, PACKAGE="DECIPHER")
 SEXP consensusSequence(SEXP x, SEXP threshold, SEXP ambiguity, SEXP minInformation, SEXP ignoreNonLetters, SEXP terminalGaps)
 {
 	cachedXStringSet x_set;
@@ -470,9 +470,9 @@ SEXP consensusSequence(SEXP x, SEXP threshold, SEXP ambiguity, SEXP minInformati
 		if (!tGaps) { // don't include terminal gaps
 			gapLengths[i][1] = frontTerminalGaps(&x_i);
 			gapLengths[i][2] = endTerminalGaps(&x_i);
-			alphabetFrequency(&x_i, &bases[0][0], seqLength, degeneracy, ignore, gapLengths[i][1], gapLengths[i][2]);
+			alphabetFrequency(&x_i, &bases[0][0], seqLength, degeneracy, ignore, gapLengths[i][1], gapLengths[i][2], 1);
 		} else { // include terminal gaps
-			alphabetFrequency(&x_i, &bases[0][0], seqLength, degeneracy, ignore, 0, 0);
+			alphabetFrequency(&x_i, &bases[0][0], seqLength, degeneracy, ignore, 0, 0, 1);
 		}
 	}
 	

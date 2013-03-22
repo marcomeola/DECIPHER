@@ -181,7 +181,7 @@ IdClusters <- function(myDistMatrix,
 			stop("myDistMatrix must have as many rows as the number of sequences.")
 	}
 	
-	w1 <- which(is.infinite(myDistMatrix))
+	w1 <- which(is.infinite(myDistMatrix[lower.tri(myDistMatrix, diag=FALSE)]))
 	if (length(w1) > 0) {
 		if (verbose)
 			warning("\n\nDistance Matrix contains infinite values.\n",
@@ -189,17 +189,17 @@ IdClusters <- function(myDistMatrix,
 		myDistMatrix[w1] <- NA
 	}
 	
-	w2 <- which(is.na(myDistMatrix))
+	w2 <- which(is.na(myDistMatrix[lower.tri(myDistMatrix, diag=FALSE)]))
 	if (length(w2) > 0) {
 		if (verbose &&
 			length(w2) > length(w1))
 			warning("\n\nDistance Matrix contains NA values.\n",
 				"Replaced NA values with max distance >= 1.\n")
-		max.dist <- max(myDistMatrix, na.rm=TRUE)
+		max.dist <- max(myDistMatrix[lower.tri(myDistMatrix, diag=FALSE)], na.rm=TRUE)
 		if (max.dist <= 1)
-			myDistMatrix[w2] <- 1
+			myDistMatrix[lower.tri(myDistMatrix, diag=FALSE)[w2]] <- 1
 		else
-			myDistMatrix[w2] <- max.dist
+			myDistMatrix[lower.tri(myDistMatrix, diag=FALSE)[w2]] <- max.dist
 	}
 	
 	if ((length(cutoff) > 1) && (showPlot || asDendrogram)) {
@@ -339,7 +339,7 @@ IdClusters <- function(myDistMatrix,
 					METHODS[method],
 					sep="")
 				c <- cbind(c, x)
-				m <- paste(m, ", ", max(myClusters[,9:10]), sep="")
+				m <- c(m, max(myClusters[,9:10]))
 			}
 		}
 		myClusters <- c
@@ -360,9 +360,9 @@ IdClusters <- function(myDistMatrix,
 	if (verbose) {
 		setTxtProgressBar(pBar,100)
 		close(pBar)
-		cat("\nGrouped into",
-			m,
-			"clusters.")
+		#cat("\nGrouped into",
+		#	paste(unique(m), collapse=", "),
+		#	"clusters.")
 		if (is.character(add2tbl) || add2tbl)
 			cat("\nAdded to ",
 				ifelse(is.character(add2tbl),add2tbl,"DNA"),

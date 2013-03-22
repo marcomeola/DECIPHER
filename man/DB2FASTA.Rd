@@ -69,7 +69,7 @@ Erik Wright \email{DECIPHER@cae.wisc.edu}
 \examples{
 db <- system.file("extdata", "Bacteria_175seqs.sqlite", package="DECIPHER")
 tf <- tempfile()
-DB2FASTA(tf, db, l=10)
+DB2FASTA(tf, db, limit=10)
 file.show(tf)
 unlink(tf)
 }

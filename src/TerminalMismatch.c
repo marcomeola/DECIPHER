@@ -171,7 +171,9 @@ SEXP terminalMismatch(SEXP p, SEXP t, SEXP cutoff, SEXP mGaps)
 			continue;
 		}
 		
-		// penultimate base
+		mm = 0;
+		
+		// penultimate base of primer (nearest neighbor)
 		switch (probe[end - 1]) {
 			case 'A':
 			case 'a':
@@ -183,17 +185,21 @@ SEXP terminalMismatch(SEXP p, SEXP t, SEXP cutoff, SEXP mGaps)
 							case 'A':
 							case 'a':
 								rans[i] = .048;
+								mm++;
 								break;
 							case 'C':
 							case 'c':
 								rans[i] = .099;
+								mm++;
 								break;
 							case 'G':
 							case 'g':
 								rans[i] = .001;
+								mm++;
 								break;
 							case '-':
 								rans[i] = 0;
+								mm++;
 								break;
 							default:
 								break;
@@ -205,17 +211,21 @@ SEXP terminalMismatch(SEXP p, SEXP t, SEXP cutoff, SEXP mGaps)
 							case 'A':
 							case 'a':
 								rans[i] = .575;
+								mm++;
 								break;
 							case 'C':
 							case 'c':
 								rans[i] = .000;
+								mm++;
 								break;
 							case 'T':
 							case 't':
 								rans[i] = .229;
+								mm++;
 								break;
 							case '-':
 								rans[i] = 0;
+								mm++;
 								break;
 							default:
 								break;
@@ -227,17 +237,21 @@ SEXP terminalMismatch(SEXP p, SEXP t, SEXP cutoff, SEXP mGaps)
 							case 'A':
 							case 'a':
 								rans[i] = .010;
+								mm++;
 								break;
 							case 'G':
 							case 'g':
 								rans[i] = .007;
+								mm++;
 								break;
 							case 'T':
 							case 't':
 								rans[i] = .151;
+								mm++;
 								break;
 							case '-':
 								rans[i] = 0;
+								mm++;
 								break;
 							default:
 								break;
@@ -249,17 +263,21 @@ SEXP terminalMismatch(SEXP p, SEXP t, SEXP cutoff, SEXP mGaps)
 							case 'C':
 							case 'c':
 								rans[i] = .087;
+								mm++;
 								break;
 							case 'G':
 							case 'g':
 								rans[i] = .494;
+								mm++;
 								break;
 							case 'T':
 							case 't':
 								rans[i] = .029;
+								mm++;
 								break;
 							case '-':
 								rans[i] = 0;
+								mm++;
 								break;
 							default:
 								break;
@@ -267,6 +285,7 @@ SEXP terminalMismatch(SEXP p, SEXP t, SEXP cutoff, SEXP mGaps)
 						break;
 					default:
 						rans[i] = 0;
+						mm++;
 						break;
 				}
 				break;
@@ -280,17 +299,21 @@ SEXP terminalMismatch(SEXP p, SEXP t, SEXP cutoff, SEXP mGaps)
 							case 'A':
 							case 'a':
 								rans[i] = .004;
+								mm++;
 								break;
 							case 'C':
 							case 'c':
 								rans[i] = 1;
+								mm++;
 								break;
 							case 'G':
 							case 'g':
 								rans[i] = .003;
+								mm++;
 								break;
 							case '-':
 								rans[i] = 0;
+								mm++;
 								break;
 							default:
 								break;
@@ -302,17 +325,21 @@ SEXP terminalMismatch(SEXP p, SEXP t, SEXP cutoff, SEXP mGaps)
 							case 'A':
 							case 'a':
 								rans[i] = .092;
+								mm++;
 								break;
 							case 'C':
 							case 'c':
 								rans[i] = .033;
+								mm++;
 								break;
 							case 'T':
 							case 't':
 								rans[i] = .346;
+								mm++;
 								break;
 							case '-':
 								rans[i] = 0;
+								mm++;
 								break;
 							default:
 								break;
@@ -324,17 +351,21 @@ SEXP terminalMismatch(SEXP p, SEXP t, SEXP cutoff, SEXP mGaps)
 							case 'A':
 							case 'a':
 								rans[i] = .001;
+								mm++;
 								break;
 							case 'G':
 							case 'g':
 								rans[i] = .088;
+								mm++;
 								break;
 							case 'T':
 							case 't':
 								rans[i] = .278;
+								mm++;
 								break;
 							case '-':
 								rans[i] = 0;
+								mm++;
 								break;
 							default:
 								break;
@@ -346,17 +377,21 @@ SEXP terminalMismatch(SEXP p, SEXP t, SEXP cutoff, SEXP mGaps)
 							case 'C':
 							case 'c':
 								rans[i] = .927;
+								mm++;
 								break;
 							case 'G':
 							case 'g':
 								rans[i] = .677;
+								mm++;
 								break;
 							case 'T':
 							case 't':
 								rans[i] = .016;
+								mm++;
 								break;
 							case '-':
 								rans[i] = 0;
+								mm++;
 								break;
 							default:
 								break;
@@ -364,6 +399,7 @@ SEXP terminalMismatch(SEXP p, SEXP t, SEXP cutoff, SEXP mGaps)
 						break;
 					default:
 						rans[i] = 0;
+						mm++;
 						break;
 				}
 				break;
@@ -377,17 +413,21 @@ SEXP terminalMismatch(SEXP p, SEXP t, SEXP cutoff, SEXP mGaps)
 							case 'A':
 							case 'a':
 								rans[i] = .000;
+								mm++;
 								break;
 							case 'C':
 							case 'c':
 								rans[i] = .114;
+								mm++;
 								break;
 							case 'G':
 							case 'g':
 								rans[i] = .002;
+								mm++;
 								break;
 							case '-':
 								rans[i] = 0;
+								mm++;
 								break;
 							default:
 								break;
@@ -399,17 +439,21 @@ SEXP terminalMismatch(SEXP p, SEXP t, SEXP cutoff, SEXP mGaps)
 							case 'A':
 							case 'a':
 								rans[i] = .042;
+								mm++;
 								break;
 							case 'C':
 							case 'c':
 								rans[i] = .002;
+								mm++;
 								break;
 							case 'T':
 							case 't':
 								rans[i] = .006;
+								mm++;
 								break;
 							case '-':
 								rans[i] = 0;
+								mm++;
 								break;
 							default:
 								break;
@@ -421,17 +465,21 @@ SEXP terminalMismatch(SEXP p, SEXP t, SEXP cutoff, SEXP mGaps)
 							case 'A':
 							case 'a':
 								rans[i] = .000;
+								mm++;
 								break;
 							case 'G':
 							case 'g':
 								rans[i] = .023;
+								mm++;
 								break;
 							case 'T':
 							case 't':
 								rans[i] = .022;
+								mm++;
 								break;
 							case '-':
 								rans[i] = 0;
+								mm++;
 								break;
 							default:
 								break;
@@ -443,17 +491,21 @@ SEXP terminalMismatch(SEXP p, SEXP t, SEXP cutoff, SEXP mGaps)
 							case 'C':
 							case 'c':
 								rans[i] = .004;
+								mm++;
 								break;
 							case 'G':
 							case 'g':
 								rans[i] = .332;
+								mm++;
 								break;
 							case 'T':
 							case 't':
 								rans[i] = .001;
+								mm++;
 								break;
 							case '-':
 								rans[i] = 0;
+								mm++;
 								break;
 							default:
 								break;
@@ -461,6 +513,7 @@ SEXP terminalMismatch(SEXP p, SEXP t, SEXP cutoff, SEXP mGaps)
 						break;
 					default:
 						rans[i] = 0;
+						mm++;
 						break;
 				}
 				break;
@@ -474,17 +527,21 @@ SEXP terminalMismatch(SEXP p, SEXP t, SEXP cutoff, SEXP mGaps)
 							case 'A':
 							case 'a':
 								rans[i] = .001;
+								mm++;
 								break;
 							case 'C':
 							case 'c':
 								rans[i] = .035;
+								mm++;
 								break;
 							case 'G':
 							case 'g':
 								rans[i] = .002;
+								mm++;
 								break;
 							case '-':
 								rans[i] = 0;
+								mm++;
 								break;
 							default:
 								break;
@@ -496,17 +553,21 @@ SEXP terminalMismatch(SEXP p, SEXP t, SEXP cutoff, SEXP mGaps)
 							case 'A':
 							case 'a':
 								rans[i] = .029;
+								mm++;
 								break;
 							case 'C':
 							case 'c':
 								rans[i] = .001;
+								mm++;
 								break;
 							case 'T':
 							case 't':
 								rans[i] = .002;
+								mm++;
 								break;
 							case '-':
 								rans[i] = 0;
+								mm++;
 								break;
 							default:
 								break;
@@ -518,17 +579,21 @@ SEXP terminalMismatch(SEXP p, SEXP t, SEXP cutoff, SEXP mGaps)
 							case 'A':
 							case 'a':
 								rans[i] = .003;
+								mm++;
 								break;
 							case 'G':
 							case 'g':
 								rans[i] = .001;
+								mm++;
 								break;
 							case 'T':
 							case 't':
 								rans[i] = .019;
+								mm++;
 								break;
 							case '-':
 								rans[i] = 0;
+								mm++;
 								break;
 							default:
 								break;
@@ -540,17 +605,21 @@ SEXP terminalMismatch(SEXP p, SEXP t, SEXP cutoff, SEXP mGaps)
 							case 'C':
 							case 'c':
 								rans[i] = .048;
+								mm++;
 								break;
 							case 'G':
 							case 'g':
 								rans[i] = .037;
+								mm++;
 								break;
 							case 'T':
 							case 't':
 								rans[i] = .000;
+								mm++;
 								break;
 							case '-':
 								rans[i] = 0;
+								mm++;
 								break;
 							default:
 								break;
@@ -558,595 +627,458 @@ SEXP terminalMismatch(SEXP p, SEXP t, SEXP cutoff, SEXP mGaps)
 						break;
 					default:
 						rans[i] = 0;
+						mm++;
 						break;
 				}
 				break;
 			default:
 				rans[i] = 0;
+				mm++;
 				break;
 		}
 		
-		if (l == 1)
+		if (l == 1 || rans[i] == 0)
 			continue;
 		
-		// penultimate base
+		// 2nd base = penultimate base
 		switch (probe[end - 1]) {
 			case 'A':
 			case 'a':
 				switch (target[lt - end + 1]) {
-					case 'A':
-					case 'a':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .210;
-						}
-						break;
-					case 'C':
-					case 'c':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .469;
-						}
-						break;
-					case 'G':
-					case 'g':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .201;
-						}
+					case 'T':
+					case 't':
 						break;
 					case '-':
 						rans[i] = 0;
+						mm++;
 						break;
 					default:
+						if (mm == 1) {
+							rans[i] = 0;
+						} else {
+							rans[i] = .372;
+							mm++;
+						}
 						break;
 				}
 				break;
 			case 'C':
 			case 'c':
 				switch (target[lt - end + 1]) {
-					case 'A':
-					case 'a':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .347;
-						}
-						break;
-					case 'C':
-					case 'c':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .207;
-						}
-						break;
-					case 'T':
-					case 't':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .317;
-						}
+					case 'G':
+					case 'g':
 						break;
 					case '-':
 						rans[i] = 0;
+						mm++;
 						break;
 					default:
+						if (mm == 1) {
+							rans[i] = 0;
+						} else {
+							rans[i] = .372;
+							mm++;
+						}
 						break;
 				}
 				break;
 			case 'G':
 			case 'g':
 				switch (target[lt - end + 1]) {
-					case 'A':
-					case 'a':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .203;
-						}
-						break;
-					case 'G':
-					case 'g':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .224;
-						}
-						break;
-					case 'T':
-					case 't':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .294;
-						}
+					case 'C':
+					case 'c':
 						break;
 					case '-':
 						rans[i] = 0;
+						mm++;
 						break;
 					default:
+						if (mm == 1) {
+							rans[i] = 0;
+						} else {
+							rans[i] = .372;
+							mm++;
+						}
 						break;
 				}
 				break;
 			case 'T':
 			case 't':
 				switch (target[lt - end + 1]) {
-					case 'C':
-					case 'c':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .413;
-						}
-						break;
-					case 'G':
-					case 'g':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .508;
-						}
-						break;
-					case 'T':
-					case 't':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .209;
-						}
+					case 'A':
+					case 'a':
 						break;
 					case '-':
 						rans[i] = 0;
+						mm++;
 						break;
 					default:
+						if (mm == 1) {
+							rans[i] = 0;
+						} else {
+							rans[i] = .372;
+							mm++;
+						}
 						break;
 				}
 				break;
 			default:
 				rans[i] = 0;
+				mm++;
 				break;
 		}
 		
-		if (l == 2)
+		if (l == 2 || rans[i] == 0)
 			continue;
 		
-		// antepenultimate base
+		// 3rd base = antepenultimate base
 		switch (probe[end - 2]) {
 			case 'A':
 			case 'a':
 				switch (target[lt - end + 2]) {
-					case 'A':
-					case 'a':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .408;
-						}
-						break;
-					case 'C':
-					case 'c':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .602;
-						}
-						break;
-					case 'G':
-					case 'g':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .401;
-						}
+					case 'T':
+					case 't':
 						break;
 					case '-':
 						rans[i] = 0;
+						mm++;
 						break;
 					default:
+						if (mm == 1) {
+							rans[i] = 0;
+						} else {
+							rans[i] = .634;
+							mm++;
+						}
 						break;
 				}
 				break;
 			case 'C':
 			case 'c':
 				switch (target[lt - end + 2]) {
-					case 'A':
-					case 'a':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .511;
-						}
-						break;
-					case 'C':
-					case 'c':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .405;
-						}
-						break;
-					case 'T':
-					case 't':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .487;
-						}
+					case 'G':
+					case 'g':
 						break;
 					case '-':
 						rans[i] = 0;
+						mm++;
 						break;
 					default:
+						if (mm == 1) {
+							rans[i] = 0;
+						} else {
+							rans[i] = .634;
+							mm++;
+						}
 						break;
 				}
 				break;
 			case 'G':
 			case 'g':
 				switch (target[lt - end + 2]) {
-					case 'A':
-					case 'a':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .402;
-						}
-						break;
-					case 'G':
-					case 'g':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .418;
-						}
-						break;
-					case 'T':
-					case 't':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .470;
-						}
+					case 'C':
+					case 'c':
 						break;
 					case '-':
 						rans[i] = 0;
+						mm++;
 						break;
 					default:
+						if (mm == 1) {
+							rans[i] = 0;
+						} else {
+							rans[i] = .634;
+							mm++;
+						}
 						break;
 				}
 				break;
 			case 'T':
 			case 't':
 				switch (target[lt - end + 2]) {
-					case 'C':
-					case 'c':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .560;
-						}
-						break;
-					case 'G':
-					case 'g':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .631;
-						}
-						break;
-					case 'T':
-					case 't':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .407;
-						}
+					case 'A':
+					case 'a':
 						break;
 					case '-':
 						rans[i] = 0;
+						mm++;
 						break;
 					default:
+						if (mm == 1) {
+							rans[i] = 0;
+						} else {
+							rans[i] = .634;
+							mm++;
+						}
 						break;
 				}
 				break;
 			default:
-				rans[i] = 0;
+				if (mm == 1) {
+					rans[i] = 0;
+				} else {
+					rans[i] = .237;
+					mm++;
+				}
 				break;
 		}
 		
-		if (l == 3)
+		if (l == 3 || rans[i] == 0)
 			continue;
 		
-		// preantepenultimate base
+		// 4th base = preantepenultimate base
 		switch (probe[end - 3]) {
 			case 'A':
 			case 'a':
 				switch (target[lt - end + 3]) {
-					case 'A':
-					case 'a':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .605;
-						}
-						break;
-					case 'C':
-					case 'c':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .734;
-						}
-						break;
-					case 'G':
-					case 'g':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .601;
-						}
+					case 'T':
+					case 't':
 						break;
 					case '-':
-						rans[i] = 0;
+						if (mm == 1) {
+							rans[i] = 0;
+						} else {
+							rans[i] = .018;
+							mm++;
+						}
 						break;
 					default:
+						if (mm == 1) {
+							rans[i] = 0;
+						} else {
+							rans[i] = .308;
+							mm++;
+						}
 						break;
 				}
 				break;
 			case 'C':
 			case 'c':
 				switch (target[lt - end + 3]) {
-					case 'A':
-					case 'a':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .674;
-						}
-						break;
-					case 'C':
-					case 'c':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .604;
-						}
-						break;
-					case 'T':
-					case 't':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .658;
-						}
+					case 'G':
+					case 'g':
 						break;
 					case '-':
-						rans[i] = 0;
+						if (mm == 1) {
+							rans[i] = 0;
+						} else {
+							rans[i] = .018;
+							mm++;
+						}
 						break;
 					default:
+						if (mm == 1) {
+							rans[i] = 0;
+						} else {
+							rans[i] = .308;
+							mm++;
+						}
 						break;
 				}
 				break;
 			case 'G':
 			case 'g':
 				switch (target[lt - end + 3]) {
-					case 'A':
-					case 'a':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .601;
-						}
-						break;
-					case 'G':
-					case 'g':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .612;
-						}
-						break;
-					case 'T':
-					case 't':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .647;
-						}
+					case 'C':
+					case 'c':
 						break;
 					case '-':
-						rans[i] = 0;
+						if (mm == 1) {
+							rans[i] = 0;
+						} else {
+							rans[i] = .018;
+							mm++;
+						}
 						break;
 					default:
+						if (mm == 1) {
+							rans[i] = 0;
+						} else {
+							rans[i] = .308;
+							mm++;
+						}
 						break;
 				}
 				break;
 			case 'T':
 			case 't':
 				switch (target[lt - end + 3]) {
-					case 'C':
-					case 'c':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .706;
-						}
-						break;
-					case 'G':
-					case 'g':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .754;
-						}
-						break;
-					case 'T':
-					case 't':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .605;
-						}
+					case 'A':
+					case 'a':
 						break;
 					case '-':
-						rans[i] = 0;
+						if (mm == 1) {
+							rans[i] = 0;
+						} else {
+							rans[i] = .018;
+							mm++;
+						}
 						break;
 					default:
+						if (mm == 1) {
+							rans[i] = 0;
+						} else {
+							rans[i] = .308;
+							mm++;
+						}
 						break;
 				}
 				break;
 			default:
-				rans[i] = 0;
+				if (mm == 1) {
+					rans[i] = 0;
+				} else {
+					rans[i] = .43;
+					mm++;
+				}
 				break;
 		}
 		
-		if (l == 4)
+		if (l == 4 || rans[i] == 0)
 			continue;
 		
-		// 5th base
+		// 5th base = ultrapreantepenultimate
 		switch (probe[end - 4]) {
 			case 'A':
 			case 'a':
 				switch (target[lt - end + 4]) {
-					case 'A':
-					case 'a':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .803;
-						}
-						break;
-					case 'C':
-					case 'c':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .867;
-						}
-						break;
-					case 'G':
-					case 'g':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .800;
-						}
-						break;
-					case '-':
-						rans[i] = 0;
+					case 'T':
+					case 't':
 						break;
 					default:
+						if (mm == 1) {
+							rans[i] = 0;
+						} else {
+							mm++;
+						}
 						break;
 				}
 				break;
 			case 'C':
 			case 'c':
 				switch (target[lt - end + 4]) {
-					case 'A':
-					case 'a':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .837;
-						}
-						break;
-					case 'C':
-					case 'c':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .802;
-						}
-						break;
-					case 'T':
-					case 't':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .829;
-						}
-						break;
-					case '-':
-						rans[i] = 0;
+					case 'G':
+					case 'g':
 						break;
 					default:
+						if (mm == 1) {
+							rans[i] = 0;
+						} else {
+							mm++;
+						}
 						break;
 				}
 				break;
 			case 'G':
 			case 'g':
 				switch (target[lt - end + 4]) {
-					case 'A':
-					case 'a':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .801;
-						}
-						break;
-					case 'G':
-					case 'g':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .806;
-						}
-						break;
-					case 'T':
-					case 't':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .823;
-						}
-						break;
-					case '-':
-						rans[i] = 0;
+					case 'C':
+					case 'c':
 						break;
 					default:
+						if (mm == 1) {
+							rans[i] = 0;
+						} else {
+							mm++;
+						}
 						break;
 				}
 				break;
 			case 'T':
 			case 't':
 				switch (target[lt - end + 4]) {
-					case 'C':
-					case 'c':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .853;
-						}
-						break;
-					case 'G':
-					case 'g':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .877;
-						}
-						break;
-					case 'T':
-					case 't':
-						if (rans[i] < 1) {
-							rans[i] = 0;
-						} else {
-							rans[i] = .802;
-						}
-						break;
-					case '-':
-						rans[i] = 0;
+					case 'A':
+					case 'a':
 						break;
 					default:
+						if (mm == 1) {
+							rans[i] = 0;
+						} else {
+							mm++;
+						}
 						break;
 				}
 				break;
 			default:
-				rans[i] = 0;
+				if (mm == 1) {
+					rans[i] = 0;
+				} else {
+					mm++;
+				}
+				break;
+		}
+		
+		if (l == 5 || rans[i] == 0)
+			continue;
+		
+		// 6th base = preultrapreantepenultimate
+		switch (probe[end - 5]) {
+			case 'A':
+			case 'a':
+				switch (target[lt - end + 5]) {
+					case 'T':
+					case 't':
+						break;
+					default:
+						if (mm == 1) {
+							rans[i] = 0;
+						} else {
+							mm++;
+						}
+						break;
+				}
+				break;
+			case 'C':
+			case 'c':
+				switch (target[lt - end + 5]) {
+					case 'G':
+					case 'g':
+						break;
+					default:
+						if (mm == 1) {
+							rans[i] = 0;
+						} else {
+							mm++;
+						}
+						break;
+				}
+				break;
+			case 'G':
+			case 'g':
+				switch (target[lt - end + 5]) {
+					case 'C':
+					case 'c':
+						break;
+					default:
+						if (mm == 1) {
+							rans[i] = 0;
+						} else {
+							mm++;
+						}
+						break;
+				}
+				break;
+			case 'T':
+			case 't':
+				switch (target[lt - end + 5]) {
+					case 'A':
+					case 'a':
+						break;
+					default:
+						if (mm == 1) {
+							rans[i] = 0;
+						} else {
+							mm++;
+						}
+						break;
+				}
+				break;
+			default:
+				if (mm == 1) {
+					rans[i] = 0;
+				} else {
+					mm++;
+				}
 				break;
 		}
 	}

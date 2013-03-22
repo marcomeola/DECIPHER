@@ -1,3 +1,7 @@
+// R_init_DECIPHER.c
+
+void R_init_DECIPHER(DllInfo *info);
+
 // ConsensusSequence.c
 
 SEXP consensusSequence(SEXP x, SEXP threshold, SEXP ambiguity, SEXP minInformation, SEXP ignoreNonLetters, SEXP terminalGaps);
@@ -7,10 +11,6 @@ SEXP consensusSequence(SEXP x, SEXP threshold, SEXP ambiguity, SEXP minInformati
 SEXP distMatrix(SEXP x, SEXP terminalGaps, SEXP penalizeGapGaps, SEXP penalizeGapLetters, SEXP verbose, SEXP pBar);
 
 SEXP gaps(SEXP x);
-
-// R_init_DECIPHER.c
-
-void R_init_DECIPHER(DllInfo *info);
 
 // ClusterNJ.c
 
@@ -27,6 +27,10 @@ SEXP reclusterUPGMA(SEXP ans, SEXP cutoff);
 // ClusterML.c
 
 SEXP clusterML(SEXP x, SEXP y, SEXP cutoff, SEXP verbose, SEXP pBar);
+
+// DesignProbes.c
+
+SEXP designProbes(SEXP x, SEXP max_pl, SEXP min_pl, SEXP max_c, SEXP numMMs, SEXP numPs, SEXP st, SEXP en, SEXP max_ov, SEXP h_percent, SEXP min_f, SEXP max_f, SEXP minS, SEXP verbose, SEXP pBar);
 
 // CommonGaps.c
 

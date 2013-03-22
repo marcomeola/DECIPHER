@@ -1,6 +1,7 @@
 BrowseSequences <- function(myDNAStringSet,
 	htmlFile=paste(tempdir(),"/dna.html",sep=""),
-	colorBases=FALSE,
+	colorBases=TRUE,
+	highlight=0,
 	...) {
 	# error checking
 	if (!is(myDNAStringSet, "DNAStringSet"))
@@ -25,15 +26,27 @@ BrowseSequences <- function(myDNAStringSet,
 			if (any((colorBases[seq(3, length(colorBases), 2)] - colorBases[seq(2, length(colorBases) - 2, 2)]) <= 0))
 				stop("Ranges specified in colorBases must be non-overlapping.")
 	}
+	if (is.null(names(myDNAStringSet)))
+		names(myDNAStringSet) <- 1:length(myDNAStringSet)
 	
 	# convert the DNAStringSet to character strings
 	html <- sapply(myDNAStringSet, toString)
+	if (highlight %in% 1:length(myDNAStringSet)) {
+		html <- sapply(html, strsplit, split="", fixed=TRUE)
+		for (i in (1:length(html))[-highlight]) {
+			l <- min(length(html[[highlight]]), length(html[[i]]))
+			w <- which(html[[i]][1:l]==html[[highlight]][1:l])
+			if (length(w) > 0)
+				html[[i]][w] <- "."
+		}
+		html <- sapply(html, paste, collapse="")
+	}
 	
 	# pad shorter sequences with periods
 	maxW <- max(width(myDNAStringSet))
 	for (i in 1:length(myDNAStringSet)) {
 		html[i] <- paste(html[i],
-			paste(rep("~",maxW - nchar(html[i])), collapse=""),
+			paste(rep("~", maxW - nchar(html[i])), collapse=""),
 			sep="")
 	}
 	
@@ -46,9 +59,11 @@ BrowseSequences <- function(myDNAStringSet,
 	
 	# create a legend that gives position
 	counter <- 20
+	if (counter > max(width(myDNAStringSet)))
+		counter <- max(width(myDNAStringSet))
 	offset <- (counter - 1) - nchar(maxW)
 	legend <- paste(paste(rep(" ", offset), collapse=""), format(seq(counter, maxW, by=counter)), collapse="")
-	counter <- counter/2
+	counter <- ceiling(counter/2)
 	tickmarks <- paste(paste(rep("'", counter - 1), collapse=""), rep("|", floor(maxW/counter)), collapse="", sep="")
 	tickmarks <- paste(tickmarks, paste(rep("'", maxW - counter*floor(maxW/counter)), collapse=""), sep="")
 	

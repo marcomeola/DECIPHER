@@ -78,10 +78,34 @@ Separate projects can be stored in distinct tables in the same sequence database
 
 The amount of DNA sequence information available is currently increasing at a phenomenal rate.  \Rpackage{DECIPHER} stores individual sequences using \term{gzip} compression so that the database file takes up much less drive space than a standard text file of sequences.  The compressed sequences are stored in a hidden table that is linked to the information table.  Storing the sequences in a separate table greatly improves access speed when there is a large amount of sequence information.  Separating projects into distinct tables further increases query speed over that of storing every project in a single table.
 
+%------------------------------------------------------------
+\section{Functionality}
+%------------------------------------------------------------
+
+The functions of DECIPHER can be grouped into several categories based on intended use:
+\begin{enumerate}
+\item Primary functions for interacting with a sequence database:
+\begin{enumerate} \item \Rfunction{Add2DB} \item \Rfunction{DB2FASTA} \item \Rfunction{SearchDB} \item \Rfunction{Seqs2DB} \end{enumerate}
+\item Secondary functions for typical database tasks:
+\begin{enumerate} \item \Rfunction{IdConsensus} \item \Rfunction{IdentifyByRank} \item \Rfunction{IdLengths} \end{enumerate}
+\item Functions for phylogenetics with a set of DNA sequences:
+\begin{enumerate} \item \Rfunction{ConsensusSequence} \item \Rfunction{DistanceMatrix} \item \Rfunction{IdClusters} \end{enumerate}
+\item Functions for visualization with a web browser:
+\begin{enumerate} \item \Rfunction{BrowseDB} \item \Rfunction{BrowseSequences} \end{enumerate}
+\item Functions related to chimeras:
+\begin{enumerate} \item \Rfunction{CreateChimeras} \item \Rfunction{FindChimeras} \item \Rfunction{FormGroups} \end{enumerate}
+\item Functions related to DNA microarrays:
+\begin{enumerate} \item \Rfunction{CalculateEfficiencyArray} \end{enumerate}
+\item Functions related to primers for polymerase chain reaction (PCR):
+\begin{enumerate} \item \Rfunction{CalculateEfficiencyPCR} \item \Rfunction{DesignPrimers} \item \Rfunction{TileSeqs} \end{enumerate}
+\end{enumerate}
+
+%------------------------------------------------------------
 \section{Installation}
+%------------------------------------------------------------
 
 \label{sec:Installation}
-\subsection{Release Version}
+\subsection{Typical Installation (recommended)}
 
 \begin{enumerate}
 \item Install \R{} (version >= 2.13.0) from \url{http://www.r-project.org/}.
@@ -94,7 +118,7 @@ The amount of DNA sequence information available is currently increasing at a ph
 \end{Schunk}
 \end{enumerate}
 
-\subsection{Development Version}
+\subsection{Manual Installation}
 
 \subsubsection{All platforms}
 
@@ -148,7 +172,7 @@ Two options are available:  the first is simpler but does not have support for m
 \item Download pcthreadsGC2.dll from \url{http://sourceware.org/pthreads-win32/}.
 \item Place pcthreadsGC2.dll in a place where R will find it such as the R/bin/ folder inside Program Files.
 \item Install Rtools from \url{http://www.murdoch-sutherland.com/Rtools/}.   Be sure to check the box that says edit PATH during installation.
-\item Open the DECIPHER source folder.  Add a text file named "Makevars.win" into the "src" folder with the following two lines:
+\item Open the DECIPHER source folder.  Add a text file named ``Makevars.win'' into the ``src'' folder with the following two lines:
 \begin{Schunk}
 \begin{Sinput}
 PKG_CFLAGS=-fopenmp
@@ -181,7 +205,7 @@ Help for any function can be accessed through a command such as:
 \end{Sinput}
 \end{Schunk}
 
-To begin we can import a GenBank file of sequences into a sequence database.  We need to provide an arbitrary sequence \term{identifier} to \Rfunction{Seqs2DB}, which we will call "Bacteria".  The \term{identifier} is used by many \Rpackage{DECIPHER} functions to reference a specific set of sequences in the database:
+To begin we can import a GenBank file of sequences into a sequence database.  We need to provide an arbitrary sequence \term{identifier} to \Rfunction{Seqs2DB}, which we will call ``Bacteria''.  The \term{identifier} is used by many \Rpackage{DECIPHER} functions to reference a specific set of sequences in the database:
 <<expr1>>=
 # access a sequence file included in the package:
 gen <- system.file("extdata", "Bacteria_175seqs.gen", package="DECIPHER")
@@ -237,6 +261,13 @@ Let's construct a phylogenetic tree from the \term{Firmicutes} sequences:
 d <- DistanceMatrix(dna, verbose=FALSE)
 c <- IdClusters(d, method="complete", cutoff=.02, showPlot=TRUE, verbose=FALSE)
 @
+
+We could then use the command below to save the in-memory database to a file for long term storage.  Be sure to change the path names to those on your system by replacing all of the text inside quotes labeled ``$<<$path to ...$>>$'' with the actual path on your system.
+\begin{Schunk}
+\begin{Sinput}
+> sqliteCopyDatabase(dbConn, "<<path to database>>")
+\end{Sinput}
+\end{Schunk}
 
 Finally, we should disconnect from the database connection.  Since the sequence database was created in temporary memory, all of the information will be erased:
 <<expr7>>=

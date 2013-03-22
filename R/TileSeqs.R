@@ -162,8 +162,8 @@ TileSeqs <- function(dbFile,
 			} else {
 				index <- 1:j
 			}
-			tiles$coverage[count + index] <- as.integer(t[index])/sum(t)
-			tiles$groupCoverage[count + index] <- as.integer(t[index])/numF
+			coverages <- as.integer(t[index])/sum(t)
+			groupCoverages <- as.integer(t[index])/numF
 			target_site <- names(t[index])
 			
 			misprime <- FALSE
@@ -171,15 +171,28 @@ TileSeqs <- function(dbFile,
 			w <- which(n < minLength | n > maxLength)
 			if (length(w) > 0) {
 				target_site <- target_site[-w]
+				coverages <- coverages[-w]
+				groupCoverages <- groupCoverages[-w]
 				misprime <- TRUE
 			}
 			w <- which(grepl("[^A|C|T|G]", target_site))
 			if (length(w) > 0) {
 				target_site <- target_site[-w]
+				coverages <- coverages[-w]
+				groupCoverages <- groupCoverages[-w]
 				misprime <- TRUE
 			}
 			if (length(target_site)==0)
 				next
+			
+			index <- 1:length(target_site)
+			tiles$coverage[count + index] <- coverages
+			tiles$groupCoverage[count + index] <- groupCoverages
+			tiles$start_aligned[count + index] <- pos[i]
+			tiles$end_aligned[count + index] <- pos[i + maxLength - 1]
+			tiles$start[count + index] <- i
+			tiles$end[count + index] <- i + maxLength - 1
+			tiles$target_site[count + index] <- target_site
 			
 			for (j in 1:length(target_site)) {
 				count <- count + 1
@@ -212,11 +225,6 @@ TileSeqs <- function(dbFile,
 						}
 					}
 				}
-				tiles$start_aligned[count] <- pos[i]
-				tiles$end_aligned[count] <- pos[i + maxLength - 1]
-				tiles$start[count] <- i
-				tiles$end[count] <- i + maxLength - 1
-				tiles$target_site[count] <- target_site[j]
 			}
 			tiles$misprime[(count - j + 1):count] <- misprime
 		}

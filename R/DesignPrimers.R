@@ -79,7 +79,7 @@
 	p <- pairwiseAlignment(primer1,
 		primer2,
 		type="global-local",
-		gapOpen=-10, gapExt=-10, fuzzyMatrix=mapping)
+		gapOpen=-5, gapExt=-5, fuzzyMatrix=mapping)
 	
 	primer1 <- sapply(strsplit(toString(pattern(p)), ", ", fixed=TRUE), `[`)
 	primer2 <- sapply(strsplit(toString(subject(p)), ", ", fixed=TRUE), `[`)
@@ -121,6 +121,7 @@ DesignPrimers <- function(tiles,
 	numPrimerSets=0,
 	minProductSize=75,
 	maxProductSize=1200,
+	maxSearchSize=1500,
 	batchSize=1000,
 	maxDistance=.4,
 	primerDimer=1e-7,
@@ -171,6 +172,24 @@ DesignPrimers <- function(tiles,
 		stop("numPrimerSets must be a whole number.")
 	if (numPrimerSets < 0)
 		stop("numPrimerSets must be greater than or equal to zero.")
+	if (!is.numeric(minProductSize))
+		stop("minProductSize must be a numeric.")
+	if (floor(minProductSize)!=minProductSize)
+		stop("minProductSize must be a whole number.")
+	if (minProductSize <= 0)
+		stop("minProductSize must be greater than zero.")
+	if (!is.numeric(maxProductSize))
+		stop("maxProductSize must be a numeric.")
+	if (floor(maxProductSize)!=maxProductSize)
+		stop("maxProductSize must be a whole number.")
+	if (maxProductSize <= 0)
+		stop("maxProductSize must be greater than zero.")
+	if (!is.numeric(maxSearchSize))
+		stop("maxSearchSize must be a numeric.")
+	if (floor(maxSearchSize)!=maxSearchSize)
+		stop("maxSearchSize must be a whole number.")
+	if (maxSearchSize <= 0)
+		stop("maxSearchSize must be greater than zero.")
 	if (!is.numeric(maxPermutations))
 		stop("maxPermutations must be a numeric.")
 	if (floor(maxPermutations)!=maxPermutations)
@@ -744,10 +763,16 @@ DesignPrimers <- function(tiles,
 			# order primers by score
 			searchSpace <- ifelse(numPrimerSets > 100, numPrimerSets, 100)
 			f_F <- which(is.finite(primers$score_forward))
-			o_F <- order(primers$score_forward[f_F], decreasing=TRUE)
+			o_F <- order(primers$score_forward[f_F],
+				-1*primers$permutations_forward[f_F],
+				rowSums(as.matrix(primers$forward_coverage[f_F,])),
+				decreasing=TRUE)
 			s_F <- ifelse(length(f_F) > searchSpace, searchSpace, length(f_F))
 			f_R <- which(is.finite(primers$score_reverse))
-			o_R <- order(primers$score_reverse[f_R], decreasing=TRUE)
+			o_R <- order(primers$score_reverse[f_R],
+				-1*primers$permutations_reverse[f_R],
+				rowSums(as.matrix(primers$reverse_coverage[f_R,]), na.rm=TRUE),
+				decreasing=TRUE)
 			s_R <- ifelse(length(f_R) > searchSpace, searchSpace, length(f_R))
 			
 			# calculate the set's efficiency
@@ -798,10 +823,13 @@ DesignPrimers <- function(tiles,
 			p <- outer(primers$permutations_forward[f_F[o_F][1:s_F]],
 				primers$permutations_reverse[f_R[o_R][1:s_R]],
 				FUN="+")
+			c <- -1*outer(rowSums(as.matrix(primers$forward_coverage[f_F[o_F][1:s_F],]), na.rm=TRUE),
+				rowSums(as.matrix(primers$reverse_coverage[f_R[o_R][1:s_R],]), na.rm=TRUE),
+				FUN="*")
 			s <- -1*outer(primers$score_forward[f_F[o_F][1:s_F]],
 				primers$score_reverse[f_R[o_R][1:s_R]],
 				FUN="+")
-			o <- order(m, p, s)
+			o <- order(m, p, c, s)
 			g_F <- g_R <- integer()
 			space <- 0
 			starts_F <- starts_R <- integer()
@@ -871,6 +899,11 @@ DesignPrimers <- function(tiles,
 					w <- which(tiles$id==ids[k])
 					if (length(w) > 0)
 						w <- w[which(tiles$end_aligned[w] < starts_R)]
+					#if (length(w) > 0)
+					#	w <- w[which(tiles$end[w] > (max(tiles$end[w]) - maxSearchSize))]
+					if (length(w) > 0)
+						w <- w[which((tiles$start[w] >= primers$start_forward[f_F[o_F][g_F[i]]] - maxSearchSize) &
+							(tiles$start[w] <= primers$start_forward[f_F[o_F][g_F[i]]] + maxSearchSize))]
 					if (length(w)==0)
 						next
 					target <- tiles[w,]
@@ -910,8 +943,8 @@ DesignPrimers <- function(tiles,
 						p <- pairwiseAlignment(s1,
 							paste("----", s2, "----", sep=""),
 							type="global-local",
-							gapOpen=-10,
-							gapExtension=-10)
+							gapOpen=-5,
+							gapExtension=-5)
 						s1 <- toString(pattern(p))
 						s2 <- toString(subject(p))
 						s2 <- toString(reverseComplement(DNAString(s2)))
@@ -945,6 +978,11 @@ DesignPrimers <- function(tiles,
 					w <- which(tiles$id==ids[k])
 					if (length(w) > 0)
 						w <- w[which(tiles$start_aligned[w] > starts_F)]
+					#if (length(w) > 0)
+					#	w <- w[which(tiles$start[w] < (min(tiles$start[w]) + maxSearchSize))]
+					if (length(w) > 0)
+						w <- w[which((tiles$end[w] >= primers$start_reverse[f_R[o_R][g_R[i]]] - maxSearchSize) &
+							(tiles$end[w] <= primers$start_reverse[f_R[o_R][g_R[i]]] + maxSearchSize))]
 					if (length(w)==0)
 						next
 					target <- tiles[w,]
@@ -983,8 +1021,8 @@ DesignPrimers <- function(tiles,
 						p <- pairwiseAlignment(s1,
 							paste("----", s2, "----", sep=""),
 							type="global-local",
-							gapOpen=-10,
-							gapExtension=-10)
+							gapOpen=-5,
+							gapExtension=-5)
 						s1 <- toString(pattern(p))
 						s2 <- toString(subject(p))
 						s2 <- toString(reverseComplement(DNAString(s2)))
@@ -1057,10 +1095,13 @@ DesignPrimers <- function(tiles,
 			p <- outer(primers$permutations_forward[f_F[o_F][g_F[1:s_F]]],
 				primers$permutations_reverse[f_R[o_R][g_R[1:s_R]]],
 				FUN="+")
+			c <- -1*outer(rowSums(as.matrix(primers$forward_coverage[f_F[o_F][g_F[1:s_F]],]), na.rm=TRUE),
+				rowSums(as.matrix(primers$reverse_coverage[f_R[o_R][g_R[1:s_R]],]), na.rm=TRUE),
+				FUN="*")
 			s <- -1*outer(primers$score_forward[f_F[o_F][g_F[1:s_F]]],
 				primers$score_reverse[f_R[o_R][g_R[1:s_R]]],
 				FUN="+")
-			o <- order(m, p, s)
+			o <- order(m, p, c, s)
 			j <- 0
 			dims <- dim(m)
 			for (k in 1:numPrimerSets) {
@@ -1167,7 +1208,7 @@ DesignPrimers <- function(tiles,
 		}
 		
 		if (numPrimerSets == 0)
-			primers_all <- rbind(primers_all,primers)
+			primers_all <- rbind(primers_all, primers)
 	}
 	
 	if (numPrimerSets > 0) {
@@ -1176,6 +1217,9 @@ DesignPrimers <- function(tiles,
 			pSets <- pSets[-w,]
 		return(pSets)
 	} else {
+		w <- which(primers_all$start_forward==0)
+		if (length(w) > 0)
+			primers_all <- primers_all[-w,]
 		return(primers_all)
 	}
 }

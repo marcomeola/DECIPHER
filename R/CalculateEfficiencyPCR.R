@@ -63,8 +63,8 @@ CalculateEfficiencyPCR <- function(primer,
 	p <- pairwiseAlignment(primer,
 		seqs2,
 		type="global-local",
-		gapOpen=-10,
-		gapExtension=-10)
+		gapOpen=-5,
+		gapExtension=-5)
 	t_START <- nchar(seqs2) - p@subject@range@start - p@subject@range@width - 2
 	t_END <- nchar(seqs2) - p@subject@range@start - 3
 	

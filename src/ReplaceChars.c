@@ -16,6 +16,9 @@
  */
 #include <R_ext/Rdynload.h>
 
+/* for Calloc/Free */
+#include <R_ext/RS.h>
+
 // for math functions
 #include <math.h>
 
@@ -45,7 +48,7 @@ SEXP replaceChars(SEXP x, SEXP r)
 	
 	SEXP seqs;
 	PROTECT(seqs = allocVector(STRSXP, n));
-	char s[longest + 1]; // each sequence
+	char *s = Calloc(longest + 1, char); // each sequence
 	
 	// write new character vector
 	for (i = 0; i < n; i++) {
@@ -106,6 +109,8 @@ SEXP replaceChars(SEXP x, SEXP r)
 		SET_STRING_ELT(seqs, i, mkChar(s));
 	}
 	
+	Free(s);
+	
 	UNPROTECT(1);
 	
 	return seqs;
@@ -128,7 +133,7 @@ SEXP replaceChar(SEXP x, SEXP c, SEXP r)
 	
 	SEXP seqs;
 	PROTECT(seqs = allocVector(STRSXP, n));
-	char s[longest + 1]; // each sequence
+	char *s = Calloc(longest + 1, char); // each sequence
 	
 	// write new character vector
 	for (i = 0; i < n; i++) {
@@ -149,6 +154,8 @@ SEXP replaceChar(SEXP x, SEXP c, SEXP r)
 		s[count] = '\0'; // null-terminate
 		SET_STRING_ELT(seqs, i, mkChar(s));
 	}
+	
+	Free(s);
 	
 	UNPROTECT(1);
 	
@@ -171,7 +178,7 @@ SEXP trimChar(SEXP x, SEXP y)
 	
 	SEXP seqs;
 	PROTECT(seqs = allocVector(STRSXP, n));
-	char s[longest + 1 - num]; // each sequence
+	char *s = Calloc(longest + 1 - num, char); // each sequence
 	
 	// write new character vector
 	for (i = 0; i < n; i++) {
@@ -182,6 +189,8 @@ SEXP trimChar(SEXP x, SEXP y)
 		s[j] = '\0'; // null-terminate
 		SET_STRING_ELT(seqs, i, mkChar(s));
 	}
+	
+	Free(s);
 	
 	UNPROTECT(1);
 	

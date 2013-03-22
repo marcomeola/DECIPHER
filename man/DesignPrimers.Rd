@@ -26,6 +26,7 @@ DesignPrimers(tiles,
               numPrimerSets = 0,
               minProductSize = 75,
               maxProductSize = 1200,
+              maxSearchSize = 1500,
               batchSize = 1000,
               maxDistance = 0.4,
               primerDimer = 1e-07,
@@ -91,6 +92,9 @@ Integer giving the minimum number of nucleotides desired in the PCR product.
   \item{maxProductSize}{
 Integer giving the maximum number of nucleotides desired in the PCR product.
 }
+  \item{maxSearchSize}{
+Integer giving the maximum number of nucleotides to search for false priming upstream and downstream of the expected binding site.
+}
   \item{batchSize}{
 Integer specifying the number of primers to simulate hybridization per batch.  See the Description section below.
 }
@@ -115,7 +119,7 @@ Primers are designed for use with \emph{Taq} DNA Polymerase to maximize sensitiv
 
 Primers are designed from a set of tiles to target each \code{identifier} while minimizing affinity for all other tiled groups.  Arguments provide constraints that ensure the designed primer sets meet the specified criteria as well as being optimized for the particular experimental conditions.  A search is conducted through all tiles in the same alignment position to estimate the chance of cross-amplification with a non-target group.
 
-If \code{numPrimers} is greater than or equal to one then the set of forward and reverse primers that minimizes potential false positive overlap is returned.  This will also initiate a thorough search of all target sites upstream of the reverse primers and downstream of the forward primers to ensure that the primers do not bind to nearby positions.  The number of possible primer sets assessed is increased with the size of \code{numPrimers}.
+If \code{numPrimers} is greater than or equal to one then the set of forward and reverse primers that minimizes potential false positive overlap is returned.  This will also initiate a thorough search through all target sites upstream and downstream of the expected binding sites to ensure that the primers do not bind to nearby positions.  Lowering the \code{maxSearchSize} will speed up the thorough search at the expense of potentially missing an unexpected target site.  The number of possible primer sets assessed is increased with the size of \code{numPrimers}.
 }
 \value{
 A different \code{data.frame} will be returned depending on number of primer sets requested.  If no primer sets are required then columns contain the forward and reverse primers for every possible position scored by their potential to amplify other identified groups.  If one or more primer sets are requested then columns contain information for the optimal set of forward and reverse primers that should be used in combination to give the fewest potential false positives.
@@ -127,14 +131,14 @@ Coming Soon!
 Erik Wright \email{DECIPHER@cae.wisc.edu}
 }
 \note{
-The program UNAFold (\url{http://mfold.rna.albany.edu/?q=DINAMelt/software}) must be installed in a location accessible by the system.  For example, the following code should print the installed UNAFold version when executed from the R console:  \code{system("hybrid -V")}.
+The program OligoArrayAux (\url{http://mfold.rna.albany.edu/?q=DINAMelt/OligoArrayAux}) must be installed in a location accessible by the system.  For example, the following code should print the installed OligoArrayAux version when executed from the R console:  \code{system("hybrid-min -V")}.
 }
 \seealso{
 \code{\link{CalculateEfficiencyPCR}}, \code{\link{TileSeqs}}
 }
 \examples{
 db <- system.file("extdata", "Bacteria_175seqs.sqlite", package="DECIPHER")
-# not run (must have UNAFold installed first):
+# not run (must have OligoArrayAux installed first):
 #tiles <- TileSeqs(db, identifier=c("Acinetobacter","Pseudomonas"))
 #primers <- DesignPrimers(tiles, identifier="Acinetobacter", start=280, end=420, minProductSize=50, numPrimerSets=1)
 }
