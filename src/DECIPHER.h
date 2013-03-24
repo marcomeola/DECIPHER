@@ -28,10 +28,6 @@ SEXP reclusterUPGMA(SEXP ans, SEXP cutoff);
 
 SEXP clusterML(SEXP x, SEXP y, SEXP cutoff, SEXP verbose, SEXP pBar);
 
-// DesignProbes.c
-
-SEXP designProbes(SEXP x, SEXP max_pl, SEXP min_pl, SEXP max_c, SEXP numMMs, SEXP numPs, SEXP st, SEXP en, SEXP max_ov, SEXP h_percent, SEXP min_f, SEXP max_f, SEXP minS, SEXP verbose, SEXP pBar);
-
 // CommonGaps.c
 
 SEXP commonGaps(SEXP x);

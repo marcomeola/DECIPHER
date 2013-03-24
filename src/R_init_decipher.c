@@ -36,7 +36,6 @@ static const R_CallMethodDef callMethods[] = { // method call, pointer, num args
 	{"clusterML", (DL_FUNC) &clusterML, 5},
 	{"distMatrix", (DL_FUNC) &distMatrix, 6},
 	{"gaps", (DL_FUNC) &gaps, 1},
-	{"designProbes", (DL_FUNC) &designProbes, 15},
 	{"commonGaps", (DL_FUNC) &commonGaps, 1},
 	{"multiMatch", (DL_FUNC) &multiMatch, 3},
 	{"multiMatchUpper", (DL_FUNC) &multiMatchUpper, 3},
