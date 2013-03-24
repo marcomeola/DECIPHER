@@ -823,13 +823,21 @@ DesignPrimers <- function(tiles,
 			p <- outer(primers$permutations_forward[f_F[o_F][1:s_F]],
 				primers$permutations_reverse[f_R[o_R][1:s_R]],
 				FUN="+")
-			c <- -1*outer(rowSums(as.matrix(primers$forward_coverage[f_F[o_F][1:s_F],]), na.rm=TRUE),
-				rowSums(as.matrix(primers$reverse_coverage[f_R[o_R][1:s_R],]), na.rm=TRUE),
+			c <- -1*outer(ifelse(rep(s_F, s_F)==1,
+					sum(primers$forward_coverage[f_F[o_F][1:s_F],], na.rm=TRUE),
+					rowSums(as.matrix(primers$forward_coverage[f_F[o_F][1:s_F],]), na.rm=TRUE)),
+				ifelse(rep(s_R, s_R)==1,
+					sum(primers$reverse_coverage[f_R[o_R][1:s_R],], na.rm=TRUE),
+					rowSums(as.matrix(primers$reverse_coverage[f_R[o_R][1:s_R],]), na.rm=TRUE)),
 				FUN="*")
 			s <- -1*outer(primers$score_forward[f_F[o_F][1:s_F]],
 				primers$score_reverse[f_R[o_R][1:s_R]],
 				FUN="+")
-			o <- order(m, p, c, s)
+			z <- -1*outer(primers$start_forward[f_F[o_F][1:s_F]],
+				primers$start_reverse[f_R[o_R][1:s_R]],
+				FUN="-") - 1
+			z <- ifelse(z > minProductSize & z < maxProductSize, 0, 1)
+			o <- order(z, m, p, c, s)
 			g_F <- g_R <- integer()
 			space <- 0
 			starts_F <- starts_R <- integer()
@@ -1095,8 +1103,12 @@ DesignPrimers <- function(tiles,
 			p <- outer(primers$permutations_forward[f_F[o_F][g_F[1:s_F]]],
 				primers$permutations_reverse[f_R[o_R][g_R[1:s_R]]],
 				FUN="+")
-			c <- -1*outer(rowSums(as.matrix(primers$forward_coverage[f_F[o_F][g_F[1:s_F]],]), na.rm=TRUE),
-				rowSums(as.matrix(primers$reverse_coverage[f_R[o_R][g_R[1:s_R]],]), na.rm=TRUE),
+			c <- -1*outer(ifelse(rep(s_F, s_F)==1,
+					sum(primers$forward_coverage[f_F[o_F][g_F[1:s_F]],], na.rm=TRUE),
+					rowSums(as.matrix(primers$forward_coverage[f_F[o_F][g_F[1:s_F]],]), na.rm=TRUE)),
+				ifelse(rep(s_R, s_R)==1,
+					sum(primers$reverse_coverage[f_R[o_R][g_R[1:s_R]],], na.rm=TRUE),
+					rowSums(as.matrix(primers$reverse_coverage[f_R[o_R][g_R[1:s_R]],]), na.rm=TRUE)),
 				FUN="*")
 			s <- -1*outer(primers$score_forward[f_F[o_F][g_F[1:s_F]]],
 				primers$score_reverse[f_R[o_R][g_R[1:s_R]]],
