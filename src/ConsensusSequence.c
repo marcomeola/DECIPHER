@@ -468,9 +468,9 @@ SEXP consensusSequence(SEXP x, SEXP threshold, SEXP ambiguity, SEXP minInformati
 		
 		// update the alphabet for this string
 		if (!tGaps) { // don't include terminal gaps
-			gapLengths[i][1] = frontTerminalGaps(&x_i);
-			gapLengths[i][2] = endTerminalGaps(&x_i);
-			alphabetFrequency(&x_i, &bases[0][0], seqLength, degeneracy, ignore, gapLengths[i][1], gapLengths[i][2], 1);
+			gapLengths[i][0] = frontTerminalGaps(&x_i);
+			gapLengths[i][1] = endTerminalGaps(&x_i);
+			alphabetFrequency(&x_i, &bases[0][0], seqLength, degeneracy, ignore, gapLengths[i][0], gapLengths[i][1], 1);
 		} else { // include terminal gaps
 			alphabetFrequency(&x_i, &bases[0][0], seqLength, degeneracy, ignore, 0, 0, 1);
 		}
