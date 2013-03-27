@@ -158,8 +158,8 @@ SEXP distMatrix(SEXP x, SEXP terminalGaps, SEXP penalizeGapGaps, SEXP penalizeGa
 		// always needed to identify no-overlap
 		for (i = 0; i < x_length; i++) {
 			x_i = get_cachedXStringSet_elt(&x_set, i);
-			gapLengths[i][1] = frontTerminalGaps(&x_i);
-			gapLengths[i][2] = endTerminalGaps(&x_i);
+			gapLengths[i][0] = frontTerminalGaps(&x_i);
+			gapLengths[i][1] = endTerminalGaps(&x_i);
 			//Rprintf("\nstart:%dend:%d",gapLengths[i][1],gapLengths[i][2]);
 		}
 		
@@ -178,23 +178,23 @@ SEXP distMatrix(SEXP x, SEXP terminalGaps, SEXP penalizeGapGaps, SEXP penalizeGa
 				seqLength_j = x_j.length;
 				
 				// find the distance for each row of the matrix
-				if ((seqLength_i - gapLengths[i][2]) < gapLengths[j][1] ||
-					gapLengths[i][1] > (seqLength_j - gapLengths[j][2])) {
+				if ((seqLength_i - gapLengths[i][1]) < gapLengths[j][0] ||
+					gapLengths[i][0] > (seqLength_j - gapLengths[j][1])) {
 					// no overlap between sequences
 					rans[i + x_length*j] = NA_REAL;
 				} else {
 					if (!tGaps) { // don't include terminal gaps
 						// find the intersection of both string's ranges
 						// to shorten the sequence comparison for speed
-						if (gapLengths[i][1] >= gapLengths[j][1]) {
-							start = gapLengths[i][1];
+						if (gapLengths[i][0] >= gapLengths[j][0]) {
+							start = gapLengths[i][0];
 						} else {
-							start = gapLengths[j][1];
+							start = gapLengths[j][0];
 						}
-						if ((seqLength_i - gapLengths[i][2]) <= (seqLength_j - gapLengths[j][2])) {
-							end = gapLengths[i][2];
+						if ((seqLength_i - gapLengths[i][1]) <= (seqLength_j - gapLengths[j][1])) {
+							end = gapLengths[i][1];
 						} else {
-							end = gapLengths[j][2];
+							end = gapLengths[j][1];
 						}
 						rans[i + x_length*j] = distance(&x_i, &x_j, start, end, pGapsGaps, pGapLetters);
 					} else { // use whole sequence including terminal gaps
