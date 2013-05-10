@@ -1,7 +1,8 @@
 useDynLib(DECIPHER)
 
-import(Biostrings)
 import(IRanges)
+import(XVector)
+import(Biostrings)
 
 export(
 # interacting with a database:
