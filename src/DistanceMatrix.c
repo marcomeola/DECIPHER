@@ -160,7 +160,7 @@ SEXP distMatrix(SEXP x, SEXP terminalGaps, SEXP penalizeGapGaps, SEXP penalizeGa
 			x_i = get_cachedXStringSet_elt(&x_set, i);
 			gapLengths[i][0] = frontTerminalGaps(&x_i);
 			gapLengths[i][1] = endTerminalGaps(&x_i);
-			//Rprintf("\nstart:%dend:%d",gapLengths[i][1],gapLengths[i][2]);
+			//Rprintf("\nstart:%dend:%d",gapLengths[i][0],gapLengths[i][1]);
 		}
 		
 		tGaps = asLogical(terminalGaps);

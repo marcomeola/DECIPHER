@@ -3,7 +3,7 @@ Seqs2DB <- function(seqs,
 	dbFile,
 	identifier,
 	tblName="DNA",
-	chunkSize = 99999,
+	chunkSize=1e5,
 	replaceTbl=FALSE,
 	verbose=TRUE) {
 	
@@ -122,25 +122,29 @@ Seqs2DB <- function(seqs,
 	
 	if (type==1) { # FASTA
 		# scan in the FASTA file
-		skipSize <- 0L
+		skipSize <- 1L
 		s1 <- character(chunkSize)
 		l <- 0L
 		newSeqs <- 0
+		buffer <- character()
+		con <- file(seqs, "r")
 		
-		while (length(s1)==(chunkSize - l)) {
+		while (length(s1)==(chunkSize + l)) {
 			# scan piece of file into memory
-			if (verbose)
-				cat("Reading FASTA file from line",skipSize,"to",(skipSize + chunkSize),"\n")
-			s1 <- scan(file = seqs, what = "", sep = "\n", quote = "", 
-				skip = skipSize, nlines = chunkSize,
-				allowEscapes = FALSE, quiet = TRUE,
-				blank.lines.skip=FALSE)
+			if (verbose) {
+				digits <- nchar(as.character(floor(skipSize/chunkSize)))
+				cat("Reading FASTA file from line ",
+					formatC(skipSize, digits=digits),
+					" to ",
+					formatC(skipSize + chunkSize - 1, digits=digits),
+					"\n",
+					sep="")
+			}
+			s1 <- c(buffer, readLines(con=con, n=chunkSize))
+			skipSize <- skipSize + chunkSize
 			
 			# descriptions contains the line index of each sequence
 			descriptions <- which(substr(s1, 1L, 1L) == ">")
-			
-			# next loop skip ahead to the first unread sequence
-			skipSize <- as.integer(descriptions[length(descriptions)] + skipSize - 1)
 			
 			# create new vectors by adding or subtracting 1
 			# from each line index in description
@@ -149,8 +153,13 @@ Seqs2DB <- function(seqs,
 			end <- c(dm[-1], length(s1))
 			
 			# remove the last incomplete sequence unless it is the end of file
-			if (length(s1)==(chunkSize - l))
+			l <- length(buffer)
+			if (length(s1)==(chunkSize + l)) {
+				buffer <- s1[descriptions[length(descriptions)]:length(s1)]
 				length(descriptions) <- length(descriptions) - 1L
+			} else {
+				buffer <- character()
+			}
 			
 			# numF contains the number of sequences for this iteration
 			numF <- length(descriptions)
@@ -224,21 +233,29 @@ Seqs2DB <- function(seqs,
 			
 			replaceTbl <- FALSE
 		}
+		close(con)
 	} else if (type==2) { # GenBank
 		# scan in the GenBank file
-		skipSize <- 0L
+		skipSize <- 1L
 		s1 <- character(chunkSize)
 		l <- 0L
 		newSeqs <- 0
+		buffer <- character()
+		con <- file(seqs, "r")
 		
-		while (length(s1)==(chunkSize - l)) {
+		while (length(s1)==(chunkSize + l)) {
 			# scan piece of file into memory
-			if (verbose)
-				cat("Reading GenBank file from line",skipSize,"to",(skipSize + chunkSize),"\n")
-			s1 <- scan(file = seqs, what = "", sep = "\n", quote = "", 
-				skip = skipSize, nlines = chunkSize,
-				allowEscapes = FALSE, quiet = TRUE,
-				blank.lines.skip=FALSE)
+			if (verbose) {
+				digits <- nchar(as.character(floor(skipSize/chunkSize)))
+				cat("Reading GenBank file from line ",
+					formatC(skipSize, digits=digits),
+					" to ",
+					formatC(skipSize + chunkSize - 1, digits=digits),
+					"\n",
+					sep="")
+			}
+			s1 <- c(buffer, readLines(con, n=chunkSize))
+			skipSize <- skipSize + chunkSize
 			
 			# descriptions contains the line index of each sequence
 			descriptions <- which(substr(s1, 1L, 10L) == "DEFINITION")
@@ -247,12 +264,14 @@ Seqs2DB <- function(seqs,
 			seq_start <- which(substr(s1, 1L, 6L) == "ORIGIN") + 1
 			seq_end <- which(substr(s1, 1L, 2L) == "//") - 1
 			
-			# next loop skip ahead to the first unread sequence
-			skipSize <- as.integer(descriptions[length(descriptions)] + skipSize - 1)
-			
 			# remove the last incomplete sequence unless it is the end of file
-			if (length(s1)==(chunkSize - l))
+			l <- length(buffer)
+			if (length(s1)==(chunkSize + l)) {
+				buffer <- s1[descriptions[length(descriptions)]:length(s1)]
 				length(descriptions) <- length(descriptions) - 1L
+			} else {
+				buffer <- character()
+			}
 			
 			# numF contains the number of sequences for this iteration
 			numF <- length(descriptions)
@@ -360,6 +379,7 @@ Seqs2DB <- function(seqs,
 			
 			replaceTbl <- FALSE
 		}
+		close(con)
 	} else if (type==3) { # DNAStringSet
 		# add the sequences to the database
 		newSeqs <- length(seqs)
@@ -432,11 +452,15 @@ Seqs2DB <- function(seqs,
 			cat("\n",
 				"Added ",
 				newSeqs,
-				" new sequences to database.",
+				" new sequences to the table ",
+				tblName,
+				".",
 				sep="")
 		cat("\n",
 			numSeq,
-			" total sequences in database.",
+			" total sequences in the table ",
+			tblName,
+			".",
 			"\n",
 			sep="")
 		print(round(difftime(time.2,

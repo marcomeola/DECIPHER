@@ -70,6 +70,9 @@ CreateChimeras <- function(myDNAStringSet,
 	
 	# initialize variables
 	i <- 0
+	myName <- ""
+	d <- 0
+	s1 <- 0
 	chimeras <- DNAStringSet()
 	if (includeParents)
 		parents <- DNAStringSet()

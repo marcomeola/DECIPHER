@@ -72,6 +72,7 @@ IdConsensus <- function(dbFile,
 	for (i in groups) {
 		j <- j + 1L
 		dna_subset <- SearchDB(dbFile,
+			tblName=tblName,
 			verbose=F,
 			identifier=identifier,
 			...=paste(colName,
@@ -131,8 +132,8 @@ IdConsensus <- function(dbFile,
 				sep="")
 		
 		cat("\nFound consensus for ",
-			sum(seqCount),
-			" sequences.",
+			length(groups),
+			" groups.",
 			sep="")
 		
 		cat("\n")

@@ -81,7 +81,7 @@ Logical indicating whether to display progress.
 \details{
 The algorithm works by finding suspect fragments that are uncommon in the group where the sequence belongs, but very common in another group where the sequence does not belong.  Each sequence in the \code{dbFile} is tiled into short sequence segments called fragments.  If the fragments are infrequent in their respective group in the \code{dbFileReference} then they are considered suspect.  If enough suspect fragments from a sequence meet the specified constraints then the sequence is flagged as a chimera.
 
-The default parameters are optimized for full-length 16S sequences (> 1,000 nucleotides).  Shorter 16S sequences require optimal parameters that are different than the defaults.  These are:  \code{minLength = 40}, and \code{minSuspectFragments = 2}.
+The default parameters are optimized for full-length 16S sequences (> 1,000 nucleotides).  Shorter 16S sequences require two parameters that are different than the defaults:  \code{minLength = 40}, and \code{minSuspectFragments = 2}.
 
 Groups are determined by the identifier present in each database.  For this reason, the groups in the \code{dbFile} should exist in the groups of the \code{dbFileReference}.  The reference database is assumed to contain many sequences of only good quality.
 

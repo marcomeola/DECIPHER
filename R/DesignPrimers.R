@@ -127,6 +127,7 @@ DesignPrimers <- function(tiles,
 	primerDimer=1e-7,
 	ragged5Prime=TRUE,
 	taqEfficiency=TRUE,
+	induceMismatch=FALSE,
 	verbose=TRUE) {
 	
 	# error checking
@@ -139,8 +140,18 @@ DesignPrimers <- function(tiles,
 	ions <- monovalent + 3.3*sqrt(divalent - dNTPs)
 	if (ions < .01 || is.nan(ions))
 		stop("Sodium equivilent concentration must be at least 0.01M.")
+	if (!is.numeric(minLength))
+		stop("minLength must be a numeric.")
+	if (floor(minLength)!=minLength)
+		stop("minLength must be a whole number.")
+	if (!is.numeric(maxLength))
+		stop("maxLength must be a numeric.")
+	if (floor(maxLength)!=maxLength)
+		stop("maxLength must be a whole number.")
 	if (minLength > maxLength)
 		stop("minLength must be less or equal to maxLength.")
+	if (minLength < 7)
+		stop("minLength must be at least 7 nucleotides.")
 	ids <- unique(tiles$id)
 	if (!is.numeric(annealingTemp))
 		stop("annealingTemp must be a numeric.")
@@ -204,6 +215,18 @@ DesignPrimers <- function(tiles,
 		stop("maxDistance must be less than or equal to one.")
 	if (!is.logical(verbose))
 		stop("verbose must be a logical.")
+	if (!is.numeric(induceMismatch) && !is.logical(induceMismatch))
+		stop("induceMismatch must be a logical or integer between 2 and 6.")
+	if (is.numeric(induceMismatch)) {
+		if (floor(induceMismatch)!=induceMismatch)
+			stop("induceMismatch must be a whole number.")
+		if (induceMismatch < 2 || induceMismatch > 6)
+			stop("induceMismatch must be between 2 and 6.")
+		pos <- induceMismatch
+		induceMismatch <- TRUE
+	} else {
+		pos <- 6
+	}
 	if (!is.logical(ragged5Prime))
 		stop("ragged5Prime must be a logical.")
 	if (!is.logical(taqEfficiency))
@@ -281,6 +304,20 @@ DesignPrimers <- function(tiles,
 			mismatches_forward=I(character(l*numPrimerSets)),
 			mismatches_reverse=I(character(l*numPrimerSets)),
 			mismatches_set=I(character(l*numPrimerSets)))
+		if (induceMismatch) {
+			pSets$forward_MM <- I(matrix(character(),
+				nrow=l*numPrimerSets,
+				ncol=maxPermutations))
+			pSets$forward_efficiency_MM <- I(matrix(numeric(),
+				nrow=l*numPrimerSets,
+				ncol=maxPermutations))
+			pSets$reverse_MM <- I(matrix(character(),
+				nrow=l*numPrimerSets,
+				ncol=maxPermutations))
+			pSets$reverse_efficiency_MM <- I(matrix(numeric(),
+				nrow=l*numPrimerSets,
+				ncol=maxPermutations))
+		}
 	}
 	l_ids <- length(ids)
 	for (id in identifier) {
@@ -565,6 +602,176 @@ DesignPrimers <- function(tiles,
 			cat(" (", d, "):\n", sep="")
 			flush.console()
 			pBar <- txtProgressBar(min=0, max=100, initial=0, style=3)
+		}
+		
+		if (induceMismatch) {
+			empty <- which(is.na(primers$forward_primer))
+			if (length(empty)==0) {
+				n <- nchar(primers$forward_primer)
+				nt <- strsplit(toString(reverseComplement(DNAStringSet(primers$forward_primer))),
+					", ",
+					fixed=TRUE)[[1]]
+				X <- substr(primers$forward_primer, n - pos + 1, n - pos + 1)
+			} else {
+				n <- nchar(primers$forward_primer[-empty])
+				nt <- strsplit(toString(reverseComplement(DNAStringSet(primers$forward_primer[-empty]))),
+					", ",
+					fixed=TRUE)[[1]]
+				X <- substr(primers$forward_primer[-empty], n - pos + 1, n - pos + 1)
+			}
+			primers$forward_MM <- I(matrix(nrow=dim(primers$forward_primer)[1],
+				ncol=dim(primers$forward_primer)[2]))
+			primers$forward_efficiency_MM <- I(matrix(nrow=dim(primers$forward_primer)[1],
+				ncol=dim(primers$forward_primer)[2]))
+			for (i in c("A", "C", "T", "G")) {
+				w <- which(X != i)
+				if (length(w)==0)
+					next
+				if (length(empty)==0) {
+					t <- primers$forward_primer[w]
+				} else {
+					t <- primers$forward_primer[-empty][w]
+				}
+				x <- X[w]
+				substr(t, n[w] - pos + 1, n[w] - pos + 1) <- i
+				eff_PM <- CalculateEfficiencyPCR(t,
+					strsplit(toString(reverseComplement(DNAStringSet(t))),
+						", ",
+						fixed=TRUE)[[1]],
+					annealingTemp,
+					P,
+					ions,
+					batchSize,
+					taqEfficiency=taqEfficiency,
+					maxDistance)
+				W <- which(eff_PM >= minEfficiency)
+				w <- w[W]
+				if (length(w)==0)
+					next
+				t <- t[W]
+				x <- x[W]
+				eff_PM <- eff_PM[W]
+				eff_MM <- CalculateEfficiencyPCR(t,
+					nt[w],
+					annealingTemp,
+					P,
+					ions,
+					batchSize,
+					taqEfficiency=taqEfficiency,
+					maxDistance)
+				W <- which(is.na(primers$forward_MM[w]))
+				nnas <- which(!is.na(primers$forward_MM[w]))
+				if (length(nnas) > 0)
+					W <- sort(c(W, nnas[which(eff_MM[nnas] > primers$forward_efficiency_MM[w[nnas]])]))
+				W <- W[which(eff_MM[W] >= 0.1)] # must have 10% MM efficiency
+				if (length(W) > 0) {
+					if (length(empty)==0) {
+						primers$forward_efficiency_MM[w[W]] <- eff_MM[W]
+						primers$forward_efficiency[w[W]] <- eff_PM[W]
+						primers$forward_MM[w[W]] <- paste(i,
+							"/",
+							strsplit(toString(reverseComplement(DNAStringSet(x[W]))),
+								", ",
+								fixed=TRUE)[[1]],
+							sep="")
+						primers$forward_primer[w[W]] <- t[W]
+					} else {
+						primers$forward_efficiency_MM[-empty][w[W]] <- eff_MM[W]
+						primers$forward_efficiency[-empty][w[W]] <- eff_PM[W]
+						primers$forward_MM[-empty][w[W]] <- paste(i,
+							"/",
+							strsplit(toString(reverseComplement(DNAStringSet(x[W]))),
+								", ",
+								fixed=TRUE)[[1]],
+							sep="")
+						primers$forward_primer[-empty][w[W]] <- t[W]
+					}
+				}
+			}
+			
+			empty <- which(is.na(primers$reverse_primer))
+			if (length(empty)==0) {
+				n <- nchar(primers$reverse_primer)
+				nt <- strsplit(toString(reverseComplement(DNAStringSet(primers$reverse_primer))),
+					", ",
+					fixed=TRUE)[[1]]
+				X <- substr(primers$reverse_primer, n - pos + 1, n - pos + 1)
+			} else {
+				n <- nchar(primers$reverse_primer[-empty])
+				nt <- strsplit(toString(reverseComplement(DNAStringSet(primers$reverse_primer[-empty]))),
+					", ",
+					fixed=TRUE)[[1]]
+				X <- substr(primers$reverse_primer[-empty], n - pos + 1, n - pos + 1)
+			}
+			primers$reverse_MM <- I(matrix(nrow=dim(primers$reverse_primer)[1],
+				ncol=dim(primers$reverse_primer)[2]))
+			primers$reverse_efficiency_MM <- I(matrix(nrow=dim(primers$reverse_primer)[1],
+				ncol=dim(primers$reverse_primer)[2]))
+			for (i in c("A", "C", "T", "G")) {
+				w <- which(X != i)
+				if (length(w)==0)
+					next
+				if (length(empty)==0) {
+					t <- primers$reverse_primer[w]
+				} else {
+					t <- primers$reverse_primer[-empty][w]
+				}
+				x <- X[w]
+				substr(t, n[w] - pos + 1, n[w] - pos + 1) <- i
+				eff_PM <- CalculateEfficiencyPCR(t,
+					strsplit(toString(reverseComplement(DNAStringSet(t))),
+						", ",
+						fixed=TRUE)[[1]],
+					annealingTemp,
+					P,
+					ions,
+					batchSize,
+					taqEfficiency=taqEfficiency,
+					maxDistance)
+				W <- which(eff_PM >= minEfficiency)
+				w <- w[W]
+				if (length(w)==0)
+					next
+				t <- t[W]
+				x <- x[W]
+				eff_PM <- eff_PM[W]
+				eff_MM <- CalculateEfficiencyPCR(t,
+					nt[w],
+					annealingTemp,
+					P,
+					ions,
+					batchSize,
+					taqEfficiency=taqEfficiency,
+					maxDistance)
+				W <- which(is.na(primers$reverse_MM[w]))
+				nnas <- which(!is.na(primers$reverse_MM[w]))
+				if (length(nnas) > 0)
+					W <- sort(c(W, nnas[which(eff_MM[nnas] > primers$reverse_efficiency_MM[w[nnas]])]))
+				W <- W[which(eff_MM[W] >= 0.1)] # must have 10% MM efficiency
+				if (length(W) > 0) {
+					if (length(empty)==0) {
+						primers$reverse_efficiency_MM[w[W]] <- eff_MM[W]
+						primers$reverse_efficiency[w[W]] <- eff_PM[W]
+						primers$reverse_MM[w[W]] <- paste(i,
+							"/",
+							strsplit(toString(reverseComplement(DNAStringSet(x[W]))),
+								", ",
+								fixed=TRUE)[[1]],
+							sep="")
+						primers$reverse_primer[w[W]] <- t[W]
+					} else {
+						primers$reverse_efficiency_MM[-empty][w[W]] <- eff_MM[W]
+						primers$reverse_efficiency[-empty][w[W]] <- eff_PM[W]
+						primers$reverse_MM[-empty][w[W]] <- paste(i,
+							"/",
+							strsplit(toString(reverseComplement(DNAStringSet(x[W]))),
+								", ",
+								fixed=TRUE)[[1]],
+							sep="")
+						primers$reverse_primer[-empty][w[W]] <- t[W]
+					}
+				}
+			}
 		}
 		
 		for (k in 1:length(ids)) {
@@ -1179,6 +1386,13 @@ DesignPrimers <- function(tiles,
 					pSets$reverse_coverage[w[k],] <- primers$reverse_coverage[r,]
 					pSets$mismatches_forward[w[k]] <- primers$mismatches_forward[f]
 					pSets$mismatches_reverse[w[k]] <- primers$mismatches_reverse[r]
+					
+					if (induceMismatch) {
+						pSets$forward_MM[w[k],] <- primers$forward_MM[f,]
+						pSets$forward_efficiency_MM[w[k],] <- primers$forward_efficiency_MM[f,]
+						pSets$reverse_MM[w[k],] <- primers$reverse_MM[r,]
+						pSets$reverse_efficiency_MM[w[k],] <- primers$reverse_efficiency_MM[r,]
+					}
 					
 					w_F <- which(index_F==w_o[1])
 					w_R <- which(index_R==w_o[2])

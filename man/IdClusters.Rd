@@ -13,6 +13,7 @@ IdClusters(myDistMatrix,
            showPlot = FALSE,
            asDendrogram = FALSE,
            myDNAStringSet = NULL,
+           model = MODELS,
            add2tbl = FALSE,
            dbFile = NULL,
            verbose = TRUE)
@@ -25,7 +26,7 @@ A symmetric \eqn{N} x \eqn{N} distance matrix with the values of dissimilarity b
 An agglomeration method to be used.  This should be (an unambiguous abbreviation of) one of \code{"complete"}, \code{"single"}, \code{"UPGMA"}, \code{"average"}, \code{"NJ"} or \code{"ML"}.
 }
   \item{cutoff}{
-A vector with the maximum branch length separating the sequences in the same cluster.  If \code{asDendrogram=TRUE} then only one cutoff may be specified.
+A vector with the maximum edge length separating the sequences in the same cluster.  If \code{asDendrogram=TRUE} then only one cutoff may be specified.
 }
   \item{showPlot}{
 Logical specifying whether or not to plot the resulting dendrogram.
@@ -34,7 +35,10 @@ Logical specifying whether or not to plot the resulting dendrogram.
 Logical.  If \code{TRUE} the object returned is of class \code{dendrogram}.
 }
   \item{myDNAStringSet}{
-\code{DNAStringSet} used in the creation of \code{myDistMatrix}.  Only necessary if \code{method="ML"}.
+\code{DNAStringSet} used in the creation of \code{myDistMatrix}.  Only necessary if \code{method} is \code{"ML"}.
+}
+  \item{model}{
+One or more of the available \code{MODELS} of DNA evolution.  Only necessary if \code{method} is \code{"ML"}.
 }
   \item{add2tbl}{
 Logical or a character string specifying the table name in which to add the result.
@@ -47,11 +51,11 @@ Logical indicating whether to display progress.
 }
 }
 \details{
-Groups the input sequences into clusters using a set dissimilarities representing the distance between \eqn{N} sequences.  Initially a phylogenetic tree is formed using the specified \code{method}.  Then each leaf (sequence) of the tree is assigned to a cluster based on its branch lengths to the other leaves (sequences).
+Groups the input sequences into clusters using a set dissimilarities representing the distance between \eqn{N} sequences.  Initially a phylogenetic tree is formed using the specified \code{method}.  Then each leaf (sequence) of the tree is assigned to a cluster based on its edge lengths to the other sequences.
 
 A number of different clustering methods are provided.  The method (\code{complete} assigns clusters using complete-linkage so that sequences in the same cluster are no more than \code{cutoff} percent apart.  The method \code{single} assigns clusters using single-linkage so that sequences in the same cluster are within \code{cutoff} of at least one other sequence in the same cluster.  \code{UPGMA} or \code{average} (the default) assigns clusters using average-linkage which is a compromise between the sensitivity of complete-linkage clustering to outliers and the tendency of single-linkage clustering to connect distant relatives that do not appear to be closely related.
 
-\code{NJ} uses the Neighbor-Joining method proposed by Saitou and Nei that does not assume lineages evolve at the same rate (the molecular clock hypothesis).  The \code{NJ} method is typically the most phylogenetically accurate of the above distance based methods.  \code{ML} creates a neighbor-joining tree and then prints the negative log likelihood of the tree.  Presently \code{ML} does not adjust the neighbor joining tree to maximize its likelihood.
+\code{NJ} uses the Neighbor-Joining method proposed by Saitou and Nei that does not assume lineages evolve at the same rate (the molecular clock hypothesis).  The \code{NJ} method is typically the most phylogenetically accurate of the above distance-based methods.  \code{ML} creates a neighbor-joining tree and then maximizes the likelihood of the tree given the aligned sequences by iteratively optimizing the edge lengths.  When \code{method="ML"}, one or more \code{MODELS} of DNA evolution must be specified.  If multiple \code{model}s are given their parameters are optimized and the best \code{model} is automatically chosen based on BIC using the sample size defined as the number of variable sites in the DNA sequence.
 
 If a \code{add2tbl=TRUE} then the resulting data.frame is added/updated into column(s) of the default table "DNA" in \code{dbFile}.  If \code{add2tbl} is a character string then the result is added to the specified table name in \code{dbFile}.  The added/updated column names are printed if \code{verbose=TRUE}.
 }
@@ -68,7 +72,7 @@ Saitou, N. and Nei, M. (1987) The neighbor-joining method: a new method for reco
 Erik Wright \email{DECIPHER@cae.wisc.edu}
 }
 \seealso{
-\code{\link{DistanceMatrix}}, \code{\link{Add2DB}}
+\code{\link{DistanceMatrix}}, \code{\link{Add2DB}}, \code{\link{MODELS}}
 }
 \examples{
 # using the matrix from the original paper by Saitou and Nei

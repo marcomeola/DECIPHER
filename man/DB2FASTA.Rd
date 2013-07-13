@@ -15,8 +15,9 @@ DB2FASTA(file,
          replaceChar = NULL,
          orderBy = "row_names",
          append = FALSE,
-         comments = TRUE,
+         comments = FALSE,
          removeGaps = "none",
+         chunkSize = 1e5,
          verbose = TRUE,
          ...)
 }
@@ -50,6 +51,9 @@ Logical specifying whether to add the value of any database fields into the FAST
 }
   \item{removeGaps}{
 Determines how gaps are removed in the sequences.  This should be (an unambiguous abbreviation of) one of \code{"none"}, \code{"all"} or \code{"common"}.
+}
+  \item{chunkSize}{
+Number of lines of the \code{file} to write at a time.
 }
   \item{verbose}{
 Logical indicating whether to display status.

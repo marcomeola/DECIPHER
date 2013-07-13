@@ -179,12 +179,6 @@ FindChimeras <- function(dbFile,
 				...="chimera is NULL")
 		}
 		
-		if (verbose) {
-			cat("\n", group, " (", length(dna), "):\n", sep="")
-			flush.console()
-			pBar <- txtProgressBar(style=3)
-		}
-		
 		# reduce to the set of unique dna sequences
 		u_dna <- unique(dna)
 		names(u_dna) <- names(dna)[match(u_dna, dna)]
@@ -192,6 +186,12 @@ FindChimeras <- function(dbFile,
 		rns <- c(rns, as.integer(names(dna)))
 		dna <- u_dna
 		numF <- length(dna)
+		
+		if (verbose) {
+			cat("\n", group, " (", length(dna), "):\n", sep="")
+			flush.console()
+			pBar <- txtProgressBar(style=3)
+		}
 		
 		batches <- seq(1, numF, batchSize)
 		

@@ -12,7 +12,7 @@ Seqs2DB(seqs,
         dbFile,
         identifier,
         tblName = "DNA",
-        chunkSize = 99999,
+        chunkSize = 1e5,
         replaceTbl = FALSE,
         verbose = TRUE)
 }
@@ -33,7 +33,7 @@ Character string specifying the \code{"id"} to give the imported sequences in th
 Character string specifying the table in which to add the sequences.
 }
   \item{chunkSize}{
-Number of lines of the \code{seqs} to read at a time.  For very large sequence files, using \code{1e7} results in a quicker import than the default (\code{99999}), but only if enough memory is available.
+Number of lines of the \code{seqs} to read at a time.
 }
   \item{replaceTbl}{
 Logical.  If \code{FALSE} (the default) then the sequences are appended to any already existing in the table.  If \code{TRUE} then any sequences already in the table are overwritten.

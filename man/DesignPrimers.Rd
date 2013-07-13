@@ -32,6 +32,7 @@ DesignPrimers(tiles,
               primerDimer = 1e-07,
               ragged5Prime = TRUE,
               taqEfficiency = TRUE,
+              induceMismatch = FALSE,
               verbose = TRUE)
 }
 \arguments{
@@ -110,6 +111,9 @@ Logical specifying whether the 5' end or 3' end of primer permutations targeting
   \item{taqEfficiency}{
 Logical determining whether to make use of elongation efficiency and maxDistance to increase predictive accuracy for \emph{Taq} DNA Polymerase amplifying primers with mismatches near the 3' terminus.  Note that this should be set to FALSE if using a high-fidelity polymerase with 3' to 5' exonuclease activity.
 }
+  \item{induceMismatch}{
+Logical or integer specifying whether to induce a mismatch in the primer with the template DNA.  If \code{TRUE} then a mismatch is induced at the 6th primer position.  If an integer value is provided between 2 and 6 then a mismatch is induced in that primer position.
+}
   \item{verbose}{
 Logical indicating whether to display progress.
 }
@@ -131,7 +135,9 @@ Coming Soon!
 Erik Wright \email{DECIPHER@cae.wisc.edu}
 }
 \note{
-The program OligoArrayAux (\url{http://mfold.rna.albany.edu/?q=DINAMelt/OligoArrayAux}) must be installed in a location accessible by the system.  For example, the following code should print the installed OligoArrayAux version when executed from the R console:  \code{system("hybrid-min -V")}.
+The program OligoArrayAux (\url{http://mfold.rna.albany.edu/?q=DINAMelt/OligoArrayAux}) must be installed in a location accessible by the system.  For example, the following code should print the installed OligoArrayAux version when executed from the R console:
+
+\code{system("hybrid-min -V")}
 }
 \seealso{
 \code{\link{CalculateEfficiencyPCR}}, \code{\link{TileSeqs}}
@@ -140,5 +146,6 @@ The program OligoArrayAux (\url{http://mfold.rna.albany.edu/?q=DINAMelt/OligoArr
 db <- system.file("extdata", "Bacteria_175seqs.sqlite", package="DECIPHER")
 # not run (must have OligoArrayAux installed first):
 #tiles <- TileSeqs(db, identifier=c("Acinetobacter","Pseudomonas"))
-#primers <- DesignPrimers(tiles, identifier="Acinetobacter", start=280, end=420, minProductSize=50, numPrimerSets=1)
+#primers <- DesignPrimers(tiles, identifier="Acinetobacter", start=280, end=420,
+#	minProductSize=50, numPrimerSets=1)
 }

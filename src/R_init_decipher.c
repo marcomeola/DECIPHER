@@ -36,6 +36,7 @@ static const R_CallMethodDef callMethods[] = { // method call, pointer, num args
 	{"clusterML", (DL_FUNC) &clusterML, 5},
 	{"distMatrix", (DL_FUNC) &distMatrix, 6},
 	{"gaps", (DL_FUNC) &gaps, 1},
+	{"designProbes", (DL_FUNC) &designProbes, 15},
 	{"commonGaps", (DL_FUNC) &commonGaps, 1},
 	{"multiMatch", (DL_FUNC) &multiMatch, 3},
 	{"multiMatchUpper", (DL_FUNC) &multiMatchUpper, 3},
@@ -46,7 +47,13 @@ static const R_CallMethodDef callMethods[] = { // method call, pointer, num args
 	{"intMatch", (DL_FUNC) &intMatch, 2},
 	{"firstMatchUpper", (DL_FUNC) &firstMatchUpper, 2},
 	{"terminalMismatch", (DL_FUNC) &terminalMismatch, 4},
+	{"NNLS", (DL_FUNC) &NNLS, 9},
+	{"sparseMult", (DL_FUNC) &sparseMult, 6},
 	{"calculateDeltaG", (DL_FUNC) &calculateDeltaG, 3},
+	{"alignProfiles", (DL_FUNC) &alignProfiles, 8},
+	{"consensusProfile", (DL_FUNC) &consensusProfile, 2},
+	{"matchLists", (DL_FUNC) &matchLists, 3},
+	{"adjustHeights", (DL_FUNC) &adjustHeights, 1},
 	{NULL, NULL, 0}
 };
 

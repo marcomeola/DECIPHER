@@ -42,6 +42,17 @@
 \date{\today}
 \maketitle
 
+\newenvironment{centerfig}
+{\begin{figure}[htp]\centering}
+{\end{figure}}
+\renewcommand{\indent}{\hspace*{\tindent}}
+\DefineVerbatimEnvironment{Sinput}{Verbatim} {xleftmargin=2em} \DefineVerbatimEnvironment{Soutput}{Verbatim}{xleftmargin=2em} \DefineVerbatimEnvironment{Scode}{Verbatim}{xleftmargin=2em} \fvset{listparameters={\setlength{\topsep}{0pt}}} \renewenvironment{Schunk}{\vspace{\topsep}}{\vspace{\topsep}}
+\SweaveOpts{keep.source=TRUE}
+<<echo=false>>=
+options(continue=" ")
+options(width=60)
+@
+
 \tableofcontents
 
 %------------------------------------------------------------
@@ -76,7 +87,7 @@ It is no longer necessary to store related data in several different files.  \Rp
 
 Separate projects can be stored in distinct tables in the same sequence database.  Each new table is structured to include every sequence's description, identifier, and a unique key called the \term{row_name} all in one place.  The sequences are referenced by their \term{row_names} or \term{identifier} throughout most functions in the package.  New information created using \Rpackage{DECIPHER} functions is added as additional database columns to its respective sequences' \term{row_names}.  To prevent the database from seeming like a black box there is a function named \Rfunction{BrowseDB} that facilitates viewing of the database contents in a web browser.  A similar function is available to view sequences called \Rfunction{BrowseSequences}.
 
-The amount of DNA sequence information available is currently increasing at a phenomenal rate.  \Rpackage{DECIPHER} stores individual sequences using \term{gzip} compression so that the database file takes up much less drive space than a standard text file of sequences.  The compressed sequences are stored in a hidden table that is linked to the information table.  Storing the sequences in a separate table greatly improves access speed when there is a large amount of sequence information.  Separating projects into distinct tables further increases query speed over that of storing every project in a single table.
+The amount of DNA sequence information available is currently increasing at a phenomenal rate.  \Rpackage{DECIPHER} stores individual sequences using \term{gzip} compression so that the database file takes up much less drive space than a standard text file of sequences.  The compressed sequences are stored in a hidden table that is linked to the information table.  For example, by default sequence information is stored in the table ``DNA'', and the associated sequences are stored in the table ``_DNA''.  Storing the sequences in a separate table greatly improves access speed when there is a large amount of sequence information.  Separating projects into distinct tables further increases query speed over that of storing every project in a single table.
 
 %------------------------------------------------------------
 \section{Functionality}
@@ -92,10 +103,12 @@ The functions of DECIPHER can be grouped into several categories based on intend
 \begin{enumerate} \item \Rfunction{ConsensusSequence} \item \Rfunction{DistanceMatrix} \item \Rfunction{IdClusters} \end{enumerate}
 \item Functions for visualization with a web browser:
 \begin{enumerate} \item \Rfunction{BrowseDB} \item \Rfunction{BrowseSequences} \end{enumerate}
+\item Functions for multiple sequence alignment:
+\begin{enumerate}\item \Rfunction{AlignProfiles}\item \Rfunction{AlignSeqs} \end{enumerate}
 \item Functions related to chimeras:
 \begin{enumerate} \item \Rfunction{CreateChimeras} \item \Rfunction{FindChimeras} \item \Rfunction{FormGroups} \end{enumerate}
 \item Functions related to DNA microarrays:
-\begin{enumerate} \item \Rfunction{CalculateEfficiencyArray} \end{enumerate}
+\begin{enumerate} \item \Rfunction{Array2Matrix} \item \Rfunction{CalculateEfficiencyArray} \item \Rfunction{DesignArray} \item \Rfunction{NNLS} \end{enumerate}
 \item Functions related to primers for polymerase chain reaction (PCR):
 \begin{enumerate} \item \Rfunction{CalculateEfficiencyPCR} \item \Rfunction{DesignPrimers} \item \Rfunction{TileSeqs} \end{enumerate}
 \end{enumerate}
@@ -104,12 +117,29 @@ The functions of DECIPHER can be grouped into several categories based on intend
 \section{Installation}
 %------------------------------------------------------------
 
+\newlength\tindent
+\setlength{\tindent}{\parindent}
+\setlength{\parindent}{0pt}
+
 \label{sec:Installation}
 \subsection{Typical Installation (recommended)}
 
 \begin{enumerate}
 \item Install \R{} (version >= 2.13.0) from \url{http://www.r-project.org/}.
 \item Install \Rpackage{DECIPHER} in R by entering:
+\begin{Schunk}
+\begin{Sinput}
+> source("http://bioconductor.org/biocLite.R")
+> biocLite("DECIPHER")
+\end{Sinput}
+\end{Schunk}
+\end{enumerate}
+
+\subsection{Update to the Latest Version}
+
+\begin{enumerate}
+\item Update \R{} to the latest version available from \url{http://www.r-project.org/}.
+\item Reinstall \Rpackage{DECIPHER} in R by entering:
 \begin{Schunk}
 \begin{Sinput}
 > source("http://bioconductor.org/biocLite.R")
@@ -142,11 +172,26 @@ The functions of DECIPHER can be grouped into several categories based on intend
 \end{enumerate}
 
 \subsubsection{Mac OS X}
+
+\begin{enumerate}
+\item First Option (simplest but no parallelization):
 \begin{Schunk}
 \begin{Sinput}
 > install.packages("<<path to Mac OS X DECIPHER.tgz>>", repos=NULL)
 \end{Sinput}
 \end{Schunk}
+\item Second Option (more difficult but enables parallelization):
+\begin{enumerate}[(a)]
+\item Open the DECIPHER source folder.  Remove the file named ``Makevars'' in the ``src'' folder.  Then save a text-file with the line ``CC=gcc-4.2 -std=gnu99'' to ``~/.R/Makevars''.  This will force packages to be compiled with gcc-4.2 instead of the default llvm.
+\item Open Terminal, and in the command prompt enter:
+\begin{Schunk}
+\begin{Sinput}
+R CMD build --no-vignettes "<<path to DECIPHER source>>"
+R CMD INSTALL "<<path to newly built DECIPHER.tar.gz>>"
+\end{Sinput}
+\end{Schunk}
+\end{enumerate}
+\end{enumerate}
 
 \subsubsection{Linux}
 In a shell enter:
@@ -179,8 +224,8 @@ PKG_CFLAGS=-fopenmp
 PKG_LIBS=-mthreads -lgomp -lpthreadGC2
 \end{Sinput}
 \end{Schunk}
-\item Open a MS-DOS command prompt by clicking Start -> All Programs -> Accessories >- Command Prompt.
-\item In the command prompt, enter:
+\item Open a MS-DOS command prompt by clicking Start -> All Programs -> Accessories -> Command Prompt.
+\item In the command prompt enter:
 \begin{Schunk}
 \begin{Sinput}
 R CMD build --no-vignettes "<<path to DECIPHER source>>"
@@ -217,7 +262,7 @@ dbConn <- dbConnect(SQLite(), ":memory:")
 Seqs2DB(gen, "GenBank", dbConn, "Bacteria")
 @
 
-Now we can view the table of information we just added to the database in a web browser:
+Now we can view the table of information we just added to the database in a web browser (Fig. 1):
 <<expr2>>=
 BrowseDB(dbConn)
 @
@@ -243,9 +288,9 @@ BrowseDB(dbConn, maxChars=20)
 \end{center}
 \end{figure}
 
-We can now look at only those sequences that belong to the phylum \term{Firmicutes}:
+We can now look at only those sequences that belong to the phylum \term{Bacteroidetes} (Fig. 2):
 <<expr5>>=
-dna <- SearchDB(dbConn, id="Firmicutes")
+dna <- SearchDB(dbConn, id="Bacteroidetes")
 BrowseSequences(subseq(dna, 140, 240), colorBases=TRUE)
 @
 
@@ -256,11 +301,14 @@ BrowseSequences(subseq(dna, 140, 240), colorBases=TRUE)
 \end{center}
 \end{figure}
 
-Let's construct a phylogenetic tree from the \term{Firmicutes} sequences:
+Let's construct a phylogenetic tree from the \term{Bacteroidetes} sequences (Fig. 3):
+\begin{centerfig}
 <<expr6,fig=TRUE,height=3.5,width=6>>=
-d <- DistanceMatrix(dna, verbose=FALSE)
-c <- IdClusters(d, method="complete", cutoff=.02, showPlot=TRUE, verbose=FALSE)
+d <- DistanceMatrix(dna, correction="Jukes-Cantor", verbose=FALSE)
+c <- IdClusters(d, method="ML", cutoff=.05, showPlot=TRUE, myDNAStringSet=dna, verbose=FALSE)
 @
+\caption{Maximum likelihood tree showing the relationships between sequences.}
+\end{centerfig}
 
 We could then use the command below to save the in-memory database to a file for long term storage.  Be sure to change the path names to those on your system by replacing all of the text inside quotes labeled ``$<<$path to ...$>>$'' with the actual path on your system.
 \begin{Schunk}

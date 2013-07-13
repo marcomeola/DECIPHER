@@ -227,3 +227,107 @@ SEXP firstMatchUpper(SEXP x, SEXP y)
 	
 	return ans;
 }
+
+// matrix of d[i, j] = 1 - length x[i] %in% x[j] / min(length)
+// requires a list of ordered integers
+SEXP matchLists(SEXP x, SEXP verbose, SEXP pBar)
+{	
+	int i, j, size_x = length(x), before, v, *rPercentComplete;
+	int o, p, start, lx, ly, *X, *Y, count;
+	SEXP ans;
+	PROTECT(ans = allocMatrix(REALSXP, size_x, size_x));
+	double *rans = REAL(ans);
+	SEXP percentComplete, utilsPackage;
+	v = asLogical(verbose);
+	
+	if (v) { // initialize progress variables
+		before = 0;
+		PROTECT(percentComplete = NEW_INTEGER(1));
+		rPercentComplete = INTEGER(percentComplete);
+		// make it possible to access R functions from the utils package for the progress bar
+		PROTECT(utilsPackage = eval(lang2(install("getNamespace"), ScalarString(mkChar("utils"))), R_GlobalEnv));
+	}
+	
+	for (i = 0; i < size_x; i++)
+		*(rans + i*size_x + i) = 0;
+	
+	for (i = 0; i < size_x; i++) {
+		#pragma omp parallel for private(j, o, p, start, count, X, Y, lx, ly) schedule(guided)
+		for (j = i + 1; j < size_x; j++) {
+			X = INTEGER(VECTOR_ELT(x, i));
+			Y = INTEGER(VECTOR_ELT(x, j));
+			lx = length(VECTOR_ELT(x, i));
+			ly = length(VECTOR_ELT(x, j));
+			
+			if (lx > 0 && ly > 0) {
+				int first = -1;
+				int last = -1;
+				for (o = 0; o < lx; o++) {
+					if (X[o] >= Y[0]) {
+						first = o;
+						break;
+					}
+				}
+				if (first == -1) { // no overlap
+					*(rans + i*size_x + j) = NA_REAL;
+					*(rans + i + j*size_x) = NA_REAL;
+					continue;
+				}
+				
+				for (o = lx - 1; o >= 0; o--) {
+					if (X[o] <= Y[ly - 1]) {
+						last = o;
+						break;
+					}
+				}
+				if (last == -1) { // no overlap
+					*(rans + i*size_x + j) = NA_REAL;
+					*(rans + i + j*size_x) = NA_REAL;
+					continue;
+				}
+				
+				int lz = last - first + 1;
+				
+				count = 0;
+				start = 0;
+				for (o = first; o <= last; o++) {
+					for (p = start; p < ly; p++) {
+						if (X[o] == Y[p]) {
+							count++;
+							start = p + 1;
+							break;
+						} else if (Y[p] > X[o]) {
+							break;
+						}
+					}
+				}
+				
+				*(rans + i*size_x + j) = 1 - (double)count/(double)lz;
+			} else {
+				*(rans + i*size_x + j) = NA_REAL;
+			}
+			*(rans + i + j*size_x) = *(rans + i*size_x + j);
+		}
+		
+		if (v) {
+			// print the percent completed so far
+			*rPercentComplete = floor(100*(double)((i + 1)*size_x+(i + 1))/((size_x - 1)*size_x+(size_x - 1)));
+			
+			if (*rPercentComplete > before) { // when the percent has changed
+				// tell the progress bar to update in the R console
+				eval(lang4(install("setTxtProgressBar"), pBar, percentComplete, R_NilValue), utilsPackage);
+				before = *rPercentComplete;
+			}
+		} else {
+			R_CheckUserInterrupt();
+		}
+	}
+	
+	if (v) {
+		UNPROTECT(3);
+	} else {
+		UNPROTECT(1);
+	}
+	
+	return ans;
+}

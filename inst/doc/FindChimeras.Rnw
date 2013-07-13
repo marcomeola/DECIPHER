@@ -39,6 +39,14 @@
 \date{\today}
 \maketitle
 
+\renewcommand{\indent}{\hspace*{\tindent}}
+\DefineVerbatimEnvironment{Sinput}{Verbatim} {xleftmargin=2em} \DefineVerbatimEnvironment{Soutput}{Verbatim}{xleftmargin=2em} \DefineVerbatimEnvironment{Scode}{Verbatim}{xleftmargin=2em} \fvset{listparameters={\setlength{\topsep}{0pt}}} \renewenvironment{Schunk}{\vspace{\topsep}}{\vspace{\topsep}}
+\SweaveOpts{keep.source=TRUE}
+<<echo=false>>=
+options(continue=" ")
+options(width=60)
+@
+
 \tableofcontents
 
 %------------------------------------------------------------
@@ -72,6 +80,10 @@ The reference database is required to have several fields of information that ar
 \end{enumerate}
 
 \subsection{Assigning Sequences To A Reference Group}
+
+\newlength\tindent
+\setlength{\tindent}{\parindent}
+\setlength{\parindent}{0pt}
 
 To get started we need to load the \Rpackage{DECIPHER} package, which automatically loads several other required packages.
 %

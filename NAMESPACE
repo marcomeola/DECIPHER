@@ -1,8 +1,7 @@
 useDynLib(DECIPHER)
 
-import(IRanges)
-import(XVector)
 import(Biostrings)
+import(IRanges)
 
 export(
 # interacting with a database:
@@ -12,15 +11,17 @@ FormGroups, IdentifyByRank,
 # lengths:
 IdLengths, TerminalChar,
 # grouping sequences:
-DistanceMatrix, IdClusters,
+DistanceMatrix, IdClusters, MODELS,
 # forming consensus:
 ConsensusSequence, IdConsensus, TileSeqs,
 # chimeras:
 FindChimeras, CreateChimeras,
 # microarrays:
-CalculateEfficiencyArray,
+DesignArray, Array2Matrix, NNLS, CalculateEfficiencyArray,
 # primers:
 CalculateEfficiencyPCR, DesignPrimers,
 # viewing information:
-BrowseSequences, BrowseDB
+BrowseSequences, BrowseDB,
+# multiple alignment
+AlignSeqs, AlignProfiles
 )

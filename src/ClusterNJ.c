@@ -674,3 +674,19 @@ SEXP reclusterNJ(SEXP ans, SEXP cutoff)
 	
 	return ans;
 }
+
+SEXP adjustHeights(SEXP x)
+{
+	// insure that nodes are at the correct heights
+	double offset, *rans;
+	int length = length(x)/10 + 1;
+	rans = REAL(x);
+	
+	for (int i = 0; i < length - 1; i++) {
+		offset = 0;
+		Offset(i, rans, &offset, length);
+		rans[5*(length - 1) + i] = rans[5*(length - 1) + i] + offset;
+	}
+	
+	return x;
+}

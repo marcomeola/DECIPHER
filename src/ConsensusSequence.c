@@ -489,3 +489,111 @@ SEXP consensusSequence(SEXP x, SEXP threshold, SEXP ambiguity, SEXP minInformati
 
 	return consensusSeq;
 }
+
+//ans_start <- .Call("consensusProfile", myDNAStringSet, weight, PACKAGE="DECIPHER")
+SEXP consensusProfile(SEXP x, SEXP weight)
+{
+	cachedXStringSet x_set;
+	cachedCharSeq x_i;
+	int x_length, i, j, seqLength;
+	SEXP ans;//, subM, ret_list
+	double *rans, *w = REAL(weight);//, *m
+	
+	// initialize the XStringSet
+	x_set = cache_XStringSet(x);
+	x_length = get_cachedXStringSet_length(&x_set);
+	double gapLengths[x_length][2];
+	
+	// find the longest length XString
+	seqLength = 0;
+	for (i = 0; i < x_length; i++) {
+		x_i = get_cachedXStringSet_elt(&x_set, i);
+		if (x_i.length > seqLength) {
+			seqLength = x_i.length;
+		}
+	}
+	// initialize an array of encoded base counts
+	double bases[7][seqLength];
+	// 2D arrays cannot be set to zero at initialization so loops are needed
+	for (i = 0; i < 7; i++) {
+		for (j = 0; j < seqLength; j++) {
+			bases[i][j] = 0;
+		}
+	}
+	
+	// initialize an array of encoded base counts
+	double gaps[2][seqLength];
+	// 2D arrays cannot be set to zero at initialization so loops are needed
+	for (i = 0; i < 2; i++) {
+		for (j = 0; j < seqLength; j++) {
+			gaps[i][j] = 0;
+		}
+	}
+	
+	// loop through each sequence in the DNAStringSet
+	for (i = 0; i < x_length; i++) {
+		// extract each ith DNAString from the DNAStringSet
+		x_i = get_cachedXStringSet_elt(&x_set, i);
+		
+		// update the alphabet for this string
+		gapLengths[i][0] = frontTerminalGaps(&x_i);
+		gapLengths[i][1] = endTerminalGaps(&x_i);
+		alphabetFrequency(&x_i, &bases[0][0], seqLength, 1, 0, gapLengths[i][0], gapLengths[i][1], w[i]);
+		
+		for (j = gapLengths[i][0] + 1; j < seqLength - gapLengths[i][1] - 1; j++) {
+			if (!(x_i.seq[j - 1] & 0x10) && (x_i.seq[j] & 0x10)) {
+				gaps[0][j] += w[i]; // gap opening
+			} else if ((x_i.seq[j] & 0x10) && !(x_i.seq[j + 1] & 0x10)) {
+				gaps[1][j] += w[i]; // gap closing
+			}
+		}
+	}
+	
+	/*
+	PROTECT(subM = allocMatrix(REALSXP, 4, 4));
+	m = REAL(subM);
+	
+	for (i = 0; i < 4; i++) {
+		for (j = 0; j < 4; j++) {
+			*(m + i*4 + j) = 0;
+		}
+	}
+	
+	if (x_length > 1) {
+		for (i = 0; i < seqLength; i++) {
+			*(m) = *(m) + bases[0][i]*(bases[0][i] - 1);
+			*(m + 5) = *(m + 5) + bases[1][i]*(bases[1][i] - 1);
+			*(m + 10) = *(m + 10) + bases[2][i]*(bases[2][i] - 1);
+			*(m + 15) = *(m + 15) + bases[3][i]*(bases[3][i] - 1);
+			
+			*(m + 1) = *(m + 1) + 2*bases[0][i]*bases[1][i];
+			*(m + 2) = *(m + 2) + 2*bases[0][i]*bases[2][i];
+			*(m + 3) = *(m + 3) + 2*bases[0][i]*bases[3][i];
+			*(m + 6) = *(m + 6) + 2*bases[1][i]*bases[2][i];
+			*(m + 7) = *(m + 7) + 2*bases[1][i]*bases[3][i];
+			*(m + 11) = *(m + 11) + 2*bases[2][i]*bases[3][i];
+		}
+	}
+	*/
+	
+	PROTECT(ans = allocMatrix(REALSXP, 7, seqLength));
+	rans = REAL(ans);
+	
+	for (i = 0; i < seqLength; i++) {
+		*(rans + i*7 + 0) = bases[0][i]/x_length;
+		*(rans + i*7 + 1) = bases[1][i]/x_length;
+		*(rans + i*7 + 2) = bases[2][i]/x_length;
+		*(rans + i*7 + 3) = bases[3][i]/x_length;
+		*(rans + i*7 + 4) = bases[4][i]/x_length;
+		*(rans + i*7 + 5) = gaps[0][i]/x_length;
+		*(rans + i*7 + 6) = gaps[1][i]/x_length;
+	}
+	
+	//PROTECT(ret_list = allocVector(VECSXP, 2));
+	//SET_VECTOR_ELT(ret_list, 0, ans);
+	//SET_VECTOR_ELT(ret_list, 1, subM);
+	
+	UNPROTECT(1);
+	
+	return ans;
+}

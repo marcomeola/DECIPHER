@@ -6,12 +6,11 @@ DB2FASTA <- function(file,
 	replaceChar=NULL,
 	orderBy="row_names",
 	append=FALSE,
-	comments=TRUE,
+	comments=FALSE,
 	removeGaps="none",
+	chunkSize=1e5,
 	verbose=TRUE,
 	...) {
-	
-	time.1 <- Sys.time()
 	
 	# error checking
 	if (!is.character(file))
@@ -33,6 +32,12 @@ DB2FASTA <- function(file,
 		stop("comments must be a logical.")
 	if (!is.logical(verbose))
 		stop("verbose must be a logical.")
+	if (!is.numeric(chunkSize))
+		stop("chunkSize must be a numeric.")
+	if (floor(chunkSize)!=chunkSize)
+		stop("chunkSize must be a whole number.")
+	if (chunkSize <= 0)
+		stop("chunkSize must be greater than zero.")
 	GAPS <- c("none", "all", "common")
 	removeGaps <- pmatch(removeGaps, GAPS)
 	if (is.na(removeGaps))
@@ -53,7 +58,13 @@ DB2FASTA <- function(file,
 			stop("The connection has expired.")
 	}
 	
-	# build the search expression
+	if (verbose) {
+		time.1 <- Sys.time()
+		pBar <- txtProgressBar(style=3)
+	}
+	
+	con <- file(file, ifelse(append, "a", "w"))
+	
 	searchExpression <- tblName
 	args <- list(...)
 	if (identifier!="" ||
@@ -77,81 +88,103 @@ DB2FASTA <- function(file,
 				a)
 		firstTime <- FALSE
 	}
+	if (limit > 0) {
+		searchExpression1 <- paste(searchExpression,
+			'limit',
+			limit)
+	} else {
+		searchExpression1 <- searchExpression
+	}
+	searchExpression1 <- paste('select count(*) from ',
+		searchExpression1,
+		sep="")
+	rs <- dbSendQuery(dbConn, searchExpression1)
+	count <- as.numeric(fetch(rs, n=-1))
+	dbClearResult(rs)
+	
 	if (orderBy!="row_names") # default ordering is row_names
 		searchExpression <- paste(searchExpression,
 			'order by',
 			orderBy)
-	if (limit > 0)
-		searchExpression <- paste(searchExpression,
+	
+	s <- seq(1, count, chunkSize)
+	for (i in 1:length(s)) {
+		# build the search expression
+		searchExpression1 <- paste(searchExpression,
 			'limit',
-			limit)
-	
-	searchExpression1 <- paste('select * from ',
-		searchExpression,
-		sep="")
-	
-	if (verbose)
-		cat("Search Expression:",
-			"\n",
+			ifelse(i==length(s), count - s[i] + 1, chunkSize),
+			'offset',
+			ifelse(i==1, 0, s[i] - 1))
+		searchExpression1 <- paste(ifelse(comments,
+				'select * from ',
+				'select row_names, description from '),
 			searchExpression1,
 			sep="")
-	
-	rs <- dbSendQuery(dbConn, searchExpression1)
-	searchResult <- fetch(rs, n=-1)
-	dbClearResult(rs)
-	
-	searchExpression2 <- paste('select row_names, sequence from _',
-		tblName,
-		" where row_names in (select row_names from ",
-		searchExpression,
-		")",
-		sep="")
-	rs <- dbSendQuery(dbConn, searchExpression2)
-	searchResult2 <- fetch(rs, n=-1)
-	dbClearResult(rs)
-	
-	# decompress the resulting sequences
-	searchResult2$sequence <- lapply(searchResult2$sequence,
-		memDecompress,
-		type="gzip",
-		asChar=TRUE)
-	searchResult2$sequence <- paste(searchResult2$sequence)
-	
-	if (!is.null(replaceChar))
-		# replace all characters not in the DNA_ALPHABET
-		searchResult2$sequence <- .Call("replaceChars",
-			searchResult2$sequence,
-			replaceChar,
-			PACKAGE="DECIPHER")
-	
-	# remove gaps if applicable
-	if (removeGaps==2) {
-		searchResult2$sequence <- .Call("replaceChar",
-			searchResult2$sequence,
-			"-",
-			"",
-			PACKAGE="DECIPHER")
-	} else if (removeGaps==3) {
-		searchResult2$sequence <- .Call("commonGaps",
-			searchResult2$sequence,
-			PACKAGE="DECIPHER")
+		
+		rs <- dbSendQuery(dbConn, searchExpression1)
+		searchResult <- fetch(rs, n=-1)
+		dbClearResult(rs)
+		
+		searchExpression2 <- paste('select row_names, sequence from _',
+			tblName,
+			" where row_names in (select row_names from ",
+			searchExpression,
+			")",
+			sep="")
+		rs <- dbSendQuery(dbConn, searchExpression2)
+		searchResult2 <- fetch(rs, n=-1)
+		dbClearResult(rs)
+		
+		m <- match(searchResult$row_names,
+			searchResult2$row_names)
+		searchResult2 <- searchResult2[m,]
+		
+		# decompress the resulting sequences
+		searchResult2$sequence <- lapply(searchResult2$sequence,
+			memDecompress,
+			type="gzip",
+			asChar=TRUE)
+		searchResult2$sequence <- paste(searchResult2$sequence)
+		
+		if (!is.null(replaceChar))
+			# replace all characters not in the DNA_ALPHABET
+			searchResult2$sequence <- .Call("replaceChars",
+				searchResult2$sequence,
+				replaceChar,
+				PACKAGE="DECIPHER")
+		
+		# remove gaps if applicable
+		if (removeGaps==2) {
+			searchResult2$sequence <- .Call("replaceChar",
+				searchResult2$sequence,
+				"-",
+				"",
+				PACKAGE="DECIPHER")
+		} else if (removeGaps==3) {
+			searchResult2$sequence <- .Call("commonGaps",
+				searchResult2$sequence,
+				PACKAGE="DECIPHER")
+		}
+		
+		fileText <- character(2*dim(searchResult2)[1])
+		fileText[seq(2, length(fileText), 2)] <- searchResult2$sequence
+		if (comments) {
+			fileText[seq(1, length(fileText), 2)] <- do.call("paste", c(searchResult, sep = "; "))
+		} else {
+			fileText[seq(1, length(fileText), 2)] <- searchResult$description
+		}
+		
+		writeLines(fileText, con)
+		
+		if (verbose)
+			setTxtProgressBar(pBar, ifelse(i==length(s), 1, (s[i + 1] - 1)/count))
 	}
-	
-	myDNAStringSet <- DNAStringSet(searchResult2$sequence)
-	if (comments) {
-		names(myDNAStringSet) <- do.call("paste", c(searchResult, sep = "; "))
-	} else {
-		names(myDNAStringSet) <- searchResult$description
-	}
-	
-	writeXStringSet(myDNAStringSet,
-		file=file,
-		append=append)
+	close(con)
 	
 	if (verbose) {
 		time.2 <- Sys.time()
 		cat("\nWrote ",
-			length(myDNAStringSet),
+			count,
 			" sequences.",
 			"\n",
 			sep="")
