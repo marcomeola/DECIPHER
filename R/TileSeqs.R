@@ -125,6 +125,15 @@ TileSeqs <- function(dbFile,
 			groupCoverage=I(numeric(l*maxTilePermutations)),
 			target_site=I(character(l*maxTilePermutations)))
 		
+		start <- integer(l*maxTilePermutations)
+		end <- integer(l*maxTilePermutations)
+		start_aligned <- integer(l*maxTilePermutations)
+		end_aligned <- integer(l*maxTilePermutations)
+		misprimes <- logical(l*maxTilePermutations)
+		coverage <- numeric(l*maxTilePermutations)
+		groupCoverage <- numeric(l*maxTilePermutations)
+		target_sites <- character(l*maxTilePermutations)
+		
 		tGaps <- TerminalChar(target)
 		
 		count <- 0
@@ -186,13 +195,13 @@ TileSeqs <- function(dbFile,
 				next
 			
 			index <- 1:length(target_site)
-			tiles$coverage[count + index] <- coverages
-			tiles$groupCoverage[count + index] <- groupCoverages
-			tiles$start_aligned[count + index] <- pos[i]
-			tiles$end_aligned[count + index] <- pos[i + maxLength - 1]
-			tiles$start[count + index] <- i
-			tiles$end[count + index] <- i + maxLength - 1
-			tiles$target_site[count + index] <- target_site
+			coverage[count + index] <- coverages
+			groupCoverage[count + index] <- groupCoverages
+			start_aligned[count + index] <- pos[i]
+			end_aligned[count + index] <- pos[i + maxLength - 1]
+			start[count + index] <- i
+			end[count + index] <- i + maxLength - 1
+			target_sites[count + index] <- target_site
 			
 			for (j in 1:length(target_site)) {
 				count <- count + 1
@@ -226,8 +235,17 @@ TileSeqs <- function(dbFile,
 					}
 				}
 			}
-			tiles$misprime[(count - j + 1):count] <- misprime
+			misprimes[(count - j + 1):count] <- misprime
 		}
+		
+		tiles$start <- start
+		tiles$end <- end
+		tiles$start_aligned <- start_aligned
+		tiles$end_aligned <- end_aligned
+		tiles$misprime <- misprimes
+		tiles$coverage <- coverage
+		tiles$groupCoverage <- groupCoverage
+		tiles$target_site <- target_sites
 		
 		w <- which(tiles$target_site=="")
 		if (length(w) > 0)
