@@ -377,7 +377,6 @@ SEXP clusterML(SEXP x, SEXP y, SEXP model, SEXP verbose, SEXP pBar)
 	double *T = REAL(x); // Tree Topology
 	double *m = REAL(model); // Substitution Model [%A %C %G %T k1 k2]
 	int *widths = (int *) R_alloc(length, sizeof(int));
-	int v = asLogical(verbose);
 	
 	// calculate a vector of sequence lengths
 	int maxWidth = 0;
@@ -400,7 +399,7 @@ SEXP clusterML(SEXP x, SEXP y, SEXP model, SEXP verbose, SEXP pBar)
 			ProbChange(m, (P + i*32 + 16), T[4*(length - 1) + i] * *(m + k + 6));
 		}
 		
-		#pragma omp parallel for private(i,j,y_i,row,sumL) schedule(guided)
+		#pragma omp parallel for private(i,j,y_i,row) schedule(guided)
 		for (i = 0; i < maxWidth; i++) { // for each position
 			//double *Ls = (double *) R_alloc(length*8, sizeof(double));
 			double *Ls = Calloc(length*8, double); // initialized to zero

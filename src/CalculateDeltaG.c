@@ -23,7 +23,8 @@
 SEXP calculateDeltaG(SEXP p, SEXP t, SEXP deltaGrules)
 {
 	int i, j, n, count;
-	int s1, s2;
+	int s1 = 0;
+	int s2 = 0;
 	int l = length(p);
 	const char *seq1;
 	const char *seq2;
