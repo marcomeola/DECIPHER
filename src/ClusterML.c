@@ -468,6 +468,7 @@ SEXP clusterML(SEXP x, SEXP y, SEXP model, SEXP verbose, SEXP pBar)
 				*(m + 3) * *(Ls + 3*length + j)) * *(m + numRates + k + 6);
 			Free(Ls);
 		}
+		Free(P);
 	}
 	
 	double LnL = 0;
