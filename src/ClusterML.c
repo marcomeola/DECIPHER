@@ -375,7 +375,7 @@ SEXP clusterML(SEXP x, SEXP y, SEXP model, SEXP verbose, SEXP pBar)
 	int length = get_cachedXStringSet_length(&y_set);
 	int i, j, k, numRates, row;
 	double *T = REAL(x); // Tree Topology
-	double *m = REAL(model); // Substitution Model [%A %C %G %T k1 k2]
+	double *m = REAL(model); // Substitution Model [%A %C %G %T k1 k2 rate probability ...]
 	int *widths = (int *) R_alloc(length, sizeof(int));
 	
 	// calculate a vector of sequence lengths
@@ -393,13 +393,13 @@ SEXP clusterML(SEXP x, SEXP y, SEXP model, SEXP verbose, SEXP pBar)
 	for (k = 0; k < numRates; k++) { // for each bin of the gamma distribution determined by alfa
 		// P = [Paa Pac Pag Pat Pcc Pcg Pct Pgg Pgt Ptt Pca Pga Pta Pgc Ptc Ptg]
 		double *P = Calloc((length - 1)*32, double); // initialized to zero
-		#pragma omp parallel for private(i) schedule(guided)
+		//#pragma omp parallel for private(i) schedule(guided)
 		for (i = 0; i < (length - 1); i++) {
 			ProbChange(m, (P + i*32), T[3*(length - 1) + i] * *(m + k + 6));
 			ProbChange(m, (P + i*32 + 16), T[4*(length - 1) + i] * *(m + k + 6));
 		}
 		
-		#pragma omp parallel for private(i,j,y_i,row) schedule(guided)
+		//#pragma omp parallel for private(i,j,y_i,row) schedule(guided)
 		for (i = 0; i < maxWidth; i++) { // for each position
 			//double *Ls = (double *) R_alloc(length*8, sizeof(double));
 			double *Ls = Calloc(length*8, double); // initialized to zero
