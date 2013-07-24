@@ -32,7 +32,7 @@ Distinguishes transitions from transversions and allows bases to have different 
 Allows for unequal base frequencies and distinguishes between transversions and the two possible types of transitions (i.e., A <-> G & C <-> T).
 
 \bold{+G (Yang, 1993)}
-Specifying a model+G adds a single parameter to any of the above models to relax the assumption of equal rates among sites in the DNA sequence.  The single parameter specifies the shape of the Gamma Distribution.  The continuous distribution is represented with six discrete rates and probabilities determined by the Laguerre Quadrature method (Felsenstein, 2001).
+Specifying a model+G4 adds a single parameter to any of the above models to relax the assumption of equal rates among sites in the DNA sequence.  The single parameter specifies the shape of the Gamma Distribution.  The continuous distribution is represented with 2-10 discrete rates and their respective probabilities as determined by the Laguerre Quadrature method (Felsenstein, 2001).  For example, specifying a model+G8 would represent the continuous Gamma Distribution with eight rates and their associated probabilities.
 }
 \references{
 Felsenstein, J. (1981). Evolutionary trees from DNA sequences: a maximum likelihood approach. Journal of Molecular Evolution, \bold{17(6)}, 368-376.

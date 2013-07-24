@@ -51,7 +51,7 @@ SearchDB <- function(dbFile,
 	} else {
 		dbConn = dbFile
 		if (!inherits(dbConn,"SQLiteConnection")) 
-			stop("'dbFile' must be a character string or SQLiteConnection")
+			stop("'dbFile' must be a character string or SQLiteConnection.")
 		if (!isIdCurrent(dbConn))
 			stop("The connection has expired.")
 	}

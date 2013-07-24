@@ -16,6 +16,12 @@
  */
 #include <R_ext/Rdynload.h>
 
+/* for R_CheckUserInterrupt */
+#include <R_ext/Utils.h>
+
+/* for Calloc/Free */
+#include <R_ext/RS.h>
+
 // for math functions
 #include <math.h>
 
@@ -23,6 +29,9 @@
 #ifdef SUPPORT_OPENMP
 #include <omp.h>
 #endif
+
+// for calloc/free
+#include <stdlib.h>
 
 /*
  * Biostrings_interface.h is needed for the DNAencode(), get_XString_asRoSeq(),
@@ -346,7 +355,7 @@ static void ProbChange(double *m, double *P, double v)
 	*(P + 15) = e11; // Ptg
 }
 
-SEXP clusterML(SEXP x, SEXP y, SEXP model, SEXP verbose, SEXP pBar)
+SEXP clusterML(SEXP x, SEXP y, SEXP model, SEXP branches, SEXP lengths)
 {
 	// input is the output tree from clusterNJ.c
 	
@@ -378,6 +387,11 @@ SEXP clusterML(SEXP x, SEXP y, SEXP model, SEXP verbose, SEXP pBar)
 	double *m = REAL(model); // Substitution Model [%A %C %G %T k1 k2 rate probability ...]
 	int *widths = (int *) R_alloc(length, sizeof(int));
 	
+	// alternative branch lengths
+	int altL = length(lengths); // number of altered branches
+	double *ls = REAL(lengths); // new branch lengths
+	int *bs = INTEGER(branches); // altered branches
+	
 	// calculate a vector of sequence lengths
 	int maxWidth = 0;
 	for (i = 0; i < length; i++) {
@@ -388,21 +402,26 @@ SEXP clusterML(SEXP x, SEXP y, SEXP model, SEXP verbose, SEXP pBar)
 		}
 	}
 	
-	double *sumL = Calloc(maxWidth, double);
+	double *sumL = Calloc(maxWidth*(altL + 1), double);
 	numRates = (length(model) - 6)/2; // number of bins for the gamma distribution
 	for (k = 0; k < numRates; k++) { // for each bin of the gamma distribution determined by alfa
 		// P = [Paa Pac Pag Pat Pcc Pcg Pct Pgg Pgt Ptt Pca Pga Pta Pgc Ptc Ptg]
-		double *P = Calloc((length - 1)*32, double); // initialized to zero
-		//#pragma omp parallel for private(i) schedule(guided)
+		double *P = Calloc((length - 1)*32 + altL*16, double); // initialized to zero
+		#pragma omp parallel for private(i) schedule(guided)
 		for (i = 0; i < (length - 1); i++) {
 			ProbChange(m, (P + i*32), T[3*(length - 1) + i] * *(m + k + 6));
 			ProbChange(m, (P + i*32 + 16), T[4*(length - 1) + i] * *(m + k + 6));
 		}
+		#pragma omp parallel for private(i) schedule(guided)
+		for (i = 0; i < altL; i++) {
+			ProbChange(m, (P + (length - 1)*32 + i*16), *(ls + i) * *(m + k + 6));
+		}
 		
-		//#pragma omp parallel for private(i,j,y_i,row) schedule(guided)
+		#pragma omp parallel for private(i,j,y_i,row) schedule(guided)
 		for (i = 0; i < maxWidth; i++) { // for each position
 			//double *Ls = (double *) R_alloc(length*8, sizeof(double));
-			double *Ls = Calloc(length*8, double); // initialized to zero
+			//double *Ls = Calloc(length*8*(altL + 1), double); // initialized to zero
+			double *Ls = (double *) calloc(length*8*(altL + 1), sizeof(double)); // initialized to zero
 			
 			for (j = 0; j < (length - 1); j++) { // for each node
 				// if first branch is leaf then its base L is 1
@@ -411,12 +430,24 @@ SEXP clusterML(SEXP x, SEXP y, SEXP model, SEXP verbose, SEXP pBar)
 						y_i = get_cachedXStringSet_elt(&y_set, (-1*(int)T[6*(length - 1) + j] - 1));
 						L_known(&y_i.seq[i], (Ls + 0*length + j), &length);
 					}
+					for (int o = 0; o < altL; o++) {
+						*(Ls + length*8*(o + 1) + j + 0*length) = *(Ls + j + 0*length);
+						*(Ls + length*8*(o + 1) + j + 1*length) = *(Ls + j + 1*length);
+						*(Ls + length*8*(o + 1) + j + 2*length) = *(Ls + j + 2*length);
+						*(Ls + length*8*(o + 1) + j + 3*length) = *(Ls + j + 3*length);
+					}
 				}
 				// if second branch is leaf then its base L is 1
 				if ((int)T[7*(length - 1) + j] < 0) { // second branch is a leaf
 					if (*(widths + (-1*(int)T[7*(length - 1) + j] - 1)) > i) { // position exist in this sequence
 						y_i = get_cachedXStringSet_elt(&y_set, (-1*(int)T[7*(length - 1) + j] - 1));
 						L_known(&y_i.seq[i], (Ls + 4*length + j), &length);
+					}
+					for (int o = 0; o < altL; o++) {
+						*(Ls + length*8*(o + 1) + j + 4*length) = *(Ls + j + 4*length);
+						*(Ls + length*8*(o + 1) + j + 5*length) = *(Ls + j + 5*length);
+						*(Ls + length*8*(o + 1) + j + 6*length) = *(Ls + j + 6*length);
+						*(Ls + length*8*(o + 1) + j + 7*length) = *(Ls + j + 7*length);
 					}
 				}
 				// if the first branch is a node then L must be calculated
@@ -425,6 +456,28 @@ SEXP clusterML(SEXP x, SEXP y, SEXP model, SEXP verbose, SEXP pBar)
 					row = (int)T[6*(length - 1) + j] - 1;
 					
 					L_unknown(Ls, 0, j, row, length, (P + row*32), (P + row*32 + 16));
+					
+					for (int o = 0; o < altL; o++) {
+						if (*(bs + o)==(row + 1)) { // first branch was adjusted
+							L_unknown(Ls, 0, j + length*8*(o + 1), row + length*8*(o + 1), length, (P + (length - 1)*32 + o*16), (P + row*32 + 16));
+						} else if (*(bs + o)==(row + length)) { // second branch was adjusted
+							L_unknown(Ls, 0, j + length*8*(o + 1), row + length*8*(o + 1), length, (P + row*32), (P + (length - 1)*32 + o*16));
+						} else if (*(Ls + 0*length + row)==*(Ls + 0*length + row + length*8*(o + 1)) &&
+								   *(Ls + 1*length + row)==*(Ls + 1*length + row + length*8*(o + 1)) &&
+								   *(Ls + 2*length + row)==*(Ls + 2*length + row + length*8*(o + 1)) &&
+								   *(Ls + 3*length + row)==*(Ls + 3*length + row + length*8*(o + 1)) &&
+								   *(Ls + 4*length + row)==*(Ls + 4*length + row + length*8*(o + 1)) &&
+								   *(Ls + 5*length + row)==*(Ls + 5*length + row + length*8*(o + 1)) &&
+								   *(Ls + 6*length + row)==*(Ls + 6*length + row + length*8*(o + 1)) &&
+								   *(Ls + 7*length + row)==*(Ls + 7*length + row + length*8*(o + 1))) {
+							*(Ls + 0*length + j + length*8*(o + 1)) = *(Ls + 0*length + j);
+							*(Ls + 1*length + j + length*8*(o + 1)) = *(Ls + 1*length + j);
+							*(Ls + 2*length + j + length*8*(o + 1)) = *(Ls + 2*length + j);
+							*(Ls + 3*length + j + length*8*(o + 1)) = *(Ls + 3*length + j);
+						} else {
+							L_unknown(Ls, 0, j + length*8*(o + 1), row + length*8*(o + 1), length, (P + row*32), (P + row*32 + 16));
+						}
+					}
 				}
 				// if the second branch is a node then L must be calculated
 				if ((int)T[7*(length - 1) + j] > 0) { // first branch is a node
@@ -432,6 +485,28 @@ SEXP clusterML(SEXP x, SEXP y, SEXP model, SEXP verbose, SEXP pBar)
 					row = (int)T[7*(length - 1) + j] - 1;
 					
 					L_unknown(Ls, 4, j, row, length, (P + row*32), (P + row*32 + 16));
+					
+					for (int o = 0; o < altL; o++) {
+						if (*(bs + o)==(row + 1)) { // first branch was adjusted
+							L_unknown(Ls, 4, j + length*8*(o + 1), row + length*8*(o + 1), length, (P + (length - 1)*32 + o*16), (P + row*32 + 16));
+						} else if (*(bs + o)==(row + length)) { // second branch was adjusted
+							L_unknown(Ls, 4, j + length*8*(o + 1), row + length*8*(o + 1), length, (P + row*32), (P + (length - 1)*32 + o*16));
+						} else if (*(Ls + 0*length + row)==*(Ls + 0*length + row + length*8*(o + 1)) &&
+								   *(Ls + 1*length + row)==*(Ls + 1*length + row + length*8*(o + 1)) &&
+								   *(Ls + 2*length + row)==*(Ls + 2*length + row + length*8*(o + 1)) &&
+								   *(Ls + 3*length + row)==*(Ls + 3*length + row + length*8*(o + 1)) &&
+								   *(Ls + 4*length + row)==*(Ls + 4*length + row + length*8*(o + 1)) &&
+								   *(Ls + 5*length + row)==*(Ls + 5*length + row + length*8*(o + 1)) &&
+								   *(Ls + 6*length + row)==*(Ls + 6*length + row + length*8*(o + 1)) &&
+								   *(Ls + 7*length + row)==*(Ls + 7*length + row + length*8*(o + 1))) {
+							*(Ls + 4*length + j + length*8*(o + 1)) = *(Ls + 4*length + j);
+							*(Ls + 5*length + j + length*8*(o + 1)) = *(Ls + 5*length + j);
+							*(Ls + 6*length + j + length*8*(o + 1)) = *(Ls + 6*length + j);
+							*(Ls + 7*length + j + length*8*(o + 1)) = *(Ls + 7*length + j);
+						} else {
+							L_unknown(Ls, 4, j + length*8*(o + 1), row + length*8*(o + 1), length, (P + row*32), (P + row*32 + 16));
+						}
+					}
 				}
 			}
 			
@@ -439,6 +514,16 @@ SEXP clusterML(SEXP x, SEXP y, SEXP model, SEXP verbose, SEXP pBar)
 			row = length - 2;  // final node: j = length - 1
 			
 			L_unknown(Ls, 0, j, row, length, (P + row*32), (P + row*32 + 16));
+			
+			for (int o = 0; o < altL; o++) {
+				if (*(bs + o)==(row + 1)) { // first branch was adjusted
+					L_unknown(Ls, 0, j + length*8*(o + 1), row + length*8*(o + 1), length, (P + (length - 1)*32 + o*16), (P + row*32 + 16));
+				} else if (*(bs + o)==(row + length)) { // second branch was adjusted
+					L_unknown(Ls, 0, j + length*8*(o + 1), row + length*8*(o + 1), length, (P + row*32), (P + (length - 1)*32 + o*16));
+				} else {
+					L_unknown(Ls, 0, j + length*8*(o + 1), row + length*8*(o + 1), length, (P + row*32), (P + row*32 + 16));
+				}
+			}
 			/* // Prints last common ancestor:
 			if (*(Ls + 0*length + j)==0 &&
 				*(Ls + 1*length + j)==0 &&
@@ -462,27 +547,31 @@ SEXP clusterML(SEXP x, SEXP y, SEXP model, SEXP verbose, SEXP pBar)
 			*/
 			
 			// sum likelihoods of tree for every position
-			*(sumL + i) += (*(m) * *(Ls + 0*length + j) +
-				 *(m + 1) * *(Ls + 1*length + j) +
-				 *(m + 2) * *(Ls + 2*length + j) +
-				*(m + 3) * *(Ls + 3*length + j)) * *(m + numRates + k + 6);
-			Free(Ls);
+			for (int o = 0; o <= altL; o++) {
+				*(sumL + i + o*maxWidth) += (*(m) * *(Ls + 0*length + j + length*8*o) +
+					*(m + 1) * *(Ls + 1*length + j + length*8*o) +
+					*(m + 2) * *(Ls + 2*length + j + length*8*o) +
+					*(m + 3) * *(Ls + 3*length + j + length*8*o)) * *(m + numRates + k + 6);
+			}
+			free(Ls);
 		}
 		Free(P);
+		R_CheckUserInterrupt();
 	}
-	
-	double LnL = 0;
-	for (i = 0; i < maxWidth; i++) {
-		if (*(sumL + i) > 0) {
-			LnL -= log(*(sumL + i));
-		}
-	}
-	Free(sumL);
 	
 	SEXP ans;
-	PROTECT(ans = allocVector(REALSXP, 1));
+	PROTECT(ans = allocVector(REALSXP, altL + 1));
 	double *rans = REAL(ans);
-	rans[0] = LnL;
+	for (int o = 0; o <= altL; o++) {
+		rans[o] = 0;
+		for (i = 0; i < maxWidth; i++) {
+			if (*(sumL + i + o*maxWidth) > 0) {
+				rans[o] -= log(*(sumL + i + o*maxWidth));
+			}
+		}
+	}
+	
+	Free(sumL);
 	UNPROTECT(1);
 	
 	return ans;

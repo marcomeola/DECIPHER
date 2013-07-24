@@ -291,6 +291,7 @@ AlignSeqs <- function(myDNAStringSet,
 	
 	if (cluster) {
 		if (verbose) {
+			setTxtProgressBar(pBar, 1)
 			close(pBar)
 			cat("\n")
 			time.2 <- Sys.time()
@@ -497,6 +498,7 @@ AlignSeqs <- function(myDNAStringSet,
 	}
 	
 	if (verbose) {
+		setTxtProgressBar(pBar, 1)
 		close(pBar)
 		cat("\n")
 		time.2 <- Sys.time()

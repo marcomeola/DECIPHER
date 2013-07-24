@@ -77,7 +77,7 @@ FindChimeras <- function(dbFile,
 	} else {
 		dbConn1 = dbFile
 		if (!inherits(dbConn1,"SQLiteConnection")) 
-			stop("'dbFile' must be a character string or SQLiteConnection")
+			stop("'dbFile' must be a character string or SQLiteConnection.")
 		if (!isIdCurrent(dbConn1))
 			stop("The connection has expired.")
 	}

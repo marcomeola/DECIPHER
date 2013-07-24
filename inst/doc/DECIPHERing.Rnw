@@ -203,27 +203,18 @@ R CMD INSTALL "<<path to newly built DECIPHER.tar.gz>>"
 \end{Schunk}
 
 \subsubsection{Windows}
-Two options are available:  the first is simpler but does not have support for making use of multiple processors.
+Two options are available:  the first is simplest, but requires the pre-built binary (DECIPHER.zip).
 
 \begin{enumerate}
-\item First Option (simplest but no parallelization):
+\item First Option:
 \begin{Schunk}
 \begin{Sinput}
 > install.packages("<<path to Windows DECIPHER.zip>>", repos=NULL)
 \end{Sinput}
 \end{Schunk}
-\item Second Option (more difficult but enables parallelization):
+\item Second Option (more difficult):
 \begin{enumerate}[(a)]
-\item Download pcthreadsGC2.dll from \url{http://sourceware.org/pthreads-win32/}.
-\item Place pcthreadsGC2.dll in a place where R will find it such as the R/bin/ folder inside Program Files.
-\item Install Rtools from \url{http://www.murdoch-sutherland.com/Rtools/}.   Be sure to check the box that says edit PATH during installation.
-\item Open the DECIPHER source folder.  Add a text file named ``Makevars.win'' into the ``src'' folder with the following two lines:
-\begin{Schunk}
-\begin{Sinput}
-PKG_CFLAGS=-fopenmp
-PKG_LIBS=-mthreads -lgomp -lpthreadGC2
-\end{Sinput}
-\end{Schunk}
+\item Install Rtools from \url{http://cran.r-project.org/bin/windows/Rtools/}.   Be sure to check the box that says edit PATH during installation.
 \item Open a MS-DOS command prompt by clicking Start -> All Programs -> Accessories -> Command Prompt.
 \item In the command prompt enter:
 \begin{Schunk}

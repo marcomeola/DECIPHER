@@ -30,7 +30,7 @@ SEXP reclusterUPGMA(SEXP ans, SEXP cutoff);
 
 // ClusterML.c
 
-SEXP clusterML(SEXP x, SEXP y, SEXP model, SEXP verbose, SEXP pBar);
+SEXP clusterML(SEXP x, SEXP y, SEXP model, SEXP branches, SEXP lengths);
 
 // DesignProbes.c
 

@@ -29,7 +29,7 @@ IdConsensus <- function(dbFile,
 	} else {
 		dbConn = dbFile
 		if (!inherits(dbConn,"SQLiteConnection")) 
-			stop("'dbFile' must be a character string or SQLiteConnection")
+			stop("'dbFile' must be a character string or SQLiteConnection.")
 		if (!isIdCurrent(dbConn))
 			stop("The connection has expired.")
 	}
@@ -37,7 +37,7 @@ IdConsensus <- function(dbFile,
 	f <- dbListFields(dbConn, tblName)
 	w <- which(f==colName)
 	if (length(w)==0)
-		stop("The specified colName does not exist.")
+		stop(paste("The colName '", colName, "' does not exist.", sep=""))
 	
 	searchExpression <- paste('select distinct ',
 		colName,
@@ -73,11 +73,11 @@ IdConsensus <- function(dbFile,
 		j <- j + 1L
 		dna_subset <- SearchDB(dbFile,
 			tblName=tblName,
-			verbose=F,
+			verbose=FALSE,
 			identifier=identifier,
 			...=paste(colName,
 				"= '",
-				i,
+				gsub("'", "''", i, fixed=TRUE),
 				"'",
 				sep=""))
 		
@@ -95,22 +95,21 @@ IdConsensus <- function(dbFile,
 		if (verbose)
 			setTxtProgressBar(pBar, 100*j/length(groups))
 	}
-	if (identifier=="")
-		names(consensus) <- paste(colName,
-			groups,
+	if (identifier=="") {
+		names(consensus) <- paste(groups,
 			"_",
 			seqCount,
 			"seqs",
 			sep="")
-	else
-		names(consensus) <- paste(colName,
-			groups,
+	} else {
+		names(consensus) <- paste(groups,
 			"_",
 			seqCount,
 			"seqs",
 			"_",
 			identifier,
 			sep="")
+	}
 	
 	if (is.character(add2tbl) || add2tbl) {
 		Seqs2DB(consensus,

@@ -23,7 +23,7 @@ IdClusters(myDistMatrix,
 A symmetric \eqn{N} x \eqn{N} distance matrix with the values of dissimilarity between \eqn{N} sequences.
 }
   \item{method}{
-An agglomeration method to be used.  This should be (an unambiguous abbreviation of) one of \code{"complete"}, \code{"single"}, \code{"UPGMA"}, \code{"average"}, \code{"NJ"} or \code{"ML"}.
+An agglomeration method to be used.  This should be (an unambiguous abbreviation of) one of \code{"complete"}, \code{"single"}, \code{"UPGMA"}, \code{"average"}, \code{"NJ"} or \code{"ML"}.  (See details section below.)
 }
   \item{cutoff}{
 A vector with the maximum edge length separating the sequences in the same cluster.  If \code{asDendrogram=TRUE} then only one cutoff may be specified.
@@ -55,7 +55,7 @@ Groups the input sequences into clusters using a set dissimilarities representin
 
 A number of different clustering methods are provided.  The method (\code{complete} assigns clusters using complete-linkage so that sequences in the same cluster are no more than \code{cutoff} percent apart.  The method \code{single} assigns clusters using single-linkage so that sequences in the same cluster are within \code{cutoff} of at least one other sequence in the same cluster.  \code{UPGMA} or \code{average} (the default) assigns clusters using average-linkage which is a compromise between the sensitivity of complete-linkage clustering to outliers and the tendency of single-linkage clustering to connect distant relatives that do not appear to be closely related.
 
-\code{NJ} uses the Neighbor-Joining method proposed by Saitou and Nei that does not assume lineages evolve at the same rate (the molecular clock hypothesis).  The \code{NJ} method is typically the most phylogenetically accurate of the above distance-based methods.  \code{ML} creates a neighbor-joining tree and then maximizes the likelihood of the tree given the aligned sequences by iteratively optimizing the edge lengths.  When \code{method="ML"}, one or more \code{MODELS} of DNA evolution must be specified.  If multiple \code{model}s are given their parameters are optimized and the best \code{model} is automatically chosen based on BIC using the sample size defined as the number of variable sites in the DNA sequence.
+\code{NJ} uses the Neighbor-Joining method proposed by Saitou and Nei that does not assume lineages evolve at the same rate (the molecular clock hypothesis).  The \code{NJ} method is typically the most phylogenetically accurate of the above distance-based methods.  \code{ML} creates a neighbor-joining tree and then iteratively maximizes the likelihood of the tree given the aligned sequences (\code{myDNAStringSet}).  This is accomplished through a combination of optimizing edge lengths with Brent's method and improving tree topology with nearest-neighbor interchanges (NNIs).  When \code{method="ML"}, one or more \code{MODELS} of DNA evolution must be specified.  If multiple \code{model}s are given their parameters are optimized and the best \code{model} is automatically chosen based on BIC using the sample size defined as the number of variable sites in the DNA sequence.
 
 If a \code{add2tbl=TRUE} then the resulting data.frame is added/updated into column(s) of the default table "DNA" in \code{dbFile}.  If \code{add2tbl} is a character string then the result is added to the specified table name in \code{dbFile}.  The added/updated column names are printed if \code{verbose=TRUE}.
 }
