@@ -66,7 +66,7 @@ Erik Wright \email{DECIPHER@cae.wisc.edu}
 }
 \examples{
 db <- system.file("extdata", "Bacteria_175seqs.sqlite", package="DECIPHER")
-dna <- SearchDB(db, remove="all")
+dna <- SearchDB(db, limit=10, remove="all")
 alignedDNA <- AlignSeqs(dna)
 BrowseSequences(alignedDNA, highlight=1)
 }
