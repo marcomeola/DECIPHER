@@ -228,7 +228,7 @@ Least squares regression is particularly sensitive outlier observations and hete
 # initialize weights to one:
 weights <- matrix(1, nrow=nrow(b), ncol=ncol(b))
 # iteratively unweight observations with high residuals:
-for (i in 1:100) { # 100 iterations
+for (i in 1:10) { # 10 iterations
 	weights <- weights*exp(-0.1*abs(x_out$residuals))
 	A_weighted <- A
 	A_weighted$x <- A$x*weights[A$i]

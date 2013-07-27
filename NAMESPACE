@@ -23,5 +23,5 @@ CalculateEfficiencyPCR, DesignPrimers,
 # viewing information:
 BrowseSequences, BrowseDB,
 # multiple alignment
-AlignSeqs, AlignProfiles
+AlignSeqs, AlignProfiles, MaskAlignment
 )

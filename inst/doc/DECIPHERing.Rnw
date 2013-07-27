@@ -104,7 +104,7 @@ The functions of DECIPHER can be grouped into several categories based on intend
 \item Functions for visualization with a web browser:
 \begin{enumerate} \item \Rfunction{BrowseDB} \item \Rfunction{BrowseSequences} \end{enumerate}
 \item Functions for multiple sequence alignment:
-\begin{enumerate}\item \Rfunction{AlignProfiles}\item \Rfunction{AlignSeqs} \end{enumerate}
+\begin{enumerate} \item \Rfunction{AlignProfiles} \item \Rfunction{AlignSeqs} \item \Rfunction{MaskAlignment} \end{enumerate}
 \item Functions related to chimeras:
 \begin{enumerate} \item \Rfunction{CreateChimeras} \item \Rfunction{FindChimeras} \item \Rfunction{FormGroups} \end{enumerate}
 \item Functions related to DNA microarrays:

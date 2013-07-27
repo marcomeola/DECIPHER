@@ -1,0 +1,188 @@
+.centerPoint <- function(x, size) {
+	
+	# returns the center-point moving average of x
+	# using a window size of size elements
+	
+	l <- length(x)
+	index <- 1:l
+	boundsL <- index - size
+	boundsL[1:size] <- 1
+	boundsL[(l - size + 1):l] <- boundsL[(l - size + 1):l] - 1:size
+	boundsR <- index + size
+	boundsR[(l - size + 1):l] <- l
+	boundsR[1:size] <- boundsR[1:size] + size:1
+	
+	avgs <- numeric(length(x))
+	for (i in index) {
+		avgs[i] <- mean(x[boundsL[i]:boundsR[i]])
+	}
+	return(avgs)
+}
+
+MaskAlignment <- function(myDNAStringSet,
+	windowSize=5,
+	threshold=1.0,
+	maxFractionGaps=0.2,
+	showPlot=FALSE) {
+	
+	# error checking
+	if (!is(myDNAStringSet, "DNAStringSet"))
+		stop("myDNAStringSet must be a DNAStringSet.")
+	if (!is.numeric(windowSize))
+		stop("windowSize must be a numeric.")
+	if (floor(windowSize)!=windowSize)
+		stop("windowSize must be a whole number.")
+	if (windowSize < 1)
+		stop("windowSize must be greater than zero.")
+	u <- unique(width(myDNAStringSet))
+	if (length(u) > 1)
+		stop("myDNAStringSet must be aligned.")
+	if (!is.numeric(maxFractionGaps))
+		stop("maxFractionGaps must be a numeric.")
+	if (maxFractionGaps > 1 || maxFractionGaps < 0)
+		stop("maxFractionGaps must be between 0 and 1 inclusive.")
+	
+	pwm <- .Call("consensusProfile",
+		myDNAStringSet,
+		rep(1, length(myDNAStringSet)),
+		PACKAGE="DECIPHER")
+	f <- function(x) {
+		w <- which(x != 0)
+		if (length(w) > 0) {
+			x <- x[w]/sum(x[w])
+			bits <- 2 + sum(x*log(x, 2))
+		} else {
+			bits <- 0
+		}
+		return(bits)
+	}
+	a <- apply(pwm[1:4,], 2, f)
+	
+	cm <- consensusMatrix(myDNAStringSet, as.prob=TRUE)["-",]
+	gaps <- which(cm > maxFractionGaps)
+	
+	if (windowSize*2 + 1 > length(a) - length(gaps))
+		stop("windowSize is too large.")
+	
+	if (length(gaps) > 0) {
+		a2 <- a[-gaps]
+		c <- .centerPoint(a2, windowSize)
+	} else {
+		a2 <- a
+		c <- .centerPoint(a2, windowSize)
+	}
+	
+	W <- which(c < threshold)
+	if (length(W) > 0) {
+		if (length(W) > 1) {
+			w <- which((W[2:length(W)] - 1) != W[1:(length(W) - 1)])
+		} else {
+			w <- integer()
+		}
+		index <- W[c(1, w + 1)]
+		
+		indicies <- list()
+		below_threshold <- as.integer(a2 < threshold)
+		rev_below_threshold <- rev(below_threshold)
+		for (i in 1:length(index)) {
+			rights <- .Call("multiMatch",
+				below_threshold,
+				1L,
+				index[i])
+			lefts <- length(below_threshold) - .Call("multiMatch",
+				rev_below_threshold,
+				1L,
+				length(below_threshold) - index[i] + 1L) + 1
+			indicies[[i]] <- c(lefts, rights)
+		}
+		
+		W <- c(W, unlist(indicies))
+		
+		if (length(gaps) > 0) {
+			W <- ((1:length(a))[-gaps])[W]
+		}
+		W <- c(W, gaps)
+		W <- unique(sort(W))
+		
+		if (length(W) > 1) {
+			w <- which((W[2:length(W)] - 1) != W[1:(length(W) - 1)])
+		} else {
+			w <- integer()
+		}
+		starts <- W[c(1, w + 1)]
+		ends <- W[c(w, length(W))]
+		
+		myDNAStringSet <- DNAMultipleAlignment(myDNAStringSet,
+			rowmask=as(IRanges(), "NormalIRanges"),
+			colmask=as(IRanges(starts, ends), "NormalIRanges"))
+	} else if (length(gaps) > 0) {
+		if (length(gaps) > 1) {
+			w <- which((gaps[2:length(gaps)] - 1) != gaps[1:(length(gaps) - 1)])
+		} else {
+			w <- integer()
+		}
+		starts <- gaps[c(1, w + 1)]
+		ends <- gaps[c(w, length(gaps))]
+		
+		myDNAStringSet <- DNAMultipleAlignment(myDNAStringSet,
+			rowmask=as(IRanges(), "NormalIRanges"),
+			colmask=as(IRanges(starts, ends), "NormalIRanges"))
+	} else {
+		myDNAStringSet <- DNAMultipleAlignment(myDNAStringSet,
+			rowmask=as(IRanges(), "NormalIRanges"),
+			colmask=as(IRanges(), "NormalIRanges"))
+	}
+	
+	if (showPlot) {
+		if (length(gaps) > 0) {
+			x <- (1:length(a))[-gaps]
+		} else {
+			x <- 1:length(a)
+		}
+		plot(x,
+			c,
+			type="l",
+			ylim=c(0,2),
+			ylab="Information Content (bits)",
+			xlab="Column Position in Alignment (nucleotides)")
+		w <- which(!(W %in% gaps))
+		if (length(w) > 0)
+			points(W[w],
+				a[W[w]],
+				pch=20,
+				col="red")
+		if (length(W) < length(a)) {
+			if (length(W) > 0) {
+				x <- (1:length(a))[-W]
+				y <- a[-W]
+			} else {
+				x <- 1:length(a)
+				y <- a
+			}
+			points(x,
+				y,
+				pch=20,
+				col="green")
+		}
+		if (length(gaps) > 0)
+			points(gaps,
+				a[gaps],
+				pch=20,
+				col="orange")
+		abline(h=threshold,
+			lty=2,
+			col="blue")
+		legend("bottomright",
+			c("Threshold",
+				"Moving Avg.",
+				"Kept Position",
+				"Masked Pos.",
+				"Masked Gaps"),
+			bg="white",
+			lty=c(2, 1, 0, 0, 0),
+			pch=c(NA, NA, 20, 20, 20),
+			col=c("blue", "black", "green", "red", "orange"))
+	}
+	
+	return(myDNAStringSet)
+}
