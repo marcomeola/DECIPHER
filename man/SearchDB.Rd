@@ -12,6 +12,7 @@ SearchDB(dbFile,
          identifier = "",
          limit = -1,
          replaceChar = "-",
+         nameBy="row_names",
          orderBy = "row_names",
          countOnly = FALSE,
          removeGaps = "none",
@@ -33,6 +34,9 @@ Number of results to display.  The default (\code{-1}) does not limit the number
 }
   \item{replaceChar}{
 Optional character used to replace any characters of the sequence that are not present in the \code{DNA_ALPHABET}.
+}
+  \item{nameBy}{
+Character string giving the column name for naming the DNAStringSet.
 }
   \item{orderBy}{
 Character string giving the column name for sorting the results.  Defaults to the order of entries in the database.  Optionally can be followed by \code{" ASC"} or \code{" DESC"} to specify ascending (the default) or descending order.

@@ -6,7 +6,8 @@ AlignProfiles <- function(pattern,
 	misMatch=-3,
 	gapOpening=-6,
 	gapExtension=-4,
-	terminalGap=-1) {
+	terminalGap=-1,
+	processors=NULL) {
 	
 	# error checking
 	if (!is(pattern, "DNAStringSet"))
@@ -47,6 +48,16 @@ AlignProfiles <- function(pattern,
 		stop("terminalGap must be of length 1 or 2.")
 	if (length(terminalGap)==1)
 		terminalGap[2] <- terminalGap[1]
+	if (!is.null(processors) && !is.numeric(processors))
+		stop("processors must be a numeric.")
+	if (!is.null(processors) && floor(processors)!=processors)
+		stop("processors must be a whole numbers.")
+	if (!is.null(processors) && processors < 1)
+		stop("processors must be at least one.")
+	if (!is.null(processors) && is.numeric(processors))
+		processors <- as.integer(processors)
+	if (is.null(processors))
+		processors <- detectCores()
 	
 	p.profile <- .Call("consensusProfile", pattern, p.weight, PACKAGE="DECIPHER")
 	s.profile <- .Call("consensusProfile", subject, s.weight, PACKAGE="DECIPHER")
@@ -63,6 +74,7 @@ AlignProfiles <- function(pattern,
 		gapExtension,
 		terminalGap[1],
 		terminalGap[2],
+		processors,
 		PACKAGE="DECIPHER")
 	
 	end.p <- t[1]

@@ -73,7 +73,7 @@ The algorithm begins by determining the optimal length of probes required to mee
 A \code{data.frame} with the optimal set of probes matching the specified constraints.  Each row lists the probe's target sequence (\code{name}), \code{start} position, \code{length} in nucleotides, start and end position in the sequence alignment, number of \code{permutations}, \code{score}, melt point in percent \code{formamide} at 42 degrees Celsius, hybridization efficiency (\code{hyb_eff}), target site, and probe(s).  Probes are designed such that the stringency is determined by the equilibrium hybridization conditions and not subsequent washing steps.
 }
 \references{
-Coming Soon!
+ES Wright et al. (2013) Identification of Bacterial and Archaeal Communities From Source to Tap. Water Research Foundation, Denver, CO.
 }
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}

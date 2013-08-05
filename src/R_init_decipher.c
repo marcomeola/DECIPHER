@@ -50,7 +50,7 @@ static const R_CallMethodDef callMethods[] = { // method call, pointer, num args
 	{"NNLS", (DL_FUNC) &NNLS, 9},
 	{"sparseMult", (DL_FUNC) &sparseMult, 6},
 	{"calculateDeltaG", (DL_FUNC) &calculateDeltaG, 3},
-	{"alignProfiles", (DL_FUNC) &alignProfiles, 8},
+	{"alignProfiles", (DL_FUNC) &alignProfiles, 9},
 	{"consensusProfile", (DL_FUNC) &consensusProfile, 2},
 	{"matchLists", (DL_FUNC) &matchLists, 3},
 	{"adjustHeights", (DL_FUNC) &adjustHeights, 1},

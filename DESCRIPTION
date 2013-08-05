@@ -1,14 +1,14 @@
 Package: DECIPHER
 Type: Package
 Title: Database Enabled Code for Ideal Probe Hybridization Employing R
-Version: 1.7.9
-Date: 2013-07-27
+Version: 1.7.10
+Date: 2013-08-05
 Author: Erik Wright
 Maintainer: Erik Wright <DECIPHER@cae.wisc.edu>
 biocViews: Clustering, Genetics, Sequencing, Infrastructure, DataImport, Visualization, Microarray, QualityControl
 Description: A toolset that assist in the design of hybridization probes.
-Depends: R (>= 2.13.0), Biostrings (>= 2.29), RSQLite (>= 0.9), IRanges, stats, XVector
-Imports: Biostrings, RSQLite, IRanges, stats, XVector
-LinkingTo: Biostrings, RSQLite, IRanges, stats, XVector
+Depends: R (>= 2.13.0), Biostrings (>= 2.29), RSQLite (>= 0.9), IRanges, stats, XVector, parallel
+Imports: Biostrings, parallel, RSQLite, IRanges, stats, XVector
+LinkingTo: Biostrings, parallel, RSQLite, IRanges, stats, XVector
 License: GPL-3
 LazyData: yes

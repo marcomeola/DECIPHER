@@ -45,6 +45,7 @@ IdConsensus              Create Consensus Sequences by Groups
 IdentifyByRank           Update Identifier To Level of Taxonomic Rank
 IdLengths                Determine the Number of Bases and Nonbases In Each
                          Sequence
+MaskAlignment            Masks Highly Variable Regions of An Alignment
 MODELS                   Available Models of DNA Evolution
 NNLS                     Sequential Coordinate-wise Algorithm for the
                          Non-negative Least Squares Problem

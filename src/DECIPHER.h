@@ -78,4 +78,4 @@ SEXP calculateDeltaG(SEXP p, SEXP t, SEXP deltaGrules);
 
 // AlignProfiles.c
 
-SEXP alignProfiles(SEXP p, SEXP s, SEXP pm, SEXP mm, SEXP go, SEXP ge, SEXP endGapPenaltyLeft, SEXP endGapPenaltyRight);
+SEXP alignProfiles(SEXP p, SEXP s, SEXP pm, SEXP mm, SEXP go, SEXP ge, SEXP endGapPenaltyLeft, SEXP endGapPenaltyRight, SEXP nThreads);

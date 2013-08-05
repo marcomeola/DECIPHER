@@ -98,7 +98,10 @@ AlignSeqs <- function(myDNAStringSet,
 			fixed=TRUE)
 		
 		if (verbose) {
-			cat("Determining distance matrix based on shared oligos:\n")
+			cat("Determining distance matrix based on shared ",
+				wordSize,
+				"-mers:\n",
+				sep="")
 			flush.console()
 			pBar <- txtProgressBar(max=100, style=3)
 		} else {

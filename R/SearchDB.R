@@ -3,6 +3,7 @@ SearchDB <- function(dbFile,
 	identifier="",
 	limit=-1,
 	replaceChar="-",
+	nameBy="row_names",
 	orderBy="row_names",
 	countOnly=FALSE,
 	removeGaps="none",
@@ -59,14 +60,35 @@ SearchDB <- function(dbFile,
 	# build the search expression
 	if (countOnly) {
 		searchExpression <- paste('select count(*) from ',
-		tblName,
-		sep="")
-	} else {
+			tblName,
+			sep="")
+	} else if (nameBy=="row_names" && orderBy=="row_names") {
 		searchExpression <- paste('select row_names, sequence from _',
-		tblName,
-		" where row_names in (select row_names from ",
-		tblName,
-		sep="")
+			tblName,
+			" where row_names in (select row_names from ",
+			tblName,
+			sep="")
+	} else {
+		searchExpression <- paste('select ',
+			ifelse(nameBy=="row_names",
+				paste(tblName, ".row_names", sep=""),
+				nameBy),
+			', _',
+			tblName,
+			'.sequence from ',
+			tblName,
+			' join _',
+			tblName,
+			' on ',
+			tblName,
+			'.row_names',
+			' = _',
+			tblName,
+			'.row_names where _',
+			tblName,
+			'.row_names in (select row_names from ',
+			tblName,
+			sep="")
 	}
 	
 	args <- list(...)
@@ -91,6 +113,9 @@ SearchDB <- function(dbFile,
 				a)
 		firstTime <- FALSE
 	}
+	if (!countOnly)
+		searchExpression <- paste(searchExpression, ")", sep="")
+	
 	if (orderBy!="row_names") # default ordering is row_names
 		searchExpression <- paste(searchExpression,
 			'order by',
@@ -99,8 +124,6 @@ SearchDB <- function(dbFile,
 		searchExpression <- paste(searchExpression,
 			'limit',
 			limit)
-	if (!countOnly)
-		searchExpression <- paste(searchExpression, ")", sep="")
 	
 	if (verbose)
 		cat("Search Expression:","\n",searchExpression,sep="")
@@ -138,7 +161,7 @@ SearchDB <- function(dbFile,
 		
 		# build a DNAStringSet based on the database
 		myDNAStringSet <- DNAStringSet(searchResult$sequence)
-		names(myDNAStringSet) <- searchResult$row_names
+		names(myDNAStringSet) <- searchResult[, 1]
 	}
 	
 	if (verbose) {

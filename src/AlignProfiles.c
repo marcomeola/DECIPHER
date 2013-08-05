@@ -37,7 +37,7 @@
 #include <stdlib.h>
 
 //ans_start <- .Call("alignProfiles", p.profile, s.profile, pm, mm, go, ge, endGapPenalty, PACKAGE="DECIPHER")//, codon, subMatrix
-SEXP alignProfiles(SEXP p, SEXP s, SEXP pm, SEXP mm, SEXP go, SEXP ge, SEXP endGapPenaltyLeft, SEXP endGapPenaltyRight)//, SEXP codonBonus, SEXP subMatrix
+SEXP alignProfiles(SEXP p, SEXP s, SEXP pm, SEXP mm, SEXP go, SEXP ge, SEXP endGapPenaltyLeft, SEXP endGapPenaltyRight, SEXP nThreads)//, SEXP codonBonus, SEXP subMatrix
 {
 	int i, j, k, start, end, *rans, count, z;
 	double *pprofile, *sprofile, gp, gs, S, M, GP, GS;
@@ -53,6 +53,7 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP pm, SEXP mm, SEXP go, SEXP ge, SEXP endG
 	double egpR = asReal(endGapPenaltyRight);
 	//double codon = asReal(codonBonus);
 	//double *subM = REAL(subMatrix);
+	int nthreads = asInteger(nThreads);
 	
 	R_len_t lp = length(p)/7;
 	R_len_t ls = length(s)/7;
@@ -84,7 +85,7 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP pm, SEXP mm, SEXP go, SEXP ge, SEXP endG
 			end = k - 1;
 		}
 		
-		#pragma omp parallel for private(i,j,gp,gs,S,M,GP,GS) schedule(guided)
+		#pragma omp parallel for private(i,j,gp,gs,S,M,GP,GS) schedule(guided) num_threads(nthreads)
 		for (i = start; i <= end; i++) {
 			// determine column index
 			if (k >= lp) {

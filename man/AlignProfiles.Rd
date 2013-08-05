@@ -15,7 +15,8 @@ AlignProfiles(pattern,
               misMatch = -3,
               gapOpening = -6,
               gapExtension = -4,
-              terminalGap = -1)
+              terminalGap = -1,
+              processors = NULL)
 }
 \arguments{
   \item{pattern}{
@@ -44,6 +45,9 @@ Numeric giving the cost for extending an open gap in the alignment.
 }
   \item{terminalGap}{
 Numeric giving the cost for allowing leading and trailing gaps in the alignment.  Either two numbers, the first for leading gaps and the second for trailing gaps, or a single number for both.
+}
+  \item{processors}{
+The number of processors to use, or \code{NULL} (the default) for all available processors.
 }
 }
 \details{
