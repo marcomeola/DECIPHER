@@ -174,19 +174,20 @@ SEXP multiMatchCharNotNA(SEXP x)
 }
 
 // same as x %in% y for integer vectors
-SEXP intMatch(SEXP x, SEXP y)
+SEXP intMatch(SEXP x, SEXP y, SEXP nThreads)
 {	
 	int *v = INTEGER(x);
 	int *w = INTEGER(y);
 	int i, j;
 	int size_x = length(x);
 	int size_y = length(y);
+	int nthreads = asInteger(nThreads);
 	
 	SEXP ans;
 	PROTECT(ans = allocVector(LGLSXP, size_x));
 	int *rans = INTEGER(ans);
 	
-	#pragma omp parallel for private(i, j) schedule(guided)
+	#pragma omp parallel for private(i, j) schedule(guided) num_threads(nthreads)
 	for (i = 0; i < size_x; i++) {
 		rans[i] = 0;
 		for (j = 0; j < size_y; j++) {
@@ -203,7 +204,7 @@ SEXP intMatch(SEXP x, SEXP y)
 }
 
 // first match in y >= x[...]
-SEXP firstMatchUpper(SEXP x, SEXP y)
+SEXP firstMatchUpper(SEXP x, SEXP y, SEXP nThreads)
 {	
 	int i, j, size_x = length(x), size_y = length(y);
 	double *v = REAL(x);
@@ -211,8 +212,9 @@ SEXP firstMatchUpper(SEXP x, SEXP y)
 	SEXP ans;
 	PROTECT(ans = allocVector(INTSXP, size_x));
 	int *rans = INTEGER(ans);
+	int nthreads = asInteger(nThreads);
 	
-	#pragma omp parallel for private(i, j) schedule(guided)
+	#pragma omp parallel for private(i, j) schedule(guided) num_threads(nthreads)
 	for (i = 0; i < size_x; i++) {
 		rans[i] = NA_INTEGER;
 		for (j = 0; j < size_y; j++) {
@@ -230,7 +232,7 @@ SEXP firstMatchUpper(SEXP x, SEXP y)
 
 // matrix of d[i, j] = 1 - length x[i] %in% x[j] / min(length)
 // requires a list of ordered integers
-SEXP matchLists(SEXP x, SEXP verbose, SEXP pBar)
+SEXP matchLists(SEXP x, SEXP verbose, SEXP pBar, SEXP nThreads)
 {	
 	int i, j, size_x = length(x), before, v, *rPercentComplete;
 	int o, p, start, lx, ly, *X, *Y, count;
@@ -239,6 +241,7 @@ SEXP matchLists(SEXP x, SEXP verbose, SEXP pBar)
 	double *rans = REAL(ans);
 	SEXP percentComplete, utilsPackage;
 	v = asLogical(verbose);
+	int nthreads = asInteger(nThreads);
 	
 	if (v) { // initialize progress variables
 		before = 0;
@@ -252,7 +255,7 @@ SEXP matchLists(SEXP x, SEXP verbose, SEXP pBar)
 		*(rans + i*size_x + i) = 0;
 	
 	for (i = 0; i < size_x; i++) {
-		#pragma omp parallel for private(j, o, p, start, count, X, Y, lx, ly) schedule(guided)
+		#pragma omp parallel for private(j, o, p, start, count, X, Y, lx, ly) schedule(guided) num_threads(nthreads)
 		for (j = i + 1; j < size_x; j++) {
 			X = INTEGER(VECTOR_ELT(x, i));
 			Y = INTEGER(VECTOR_ELT(x, j));

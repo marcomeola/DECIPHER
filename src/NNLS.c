@@ -34,7 +34,7 @@
 #include "DECIPHER.h"
 
 //ans_start <- .Call("NNLS", i, j, x, nrows, ncols, b, tol, verbose, pBar, PACKAGE="DECIPHER")
-SEXP NNLS(SEXP row, SEXP col, SEXP value, SEXP nrows, SEXP ncols, SEXP b, SEXP tol, SEXP verbose, SEXP pBar)
+SEXP NNLS(SEXP row, SEXP col, SEXP value, SEXP nrows, SEXP ncols, SEXP b, SEXP tol, SEXP verbose, SEXP pBar, SEXP nThreads)
 {
 	int i, j, k, before, v, *rPercentComplete;
 	int *rows = INTEGER(row);
@@ -46,6 +46,7 @@ SEXP NNLS(SEXP row, SEXP col, SEXP value, SEXP nrows, SEXP ncols, SEXP b, SEXP t
 	R_len_t l = length(row);
 	SEXP percentComplete, utilsPackage;
 	v = asLogical(verbose);
+	int nthreads = asInteger(nThreads);
 	
 	float *H = Calloc(n*n, float); // initialized to zero
 	
@@ -85,7 +86,7 @@ SEXP NNLS(SEXP row, SEXP col, SEXP value, SEXP nrows, SEXP ncols, SEXP b, SEXP t
 			}
 		}
 		
-		#pragma omp parallel for private(j) schedule(guided)
+		#pragma omp parallel for private(j) schedule(guided) num_threads(nthreads)
 		for (j = start; j < stop; j++)
 			H[(*(cols + i) - 1)*n + *(cols + j) - 1] += *(values + i) * *(values + j);
 	}

@@ -9,8 +9,8 @@ IdentifyByRank <- function(dbFile,
 		stop("verbose must be a logical.")
 	if (!is.logical(add2tbl) && !is.character(add2tbl))
 		stop("add2tbl must be a logical or table name.")
-	if (!is.numeric(level) || level < 1)
-		stop("level must be an integer greater than zero.")
+	if (!is.numeric(level) || level == 0 || floor(level) != level)
+		stop("level must be an integer other than zero.")
 	
 	if (verbose)
 		time.1 <- Sys.time()
@@ -44,10 +44,18 @@ IdentifyByRank <- function(dbFile,
 	for (j in 1:length(x$f)) {
 		a <- strsplit(as.character(x$f[j]), ";")[[1]]
 		l <- length(a)
-		if (level > l) {
-			id <- as.character(a[l])
+		if (level < 0) {
+			temp_level <- l + level
 		} else {
-			id <- as.character(a[level])
+			temp_level <- level
+		}
+		
+		if (temp_level > l) {
+			id <- as.character(a[l])
+		} else if (temp_level < 1) {
+			id <- as.character(a[1])
+		} else {
+			id <- as.character(a[temp_level])
 		}
 		z$origin[j] <- unlist(strsplit(as.character(x$f[j]),
 			id,

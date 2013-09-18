@@ -139,6 +139,10 @@ MaskAlignment <- function(myDNAStringSet,
 		} else {
 			x <- 1:length(a)
 		}
+		if (length(gaps) > 0) {
+			org_mar <- par()$mar
+			par(mar=org_mar + c(0, 0, 0, 2))
+		}
 		plot(x,
 			c,
 			type="l",
@@ -164,16 +168,26 @@ MaskAlignment <- function(myDNAStringSet,
 				pch=20,
 				col="green")
 		}
-		if (length(gaps) > 0)
+		if (length(gaps) > 0) {
+			abline(h=maxFractionGaps,
+				lty=2,
+				col="orange")
 			points(gaps,
-				a[gaps],
+				2*cm[gaps],
 				pch=20,
 				col="orange")
+			axis(4,
+				seq(0, 2, 0.5),
+				labels=c("0", "25", "50", "75", "100"),
+				col.axis="orange")
+			mtext("Percent Gaps (%)", 4, line=3, col="orange")
+			par(mar=org_mar)
+		}
 		abline(h=threshold,
 			lty=2,
-			col="blue")
+			col="red")
 		legend("bottomright",
-			c("Threshold",
+			c(ifelse(length(gaps) > 0, "Thresholds", "Threshold"),
 				"Moving Avg.",
 				"Kept Position",
 				"Masked Pos.",
@@ -181,7 +195,7 @@ MaskAlignment <- function(myDNAStringSet,
 			bg="white",
 			lty=c(2, 1, 0, 0, 0),
 			pch=c(NA, NA, 20, 20, 20),
-			col=c("blue", "black", "green", "red", "orange"))
+			col=c(ifelse(length(gaps) > 0, "black", "red"), "black", "green", "red", "orange"))
 	}
 	
 	return(myDNAStringSet)

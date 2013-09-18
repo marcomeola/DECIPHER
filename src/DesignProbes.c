@@ -37,7 +37,7 @@
 // DECIPHER header file
 #include "DECIPHER.h"
 
-SEXP designProbes(SEXP x, SEXP max_pl, SEXP min_pl, SEXP max_c, SEXP numMMs, SEXP numPs, SEXP st, SEXP en, SEXP max_ov, SEXP h_percent, SEXP min_f, SEXP max_f, SEXP minS, SEXP verbose, SEXP pBar)
+SEXP designProbes(SEXP x, SEXP max_pl, SEXP min_pl, SEXP max_c, SEXP numMMs, SEXP numPs, SEXP st, SEXP en, SEXP max_ov, SEXP h_percent, SEXP min_f, SEXP max_f, SEXP minS, SEXP verbose, SEXP pBar, SEXP nThreads)
 {
 	cachedXStringSet x_set;
 	cachedCharSeq x_i, x_l;
@@ -55,6 +55,7 @@ SEXP designProbes(SEXP x, SEXP max_pl, SEXP min_pl, SEXP max_c, SEXP numMMs, SEX
 	int polyT = 20; // maximum length of poly-T base
 	double *rans, *rMMs;
 	SEXP ans, MMs, probes, perms, percentComplete, utilsPackage;
+	int nthreads = asInteger(nThreads);
 	
 	v = asLogical(verbose);
 	if (v) { // percent complete variables
@@ -255,7 +256,8 @@ SEXP designProbes(SEXP x, SEXP max_pl, SEXP min_pl, SEXP max_c, SEXP numMMs, SEX
 		#pragma omp parallel for \
 			private(x_l, j, k, l, p, n, o) \
 			default(shared) \
-			schedule(guided)
+			schedule(guided) \
+			num_threads(nthreads)
 		for (j = 0; j <= (count - max_probeLength); j++) {
 			// score each possible oligo
 			int combos = 1; // number of ambiguities

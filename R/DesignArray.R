@@ -11,6 +11,7 @@ DesignArray <- function(myDNAStringSet,
 	minMeltingFormamide=15,
 	maxMeltingFormamide=20,
 	minScore=-1e12,
+	processors=NULL,
 	verbose=TRUE) {
 	
 	# error checking
@@ -70,6 +71,17 @@ DesignArray <- function(myDNAStringSet,
 		stop("maxOverlap must be a positive integer")
 	if (numRecordedMismatches*length(myDNAStringSet) > (2^31 - 1)/2)
 		stop("numRecordedMismatches is too large.")
+	if (!is.null(processors) && !is.numeric(processors))
+		stop("processors must be a numeric.")
+	if (!is.null(processors) && floor(processors)!=processors)
+		stop("processors must be a whole number.")
+	if (!is.null(processors) && processors < 1)
+		stop("processors must be at least 1.")
+	if (is.null(processors)) {
+		processors <- detectCores()
+	} else {
+		processors <- as.integer(processors)
+	}
 	
 	if (is.null(end)) {
 		end <- min(width(myDNAStringSet))
@@ -117,6 +129,7 @@ DesignArray <- function(myDNAStringSet,
 		minScore,
 		verbose,
 		pBar,
+		processors,
 		PACKAGE="DECIPHER")
 	
 	w <- which(probes[[1]][,9] != minScore)

@@ -51,13 +51,14 @@ AlignProfiles <- function(pattern,
 	if (!is.null(processors) && !is.numeric(processors))
 		stop("processors must be a numeric.")
 	if (!is.null(processors) && floor(processors)!=processors)
-		stop("processors must be a whole numbers.")
+		stop("processors must be a whole number.")
 	if (!is.null(processors) && processors < 1)
-		stop("processors must be at least one.")
-	if (!is.null(processors) && is.numeric(processors))
-		processors <- as.integer(processors)
-	if (is.null(processors))
+		stop("processors must be at least 1.")
+	if (is.null(processors)) {
 		processors <- detectCores()
+	} else {
+		processors <- as.integer(processors)
+	}
 	
 	p.profile <- .Call("consensusProfile", pattern, p.weight, PACKAGE="DECIPHER")
 	s.profile <- .Call("consensusProfile", subject, s.weight, PACKAGE="DECIPHER")

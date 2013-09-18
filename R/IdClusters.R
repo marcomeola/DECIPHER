@@ -171,7 +171,8 @@ to.dendrogram <- function (object,
 .optimizeModel <- function(myClusters,
 	model,
 	myDNAStringSet,
-	N) {
+	N,
+	processors=NULL) {
 	
 	rates <- as.integer(sub("([^+]*)(\\+G(\\d+))?", "\\3", model))
 	model <- sub("([^+]*)(\\+G(\\d+))?", "\\1", model)
@@ -183,6 +184,7 @@ to.dendrogram <- function (object,
 			c(0.25, 0.25, 0.25, 0.25, 1, 1, 1, 1),
 			integer(),
 			numeric(),
+			processors,
 			PACKAGE="DECIPHER")
 		K <- 2*dim(myClusters)[1] - 1
 		AICc <- 2*K + 2*LnL + 2*K*(K + 1)/(N - K - 1)
@@ -196,6 +198,7 @@ to.dendrogram <- function (object,
 				c(0.25, 0.25, 0.25, 0.25, 1, 1, .rates(params, rates)),
 				integer(),
 				numeric(),
+				processors,
 				PACKAGE="DECIPHER")
 		}
 		o <- optimize(f, c(0.001, 500), tol=1e-4)
@@ -211,6 +214,7 @@ to.dendrogram <- function (object,
 				c(0.25, 0.25, 0.25, 0.25, params, params, 1, 1),
 				integer(),
 				numeric(),
+				processors,
 				PACKAGE="DECIPHER")
 		}
 		o <- optimize(f, c(0, 10), tol=1e-4)
@@ -223,6 +227,7 @@ to.dendrogram <- function (object,
 					c(0.25, 0.25, 0.25, 0.25, o$minimum, o$minimum, .rates(params, rates)),
 					integer(),
 					numeric(),
+					processors,
 					PACKAGE="DECIPHER")
 			}
 			a <- optimize(f, c(0.001, 500), tol=1e-4)
@@ -248,6 +253,7 @@ to.dendrogram <- function (object,
 				c(params[1], params[2], params[3], 1 - sum(params), 1, 1, 1, 1),
 				integer(),
 				numeric(),
+				processors,
 				PACKAGE="DECIPHER")
 		}
 		o <- nlminb(rep(0.25, 3),
@@ -264,6 +270,7 @@ to.dendrogram <- function (object,
 					c(o$par, 1 - sum(o$par), 1, 1, .rates(params, rates)),
 					integer(),
 					numeric(),
+					processors,
 					PACKAGE="DECIPHER")
 			}
 			a <- optimize(f, c(0.001, 500), tol=1e-4)
@@ -289,6 +296,7 @@ to.dendrogram <- function (object,
 				c(params[1], params[2], params[3], 1 - sum(params[1:3]), 1, 1, 1, 1),
 				integer(),
 				numeric(),
+				processors,
 				PACKAGE="DECIPHER")
 		}
 		baseFreqs <- nlminb(rep(0.25, 3),
@@ -305,6 +313,7 @@ to.dendrogram <- function (object,
 				c(baseFreqs, params, params, 1, 1),
 				integer(),
 				numeric(),
+				processors,
 				PACKAGE="DECIPHER")
 		}
 		o <- nlminb(1,
@@ -321,6 +330,7 @@ to.dendrogram <- function (object,
 					c(baseFreqs, o$par[1], o$par[1], .rates(params, rates)),
 					integer(),
 					numeric(),
+					processors,
 					PACKAGE="DECIPHER")
 			}
 			a <- optimize(f, c(0.001, 500), tol=1e-4)
@@ -346,6 +356,7 @@ to.dendrogram <- function (object,
 				c(params, rep((1 - 2*params)/2, 2), params, 1, 1, 1, 1),
 				integer(),
 				numeric(),
+				processors,
 				PACKAGE="DECIPHER")
 		}
 		o <- nlminb(0.25,
@@ -362,6 +373,7 @@ to.dendrogram <- function (object,
 				c(baseFreqs, params, params, 1, 1),
 				integer(),
 				numeric(),
+				processors,
 				PACKAGE="DECIPHER")
 		}
 		o <- nlminb(1,
@@ -378,6 +390,7 @@ to.dendrogram <- function (object,
 					c(baseFreqs, o$par[1], o$par[1], .rates(params, rates)),
 					integer(),
 					numeric(),
+					processors,
 					PACKAGE="DECIPHER")
 			}
 			a <- optimize(f, c(0.001, 500), tol=1e-4)
@@ -403,6 +416,7 @@ to.dendrogram <- function (object,
 				c(params[1], params[2], params[3], 1 - sum(params[1:3]), 1, 1, 1, 1),
 				integer(),
 				numeric(),
+				processors,
 				PACKAGE="DECIPHER")
 		}
 		o <- nlminb(rep(0.25, 3),
@@ -419,6 +433,7 @@ to.dendrogram <- function (object,
 				c(baseFreqs, params[1], params[2], 1, 1),
 				integer(),
 				numeric(),
+				processors,
 				PACKAGE="DECIPHER")
 		}
 		o <- nlminb(c(1, 1),
@@ -435,6 +450,7 @@ to.dendrogram <- function (object,
 					c(baseFreqs, o$par[1], o$par[2], .rates(params, rates)),
 					integer(),
 					numeric(),
+					processors,
 					PACKAGE="DECIPHER")
 			}
 			a <- optimize(f, c(0.001, 500), tol=1e-4)
@@ -796,6 +812,7 @@ IdClusters <- function(myDistMatrix,
 	model=MODELS,
 	add2tbl=FALSE,
 	dbFile=NULL,
+	processors=NULL,
 	verbose=TRUE) {
 	
 	# initialize variables
@@ -844,6 +861,17 @@ IdClusters <- function(myDistMatrix,
 				stop("dbFile must be a character string or connection if add2tbl.")
 	if (!is.logical(verbose))
 		stop("verbose must be a logical.")
+	if (!is.null(processors) && !is.numeric(processors))
+		stop("processors must be a numeric.")
+	if (!is.null(processors) && floor(processors)!=processors)
+		stop("processors must be a whole number.")
+	if (!is.null(processors) && processors < 1)
+		stop("processors must be at least 1.")
+	if (is.null(processors)) {
+		processors <- detectCores()
+	} else {
+		processors <- as.integer(processors)
+	}
 	dim <- dim(myDistMatrix)
 	if (dim[2]!=dim[1])
 		stop("\nYour distance matrix is not square.")
@@ -904,6 +932,7 @@ IdClusters <- function(myDistMatrix,
 			cutoff[1],
 			verbose,
 			pBar,
+			processors,
 			PACKAGE="DECIPHER")
 	
 	if (method==2 ||
@@ -916,6 +945,7 @@ IdClusters <- function(myDistMatrix,
 			method,
 			verbose,
 			pBar,
+			processors,
 			PACKAGE="DECIPHER")
 	
 	if (method==3) {
@@ -925,6 +955,7 @@ IdClusters <- function(myDistMatrix,
 			cutoff=-Inf,
 			verbose,
 			pBar,
+			processors,
 			PACKAGE="DECIPHER")
 		myClusters <- .reorderClusters(myClusters)
 		
@@ -949,7 +980,8 @@ IdClusters <- function(myDistMatrix,
 				m[model[i],] <- .optimizeModel(myClusters,
 					model[i],
 					myDNAStringSet,
-					N)
+					N,
+					processors=processors)
 				if (verbose)
 					cat("\n", model[i],
 						":", paste(rep(" ",
@@ -1083,6 +1115,7 @@ IdClusters <- function(myDistMatrix,
 				model_params,
 				branches,
 				lengths,
+				processors,
 				PACKAGE="DECIPHER")
 			
 			w <- which.min(LnL)
@@ -1111,6 +1144,7 @@ IdClusters <- function(myDistMatrix,
 				model_params,
 				integer(),
 				numeric(),
+				processors,
 				PACKAGE="DECIPHER")
 			
 			if (LnL < .bestLnL - tol) {

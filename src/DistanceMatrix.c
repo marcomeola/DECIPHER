@@ -125,7 +125,7 @@ static int endTerminalGaps(const cachedCharSeq *P)
 }
 
 //ans_start <- .Call("distMatrix", myDNAStringSet, pBar, PACKAGE="DECIPHER")
-SEXP distMatrix(SEXP x, SEXP terminalGaps, SEXP penalizeGapGaps, SEXP penalizeGapLetters, SEXP verbose, SEXP pBar)
+SEXP distMatrix(SEXP x, SEXP terminalGaps, SEXP penalizeGapGaps, SEXP penalizeGapLetters, SEXP verbose, SEXP pBar, SEXP nThreads)
 {
 	cachedXStringSet x_set;
 	cachedCharSeq x_i, x_j;
@@ -133,6 +133,7 @@ SEXP distMatrix(SEXP x, SEXP terminalGaps, SEXP penalizeGapGaps, SEXP penalizeGa
 	int pGapLetters, pGapsGaps, tGaps;
 	int soFar, before, v, *rPercentComplete;
 	double *rans;
+	int nthreads = asInteger(nThreads);
 	SEXP ans, percentComplete, utilsPackage;
 	v = asLogical(verbose);
 	if (v) { // percent complete variables
@@ -171,7 +172,7 @@ SEXP distMatrix(SEXP x, SEXP terminalGaps, SEXP penalizeGapGaps, SEXP penalizeGa
 			x_i = get_cachedXStringSet_elt(&x_set, i);
 			seqLength_i = x_i.length;
 			
-			#pragma omp parallel for private(j,x_j,seqLength_j,start,end) schedule(guided)
+			#pragma omp parallel for private(j,x_j,seqLength_j,start,end) schedule(guided) num_threads(nthreads)
 			for (j = (i+1); j < x_length; j++) {
 				// extract each jth DNAString from the DNAStringSet
 				x_j = get_cachedXStringSet_elt(&x_set, j);

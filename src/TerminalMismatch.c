@@ -28,7 +28,7 @@
 #include "DECIPHER.h"
 
 //ans_start <- .Call("terminalMismatch", probes, targets, cut, mGaps, PACKAGE="DECIPHER")
-SEXP terminalMismatch(SEXP p, SEXP t, SEXP cutoff, SEXP mGaps)
+SEXP terminalMismatch(SEXP p, SEXP t, SEXP cutoff, SEXP mGaps, SEXP nThreads)
 {
 	int i, j, lp, lt, l, mm, count, end, gaps;
 	int n = length(p);
@@ -37,13 +37,14 @@ SEXP terminalMismatch(SEXP p, SEXP t, SEXP cutoff, SEXP mGaps)
 	const char *target;
 	cut = REAL(cutoff);
 	int maxGaps = asInteger(mGaps);
+	int nthreads = asInteger(nThreads);
 	
 	double *rans;
 	SEXP ans;
 	PROTECT(ans = allocVector(REALSXP, n));
 	rans = REAL(ans);
 	
-	#pragma omp parallel for private(i,j,lp,lt,l,mm,count,end,gaps,probe,target) schedule(guided)
+	#pragma omp parallel for private(i,j,lp,lt,l,mm,count,end,gaps,probe,target) schedule(guided) num_threads(nthreads)
 	for (i = 0; i < n; i++) {
 		lp = length(STRING_ELT(p, i)) - 1;
 		lt = length(STRING_ELT(t, i)) - 1;

@@ -6,6 +6,7 @@ CreateChimeras <- function(myDNAStringSet,
 	minChimericRegionLength=30,
 	randomLengths=TRUE,
 	includeParents=TRUE,
+	processors=NULL,
 	verbose=TRUE) {
 	
 	# error checking
@@ -47,6 +48,17 @@ CreateChimeras <- function(myDNAStringSet,
 		stop("maxLength must be a whole number.")
 	if (maxLength < 0)
 		stop("maxLength must be greater than or equal to zero.")
+	if (!is.null(processors) && !is.numeric(processors))
+		stop("processors must be a numeric.")
+	if (!is.null(processors) && floor(processors)!=processors)
+		stop("processors must be a whole number.")
+	if (!is.null(processors) && processors < 1)
+		stop("processors must be at least 1.")
+	if (is.null(processors)) {
+		processors <- detectCores()
+	} else {
+		processors <- as.integer(processors)
+	}
 	
 	# initialize variables
 	time.1 <- Sys.time()
@@ -178,7 +190,7 @@ CreateChimeras <- function(myDNAStringSet,
 				p,
 				sep="")
 		}
-		expr1 <- paste(expr1, "), chimera), verbose=FALSE)", sep="")
+		expr1 <- paste(expr1, "), chimera), processors=processors, verbose=FALSE)", sep="")
 		eval(parse(text=expr1))
 		
 		add2set <- TRUE
@@ -311,7 +323,7 @@ CreateChimeras <- function(myDNAStringSet,
 						sep="")
 				}
 			}
-			expr1 <- paste(expr1, "), verbose=FALSE)", sep="")
+			expr1 <- paste(expr1, "), processors=processors, verbose=FALSE)", sep="")
 			eval(parse(text=expr1))
 			
 			for (p in 1:numParts) {

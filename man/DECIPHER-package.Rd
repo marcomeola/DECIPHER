@@ -12,9 +12,9 @@ Database Enabled Code for Ideal Probe Hybridization Employing R (DECIPHER) is a 
 \tabular{ll}{
 Package: \tab DECIPHER\cr
 Type: \tab Package\cr
-Depends: \tab R (>= 2.13.0), Biostrings (>= 2.29), RSQLite (>= 0.9), IRanges, stats\cr
-Imports: \tab Biostrings, RSQLite, IRanges, stats\cr
-LinkingTo: \tab Biostrings, RSQLite, IRanges, stats\cr
+Depends: \tab R (>= 2.13.0), Biostrings (>= 2.29), RSQLite (>= 0.9), IRanges, stats, XVector, parallel\cr
+Imports: \tab Biostrings, parallel, RSQLite, IRanges, stats, XVector\cr
+LinkingTo: \tab Biostrings, parallel, RSQLite, IRanges, stats, XVector\cr
 License: \tab GPL-3\cr
 LazyLoad: \tab yes\cr
 }
@@ -27,6 +27,7 @@ BrowseDB                 View A Database Table In A Web Browser
 BrowseSequences          View Sequences In A Web Browser
 CalculateEfficiencyArray Predicts the Hybridization Efficiency of
                          Probe/Target Sequence Pairs
+CalculateEfficiencyFISH  Predicts Thermodynamic Parameters of Probe/Target Sequence Pairs
 CalculateEfficiencyPCR   Predicts Amplification Efficiency of Primer Sequences
 ConsensusSequence        Create A Consensus Sequence
 CreateChimeras           Creates Artificial Chimeras
@@ -37,6 +38,7 @@ DesignArray              Designs a set of DNA Microarray Probes for Detecting
                          Sequences
 DesignPrimers            Designs Primers Targeting a Specific Group of
                          Sequences
+DesignProbes             Designs FISH Probes Targeting a Specific Group of Sequences
 DistanceMatrix           Calculate the Distance Between DNA Sequences
 FindChimeras             Find Chimeras In A Sequence Database
 FormGroups               Forms Groups By Rank

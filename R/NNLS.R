@@ -1,6 +1,7 @@
 NNLS <- function(A,
 	b,
 	precision=sqrt(.Machine$double.eps),
+	processors=NULL,
 	verbose=TRUE) {
 	if (length(A) != 4)
 		stop("A must have four components: A$i, A$j, A$x, and A$dimnames.")
@@ -31,6 +32,17 @@ NNLS <- function(A,
 		stop("precision must be a positive number.")
 	if (!is.logical(verbose))
 		stop("verbose must be a logical.")
+	if (!is.null(processors) && !is.numeric(processors))
+		stop("processors must be a numeric.")
+	if (!is.null(processors) && floor(processors)!=processors)
+		stop("processors must be a whole number.")
+	if (!is.null(processors) && processors < 1)
+		stop("processors must be at least 1.")
+	if (is.null(processors)) {
+		processors <- detectCores()
+	} else {
+		processors <- as.integer(processors)
+	}
 	
 	if (verbose) {
 		time.1 <- Sys.time()
@@ -50,6 +62,7 @@ NNLS <- function(A,
 		precision,
 		verbose,
 		pBar,
+		processors,
 		PACKAGE="DECIPHER")
 	b <- matrix(b, ncol=ncol(x))
 	res <- b - .Call("sparseMult",

@@ -164,15 +164,15 @@ Add2DB(data.frame(id=desc), dbConn)
 
 \subsection{Tiling Sequences}
 
-We continue by creating a set of k-mers, known as ``tiles'', that represents the sequences in each group.  Here we must make several decisions that will affect primer design in the future.  The defaults are to create tiles of length 26-27 base pairs with up to 10 permutations that represent at least 90\% of the permutations present in each target site.  These parameters will generally fit most primer designs, but it is recommended to read the help file for the \Rfunction{TileSeqs} function to make sure that it is doing what is desired.  We will save the resulting tiles back to the database as a new table named ``Tiles'' in case we wish to access them in the future.
+We continue by creating a set of k-mers, known as ``tiles'', that represent the sequences in each group.  Here we must make several decisions that will affect primer design in the future.  The defaults are to create tiles of length 26-27 nucleotides with up to 10 permutations that represent at least 90\% of the permutations present in each target site.  These parameters will generally fit most primer designs, but it is recommended to read the help file for the \Rfunction{TileSeqs} function to make sure that it is doing what is desired.  We will save the resulting tiles back to the database as a new table named ``Tiles'' in case we wish to access them in the future.
 
 <<expr5,eval=FALSE>>=
-tiles <- TileSeqs(dbConn, add2tbl="Tiles")
+tiles <- TileSeqs(dbConn, add2tbl="Tiles", minCoverage=1)
 @
 
 \begin{Schunk}
 \begin{Sinput}
-  |===============================================================================| 100%
+  |===========================================================================| 100%
 
 Time difference of 102.9 secs
 \end{Sinput}
@@ -217,7 +217,7 @@ primers <- DesignPrimers(tiles, identifier="avermitilis",
 \begin{Schunk}
 \begin{Sinput}
 avermitilis (499):
-  |===============================================================================| 100%
+  |===========================================================================| 100%
 
 Time difference of 20 secs
 \end{Sinput}
@@ -289,9 +289,9 @@ primers <- DesignPrimers(tiles, identifier="avermitilis", minCoverage=1,
 \begin{Schunk}
 \begin{Sinput}
 avermitilis (499):
-  |===============================================================================| 100%
+  |===========================================================================| 100%
 Determining Best Primer Pairs:
-  |===============================================================================| 100%
+  |===========================================================================| 100%
 
 Time difference of 50 secs
 \end{Sinput}
@@ -353,12 +353,14 @@ head(primers)
 3                  1                 NA                 NA                 NA
 4                  1                 NA                 NA                 NA
 5                  1                 NA                 NA                 NA
-                                                                                                          mismatches_forward
+mismatches_forward
 1                                                                                                                           
 2                                                                                                                           
 3                                                                                                                           
-4 lividans (0.368%,TATTCGGCACACTCGA-CCT/AGGATCAAGTGTGCCGAGT-) coelicolor (0.368%,TATTCGGCACACTCGA-CCT/AGGATCAAGTGTGCCGAGT-) 
-5         lividans (0.856%,TCGGCACACTCGA-CCTG/CAGGATCAAGTGTGCCGA) coelicolor (0.856%,TCGGCACACTCGA-CCTG/CAGGATCAAGTGTGCCGA) 
+4 lividans (0.368%,TATTCGGCACACTCGA-CCT/AGGATCAAGTGTGCCGAGT-)
+coelicolor (0.368%,TATTCGGCACACTCGA-CCT/AGGATCAAGTGTGCCGAGT-) 
+5         lividans (0.856%,TCGGCACACTCGA-CCTG/CAGGATCAAGTGTGCCGA)
+coelicolor (0.856%,TCGGCACACTCGA-CCTG/CAGGATCAAGTGTGCCGA) 
   mismatches_reverse mismatches_set
 1                                  
 2                                  
@@ -406,10 +408,11 @@ We originally designed the primers to have at least 80\% \code{minEfficiency} at
 
 \subsection{Visualizing the Target Sites}
 
-Often it is useful to visualize the sequence region where the primers will anneal on both the target and non-targets side by side.  We can accomplish this by looking at the amplicon sequences and highlighting the region of both primers.  First we query the database for the sequences of interest and proceed to crop them to the region around the amplicon given by the \code{start_aligned_forward} and \code{start_aligned_reverse} outputs of \Rfunction{DesignPrimers}.  Next we name and order the unique sequences in the set such that the target (\textit{S. avermitilis}) appears at the top.
+Often it is useful to visualize the sequence region where the primers will anneal on both the target and non-targets side-by-side.  We can accomplish this by looking at the amplicon sequences and highlighting the region of both primers.  First we query the database for the sequences of interest and proceed to trim them to the region around the amplicon given by the \code{start_aligned_forward} and \code{start_aligned_reverse} outputs of \Rfunction{DesignPrimers}.  Next we name and order the unique sequences in the set such that the target (\textit{S. avermitilis}) appears at the top.
 
 <<expr13,eval=TRUE>>=
 dna <- SearchDB(dbConn)
+dbDisconnect(dbConn)
 amplicon <- subseq(dna, 247, 344)
 names(amplicon) <- desc
 # only show unique sequences

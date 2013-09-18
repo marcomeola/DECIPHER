@@ -10,6 +10,7 @@ Consider the linear system \eqn{\textbf{A} x = b} where \eqn{\textbf{A} \in  R\t
 NNLS(A,
      b,
      precision = sqrt(.Machine$double.eps),
+     processors = NULL,
      verbose = TRUE)
 }
 \arguments{
@@ -21,6 +22,9 @@ Numeric matrix for the set of observed values.  (See details section below.)
 }
   \item{precision}{
 The desired accuracy.
+}
+  \item{processors}{
+The number of processors to use, or \code{NULL} (the default) for all available processors.
 }
   \item{verbose}{
 Logical indicating whether to display progress.

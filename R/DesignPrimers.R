@@ -3,7 +3,8 @@
 	temp,
 	P,
 	ions,
-	minOverlap=6) {
+	minOverlap=6,
+	processors=NULL) {
 	
 	RT <- .0019871*(273.15 + temp)
 	
@@ -90,8 +91,8 @@
 	primer1 <- substr(primer1, t[,2] + 1, t[,2] + t[,3])
 	primer2 <- substr(primer2, t[,1] + 1, t[,1] + t[,3])
 	
-	eff1 <- .Call("terminalMismatch", primer1, primer2, .2, 0, PACKAGE="DECIPHER")
-	eff2 <- .Call("terminalMismatch", primer2, primer1, .2, 0, PACKAGE="DECIPHER")
+	eff1 <- .Call("terminalMismatch", primer1, primer2, .2, 0, processors, PACKAGE="DECIPHER")
+	eff2 <- .Call("terminalMismatch", primer2, primer1, .2, 0, processors, PACKAGE="DECIPHER")
 	eff_taq <- sqrt(eff1*eff2)
 	
 	n <- nchar(primer1)
@@ -128,6 +129,7 @@ DesignPrimers <- function(tiles,
 	ragged5Prime=TRUE,
 	taqEfficiency=TRUE,
 	induceMismatch=FALSE,
+	processors=NULL,
 	verbose=TRUE) {
 	
 	# error checking
@@ -266,6 +268,17 @@ DesignPrimers <- function(tiles,
 		if (length(w) > 0)
 			stop("identifier not in tiles: ",
 				paste(identifier[w], collapse=", "))
+	}
+	if (!is.null(processors) && !is.numeric(processors))
+		stop("processors must be a numeric.")
+	if (!is.null(processors) && floor(processors)!=processors)
+		stop("processors must be a whole number.")
+	if (!is.null(processors) && processors < 1)
+		stop("processors must be at least 1.")
+	if (is.null(processors)) {
+		processors <- detectCores()
+	} else {
+		processors <- as.integer(processors)
 	}
 	
 	primers_all <- data.frame()
@@ -475,7 +488,8 @@ DesignPrimers <- function(tiles,
 				ions,
 				batchSize,
 				taqEfficiency=taqEfficiency,
-				maxDistance)
+				maxDistance,
+				processors=processors)
 			w <- which(eff > minEfficiency)
 			if (length(empty) > 0) {
 				primers$forward_primer[-empty][w] <- targets_F[,,j][-empty][w]
@@ -515,7 +529,8 @@ DesignPrimers <- function(tiles,
 				ions,
 				batchSize,
 				taqEfficiency=taqEfficiency,
-				maxDistance)
+				maxDistance,
+				processors=processors)
 			w <- which(eff > minEfficiency)
 			if (length(empty) > 0) {
 				primers$reverse_primer[-empty][w] <- strsplit(toString(reverseComplement(DNAStringSet(targets_R[,,j][-empty][w]))),
@@ -643,7 +658,8 @@ DesignPrimers <- function(tiles,
 					ions,
 					batchSize,
 					taqEfficiency=taqEfficiency,
-					maxDistance)
+					maxDistance,
+					processors=processors)
 				W <- which(eff_PM >= minEfficiency)
 				w <- w[W]
 				if (length(w)==0)
@@ -658,7 +674,8 @@ DesignPrimers <- function(tiles,
 					ions,
 					batchSize,
 					taqEfficiency=taqEfficiency,
-					maxDistance)
+					maxDistance,
+					processors=processors)
 				W <- which(is.na(primers$forward_MM[w]))
 				nnas <- which(!is.na(primers$forward_MM[w]))
 				if (length(nnas) > 0)
@@ -727,7 +744,8 @@ DesignPrimers <- function(tiles,
 					ions,
 					batchSize,
 					taqEfficiency=taqEfficiency,
-					maxDistance)
+					maxDistance,
+					processors=processors)
 				W <- which(eff_PM >= minEfficiency)
 				w <- w[W]
 				if (length(w)==0)
@@ -742,7 +760,8 @@ DesignPrimers <- function(tiles,
 					ions,
 					batchSize,
 					taqEfficiency=taqEfficiency,
-					maxDistance)
+					maxDistance,
+					processors=processors)
 				W <- which(is.na(primers$reverse_MM[w]))
 				nnas <- which(!is.na(primers$reverse_MM[w]))
 				if (length(nnas) > 0)
@@ -860,7 +879,8 @@ DesignPrimers <- function(tiles,
 					ions,
 					batchSize,
 					taqEfficiency=taqEfficiency,
-					maxDistance)
+					maxDistance,
+					processors=processors)
 				
 				eff_max_F <- numeric(d)
 				count_F <- 1
@@ -893,7 +913,8 @@ DesignPrimers <- function(tiles,
 					ions,
 					batchSize,
 					taqEfficiency=taqEfficiency,
-					maxDistance)
+					maxDistance,
+					processors=processors)
 				
 				eff_max_R <- numeric(d)
 				count_R <- 1
@@ -1070,7 +1091,7 @@ DesignPrimers <- function(tiles,
 					seqs1 <- seqs1[-remove]
 					seqs2 <- seqs2[-remove]
 				}
-				eff_pd <- .primerDimer(seqs1, seqs2, annealingTemp, P, ions)
+				eff_pd <- .primerDimer(seqs1, seqs2, annealingTemp, P, ions, processors=processors)
 				if (any(eff_pd >= primerDimer)) # primer-dimer
 					next
 				
@@ -1140,7 +1161,8 @@ DesignPrimers <- function(tiles,
 						ions,
 						batchSize,
 						taqEfficiency=taqEfficiency,
-						maxDistance)
+						maxDistance,
+						processors=processors)
 					
 					if (ragged5Prime) {
 						w_max <- which(eff==max(eff))
@@ -1217,7 +1239,8 @@ DesignPrimers <- function(tiles,
 						ions,
 						batchSize,
 						taqEfficiency=taqEfficiency,
-						maxDistance)
+						maxDistance,
+						processors=processors)
 					
 					if (ragged5Prime) {
 						w_max <- which.max(eff)
@@ -1352,7 +1375,7 @@ DesignPrimers <- function(tiles,
 						seqs1 <- seqs1[-remove]
 						seqs2 <- seqs2[-remove]
 					}
-					eff_pd <- .primerDimer(seqs1, seqs2, annealingTemp, P, ions)
+					eff_pd <- .primerDimer(seqs1, seqs2, annealingTemp, P, ions, processors=processors)
 					if (any(eff_pd >= primerDimer)) # primer-dimer
 						next
 					

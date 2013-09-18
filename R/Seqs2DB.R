@@ -259,9 +259,8 @@ Seqs2DB <- function(seqs,
 			
 			# descriptions contains the line index of each sequence
 			descriptions <- which(substr(s1, 1L, 10L) == "DEFINITION")
-			rank <- which(substr(s1, 3L, 10L) == "ORGANISM") + 1
 			accession <- which(substr(s1, 1L, 9L) == "ACCESSION")
-			seq_start <- which(substr(s1, 1L, 6L) == "ORIGIN") + 1
+			seq_start <- grep("CONTIG|ORIGIN", substr(s1, 1L, 6L)) + 1
 			seq_end <- which(substr(s1, 1L, 2L) == "//") - 1
 			
 			# remove the last incomplete sequence unless it is the end of file
@@ -269,6 +268,7 @@ Seqs2DB <- function(seqs,
 			if (length(s1)==(chunkSize + l)) {
 				buffer <- s1[descriptions[length(descriptions)]:length(s1)]
 				length(descriptions) <- length(descriptions) - 1L
+				length(accession) <- length(seq_start) <- length(seq_end) <- length(descriptions)
 			} else {
 				buffer <- character()
 			}
@@ -281,7 +281,7 @@ Seqs2DB <- function(seqs,
 			# build the data frame sequence by sequence
 			myData <- data.frame(row_names=seq(from=(numSeq + 1),
 					to=(numSeq + length(descriptions))),
-					id=identifier)
+				id=identifier)
 			
 			myData$description <- substr(s1[descriptions],
 				13L,
@@ -293,6 +293,8 @@ Seqs2DB <- function(seqs,
 			
 			sequence <- lapply(seq_len(numF),
 				function(i) {
+					if (seq_start[i] > seq_end[i])
+						return("")
 					seq <- paste(
 						s1[seq_start[i]:seq_end[i]],
 						collapse = "")
@@ -302,38 +304,31 @@ Seqs2DB <- function(seqs,
 						perl=TRUE)
 				}
 			)
+			
 			myData_ <- data.frame(row_names=seq(from=(numSeq + 1),
 					to=(numSeq + length(descriptions))),
 				sequence=I(lapply(sequence,
 					memCompress,
 					type="gzip")))
 			
+			# parse the ORGANISM lines into a rank field
+			ranks <- character(numF)
 			for (i in 1:numF) {
-				# parse the ORGANISM line into a rank field
-				j <- 0L
-				lineage <- FALSE
-				if (is.na(rank[i])) {
-					myData$rank[i] <- "unknown"
+				rank <- which(substr(s1[descriptions[i]:seq_start[i]], 3L, 10L) == "ORGANISM") + descriptions[i]
+				if (length(rank)==0)
 					next
-				}
-				while (substr(s1[rank[i] + j], 1L, 1L)==" ") {
-					if (lineage || grepl(";",
-							substr(s1[rank[i] + j],
+				
+				j <- 0L
+				while (substr(s1[rank + j], 1L, 1L)==" ") {
+					ranks[i] <- paste(ranks[i],
+						substr(s1[rank + j],
 							13L,
-							nchar(s1[rank[i] + j])),
-							fixed=TRUE)) {
-						if (!lineage)
-							myData$rank[i] <- ""
-						lineage <- TRUE
-						myData$rank[i] <- paste(myData$rank[i],
-							substr(s1[rank[i] + j],
-							13L,
-							nchar(s1[rank[i] + j])),
-							sep="")
-					}
+							nchar(s1[rank + j])),
+						sep="")
 					j <- j + 1L
 				}
 			}
+			myData$rank <- ranks
 			
 			# add database columns to the data frame
 			if (length(f) > 0) {

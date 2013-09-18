@@ -16,6 +16,7 @@ IdClusters(myDistMatrix,
            model = MODELS,
            add2tbl = FALSE,
            dbFile = NULL,
+           processors = NULL,
            verbose = TRUE)
 }
 \arguments{
@@ -45,6 +46,9 @@ Logical or a character string specifying the table name in which to add the resu
 }
   \item{dbFile}{
 A connection to a SQLite database or character string giving the path to the database file.  Only necessary if \code{add2tbl} is not \code{FALSE}.
+}
+  \item{processors}{
+The number of processors to use, or \code{NULL} (the default) for all available processors.
 }
   \item{verbose}{
 Logical indicating whether to display progress.

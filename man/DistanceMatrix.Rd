@@ -13,6 +13,7 @@ DistanceMatrix(myDNAStringSet,
                penalizeGapGapMatches = FALSE,
                removeDuplicates = FALSE,
                correction = "none",
+               processors = NULL,
                verbose = TRUE)
 }
 \arguments{
@@ -33,6 +34,9 @@ Logical specifying whether to remove any identical sequences from the input sequ
 }
   \item{correction}{
 The substitution model used for distance correction.  This should be (an unambiguous abbreviation of) one of \code{"none"} or \code{"Jukes-Cantor"}.
+}
+  \item{processors}{
+The number of processors to use, or \code{NULL} (the default) for all available processors.
 }
   \item{verbose}{
 Logical indicating whether to display progress.

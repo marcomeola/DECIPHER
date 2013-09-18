@@ -6,7 +6,8 @@ CalculateEfficiencyPCR <- function(primer,
 	batchSize=1000,
 	taqEfficiency=TRUE,
 	maxDistance=.4,
-	maxGaps=2) {
+	maxGaps=2,
+	processors=NULL) {
 	
 	# error checking
 	if (is.character(primer))
@@ -47,6 +48,17 @@ CalculateEfficiencyPCR <- function(primer,
 		stop("maxGaps must be a numeric.")
 	if (maxGaps < 0)
 		stop("maxGaps must be at least zero.")
+	if (!is.null(processors) && !is.numeric(processors))
+		stop("processors must be a numeric.")
+	if (!is.null(processors) && floor(processors)!=processors)
+		stop("processors must be a whole number.")
+	if (!is.null(processors) && processors < 1)
+		stop("processors must be at least 1.")
+	if (is.null(processors)) {
+		processors <- detectCores()
+	} else {
+		processors <- as.integer(processors)
+	}
 	
 	RT <- .0019871*(273.15 + temp) # [kcal/mol]
 	l <- length(primer)
@@ -75,7 +87,7 @@ CalculateEfficiencyPCR <- function(primer,
 		seqs2 <- unlist(strsplit(toString(seqs2), ", ", fixed=TRUE))
 		
 		# calculate elongation efficiency
-		eff_taq <- .Call("terminalMismatch", seqs1, seqs2, maxDistance, maxGaps, PACKAGE="DECIPHER")
+		eff_taq <- .Call("terminalMismatch", seqs1, seqs2, maxDistance, maxGaps, processors, PACKAGE="DECIPHER")
 	} else {
 		eff_taq <- numeric(l)
 		eff_taq[] <- 1

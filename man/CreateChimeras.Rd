@@ -15,6 +15,7 @@ CreateChimeras(myDNAStringSet,
                minChimericRegionLength = 30,
                randomLengths = TRUE,
                includeParents = TRUE,
+               processors = NULL,
                verbose = TRUE)
 }
 \arguments{
@@ -41,6 +42,9 @@ Logical specifying whether to create random length chimeras in addition to rando
 }
   \item{includeParents}{
 Whether to include the parents of each chimera in the output.
+}
+  \item{processors}{
+The number of processors to use, or \code{NULL} (the default) for all available processors.
 }
   \item{verbose}{
 Logical indicating whether to display progress.

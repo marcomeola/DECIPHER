@@ -7,6 +7,7 @@ AlignSeqs <- function(myDNAStringSet,
 	doNotAlign=0.75,
 	guideTree=NULL,
 	orient=TRUE,
+	processors=NULL,
 	verbose=TRUE) {
 	
 	# error checking
@@ -49,6 +50,17 @@ AlignSeqs <- function(myDNAStringSet,
 	a <- alphabetFrequency(myDNAStringSet)
 	if (any(a[, "-"]) > 0)
 		stop("Gaps must be removed before alignment.")
+	if (!is.null(processors) && !is.numeric(processors))
+		stop("processors must be a numeric.")
+	if (!is.null(processors) && floor(processors)!=processors)
+		stop("processors must be a whole number.")
+	if (!is.null(processors) && processors < 1)
+		stop("processors must be at least 1.")
+	if (is.null(processors)) {
+		processors <- detectCores()
+	} else {
+		processors <- as.integer(processors)
+	}
 	
 	if (verbose)
 		time.1 <- Sys.time()
@@ -108,7 +120,7 @@ AlignSeqs <- function(myDNAStringSet,
 			pBar <- NULL
 		}
 		
-		d <- .Call("matchLists", v, verbose, pBar, PACKAGE="DECIPHER")
+		d <- .Call("matchLists", v, verbose, pBar, processors, PACKAGE="DECIPHER")
 		if (doNotAlign[1] < 1) {
 			w <- which(is.na(d))
 			if (length(w) > 0)
@@ -132,7 +144,7 @@ AlignSeqs <- function(myDNAStringSet,
 		}
 		cutoffs <- seq(0, max(d, na.rm=TRUE), 0.01)
 		dimnames(d) <- NULL
-		guideTree <- IdClusters(d, method="UPGMA", cutoff=cutoffs, verbose=verbose)
+		guideTree <- IdClusters(d, method="UPGMA", cutoff=cutoffs, verbose=verbose, processors=processors)
 	}
 	guideTree$Top <- 1
 	cutoffs <- c(cutoffs, doNotAlign[1])
@@ -219,7 +231,8 @@ AlignSeqs <- function(myDNAStringSet,
 						misMatch,
 						gapOpening,
 						gapExtension,
-						terminalGap)
+						terminalGap,
+						processors=processors)
 					
 					steps <- steps + 1
 					x <- grep(w[1], mergers[1:steps], fixed=TRUE)
@@ -257,7 +270,8 @@ AlignSeqs <- function(myDNAStringSet,
 						misMatch,
 						gapOpening,
 						gapExtension,
-						terminalGap)
+						terminalGap,
+						processors=processors)
 					
 					steps <- steps + 1
 					x <- grep(w[g1[1]], mergers[1:steps], fixed=TRUE)
@@ -306,7 +320,7 @@ AlignSeqs <- function(myDNAStringSet,
 			flush.console()
 		}
 		
-		suppressWarnings(d <- DistanceMatrix(dna, verbose=verbose))
+		suppressWarnings(d <- DistanceMatrix(dna, verbose=verbose, processors=processors))
 		if (doNotAlign[2] < 1) {
 			w <- which(is.na(d))
 			if (length(w) > 0)
@@ -320,7 +334,7 @@ AlignSeqs <- function(myDNAStringSet,
 		orgTree <- guideTree
 		cutoffs <- seq(0, max(d, na.rm=TRUE), length.out=100)
 		dimnames(d) <- NULL
-		suppressWarnings(guideTree <- IdClusters(d, cutoff=cutoffs, verbose=verbose, method="UPGMA"))
+		suppressWarnings(guideTree <- IdClusters(d, cutoff=cutoffs, verbose=verbose, method="UPGMA", processors=processors))
 		guideTree$Top <- 1
 		cutoffs <- c(cutoffs, doNotAlign[2])
 		w <- which(is.na(d))
@@ -427,7 +441,8 @@ AlignSeqs <- function(myDNAStringSet,
 							misMatch,
 							gapOpening,
 							gapExtension,
-							terminalGap)
+							terminalGap,
+							processors=processors)
 						
 						if (verbose)
 							setTxtProgressBar(pBar, steps/l)
@@ -486,7 +501,8 @@ AlignSeqs <- function(myDNAStringSet,
 								misMatch,
 								gapOpening,
 								gapExtension,
-								terminalGap)
+								terminalGap,
+								processors=processors)
 						
 						if (verbose)
 							setTxtProgressBar(pBar, steps/l)

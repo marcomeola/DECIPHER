@@ -109,6 +109,8 @@ The functions of DECIPHER can be grouped into several categories based on intend
 \begin{enumerate} \item \Rfunction{CreateChimeras} \item \Rfunction{FindChimeras} \item \Rfunction{FormGroups} \end{enumerate}
 \item Functions related to DNA microarrays:
 \begin{enumerate} \item \Rfunction{Array2Matrix} \item \Rfunction{CalculateEfficiencyArray} \item \Rfunction{DesignArray} \item \Rfunction{NNLS} \end{enumerate}
+\item Functions related to probes for fluorescence \textit{in situ} hybridization (FISH):
+\begin{enumerate} \item \Rfunction{CalculateEfficiencyFISH} \item \Rfunction{DesignProbes} \item \Rfunction{TileSeqs} \end{enumerate}
 \item Functions related to primers for polymerase chain reaction (PCR):
 \begin{enumerate} \item \Rfunction{CalculateEfficiencyPCR} \item \Rfunction{DesignPrimers} \item \Rfunction{TileSeqs} \end{enumerate}
 \end{enumerate}

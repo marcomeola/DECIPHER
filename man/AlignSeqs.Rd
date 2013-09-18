@@ -16,6 +16,7 @@ AlignSeqs(myDNAStringSet,
           doNotAlign = 0.75,
           guideTree = NULL,
           orient = TRUE,
+          processors = NULL,
           verbose = TRUE)
 }
 \arguments{
@@ -45,6 +46,9 @@ Either \code{NULL} or a \code{data.frame} giving the ordered tree structure in w
 }
   \item{orient}{
 Logical specifying whether some sequences may need to be reoriented (reverse complemented) before alignment.  If \code{TRUE}, an attempt to determine orientation will be performed with sequences reoriented as necessary.
+}
+  \item{processors}{
+The number of processors to use, or \code{NULL} (the default) for all available processors.
 }
   \item{verbose}{
 Logical indicating whether to display progress.

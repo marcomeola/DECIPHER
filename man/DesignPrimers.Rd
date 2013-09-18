@@ -1,7 +1,7 @@
 \name{DesignPrimers}
 \alias{DesignPrimers}
 \title{
-Designs Primers Targeting a Specific Group of Sequences
+Designs PCR Primers Targeting a Specific Group of Sequences
 }
 \description{
 Assists in the design of primer sets targeting a specific group of sequences while minimizing the potential to cross-amplify other groups of sequences.
@@ -33,6 +33,7 @@ DesignPrimers(tiles,
               ragged5Prime = TRUE,
               taqEfficiency = TRUE,
               induceMismatch = FALSE,
+              processors = NULL,
               verbose = TRUE)
 }
 \arguments{
@@ -82,10 +83,10 @@ Numeric giving the molar concentration of free nucleotides added to the solution
 Numeric giving the minimum efficiency of hybridization desired for the primer set.  Note that an efficiency of 99% (0.99) will greatly lower predicted specificity of the primer set, however an efficiency of 50% (0.5) may be too low in actuality to amplify the target group due to error in melt temperature predictions.
 }
   \item{worstScore}{
-Numeric specifying the score cutoff to remove target sites from consideration.  For example, a \code{worstScore} of -5 will remove all primer sets scoring below -5, although this may eventually result in no primer sets meeting this criteria.
+Numeric specifying the score cutoff to remove target sites from consideration.  For example, a \code{worstScore} of -5 will remove all primer sets scoring below -5, although this may eventually result in no primer sets meeting the design criteria.
 }
   \item{numPrimerSets}{
-Integer giving the optimal number of primer sets (forward and reverse primer sets) to design.  If set to zero then all possible forward and reverse primers are returned, but the primer sets minimizing potential false positives are not chosen.
+Integer giving the optimal number of primer sets (forward and reverse primer sets) to design.  If set to zero then all possible forward and reverse primers are returned, but the primer sets minimizing potential cross-amplifications are not chosen.
 }
   \item{minProductSize}{
 Integer giving the minimum number of nucleotides desired in the PCR product.
@@ -97,7 +98,7 @@ Integer giving the maximum number of nucleotides desired in the PCR product.
 Integer giving the maximum number of nucleotides to search for false priming upstream and downstream of the expected binding site.
 }
   \item{batchSize}{
-Integer specifying the number of primers to simulate hybridization per batch.  See the Description section below.
+Integer specifying the number of primers to simulate hybridization per batch that is passed to \code{CalculateEfficiencyPCR}.
 }
   \item{maxDistance}{
 Numeric specifying the maximal fraction of mismatched base pairings on a rolling basis beginning from the 3' end of the primer.
@@ -114,6 +115,9 @@ Logical determining whether to make use of elongation efficiency and maxDistance
   \item{induceMismatch}{
 Logical or integer specifying whether to induce a mismatch in the primer with the template DNA.  If \code{TRUE} then a mismatch is induced at the 6th primer position.  If an integer value is provided between 2 and 6 then a mismatch is induced in that primer position.
 }
+  \item{processors}{
+The number of processors to use, or \code{NULL} (the default) for all available processors.
+}
   \item{verbose}{
 Logical indicating whether to display progress.
 }
@@ -126,10 +130,10 @@ Primers are designed from a set of tiles to target each \code{identifier} while 
 If \code{numPrimers} is greater than or equal to one then the set of forward and reverse primers that minimizes potential false positive overlap is returned.  This will also initiate a thorough search through all target sites upstream and downstream of the expected binding sites to ensure that the primers do not bind to nearby positions.  Lowering the \code{maxSearchSize} will speed up the thorough search at the expense of potentially missing an unexpected target site.  The number of possible primer sets assessed is increased with the size of \code{numPrimers}.
 }
 \value{
-A different \code{data.frame} will be returned depending on number of primer sets requested.  If no primer sets are required then columns contain the forward and reverse primers for every possible position scored by their potential to amplify other identified groups.  If one or more primer sets are requested then columns contain information for the optimal set of forward and reverse primers that should be used in combination to give the fewest potential false positives.
+A different \code{data.frame} will be returned depending on number of primer sets requested.  If no primer sets are required then columns contain the forward and reverse primers for every possible position scored by their potential to amplify other identified groups.  If one or more primer sets are requested then columns contain information for the optimal set of forward and reverse primers that could be used in combination to give the fewest potential cross-amplifications.
 }
 \references{
-Coming Soon!
+ES Wright et al. (2013) "Exploiting Extension Bias in PCR to Improve Primer Specificity in Ensembles of Nearly Identical DNA Templates." Environmental Microbiology, doi:10.1111/1462-2920.12259.
 }
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}

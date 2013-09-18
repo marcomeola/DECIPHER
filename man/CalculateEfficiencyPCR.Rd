@@ -15,7 +15,8 @@ CalculateEfficiencyPCR(primer,
                        batchSize = 1000,
                        taqEfficiency = TRUE,
                        maxDistance = 0.4,
-                       maxGaps = 2)
+                       maxGaps = 2,
+                       processors = NULL)
 }
 \arguments{
   \item{primer}{
@@ -45,23 +46,28 @@ Numeric specifying the maximal fraction of mismatched base pairings on a rolling
   \item{maxGaps}{
 Integer specifying the maximum number of insertions or deletions (indels) in the primer/target alignment.  Only used if \code{taqEfficiency} is \code{TRUE}.
 }
+  \item{processors}{
+The number of processors to use, or \code{NULL} (the default) for all available processors.
+}
 }
 \details{
 Amplification of pairwise primer/target pairs is simulated \emph{in silico}.  A complex model of hybridization is employed that takes into account the side reactions resulting in probe-folding, target-folding, and primer-dimer formation.  The resulting hybridization efficiency is multiplied by the elongation efficiency to predict the overall efficiency of amplification.
 
-Free energy is obtained from system calls to UNAFold, which must be properly installed (see the Notes section below).  Primer/target pairs are sent to UNAFold in batches of \code{batchSize}, which prevents systems calls from being too many characters.
+Free energy is obtained from system calls to OligoArrayAux, which must be properly installed (see the Notes section below).  Primer/target pairs are sent to OligoArrayAux in batches of \code{batchSize}, which prevents systems calls from being too many characters.
 }
 \value{
 A vector of predicted efficiencies for amplifying each primer/target pair of sequences.
 }
 \references{
-Coming Soon!
+ES Wright et al. (2013) "Exploiting Extension Bias in PCR to Improve Primer Specificity in Ensembles of Nearly Identical DNA Templates." Environmental Microbiology, doi:10.1111/1462-2920.12259.
 }
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}
 }
 \note{
-The program UNAFold (\url{http://mfold.rna.albany.edu/?q=DINAMelt/software}) must be installed in a location accessible by the system.  For example, the following code should print the installed UNAFold version when executed from the R console:  \code{system("hybrid -V")}.
+The program OligoArrayAux (\url{http://mfold.rna.albany.edu/?q=DINAMelt/OligoArrayAux}) must be installed in a location accessible by the system.  For example, the following code should print the installed OligoArrayAux version when executed from the R console:
+
+\code{system("hybrid-min -V")}
 }
 \seealso{
 \code{\link{DesignPrimers}}, \code{\link{TileSeqs}}
@@ -69,6 +75,6 @@ The program UNAFold (\url{http://mfold.rna.albany.edu/?q=DINAMelt/software}) mus
 \examples{
 primers <- c("AAAAACGGGGAGCGGGGGG", "AAAAACTCAACCCGAGGAGCGCGT")
 targets <- reverseComplement(DNAStringSet(primers))
-# not run (must have UNAFold installed first):
+# not run (must have OligoArrayAux installed first):
 #CalculateEfficiencyPCR(primers, targets, temp=75, P=4e-7, ions=.225)
 }

@@ -20,6 +20,7 @@ DesignArray(myDNAStringSet,
             minMeltingFormamide = 15,
             maxMeltingFormamide = 20,
             minScore = -1e+12,
+            processors = NULL,
             verbose = TRUE)
 }
 \arguments{
@@ -61,6 +62,9 @@ The maximum melting point formamide concentration (\%, vol/vol) of the designed 
 }
   \item{minScore}{
 The minimum score of designed probes before exclusion.  A greater \code{minScore} will accelerate the code because more target sites will be excluded from consideration.  However,  if the \code{minScore} is too high it will prevent any target sites from being recorded.
+}
+  \item{processors}{
+The number of processors to use, or \code{NULL} (the default) for all available processors.
 }
   \item{verbose}{
 Logical indicating whether to display progress.

@@ -126,6 +126,7 @@ Now that we have identified 100 operational taxonomic units (OTUs), we must form
 
 <<expr4,eval=TRUE>>=
 conSeqs <- IdConsensus(dbConn, verbose=FALSE)
+dbDisconnect(dbConn)
 # name the sequences by their cluster number
 ns <- lapply(strsplit(names(conSeqs), "_", fixed=TRUE), `[`, 1)
 names(conSeqs) <- gsub("cluster", "", unlist(ns), fixed=TRUE)

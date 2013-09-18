@@ -79,7 +79,7 @@ void binUPGMA(double *rans, int i, int clusterNumber, double maxHeight, int leng
 }
 
 //ans_start <- .Call("cluster", myDistMatrix, verbose, pBar, PACKAGE="DECIPHER")
-SEXP clusterUPGMA(SEXP x, SEXP cutoff, SEXP method, SEXP verbose, SEXP pBar)
+SEXP clusterUPGMA(SEXP x, SEXP cutoff, SEXP method, SEXP verbose, SEXP pBar, SEXP nThreads)
 {	
 	/*
 	 * **** Input ****
@@ -125,6 +125,7 @@ SEXP clusterUPGMA(SEXP x, SEXP cutoff, SEXP method, SEXP verbose, SEXP pBar)
 	int before, v, *rPercentComplete;
 	double soFar, total, minHeight, *cut, *rans, *distanceMatrix, minH;
 	SEXP ans, percentComplete, utilsPackage;
+	int nthreads = asInteger(nThreads);
 	
 	// initialize variables
 	clusterNum = 0; // increments with each new cluster
@@ -180,7 +181,7 @@ SEXP clusterUPGMA(SEXP x, SEXP cutoff, SEXP method, SEXP verbose, SEXP pBar)
 		minRow = 0;
 		minCol = 0;
 		minHeight = 1e50;
-		#pragma omp parallel for private(i,j,minR,minC,minH) schedule(guided)
+		#pragma omp parallel for private(i,j,minR,minC,minH) schedule(guided) num_threads(nthreads)
 		for (i = (size - 2); i >= 0; i--) {
 			minH = minHeight;
 			for (j = 0; j <= i; j++) {
@@ -340,7 +341,7 @@ SEXP clusterUPGMA(SEXP x, SEXP cutoff, SEXP method, SEXP verbose, SEXP pBar)
 		
 		// make the new distance matrix
 		// (note: minRow is always greater than minCol)
-		#pragma omp parallel for private(i,j) schedule(guided)
+		#pragma omp parallel for private(i,j) schedule(guided) num_threads(nthreads)
 		for (j = 0; j < (size - 1); j++) { // for each column
 			// move each row up by one after minRow
 			int start = minRow + 1;
@@ -352,7 +353,7 @@ SEXP clusterUPGMA(SEXP x, SEXP cutoff, SEXP method, SEXP verbose, SEXP pBar)
 			}
 		}
 		
-		#pragma omp parallel for private(i,j) schedule(guided)
+		#pragma omp parallel for private(i,j) schedule(guided) num_threads(nthreads)
 		for (i = minRow; i < (size - 1); i++) { // for each row
 			// move each column left after minRow
 			for (j = minRow + 1; j <= i; j++) { // for each column

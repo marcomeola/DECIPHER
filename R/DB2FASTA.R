@@ -169,9 +169,13 @@ DB2FASTA <- function(file,
 		fileText <- character(2*dim(searchResult2)[1])
 		fileText[seq(2, length(fileText), 2)] <- searchResult2$sequence
 		if (comments) {
-			fileText[seq(1, length(fileText), 2)] <- do.call("paste", c(searchResult, sep = "; "))
+			fileText[seq(1, length(fileText), 2)] <- paste(">",
+				do.call("paste", c(searchResult, sep = "; ")),
+				sep="")
 		} else {
-			fileText[seq(1, length(fileText), 2)] <- searchResult$description
+			fileText[seq(1, length(fileText), 2)] <- paste(">",
+				searchResult$description,
+				sep="")
 		}
 		
 		writeLines(fileText, con)

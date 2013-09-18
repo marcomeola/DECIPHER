@@ -20,6 +20,8 @@ FindChimeras, CreateChimeras,
 DesignArray, Array2Matrix, NNLS, CalculateEfficiencyArray,
 # primers:
 CalculateEfficiencyPCR, DesignPrimers,
+# probes:
+CalculateEfficiencyFISH, DesignProbes,
 # viewing information:
 BrowseSequences, BrowseDB,
 # multiple alignment

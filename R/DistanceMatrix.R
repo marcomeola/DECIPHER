@@ -4,6 +4,7 @@ DistanceMatrix <- function(myDNAStringSet,
 	penalizeGapGapMatches=FALSE,
 	removeDuplicates=FALSE,
 	correction="none",
+	processors=NULL,
 	verbose=TRUE) {
 	
 	# initialize variables
@@ -30,6 +31,17 @@ DistanceMatrix <- function(myDNAStringSet,
 		stop("verbose must be a logical.")
 	if (!is(myDNAStringSet, "DNAStringSet"))
 		stop("myDNAStringSet must be a DNAStringSet.")
+	if (!is.null(processors) && !is.numeric(processors))
+		stop("processors must be a numeric.")
+	if (!is.null(processors) && floor(processors)!=processors)
+		stop("processors must be a whole number.")
+	if (!is.null(processors) && processors < 1)
+		stop("processors must be at least 1.")
+	if (is.null(processors)) {
+		processors <- detectCores()
+	} else {
+		processors <- as.integer(processors)
+	}
 	
 	maxW <- unique(width(myDNAStringSet))
 	if (length(maxW)!=1) {
@@ -65,6 +77,7 @@ DistanceMatrix <- function(myDNAStringSet,
 		penalizeGapLetterMatches,
 		verbose,
 		pBar,
+		processors,
 		PACKAGE="DECIPHER")
 	dimnames(distMatrix) <- list(names(myDNAStringSet),
 		names(myDNAStringSet))

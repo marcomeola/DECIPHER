@@ -355,7 +355,7 @@ static void ProbChange(double *m, double *P, double v)
 	*(P + 15) = e11; // Ptg
 }
 
-SEXP clusterML(SEXP x, SEXP y, SEXP model, SEXP branches, SEXP lengths)
+SEXP clusterML(SEXP x, SEXP y, SEXP model, SEXP branches, SEXP lengths, SEXP nThreads)
 {
 	// input is the output tree from clusterNJ.c
 	
@@ -386,6 +386,7 @@ SEXP clusterML(SEXP x, SEXP y, SEXP model, SEXP branches, SEXP lengths)
 	double *T = REAL(x); // Tree Topology
 	double *m = REAL(model); // Substitution Model [%A %C %G %T k1 k2 rate probability ...]
 	int *widths = (int *) R_alloc(length, sizeof(int));
+	int nthreads = asInteger(nThreads);
 	
 	// alternative branch lengths
 	int altL = length(lengths); // number of altered branches
@@ -407,17 +408,17 @@ SEXP clusterML(SEXP x, SEXP y, SEXP model, SEXP branches, SEXP lengths)
 	for (k = 0; k < numRates; k++) { // for each bin of the gamma distribution determined by alfa
 		// P = [Paa Pac Pag Pat Pcc Pcg Pct Pgg Pgt Ptt Pca Pga Pta Pgc Ptc Ptg]
 		double *P = Calloc((length - 1)*32 + altL*16, double); // initialized to zero
-		#pragma omp parallel for private(i) schedule(guided)
+		#pragma omp parallel for private(i) schedule(guided) num_threads(nthreads)
 		for (i = 0; i < (length - 1); i++) {
 			ProbChange(m, (P + i*32), T[3*(length - 1) + i] * *(m + k + 6));
 			ProbChange(m, (P + i*32 + 16), T[4*(length - 1) + i] * *(m + k + 6));
 		}
-		#pragma omp parallel for private(i) schedule(guided)
+		#pragma omp parallel for private(i) schedule(guided) num_threads(nthreads)
 		for (i = 0; i < altL; i++) {
 			ProbChange(m, (P + (length - 1)*32 + i*16), *(ls + i) * *(m + k + 6));
 		}
 		
-		#pragma omp parallel for private(i,j,y_i,row) schedule(guided)
+		#pragma omp parallel for private(i,j,y_i,row) schedule(guided) num_threads(nthreads)
 		for (i = 0; i < maxWidth; i++) { // for each position
 			//double *Ls = (double *) R_alloc(length*8, sizeof(double));
 			//double *Ls = Calloc(length*8*(altL + 1), double); // initialized to zero

@@ -38,7 +38,7 @@ Integer providing the maximum number of nucleotides in each tile.  Tiles are des
 Integer specifying the maximum number of tiles in each target site.
 }
   \item{minCoverage}{
-Numeric providing the fraction of coverage that is desired for each target site in the group.  For example, a \code{minCoverage} of 0.9 request that additional tiles are added until 90% of the group is represented by the tile permutations.
+Numeric providing the fraction of coverage that is desired for each target site in the group.  For example, a \code{minCoverage} of 0.9 request that additional tiles are added until 90\% of the group is represented by the tile permutations.
 }
   \item{add2tbl}{
 Logical or a character string specifying the table name in which to add the result.
