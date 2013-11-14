@@ -29,7 +29,7 @@
 // DECIPHER header file
 #include "DECIPHER.h"
 
-static int frontTerminalGaps(const cachedCharSeq *P)
+static int frontTerminalGaps(const Chars_holder *P)
 {
 	int i, gaps;
 	const char *p;
@@ -49,7 +49,7 @@ static int frontTerminalGaps(const cachedCharSeq *P)
 	return gaps;
 }
 
-static int endTerminalGaps(const cachedCharSeq *P)
+static int endTerminalGaps(const Chars_holder *P)
 {
 	int i, gaps;
 	const char *p;
@@ -69,7 +69,7 @@ static int endTerminalGaps(const cachedCharSeq *P)
 	return gaps;
 }
 
-static void alphabetFrequency(const cachedCharSeq *P, double *bits, int seqLength, int degeneracy, int ignore, int start, int end, double weight)
+static void alphabetFrequency(const Chars_holder *P, double *bits, int seqLength, int degeneracy, int ignore, int start, int end, double weight)
 {
 	int j;
 	const char *p;
@@ -430,15 +430,15 @@ static void makeConsensus(double *bits, char *seq, int seqLength, int x_length, 
 //ans_start <- .Call("consensusSequence", myDNAStringSet, threshold, ambiguity, minInformation, ignoreNonLetters, terminalGaps, PACKAGE="DECIPHER")
 SEXP consensusSequence(SEXP x, SEXP threshold, SEXP ambiguity, SEXP minInformation, SEXP ignoreNonLetters, SEXP terminalGaps)
 {
-	cachedXStringSet x_set;
-	cachedCharSeq x_i;
+	XStringSet_holder x_set;
+	Chars_holder x_i;
 	int x_length, i, j, seqLength, degeneracy, ignore, tGaps;
 	double *thresh, *minInfo;
 	SEXP consensusSeq;
 	
 	// initialize the XStringSet
-	x_set = cache_XStringSet(x);
-	x_length = get_cachedXStringSet_length(&x_set);
+	x_set = hold_XStringSet(x);
+	x_length = get_length_from_XStringSet_holder(&x_set);
 	int gapLengths[x_length][2];
 	degeneracy = asLogical(ambiguity);
 	ignore = asLogical(ignoreNonLetters);
@@ -447,7 +447,7 @@ SEXP consensusSequence(SEXP x, SEXP threshold, SEXP ambiguity, SEXP minInformati
 	// find the longest length XString
 	seqLength = 0;
 	for (i = 0; i < x_length; i++) {
-		x_i = get_cachedXStringSet_elt(&x_set, i);
+		x_i = get_elt_from_XStringSet_holder(&x_set, i);
 		if (x_i.length > seqLength) {
 			seqLength = x_i.length;
 		}
@@ -464,7 +464,7 @@ SEXP consensusSequence(SEXP x, SEXP threshold, SEXP ambiguity, SEXP minInformati
 	// loop through each sequence in the DNAStringSet
 	for (i = 0; i < x_length; i++) {
 		// extract each ith DNAString from the DNAStringSet
-		x_i = get_cachedXStringSet_elt(&x_set, i);
+		x_i = get_elt_from_XStringSet_holder(&x_set, i);
 		
 		// update the alphabet for this string
 		if (!tGaps) { // don't include terminal gaps
@@ -493,21 +493,21 @@ SEXP consensusSequence(SEXP x, SEXP threshold, SEXP ambiguity, SEXP minInformati
 //ans_start <- .Call("consensusProfile", myDNAStringSet, weight, PACKAGE="DECIPHER")
 SEXP consensusProfile(SEXP x, SEXP weight)
 {
-	cachedXStringSet x_set;
-	cachedCharSeq x_i;
+	XStringSet_holder x_set;
+	Chars_holder x_i;
 	int x_length, i, j, seqLength;
 	SEXP ans;//, subM, ret_list
 	double *rans, *w = REAL(weight);//, *m
 	
 	// initialize the XStringSet
-	x_set = cache_XStringSet(x);
-	x_length = get_cachedXStringSet_length(&x_set);
+	x_set = hold_XStringSet(x);
+	x_length = get_length_from_XStringSet_holder(&x_set);
 	double gapLengths[x_length][2];
 	
 	// find the longest length XString
 	seqLength = 0;
 	for (i = 0; i < x_length; i++) {
-		x_i = get_cachedXStringSet_elt(&x_set, i);
+		x_i = get_elt_from_XStringSet_holder(&x_set, i);
 		if (x_i.length > seqLength) {
 			seqLength = x_i.length;
 		}
@@ -533,7 +533,7 @@ SEXP consensusProfile(SEXP x, SEXP weight)
 	// loop through each sequence in the DNAStringSet
 	for (i = 0; i < x_length; i++) {
 		// extract each ith DNAString from the DNAStringSet
-		x_i = get_cachedXStringSet_elt(&x_set, i);
+		x_i = get_elt_from_XStringSet_holder(&x_set, i);
 		
 		// update the alphabet for this string
 		gapLengths[i][0] = frontTerminalGaps(&x_i);

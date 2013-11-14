@@ -378,10 +378,10 @@ SEXP clusterML(SEXP x, SEXP y, SEXP model, SEXP branches, SEXP lengths, SEXP nTh
 	//          -LnL = -1*sum(Ln(base)*frequency)
 	
 	// initialize variables
-	cachedXStringSet y_set;
-	cachedCharSeq y_i;
-	y_set = cache_XStringSet(y);
-	int length = get_cachedXStringSet_length(&y_set);
+	XStringSet_holder y_set;
+	Chars_holder y_i;
+	y_set = hold_XStringSet(y);
+	int length = get_length_from_XStringSet_holder(&y_set);
 	int i, j, k, numRates, row;
 	double *T = REAL(x); // Tree Topology
 	double *m = REAL(model); // Substitution Model [%A %C %G %T k1 k2 rate probability ...]
@@ -396,7 +396,7 @@ SEXP clusterML(SEXP x, SEXP y, SEXP model, SEXP branches, SEXP lengths, SEXP nTh
 	// calculate a vector of sequence lengths
 	int maxWidth = 0;
 	for (i = 0; i < length; i++) {
-		y_i = get_cachedXStringSet_elt(&y_set, i);
+		y_i = get_elt_from_XStringSet_holder(&y_set, i);
 		*(widths + i) = y_i.length;
 		if (*(widths + i) > maxWidth) {
 			maxWidth = *(widths + i);
@@ -428,7 +428,7 @@ SEXP clusterML(SEXP x, SEXP y, SEXP model, SEXP branches, SEXP lengths, SEXP nTh
 				// if first branch is leaf then its base L is 1
 				if ((int)T[6*(length - 1) + j] < 0) { // first branch is a leaf
 					if (*(widths + (-1*(int)T[6*(length - 1) + j] - 1)) > i) { // position exist in this sequence
-						y_i = get_cachedXStringSet_elt(&y_set, (-1*(int)T[6*(length - 1) + j] - 1));
+						y_i = get_elt_from_XStringSet_holder(&y_set, (-1*(int)T[6*(length - 1) + j] - 1));
 						L_known(&y_i.seq[i], (Ls + 0*length + j), &length);
 					}
 					for (int o = 0; o < altL; o++) {
@@ -441,7 +441,7 @@ SEXP clusterML(SEXP x, SEXP y, SEXP model, SEXP branches, SEXP lengths, SEXP nTh
 				// if second branch is leaf then its base L is 1
 				if ((int)T[7*(length - 1) + j] < 0) { // second branch is a leaf
 					if (*(widths + (-1*(int)T[7*(length - 1) + j] - 1)) > i) { // position exist in this sequence
-						y_i = get_cachedXStringSet_elt(&y_set, (-1*(int)T[7*(length - 1) + j] - 1));
+						y_i = get_elt_from_XStringSet_holder(&y_set, (-1*(int)T[7*(length - 1) + j] - 1));
 						L_known(&y_i.seq[i], (Ls + 4*length + j), &length);
 					}
 					for (int o = 0; o < altL; o++) {

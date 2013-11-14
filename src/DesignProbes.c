@@ -39,8 +39,8 @@
 
 SEXP designProbes(SEXP x, SEXP max_pl, SEXP min_pl, SEXP max_c, SEXP numMMs, SEXP numPs, SEXP st, SEXP en, SEXP max_ov, SEXP h_percent, SEXP min_f, SEXP max_f, SEXP minS, SEXP verbose, SEXP pBar, SEXP nThreads)
 {
-	cachedXStringSet x_set;
-	cachedCharSeq x_i, x_l;
+	XStringSet_holder x_set;
+	Chars_holder x_i, x_l;
 	int x_length; //seqLength;
 	int before, v, *rPercentComplete;
 	int max_probeLength = asInteger(max_pl);
@@ -185,8 +185,8 @@ SEXP designProbes(SEXP x, SEXP max_pl, SEXP min_pl, SEXP max_c, SEXP numMMs, SEX
 	};
 	
 	// initialize the XStringSet
-	x_set = cache_XStringSet(x);
-	x_length = get_cachedXStringSet_length(&x_set);
+	x_set = hold_XStringSet(x);
+	x_length = get_length_from_XStringSet_holder(&x_set);
 	
 	int numProbes = asInteger(numPs);
 	PROTECT(probes = allocVector(STRSXP, x_length*numProbes)); // each probe
@@ -205,7 +205,7 @@ SEXP designProbes(SEXP x, SEXP max_pl, SEXP min_pl, SEXP max_c, SEXP numMMs, SEX
 	for (n = 0; n < ((x_length - 1)*numProbes + numProbes - 1 + (2*nMMs - 1)*x_length*numProbes + 1); n++)
 		rMMs[n] = -1;
 	
-	//seqLength = get_cachedXStringSet_elt(&x_set, 0).length;
+	//seqLength = get_elt_from_XStringSet_holder(&x_set, 0).length;
 	int start = asInteger(st) - 1; // first position AFTER forward primer
 	int end = asInteger(en) - 1;//seqLength; // last position BEFORE reverse primer
 	int maxOverlap = asInteger(max_ov);
@@ -215,7 +215,7 @@ SEXP designProbes(SEXP x, SEXP max_pl, SEXP min_pl, SEXP max_c, SEXP numMMs, SEX
 		minScore = mScore;
 		
 		// extract each ith DNAString from the DNAStringSet
-		x_i = get_cachedXStringSet_elt(&x_set, i);
+		x_i = get_elt_from_XStringSet_holder(&x_set, i);
 		
 		// make an array of position, ambiguity
 		int pos[(end - start)][2];
@@ -471,7 +471,7 @@ SEXP designProbes(SEXP x, SEXP max_pl, SEXP min_pl, SEXP max_c, SEXP numMMs, SEX
 				for (l = 0; l < x_length; l++) { // for each sequence
 					if (i==l)
 						continue;
-					x_l = get_cachedXStringSet_elt(&x_set, l);
+					x_l = get_elt_from_XStringSet_holder(&x_set, l);
 					MM = 0; // number of mismatches
 					dG = dGini; // dG of probe
 					dGmin = dGini; // lowest (best) dG along probe length

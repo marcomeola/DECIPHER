@@ -37,7 +37,7 @@
 // DECIPHER header file
 #include "DECIPHER.h"
 
-static double distance(const cachedCharSeq *P, const cachedCharSeq *S, int start, int end, int pGapsGaps, int pGapLetters)
+static double distance(const Chars_holder *P, const Chars_holder *S, int start, int end, int pGapsGaps, int pGapLetters)
 {
 	double distance;
 	int i, j, mismatches, gapGapMatches, gapLetterMatches, count;
@@ -84,7 +84,7 @@ static double distance(const cachedCharSeq *P, const cachedCharSeq *S, int start
 	return distance;
 }
 
-static int frontTerminalGaps(const cachedCharSeq *P)
+static int frontTerminalGaps(const Chars_holder *P)
 {
 	int i, gaps;
 	const char *p;
@@ -104,7 +104,7 @@ static int frontTerminalGaps(const cachedCharSeq *P)
 	return gaps;
 }
 
-static int endTerminalGaps(const cachedCharSeq *P)
+static int endTerminalGaps(const Chars_holder *P)
 {
 	int i, gaps;
 	const char *p;
@@ -127,8 +127,8 @@ static int endTerminalGaps(const cachedCharSeq *P)
 //ans_start <- .Call("distMatrix", myDNAStringSet, pBar, PACKAGE="DECIPHER")
 SEXP distMatrix(SEXP x, SEXP terminalGaps, SEXP penalizeGapGaps, SEXP penalizeGapLetters, SEXP verbose, SEXP pBar, SEXP nThreads)
 {
-	cachedXStringSet x_set;
-	cachedCharSeq x_i, x_j;
+	XStringSet_holder x_set;
+	Chars_holder x_i, x_j;
 	int x_length, start, end, i, j, seqLength_i, seqLength_j;
 	int pGapLetters, pGapsGaps, tGaps;
 	int soFar, before, v, *rPercentComplete;
@@ -145,8 +145,8 @@ SEXP distMatrix(SEXP x, SEXP terminalGaps, SEXP penalizeGapGaps, SEXP penalizeGa
 		PROTECT(utilsPackage = eval(lang2(install("getNamespace"), ScalarString(mkChar("utils"))), R_GlobalEnv));
 	}
 	
-	x_set = cache_XStringSet(x);
-	x_length = get_cachedXStringSet_length(&x_set);
+	x_set = hold_XStringSet(x);
+	x_length = get_length_from_XStringSet_holder(&x_set);
 	int gapLengths[x_length][2];
 	
 	if (x_length < 2) { // there is only one sequence
@@ -158,7 +158,7 @@ SEXP distMatrix(SEXP x, SEXP terminalGaps, SEXP penalizeGapGaps, SEXP penalizeGa
 		// find the terminal gap lengths
 		// always needed to identify no-overlap
 		for (i = 0; i < x_length; i++) {
-			x_i = get_cachedXStringSet_elt(&x_set, i);
+			x_i = get_elt_from_XStringSet_holder(&x_set, i);
 			gapLengths[i][0] = frontTerminalGaps(&x_i);
 			gapLengths[i][1] = endTerminalGaps(&x_i);
 			//Rprintf("\nstart:%dend:%d",gapLengths[i][0],gapLengths[i][1]);
@@ -169,13 +169,13 @@ SEXP distMatrix(SEXP x, SEXP terminalGaps, SEXP penalizeGapGaps, SEXP penalizeGa
 		pGapLetters = asLogical(penalizeGapLetters);
 		for (i = 0; i < (x_length - 1); i++) {
 			// extract each ith DNAString from the DNAStringSet
-			x_i = get_cachedXStringSet_elt(&x_set, i);
+			x_i = get_elt_from_XStringSet_holder(&x_set, i);
 			seqLength_i = x_i.length;
 			
 			#pragma omp parallel for private(j,x_j,seqLength_j,start,end) schedule(guided) num_threads(nthreads)
 			for (j = (i+1); j < x_length; j++) {
 				// extract each jth DNAString from the DNAStringSet
-				x_j = get_cachedXStringSet_elt(&x_set, j);
+				x_j = get_elt_from_XStringSet_holder(&x_set, j);
 				seqLength_j = x_j.length;
 				
 				// find the distance for each row of the matrix
@@ -237,21 +237,21 @@ SEXP distMatrix(SEXP x, SEXP terminalGaps, SEXP penalizeGapGaps, SEXP penalizeGa
 //ans_start <- .Call("gaps", myDNAStringSet, PACKAGE="DECIPHER")
 SEXP gaps(SEXP x)
 {
-	cachedXStringSet x_set;
-	cachedCharSeq x_i;
+	XStringSet_holder x_set;
+	Chars_holder x_i;
 	int x_length, i;
 	double *rans;
 	SEXP ans;
 	
-	x_set = cache_XStringSet(x);
-	x_length = get_cachedXStringSet_length(&x_set);
+	x_set = hold_XStringSet(x);
+	x_length = get_length_from_XStringSet_holder(&x_set);
 
 	PROTECT(ans = allocMatrix(REALSXP, x_length, 3));
 	rans = REAL(ans);
 	
 	// find the three lengths for each sequence
 	for (i = 0; i < x_length; i++) {
-		x_i = get_cachedXStringSet_elt(&x_set, i);
+		x_i = get_elt_from_XStringSet_holder(&x_set, i);
 		rans[i + x_length*0] = frontTerminalGaps(&x_i);
 		rans[i + x_length*1] = endTerminalGaps(&x_i);
 		rans[i + x_length*2] = x_i.length - rans[i + x_length*1] - rans[i + x_length*0];
