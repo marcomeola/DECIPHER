@@ -6,13 +6,19 @@ void R_init_DECIPHER(DllInfo *info);
 
 SEXP consensusSequence(SEXP x, SEXP threshold, SEXP ambiguity, SEXP minInformation, SEXP ignoreNonLetters, SEXP terminalGaps);
 
+SEXP consensusSequenceAA(SEXP x, SEXP threshold, SEXP ambiguity, SEXP minInformation, SEXP ignoreNonLetters, SEXP terminalGaps);
+
 SEXP consensusProfile(SEXP x, SEXP weight);
+
+SEXP consensusProfileAA(SEXP x, SEXP weight);
 
 // DistanceMatrix.c
 
-SEXP distMatrix(SEXP x, SEXP terminalGaps, SEXP penalizeGapGaps, SEXP penalizeGapLetters, SEXP verbose, SEXP pBar, SEXP nThreads);
+SEXP distMatrix(SEXP x, SEXP t, SEXP terminalGaps, SEXP penalizeGapGaps, SEXP penalizeGapLetters, SEXP fullMatrix, SEXP verbose, SEXP pBar, SEXP nThreads);
 
-SEXP gaps(SEXP x);
+SEXP gaps(SEXP x, SEXP t);
+
+SEXP firstSeqsEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, SEXP end_y);
 
 // ClusterNJ.c
 
@@ -54,9 +60,15 @@ SEXP firstMatchUpper(SEXP x, SEXP y, SEXP nThreads);
 
 SEXP matchLists(SEXP x, SEXP verbose, SEXP pBar, SEXP nThreads);
 
+SEXP matchOrder(SEXP x, SEXP verbose, SEXP pBar, SEXP nThreads);
+
+SEXP matchOrderDual(SEXP x, SEXP y, SEXP nThreads);
+
+SEXP matchRanges(SEXP x, SEXP y, SEXP wordSize, SEXP maxLength, SEXP threshold);
+
 // ReplaceChars.c
 
-SEXP replaceChars(SEXP x, SEXP r);
+SEXP replaceChars(SEXP x, SEXP r, SEXP t);
 
 SEXP replaceChar(SEXP x, SEXP c, SEXP r);
 
@@ -82,4 +94,16 @@ SEXP calculateFISH(SEXP probes, SEXP targets);
 
 // AlignProfiles.c
 
-SEXP alignProfiles(SEXP p, SEXP s, SEXP pm, SEXP mm, SEXP go, SEXP ge, SEXP endGapPenaltyLeft, SEXP endGapPenaltyRight, SEXP nThreads);
+SEXP alignProfiles(SEXP p, SEXP s, SEXP pm, SEXP mm, SEXP go, SEXP ge, SEXP endGapPenaltyLeft, SEXP endGapPenaltyRight, SEXP boundary, SEXP nThreads);
+
+SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP pm, SEXP mm, SEXP go, SEXP ge, SEXP endGapPenaltyLeft, SEXP endGapPenaltyRight, SEXP boundary, SEXP nThreads);
+
+// EnumerateSequence.c
+
+SEXP enumerateSequence(SEXP x, SEXP wordSize);
+
+SEXP enumerateSequenceAA(SEXP x, SEXP wordSize);
+
+SEXP enumerateGappedSequence(SEXP x, SEXP wordSize);
+
+SEXP enumerateGappedSequenceAA(SEXP x, SEXP wordSize);

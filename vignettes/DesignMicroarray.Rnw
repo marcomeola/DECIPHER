@@ -125,7 +125,7 @@ clusters <- IdClusters(dMatrix, cutoff=.03, method="complete",
 Now that we have identified 100 operational taxonomic units (OTUs), we must form a set of consensus sequences that represent each OTU.
 
 <<expr4,eval=TRUE>>=
-conSeqs <- IdConsensus(dbConn, verbose=FALSE)
+conSeqs <- IdConsensus(dbConn, colName="cluster", verbose=FALSE)
 dbDisconnect(dbConn)
 # name the sequences by their cluster number
 ns <- lapply(strsplit(names(conSeqs), "_", fixed=TRUE), `[`, 1)

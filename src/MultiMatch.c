@@ -334,3 +334,406 @@ SEXP matchLists(SEXP x, SEXP verbose, SEXP pBar, SEXP nThreads)
 	
 	return ans;
 }
+
+// matrix of d[i, j] = ordered matches (x[i], x[j]) / min(length bound by consecutive matches)
+// requires a list of unsorted integers retaining the order of x
+SEXP matchOrder(SEXP x, SEXP verbose, SEXP pBar, SEXP nThreads)
+{	
+	int i, j, size_x = length(x), before, v, *rPercentComplete;
+	int lx, ly, *X, *Y;
+	SEXP ans;
+	PROTECT(ans = allocMatrix(REALSXP, size_x, size_x));
+	double *rans = REAL(ans);
+	SEXP percentComplete, utilsPackage;
+	v = asLogical(verbose);
+	int nthreads = asInteger(nThreads);
+	
+	if (v) { // initialize progress variables
+		before = 0;
+		PROTECT(percentComplete = NEW_INTEGER(1));
+		rPercentComplete = INTEGER(percentComplete);
+		// make it possible to access R functions from the utils package for the progress bar
+		PROTECT(utilsPackage = eval(lang2(install("getNamespace"), ScalarString(mkChar("utils"))), R_GlobalEnv));
+	}
+	
+	for (i = 0; i < size_x; i++)
+		*(rans + i*size_x + i) = 0;
+	
+	for (i = 0; i < size_x; i++) {
+		#pragma omp parallel for private(j, X, Y, lx, ly) schedule(guided) num_threads(nthreads)
+		for (j = i + 1; j < size_x; j++) {
+			X = INTEGER(VECTOR_ELT(x, i));
+			Y = INTEGER(VECTOR_ELT(x, j));
+			lx = length(VECTOR_ELT(x, i));
+			ly = length(VECTOR_ELT(x, j));
+			
+			/*
+			int link_x = -1, link_y = -1; // last established link between X and Y
+			int matches = 0, matches_temp = 0; // running number of matches
+			int start_x = -1, start_y = -1; // first consecutive matches
+			int end_x = lx - 1, end_y = ly - 1; // last consecutive matches
+			int pos_x, pos_y, off; // current position
+			
+			int offset = 1; // distance offset from link
+			while (offset <= (lx - link_x + ly - link_y - 2)) { // within sequence
+				for (off = 1; off <= offset; off++) {
+					pos_y = link_y + off;
+					pos_x = link_x + offset - off + 1;
+					//Rprintf("\n%d %d %d %d %d", pos_x, pos_y, link_x, link_y, offset);
+					if (pos_y < ly &&
+						pos_x < lx &&
+						X[pos_x]==Y[pos_y]) {
+						if (pos_x==(link_x + 1) &&
+							pos_y==(link_y + 1)) {
+							if (start_x==-1) { // no consecutive match found yet
+								start_x = link_x - 1;
+								start_y = link_y - 1;
+								matches_temp = 1;
+							} else { // another consecutive match found
+								end_x = link_x;
+								end_y = link_y;
+								matches += matches_temp + 1;
+								matches_temp = -1;
+							}
+						}
+						link_x = pos_x;
+						link_y = pos_y;
+						offset = 0;
+						matches_temp++;
+					}
+				}
+				offset++;
+			}
+			
+			if (start_x==-1) { // no overlap
+				*(rans + i*size_x + j) = NA_REAL;
+			} else if (end_y - start_y < end_x - start_x) {
+				*(rans + i*size_x + j) = 1 - (double)matches/(double)(end_y - start_y + 1);
+			} else {
+				*(rans + i*size_x + j) = 1 - (double)matches/(double)(end_x - start_x + 1);
+			}
+			
+			// repeat for the opposite direction to account for offset in overlap
+			link_x = -1, link_y = -1; // last established link between X and Y
+			matches = 0, matches_temp = 0; // running number of matches
+			start_x = -1, start_y = -1; // first consecutive matches
+			end_x = lx - 1, end_y = ly - 1; // last consecutive matches
+			
+			offset = 1; // distance offset from link
+			while (offset <= (lx - link_x + ly - link_y - 2)) { // within sequence
+				for (off = 1; off <= offset; off++) {
+					pos_y = link_y + off;
+					pos_x = link_x + offset - off + 1;
+					//Rprintf("\n%d %d %d %d %d", pos_x, pos_y, link_x, link_y, offset);
+					if (pos_y < ly &&
+						pos_x < lx &&
+						X[lx - pos_x - 1]==Y[ly - pos_y - 1]) { // reverse order
+						if (pos_x==(link_x + 1) &&
+							pos_y==(link_y + 1)) {
+							if (start_x==-1) { // no consecutive match found yet
+								start_x = link_x - 1;
+								start_y = link_y - 1;
+								matches_temp = 1;
+							} else { // another consecutive match found
+								end_x = link_x;
+								end_y = link_y;
+								matches += matches_temp + 1;
+								matches_temp = -1;
+							}
+						}
+						link_x = pos_x;
+						link_y = pos_y;
+						offset = 0;
+						matches_temp++;
+					}
+				}
+				offset++;
+			}
+			
+			if (start_x!=-1 &&
+				end_y - start_y < end_x - start_x &&
+				1 - (double)matches/(double)(end_y - start_y + 1) < *(rans + i*size_x + j)) {
+				*(rans + i*size_x + j) = 1 - (double)matches/(double)(end_y - start_y + 1);
+			} else if (start_x != -1 &&
+					   1 - (double)matches/(double)(end_x - start_x + 1) < *(rans + i*size_x + j)) {
+				*(rans + i*size_x + j) = 1 - (double)matches/(double)(end_x - start_x + 1);
+			}
+			*/
+			
+			int link_x = -1, link_y = -1; // last established link between X and Y
+			int matches = 0; // running number of matches
+			int pos_x, pos_y, off; // current position
+			int offset = 1; // distance offset from link
+			while (offset <= (lx - link_x + ly - link_y - 2)) { // within sequence
+				for (off = 1; off <= offset; off++) {
+					pos_y = link_y + off;
+					pos_x = link_x + offset - off + 1;
+					if (pos_y < ly &&
+						pos_x < lx &&
+						X[pos_x]==Y[pos_y]) {
+						link_x = pos_x;
+						link_y = pos_y;
+						offset = 0;
+						matches++;
+					}
+				}
+				offset++;
+			}
+			
+			if (lx < ly) {
+				*(rans + i*size_x + j) = 1 - (double)matches/(double)(lx);
+			} else {
+				*(rans + i*size_x + j) = 1 - (double)matches/(double)(ly);
+			}
+			
+			link_x = -1, link_y = -1; // last established link between X and Y
+			matches = 0; // running number of matches
+			offset = 1; // distance offset from link
+			while (offset <= (lx - link_x + ly - link_y - 2)) { // within sequence
+				for (off = 1; off <= offset; off++) {
+					pos_y = link_y + off;
+					pos_x = link_x + offset - off + 1;
+					if (pos_y < ly &&
+						pos_x < lx &&
+						X[lx - pos_x - 1]==Y[ly - pos_y - 1]) {
+						link_x = pos_x;
+						link_y = pos_y;
+						offset = 0;
+						matches++;
+					}
+				}
+				offset++;
+			}
+			
+			double temp;
+			if (lx < ly) {
+				temp = 1 - (double)matches/(double)(lx);
+			} else {
+				temp = 1 - (double)matches/(double)(ly);
+			}
+			if (temp < *(rans + i*size_x + j))
+				*(rans + i*size_x + j) = temp;
+			
+			*(rans + i + j*size_x) = *(rans + i*size_x + j);
+		}
+		
+		if (v) {
+			// print the percent completed so far
+			*rPercentComplete = floor(100*((double)i/((double)size_x - 1)));
+			
+			if (*rPercentComplete > before) { // when the percent has changed
+				// tell the progress bar to update in the R console
+				eval(lang4(install("setTxtProgressBar"), pBar, percentComplete, R_NilValue), utilsPackage);
+				before = *rPercentComplete;
+			}
+		} else {
+			R_CheckUserInterrupt();
+		}
+	}
+	
+	if (v) {
+		UNPROTECT(3);
+	} else {
+		UNPROTECT(1);
+	}
+	
+	return ans;
+}
+
+// matrix of d[i, j] = ordered matches (x[i], y[j]) / min(length bound by consecutive matches)
+// requires dual lists of unsorted integers retaining the order of x (typically length(x) < length(y))
+SEXP matchOrderDual(SEXP x, SEXP y, SEXP nThreads)
+{	
+	int i, j, size_x = length(x), size_y = length(y);
+	int lx, ly, *X, *Y;
+	SEXP ans;
+	PROTECT(ans = allocMatrix(REALSXP, size_x, size_y));
+	double *rans = REAL(ans);
+	int nthreads = asInteger(nThreads);
+	
+	for (i = 0; i < size_x; i++) {
+		#pragma omp parallel for private(j, X, Y, lx, ly) schedule(guided) num_threads(nthreads)
+		for (j = 0; j < size_y; j++) {
+			X = INTEGER(VECTOR_ELT(x, i));
+			Y = INTEGER(VECTOR_ELT(y, j));
+			lx = length(VECTOR_ELT(x, i));
+			ly = length(VECTOR_ELT(y, j));
+			
+			int link_x = -1, link_y = -1; // last established link between X and Y
+			int matches = 0; // running number of matches
+			int pos_x, pos_y, off; // current position
+			int offset = 1; // distance offset from link
+			while (offset <= (lx - link_x + ly - link_y - 2)) { // within sequence
+				for (off = 1; off <= offset; off++) {
+					pos_y = link_y + off;
+					pos_x = link_x + offset - off + 1;
+					if (pos_y < ly &&
+						pos_x < lx &&
+						X[pos_x]==Y[pos_y]) {
+						link_x = pos_x;
+						link_y = pos_y;
+						offset = 0;
+						matches++;
+					}
+				}
+				offset++;
+			}
+			
+			if (lx < ly) {
+				*(rans + i + j*size_x) = 1 - (double)matches/(double)(lx);
+			} else {
+				*(rans + i + j*size_x) = 1 - (double)matches/(double)(ly);
+			}
+			
+			link_x = -1, link_y = -1; // last established link between X and Y
+			matches = 0; // running number of matches
+			offset = 1; // distance offset from link
+			while (offset <= (lx - link_x + ly - link_y - 2)) { // within sequence
+				for (off = 1; off <= offset; off++) {
+					pos_y = link_y + off;
+					pos_x = link_x + offset - off + 1;
+					if (pos_y < ly &&
+						pos_x < lx &&
+						X[lx - pos_x - 1]==Y[ly - pos_y - 1]) {
+						link_x = pos_x;
+						link_y = pos_y;
+						offset = 0;
+						matches++;
+					}
+				}
+				offset++;
+			}
+			
+			double temp;
+			if (lx < ly) {
+				temp = 1 - (double)matches/(double)(lx);
+			} else {
+				temp = 1 - (double)matches/(double)(ly);
+			}
+			if (temp < *(rans + i + j*size_x))
+				*(rans + i + j*size_x) = temp;
+		}
+		
+		R_CheckUserInterrupt();
+	}
+	
+	UNPROTECT(1);
+	
+	return ans;
+}
+
+// returns shared ranges between pairs in two unordered lists
+SEXP matchRanges(SEXP x, SEXP y, SEXP wordSize, SEXP maxLength, SEXP threshold)
+{	
+	int i, j, k, size_x = length(x), size_y = length(y), size;
+	int lx, ly, *X, *Y, *X_pos, *Y_pos, wS, *rans;
+	int l = asInteger(maxLength);
+	double thresh = asReal(threshold);
+	wS = asInteger(wordSize);
+	int *bits = Calloc(l*2, int); // initialized to zero
+	
+	if (size_x > size_y) {
+		size = size_x;
+	} else {
+		size = size_y;
+	}
+	
+	for (i = 0; i < size; i += 2) {
+		j = i;
+		X = INTEGER(VECTOR_ELT(x, i));
+		Y = INTEGER(VECTOR_ELT(y, j));
+		X_pos = INTEGER(VECTOR_ELT(x, i + 1));
+		Y_pos = INTEGER(VECTOR_ELT(y, j + 1));
+		lx = length(VECTOR_ELT(x, i));
+		ly = length(VECTOR_ELT(y, j));
+		
+		int link_x = -1, link_y = -1; // last established link between X and Y
+		int pos_x, pos_y; // current position
+		
+		int offset = 1; // distance offset from link
+		while (offset <= (lx - link_x + ly - link_y - 2)) { // within sequence
+			for (int off = 1; off <= offset; off++) {
+				pos_y = link_y + off;
+				pos_x = link_x + offset - off + 1;
+				if (pos_y < ly &&
+					pos_x < lx &&
+					X[pos_x]==Y[pos_y] &&
+					X[pos_x] != NA_INTEGER) {
+					if (pos_x==(link_x + 1) &&
+						pos_y==(link_y + 1)) {
+						if (*(bits + l + X_pos[pos_x] - 1)==0) { // new anchor
+							*(bits + l + X_pos[pos_x] - 1) = Y_pos[pos_y]; // anchor position
+							*(bits + X_pos[pos_x] - 1) += 1; // increment anchoring
+						} else if (*(bits + l + X_pos[pos_x] - 1)==Y_pos[pos_y]) { // previous anchor
+							*(bits + X_pos[pos_x] - 1) += 1; // increment anchoring
+						} else { // does not match previous anchoring
+							*(bits + X_pos[pos_x] - 1) == 0; // reset inconsistent anchoring
+							*(bits + l + X_pos[pos_x] - 1) = 0;
+						}
+					}
+					link_x = pos_x;
+					link_y = pos_y;
+					offset = 0;
+				}
+			}
+			offset++;
+		}
+		
+		R_CheckUserInterrupt();
+	}
+	
+	size /= 2;
+	// calculate ranges of anchors
+	int *temp = Calloc(l, int); // initialized to zero
+	int match = 0, count = -1, last_end_x = -1, last_end_y = -1;
+	for (i = 0; i < l; i++) {
+		//Rprintf("\n%d start_x=%d start_y=%d end_x=%d end_y=%d last_end_x=%d last_end_y=%d", i, i - wS + 2, *(bits + i + l) - wS + 1, i+1, *(bits + i + l), last_end_x, last_end_y);
+		if ((double)*(bits + i)/(double)size >= thresh) {
+			if (match==0) { // start of anchor range
+				if (i - wS + 2 > last_end_x + 100 &&
+					*(bits + i + l) - wS + 1 > last_end_y + 100) {
+					match = 1;
+					count++;
+					*(temp + count*4) = i + 1;//i - wS + 2;
+					*(temp + count*4 + 2) = *(bits + i + l);//*(bits + i + l) - wS + 1;
+					*(temp + count*4 + 1) = i + 1;
+					*(temp + count*4 + 3) = *(bits + i + l);
+				}
+			} else if (i - wS + 2 > last_end_x + 1000 &&
+				*(bits + i + l) - wS + 1 > last_end_y + 1000) {
+				count++; // start new range
+				last_end_x = i - 100 - wS;
+				last_end_y = *(bits + i + l - 1) - 100 - wS;
+				*(temp + count*4) = i + 1;//i - wS + 2;
+				*(temp + count*4 + 2) = *(bits + i + l);//*(bits + i + l) - wS + 1;
+				*(temp + count*4 + 1) = i + 1;
+				*(temp + count*4 + 3) = *(bits + i + l);
+			} else if (i + 1 > last_end_x + 100 &&
+				*(bits + i + l) > last_end_y + 100 &&
+				*(bits + i + l) > *(temp + count*4 + 3)) { // extend end
+				*(temp + count*4 + 1) = i + 1;
+				*(temp + count*4 + 3) = *(bits + i + l);
+			}
+		} else if (match==1) { // set to last match
+			match = 0;
+			last_end_x = *(temp + count*4 + 1);
+			last_end_y = *(temp + count*4 + 3);
+		}
+	}
+	
+	SEXP ans;
+	PROTECT(ans = allocMatrix(INTSXP, 4, count + 1));
+	rans = INTEGER(ans);
+	for (i = 0; i <= count; i++) {
+		*(rans + i*4) = *(temp + i*4);
+		*(rans + i*4 + 1) = *(temp + i*4 + 1);
+		*(rans + i*4 + 2) = *(temp + i*4 + 2);
+		*(rans + i*4 + 3) = *(temp + i*4 + 3);
+	}
+	
+	UNPROTECT(1);
+	Free(bits);
+	Free(temp);
+	
+	return ans;
+}

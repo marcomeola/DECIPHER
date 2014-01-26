@@ -160,7 +160,7 @@ tiles <- TileSeqs(dbConn, add2tbl="Tiles")
 \begin{Sinput}
   |===========================================================================| 100%
 
-Time difference of 328.25 secs
+Time difference of 317.74 secs
 \end{Sinput}
 \end{Schunk}
 
@@ -178,7 +178,7 @@ probes <- DesignProbes(tiles, identifier="Sphingopyxis",
 Sphingopyxis (678):
   |===========================================================================| 100%
 
-Time difference of 290 secs
+Time difference of 270 secs
 \end{Sinput}
 \end{Schunk}
 
@@ -282,7 +282,7 @@ probes <- DesignProbes(tiles, identifier="Sphingopyxis",
 Sphingopyxis (678):
   |===========================================================================| 100%
 
-Time difference of 300 secs
+Time difference of 270 secs
 \end{Sinput}
 \end{Schunk}
 
@@ -464,7 +464,7 @@ dbDisconnect(dbConn)
 w <- which(names(dna)=="Sphingopyxis")
 dna <- c(dna[w], dna[-w])
 
-BrowseSequences(dna, color=c(204, 253, 1019, 1045), highlight=1)
+BrowseSequences(dna, colorPatterns=c(204, 253, 1019, 1045), highlight=1)
 @
 
 \begin{figure}

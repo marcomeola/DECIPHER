@@ -51,7 +51,7 @@ Additional arguments to be passed directly to \code{SearchDB}.
 }
 }
 \details{
-This function will create a set of overlapping tiles representing each target site in an alignment of sequences.  The most common tile permutations are added until the minimum group coverage is obtained.
+This function will create a set of overlapping tiles representing each target site in an alignment of sequences.  The most common tile permutations are added until the minimum group coverage is obtained.  The \code{dbFile} is assumed to contain \code{DNAStringSet} sequences (any U's are converted to T's).
 
 Target sites with one more more tiles not meeting a set of requirements are marked with \code{misprime} equals \code{TRUE}.  Requirements are a minimum group coverage, minimum length, and a maximum length.  Additionally, tiles are required not to contain more than four runs of a single base or four di-nucleotide repeats.
 }

@@ -59,7 +59,7 @@ options(width=60)
 \section{About DECIPHER}
 %------------------------------------------------------------
 
-\term{D}atabase \term{E}nabled \term{C}ode for \term{I}deal \term{P}robe \term{H}ybridization \term{E}mploying \term{R} (\Rpackage{DECIPHER}) is a software toolset that can be used for deciphering and managing DNA sequences efficiently using the \R{} statistical programming language.  The project originally sprang to life as a program for developing hybridization probes for a variety of applications using 16S rRNA sequences.  Although the program's functionality has expanded since its conception, it still maintains the name \Rpackage{DECIPHER} to this day.  \Rpackage{DECIPHER} is available under the terms of the GNU Public License version 3 (\url{http://www.gnu.org/copyleft/gpl.html}).
+\term{D}atabase \term{E}nabled \term{C}ode for \term{I}deal \term{P}robe \term{H}ybridization \term{E}mploying \term{R} (\Rpackage{DECIPHER}) is a software toolset that can be used for deciphering and managing biological sequences efficiently using the \R{} statistical programming language.  The project originally sprang to life as a program for developing hybridization probes for a variety of applications using 16S rRNA sequences.  Although the program's functionality has expanded since its conception, it still maintains the name \Rpackage{DECIPHER} to this day.  \Rpackage{DECIPHER} is available under the terms of the GNU Public License version 3 (\url{http://www.gnu.org/copyleft/gpl.html}).
 
 %------------------------------------------------------------
 \section{Design Philosophy}
@@ -71,13 +71,13 @@ One of the core principles of \Rpackage{DECIPHER} is the idea of the non-destruc
 
 \subsection{Don't Reinvent the Wheel}
 
-\Rpackage{DECIPHER} makes use of the \Rpackage{Biostrings} package that is a core part of the Bioconductor suite (\url{http://www.bioconductor.org/}).  This package contains numerous functions for common operations such as searching, aligning, and reverse complementing sequences.  Furthermore, \Rpackage{DECIPHER} makes use of the \Rpackage{Biostrings} interface for handling DNA sequence data so that sequences are stored in a \Robject{DNAStringSet}.  These objects are compatible with many useful packages in the Bioconductor suite.
+\Rpackage{DECIPHER} makes use of the \Rpackage{Biostrings} package that is a core part of the Bioconductor suite (\url{http://www.bioconductor.org/}).  This package contains numerous functions for common operations such as searching, aligning, and reverse complementing sequences.  Furthermore, \Rpackage{DECIPHER} makes use of the \Rpackage{Biostrings} interface for handling sequence data so that sequences are stored in an \Robject{XStringSet}.  These objects are compatible with many useful packages in the Bioconductor suite.
 
 A wide variety of user objectives necessitates that \Rpackage{DECIPHER} be extensible to customized projects.  \R{} provides a simple way to place the power of thousands of packages at your fingertips.  Likewise, \R{} enables direct access to the speed and efficiency of the programming language \C{} while maintaining the utility of a scripting language.  Therefore, minimal coding skill is required to solve complex new problems.  Best of all, the \R{} statistical programming language is open source, and maintains a thriving user community so that direct collaboration with other \R{} users is available on several Internet forums \url{https://stat.ethz.ch/mailman/listinfo}.
 
 \subsection{That Which is the Most Difficult, Make Fastest}
 
-A core objective of \Rpackage{DECIPHER} is to make massive tasks feasible in minimal time.  To this end, many of the most time consuming functions are parallelized to make use of multiple processors.  For example, the function \Rfunction{DistanceMatrix} gets almost a 1x speed boost for each processor core.  A modern processor with 8 cores can see a factor of close to eight times speed improvement.  Similar speedups can be achieved when clustering the resulting distance matrix using \Rfunction{IdClusters}.  This is all made possible through the integration of OpenMp, which is currently supported by default on most major platforms expect Windows (see installation \ref{sec:Installation}).
+A core objective of \Rpackage{DECIPHER} is to make massive tasks feasible in minimal time.  To this end, many of the most time consuming functions are parallelized to make use of multiple processors.  For example, the function \Rfunction{DistanceMatrix} gets almost a 1x speed boost for each processor core.  A modern processor with 8 cores can see a factor of close to eight times speed improvement.  Similar speedups can be achieved when clustering the resulting distance matrix using \Rfunction{IdClusters}, and in many other \Rpackage{DECIPHER} functions.  This is all made possible through the integration of OpenMP, which is currently supported by default on most major platforms.
 
 Other time consuming tasks are handled efficiently.  The function \Rfunction{FindChimeras} can uncover sequence chimeras by searching through a reference database of over a million sequences for thousands of 30-mer fragments in a number of minutes.  This incredible feat is accomplished by using the \Rclass{PDict} class provided by \Rpackage{Biostrings}.  Similarly, the \Rfunction{SearchDB} function can obtain the one-in-a-million sequences that match a targeted query in a matter of seconds.  Such high-speed functions enable the user to find solutions to problems that previously would have been extremely difficult or nearly impossible to solve using antiquated methods.
 
@@ -99,12 +99,12 @@ The functions of DECIPHER can be grouped into several categories based on intend
 \begin{enumerate} \item \Rfunction{Add2DB} \item \Rfunction{DB2FASTA} \item \Rfunction{SearchDB} \item \Rfunction{Seqs2DB} \end{enumerate}
 \item Secondary functions for typical database tasks:
 \begin{enumerate} \item \Rfunction{IdConsensus} \item \Rfunction{IdentifyByRank} \item \Rfunction{IdLengths} \end{enumerate}
-\item Functions for phylogenetics with a set of DNA sequences:
+\item Functions for phylogenetics with a set of sequences:
 \begin{enumerate} \item \Rfunction{ConsensusSequence} \item \Rfunction{DistanceMatrix} \item \Rfunction{IdClusters} \end{enumerate}
 \item Functions for visualization with a web browser:
 \begin{enumerate} \item \Rfunction{BrowseDB} \item \Rfunction{BrowseSequences} \end{enumerate}
 \item Functions for multiple sequence alignment:
-\begin{enumerate} \item \Rfunction{AlignProfiles} \item \Rfunction{AlignSeqs} \item \Rfunction{MaskAlignment} \end{enumerate}
+\begin{enumerate} \item \Rfunction{AlignProfiles} \item \Rfunction{AlignSeqs} \item \Rfunction{AlignTranslation} \item \Rfunction{MaskAlignment} \end{enumerate}
 \item Functions related to chimeras:
 \begin{enumerate} \item \Rfunction{CreateChimeras} \item \Rfunction{FindChimeras} \item \Rfunction{FormGroups} \end{enumerate}
 \item Functions related to DNA microarrays:
@@ -284,7 +284,7 @@ BrowseDB(dbConn, maxChars=20)
 We can now look at only those sequences that belong to the phylum \term{Bacteroidetes} (Fig. 2):
 <<expr5>>=
 dna <- SearchDB(dbConn, id="Bacteroidetes")
-BrowseSequences(subseq(dna, 140, 240), colorBases=TRUE)
+BrowseSequences(subseq(dna, 140, 240))
 @
 
 \begin{figure}
@@ -298,7 +298,7 @@ Let's construct a phylogenetic tree from the \term{Bacteroidetes} sequences (Fig
 \begin{centerfig}
 <<expr6,fig=TRUE,height=3.5,width=6>>=
 d <- DistanceMatrix(dna, correction="Jukes-Cantor", verbose=FALSE)
-c <- IdClusters(d, method="ML", cutoff=.05, showPlot=TRUE, myDNAStringSet=dna, verbose=FALSE)
+c <- IdClusters(d, method="ML", cutoff=.05, showPlot=TRUE, myXStringSet=dna, verbose=FALSE)
 @
 \caption{Maximum likelihood tree showing the relationships between sequences.}
 \end{centerfig}

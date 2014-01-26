@@ -353,6 +353,14 @@ static void ProbChange(double *m, double *P, double v)
 	*(P + 13) = e12; // Pgc
 	*(P + 14) = C - C/e1 + e8; // Ptc
 	*(P + 15) = e11; // Ptg
+	
+	/*
+	Rprintf("\n\nA=%d C=%d G=%d T=%d k1=%d k2=%d v=%d:", (int)(100*A), (int)(100*C), (int)(100*G), (int)(100*T), (int)(100*k1), (int)(100*k2), (int)(100*v));
+	Rprintf("\n%d %d %d %d", (int)(1000 * *(P)), (int)(1000 * *(P + 1)), (int)(1000 * *(P + 2)), (int)(1000 * *(P + 3)));
+	Rprintf("\n%d %d %d %d", (int)(1000 * *(P + 10)), (int)(1000 * *(P + 4)), (int)(1000 * *(P + 5)), (int)(1000 * *(P + 6)));
+	Rprintf("\n%d %d %d %d", (int)(1000 * *(P + 11)), (int)(1000 * *(P + 13)), (int)(1000 * *(P + 7)), (int)(1000 * *(P + 8)));
+	Rprintf("\n%d %d %d %d", (int)(1000 * *(P + 12)), (int)(1000 * *(P + 14)), (int)(1000 * *(P + 15)), (int)(1000 * *(P + 9)));
+	*/
 }
 
 SEXP clusterML(SEXP x, SEXP y, SEXP model, SEXP branches, SEXP lengths, SEXP nThreads)
@@ -384,7 +392,7 @@ SEXP clusterML(SEXP x, SEXP y, SEXP model, SEXP branches, SEXP lengths, SEXP nTh
 	int length = get_length_from_XStringSet_holder(&y_set);
 	int i, j, k, numRates, row;
 	double *T = REAL(x); // Tree Topology
-	double *m = REAL(model); // Substitution Model [%A %C %G %T k1 k2 rate probability ...]
+	double *m = REAL(model); // Substitution Model [%A %C %G %T k1 k2 rate(s) probabilities]
 	int *widths = (int *) R_alloc(length, sizeof(int));
 	int nthreads = asInteger(nThreads);
 	

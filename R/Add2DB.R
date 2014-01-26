@@ -79,8 +79,10 @@ Add2DB <- function(myData,
 			dbGetPreparedQuery(dbConn,
 				expression2,
 				bind.data=myData)
-			if (!dbCommit(dbConn))
-				stop("Unsucessful transaction!")
+			if (!dbCommit(dbConn)) {
+				warning("Unsucessful transaction!")
+				return(FALSE)
+			}
 		}
 	}
 	

@@ -3,8 +3,9 @@
 	
     r <- attr(x,"x.member")
     if(is.null(r)) {
-	r <- attr(x,"members")
-	if(is.null(r)) r <- 1L
+		r <- attr(x,"members")
+		if(is.null(r))
+			r <- 1L
     }
     return(r)
 }
@@ -18,19 +19,19 @@ to.dendrogram <- function (object,
     oHgts <- object$lengths
     nMerge <- length(oHgt <- object$height)
     if (nMerge != nrow(object$merge))
-	stop("'merge' and 'height' do not fit!")
+		stop("'merge' and 'height' do not fit!")
     hMax <- oHgt[nMerge]
     cMax <- max(object$clusters)
     
     one <- 1L
     two <- 2L
     for (k in 1L:nMerge) {
-		x <- object$merge[k, ]# no sort() anymore!
+		x <- as.integer(object$merge[k, ])
 		neg <- x < 0
-		if (all(neg)) {			# two leaves
+		if (all(neg)) { # two leaves
 			    zk <- as.list(-x)
 			    attr(zk, "members") <- two
-			    attr(zk, "midpoint") <- 0.5 # mean( c(0,1) )
+			    attr(zk, "midpoint") <- 0.5 # mean(c(0,1))
 			    objlabels <- object$labels[-x]
 			    attr(zk[[1L]], "label") <- objlabels[1L]
 			    attr(zk[[2L]], "label") <- objlabels[2L]
@@ -38,14 +39,15 @@ to.dendrogram <- function (object,
 			    attr(zk[[1L]], "height") <- oHgt[k] - oHgts[k,1]
 			    attr(zk[[2L]], "height") <- oHgt[k] - oHgts[k,2]
 			    attr(zk[[1L]], "leaf") <- attr(zk[[2L]], "leaf") <- TRUE
-			} else if (any(neg)) {		# one leaf, one node
+			} else if (any(neg)) { # one leaf, one node
 			    X <- as.character(x)
-			    ## Originally had "x <- sort(..) above => leaf always left, x[1L];
-			    ## don't want to assume this
-			    isL <- x[1L] < 0 ## is leaf left?
+			    isL <- x[1L] < 0 # is leaf left?
 			    zk <-
-				if(isL) list(-x[1L], z[[X[2L]]])
-				else	list(z[[X[1L]]], -x[2L])
+				if(isL) {
+					list(-x[1L], z[[X[2L]]])
+				} else {
+					list(z[[X[1L]]], -x[2L])
+				}
 			    attr(zk, "members") <- attr(z[[X[1 + isL]]], "members") + one
 			    attr(zk, "midpoint") <-
 	        	        (.memberDend(zk[[1L]]) + attr(z[[X[1 + isL]]], "midpoint"))/2
@@ -53,14 +55,14 @@ to.dendrogram <- function (object,
 			    attr(zk[[2 - isL]], "height") <- oHgt[k] - oHgts[k,2 - isL]
 			    attr(zk[[2 - isL]], "label") <- object$labels[-x[2 - isL]]
 			    attr(zk[[2 - isL]], "leaf") <- TRUE
-			} else {				# two nodes
-		    	x <- as.character(x)
-		    	zk <- list(z[[x[1L]]], z[[x[2L]]])
-		    	attr(zk, "members") <- attr(z[[x[1L]]], "members") +
-				attr(z[[x[2L]]], "members")
-				attr(zk, "midpoint") <- (attr(z[[x[1L]]], "members") +
-						     attr(z[[x[1L]]], "midpoint") +
-						     attr(z[[x[2L]]], "midpoint"))/2
+			} else {	 # two nodes
+		    		x <- as.character(x)
+		    		zk <- list(z[[x[1L]]], z[[x[2L]]])
+		    		attr(zk, "members") <- attr(z[[x[1L]]], "members") +
+					attr(z[[x[2L]]], "members")
+					attr(zk, "midpoint") <- (attr(z[[x[1L]]], "members") +
+						attr(z[[x[1L]]], "midpoint") +
+						attr(z[[x[2L]]], "midpoint"))/2
 		}
 		attr(zk, "height") <- oHgt[k]
 		z[[k <- as.character(k)]] <- zk
@@ -244,30 +246,37 @@ to.dendrogram <- function (object,
 		BIC <- 2*LnL + K*log(N)
 		return(c(NA, NA, NA, NA, rep(o$minimum, 2), a, LnL, AICc, BIC))
 	} else if (model=="F81") {
-		f <- function(params) {
-			if (sum(params) > 0.99)
-				return(1e9)
-			LnL <- .Call("clusterML",
-				myClusters,
-				myDNAStringSet,
-				c(params[1], params[2], params[3], 1 - sum(params), 1, 1, 1, 1),
-				integer(),
-				numeric(),
-				processors,
-				PACKAGE="DECIPHER")
-		}
-		o <- nlminb(rep(0.25, 3),
-			f,
-			upper=rep(0.99, 3),
-			lower=rep(0.01, 3),
-			control=list(rel.tol=1e-4))
+		baseFreqs <- colSums(alphabetFrequency(myDNAStringSet))[1:4]
+		baseFreqs <- baseFreqs/sum(baseFreqs)
+#		f <- function(params) {
+#			if (sum(params) > 0.99)
+#				return(1e9)
+#			LnL <- .Call("clusterML",
+#				myClusters,
+#				myDNAStringSet,
+#				c(params[1], params[2], params[3], 1 - sum(params), 1, 1, 1, 1),
+#				integer(),
+#				numeric(),
+#				processors,
+#				PACKAGE="DECIPHER")
+#			o <- optimize(adjustTreeHeight,
+#				c(0.001, 1000),
+#				tol=1e-2,
+#				params=params)
+#			return(o$minimum)
+#		}
+#		o <- nlminb(rep(0.25, 3),
+#			f,
+#			upper=rep(0.99, 3),
+#			lower=rep(0.01, 3),
+#			control=list(rel.tol=1e-4))
 		
 		if (!is.na(rates)) {
 			f <- function(params) {
 				LnL <- .Call("clusterML",
 					myClusters,
 					myDNAStringSet,
-					c(o$par, 1 - sum(o$par), 1, 1, .rates(params, rates)),
+					c(baseFreqs, 1, 1, .rates(params, rates)),
 					integer(),
 					numeric(),
 					processors,
@@ -280,31 +289,39 @@ to.dendrogram <- function (object,
 		} else {
 			K <- 2*dim(myClusters)[1] + 2
 			a <- NA
-			LnL <- o$objective
-		}
-		
-		AICc <- 2*K + 2*LnL + 2*K*(K + 1)/(N - K - 1)
-		BIC <- 2*LnL + K*log(N)
-		return(c(o$par, 1-sum(o$par), NA, NA, a, LnL, AICc, BIC))
-	} else if (model=="HKY85") {
-		f <- function(params) {
-			if (sum(params) > 0.99)
-				return(1e9)
 			LnL <- .Call("clusterML",
 				myClusters,
 				myDNAStringSet,
-				c(params[1], params[2], params[3], 1 - sum(params[1:3]), 1, 1, 1, 1),
+				c(baseFreqs, 1, 1, 1, 1),
 				integer(),
 				numeric(),
 				processors,
 				PACKAGE="DECIPHER")
 		}
-		baseFreqs <- nlminb(rep(0.25, 3),
-			f,
-			upper=rep(0.99, 3),
-			lower=rep(0.01, 3),
-			control=list(rel.tol=1e-4))$par
-		baseFreqs <- c(baseFreqs, 1 - sum(baseFreqs))
+		
+		AICc <- 2*K + 2*LnL + 2*K*(K + 1)/(N - K - 1)
+		BIC <- 2*LnL + K*log(N)
+		return(c(baseFreqs, NA, NA, a, LnL, AICc, BIC))
+	} else if (model=="HKY85") {
+		baseFreqs <- colSums(alphabetFrequency(myDNAStringSet))[1:4]
+		baseFreqs <- baseFreqs/sum(baseFreqs)
+#		f <- function(params) {
+#			if (sum(params) > 0.99)
+#				return(1e9)
+#			LnL <- .Call("clusterML",
+#				myClusters,
+#				myDNAStringSet,
+#				c(params[1], params[2], params[3], 1 - sum(params[1:3]), 1, 1, 1, 1),
+#				integer(),
+#				numeric(),
+#				processors,
+#				PACKAGE="DECIPHER")
+#		}
+#		baseFreqs <- nlminb(rep(0.25, 3),
+#			f,
+#			upper=rep(0.99, 3),
+#			lower=rep(0.01, 3),
+#			control=list(rel.tol=1e-4))$par
 		
 		f <- function(params) {
 			LnL <- .Call("clusterML",
@@ -347,24 +364,28 @@ to.dendrogram <- function (object,
 		BIC <- 2*LnL + K*log(N)
 		return(c(baseFreqs, o$par[1], o$par[1], a, LnL, AICc, BIC))
 	} else if (model=="T92") {
-		f <- function(params) {
-			if (params[1] > 0.49)
-				return(1e9)
-			LnL <- .Call("clusterML",
-				myClusters,
-				myDNAStringSet,
-				c(params, rep((1 - 2*params)/2, 2), params, 1, 1, 1, 1),
-				integer(),
-				numeric(),
-				processors,
-				PACKAGE="DECIPHER")
-		}
-		o <- nlminb(0.25,
-			f,
-			upper=0.49,
-			lower=0.01,
-			control=list(rel.tol=1e-4))
-		baseFreqs <- c(o$par, rep((1 - 2*o$par)/2, 2), o$par)
+		baseFreqs <- colSums(alphabetFrequency(myDNAStringSet))[1:4]
+		baseFreqs <- c((baseFreqs[1] + baseFreqs[4])/(2*sum(baseFreqs)),
+			(baseFreqs[2] + baseFreqs[3])/(2*sum(baseFreqs)))
+		baseFreqs <- c(baseFreqs[1], baseFreqs[2], baseFreqs[2], baseFreqs[1])
+#		f <- function(params) {
+#			if (params[1] > 0.49)
+#				return(1e9)
+#			LnL <- .Call("clusterML",
+#				myClusters,
+#				myDNAStringSet,
+#				c(params, rep((1 - 2*params)/2, 2), params, 1, 1, 1, 1),
+#				integer(),
+#				numeric(),
+#				processors,
+#				PACKAGE="DECIPHER")
+#		}
+#		o <- nlminb(0.25,
+#			f,
+#			upper=0.49,
+#			lower=0.01,
+#			control=list(rel.tol=1e-4))
+#		baseFreqs <- c(o$par, rep((1 - 2*o$par)/2, 2), o$par)
 		
 		f <- function(params) {
 			LnL <- .Call("clusterML",
@@ -407,24 +428,26 @@ to.dendrogram <- function (object,
 		BIC <- 2*LnL + K*log(N)
 		return(c(baseFreqs, o$par[1], o$par[1], a, LnL, AICc, BIC))
 	} else if (model=="TN93") {
-		f <- function(params) {
-			if (sum(params[1:3]) > 0.99)
-				return(1e9)
-			LnL <- .Call("clusterML",
-				myClusters,
-				myDNAStringSet,
-				c(params[1], params[2], params[3], 1 - sum(params[1:3]), 1, 1, 1, 1),
-				integer(),
-				numeric(),
-				processors,
-				PACKAGE="DECIPHER")
-		}
-		o <- nlminb(rep(0.25, 3),
-			f,
-			upper=rep(0.99, 3),
-			lower=rep(0.01, 3),
-			control=list(rel.tol=1e-4))
-		baseFreqs <- c(o$par, 1 - sum(o$par))
+		baseFreqs <- colSums(alphabetFrequency(myDNAStringSet))[1:4]
+		baseFreqs <- baseFreqs/sum(baseFreqs)
+#		f <- function(params) {
+#			if (sum(params[1:3]) > 0.99)
+#				return(1e9)
+#			LnL <- .Call("clusterML",
+#				myClusters,
+#				myDNAStringSet,
+#				c(params[1], params[2], params[3], 1 - sum(params[1:3]), 1, 1, 1, 1),
+#				integer(),
+#				numeric(),
+#				processors,
+#				PACKAGE="DECIPHER")
+#		}
+#		o <- nlminb(rep(0.25, 3),
+#			f,
+#			upper=rep(0.99, 3),
+#			lower=rep(0.01, 3),
+#			control=list(rel.tol=1e-4))
+#		baseFreqs <- c(o$par, 1 - sum(o$par))
 		
 		f <- function(params) {
 			LnL <- .Call("clusterML",
@@ -628,7 +651,7 @@ to.dendrogram <- function (object,
 	
 	# order clusters by branching pattern
 	repeat {
-		a <- apply(myClusters[, 7:8], 1, max)
+		a <- apply(as.matrix(myClusters[, 7:8], ncol=2), 1, max)
 		w <- which(a > 1:dim(myClusters)[1])[1]
 		if (is.na(w))
 			break
@@ -685,6 +708,9 @@ to.dendrogram <- function (object,
 }
 
 .NNI <- function(myClusters, bestLnL, NNIs, maximizeLikelihood, tol=1e-1) {
+	
+	if (dim(myClusters)[1]==1)
+		return(myClusters)
 	
 	# perform rounds of nearest-neighbor interchanges
 	W <- dim(myClusters)[1]:2
@@ -803,12 +829,12 @@ MODELS <- c("JC69",
 	"TN93",
 	"TN93+G4")
 
-IdClusters <- function(myDistMatrix,
+IdClusters <- function(myDistMatrix=NULL,
 	method="UPGMA",
 	cutoff=-Inf,
 	showPlot=FALSE,
 	asDendrogram=FALSE,
-	myDNAStringSet=NULL,
+	myXStringSet=NULL,
 	model=MODELS,
 	add2tbl=FALSE,
 	dbFile=NULL,
@@ -819,14 +845,18 @@ IdClusters <- function(myDistMatrix,
 	time.1 <- Sys.time()
 	
 	# error checking
-	METHODS <- c("NJ","UPGMA", "ML", "complete", "single", "average")
+	METHODS <- c("NJ","UPGMA", "ML", "complete", "single", "WPGMA", "inexact")
 	method <- pmatch(method, METHODS)
-	if (is.na(method))
-		stop("Invalid method.  Choose either ML, NJ, complete, single, or UPGMA (average).")
-	if (method == -1)
-		stop("Ambiguous method.  Choose either ML, NJ, complete, single, or UPGMA (average).")
-	if (method == 6)
-		method <- 2
+	if (is.na(method) && !is.null(myDistMatrix)) {
+		stop("Invalid method.  Choose either ML, NJ, complete, single, WPGMA, or UPGMA.")
+	} else if (is.na(method)) {
+		stop("Invalid method.")
+	}
+	if (method==-1 && !is.null(myDistMatrix)) {
+		stop("Ambiguous method.  Choose either ML, NJ, complete, single, WPGMA, or UPGMA.")
+	} else if (method==-1) {
+		stop("Ambiguous method.")
+	}
 	if (method==3 && length(model) < 1)
 		stop("No model(s) specified.")
 	if (method==3 && !is.character(model))
@@ -849,10 +879,20 @@ IdClusters <- function(myDistMatrix,
 	model <- unique(model)
 	if (!is.numeric(cutoff))
 		stop("cutoff must be a numeric.")
+	if (is.integer(cutoff))
+		cutoff <- as.numeric(cutoff)
 	if (!is.logical(showPlot))
 		stop("showPlot must be a logical.")
 	if (!is.logical(asDendrogram))
 		stop("asDendrogram must be a logical.")
+	if (method==7 && showPlot)
+		stop("showPlot must be FALSE if method is 'inexact'")
+	if (method==7 && asDendrogram)
+		stop("showPlot must be FALSE if method is 'inexact'")
+	if (length(cutoff) > 1 && (showPlot || asDendrogram))
+		stop("Only one cutoff may be specified when showPlot or asDendrogram is TRUE.")
+	if (method==7 && is.unsorted(cutoff))
+		stop("cutoff must be sorted in ascending order.")
 	if (!is.logical(add2tbl) && !is.character(add2tbl))
 		stop("add2tbl must be a logical or table name.")
 	if (is.character(add2tbl) || add2tbl)
@@ -872,441 +912,660 @@ IdClusters <- function(myDistMatrix,
 	} else {
 		processors <- as.integer(processors)
 	}
-	dim <- dim(myDistMatrix)
-	if (dim[2]!=dim[1])
-		stop("\nYour distance matrix is not square.")
-	dim <- dim[1]
-	if (dim < 2)
-		stop("\nYour distance matrix is too small.")
+	if (method != 7 && !is(myDistMatrix, "matrix")) {
+		stop(paste("myDistMatrix must be a matrix for method '", METHODS[method], "'.", sep=""))
+	} else if (method != 7 && method != 8) {
+		dim <- dim(myDistMatrix)
+		if (dim[2]!=dim[1])
+			stop("myDistMatrix is not square.")
+		dim <- dim[1]
+		if (dim < 2)
+			stop("myDistMatrix is too small.")
+	}
 	if (method == 3) {
-		if (is.null(myDNAStringSet))
-			stop("A DNAStringSet must be provided when method is ML.")
-		if (!is(myDNAStringSet, "DNAStringSet"))
-			stop("myDNAStringSet must be a DNAStringSet.")
-		if (length(myDNAStringSet)!=dim(myDistMatrix)[1])
+		if (!is(myXStringSet, "DNAStringSet"))
+			stop("myXStringSet must be a DNAStringSet.")
+		if (length(myXStringSet)!=dim(myDistMatrix)[1])
 			stop("myDistMatrix must have as many rows as the number of sequences.")
+		if (length(unique(width(myXStringSet))) != 1)
+			stop("All sequences in myXStringSet must be the same width (aligned).")
+		if (!is.null(attr(myDistMatrix, "correction")) &&
+			attr(myDistMatrix, "correction") == "none")
+			stop('myDistMatrix must have a correction with method="ML"')
 	}
 	
-	w1 <- which(is.infinite(myDistMatrix[lower.tri(myDistMatrix, diag=FALSE)]))
-	if (length(w1) > 0) {
+	if (method == 7) {
+		if (!is(myXStringSet, "DNAStringSet") &&
+			!is(myXStringSet, "RNAStringSet") &&
+			!is(myXStringSet, "AAStringSet"))
+			stop("myXStringSet must be a DNAStringSet, RNAStringSet, or AAStringSet.")
+		a <- vcountPattern("-", myXStringSet)
+		if (any(a) > 0)
+			stop("Gaps must be removed before inexact clustering.")
 		if (verbose)
-			warning("\n\nDistance Matrix contains infinite values.\n",
-				"Replaced infinite values with max distance >= 1.\n")
-		myDistMatrix[lower.tri(myDistMatrix, diag=FALSE)][w1] <- NA
-	}
-	
-	w2 <- which(is.na(myDistMatrix[lower.tri(myDistMatrix, diag=FALSE)]))
-	if (length(w2) > 0) {
-		if (verbose &&
-			length(w2) > length(w1))
-			warning("\n\nDistance Matrix contains NA values.\n",
-				"Replaced NA values with max distance >= 1.\n")
-		max.dist <- max(myDistMatrix[lower.tri(myDistMatrix, diag=FALSE)], na.rm=TRUE)
-		if (max.dist <= 1) {
-			myDistMatrix[lower.tri(myDistMatrix, diag=FALSE)][w2] <- 1
+			pBar <- txtProgressBar(style=3)
+		
+		if (is(myXStringSet, "AAStringSet")) {
+			wordSize <- ceiling(mean(width(myXStringSet))^0.2) # always >= 1
+			if (wordSize > 7)
+				wordSize <- 7
 		} else {
-			myDistMatrix[lower.tri(myDistMatrix, diag=FALSE)][w2] <- max.dist
-		}
-	}
-	
-	if ((length(cutoff) > 1) && (showPlot || asDendrogram)) {
-		cutoff <- cutoff[1]
-		warning("Only the first cutoff used since showPlot or asDendrogram.")
-	}
-	
-	
-	# initialize a progress bar
-	if (verbose) {
-		if (method==3) {
-			cat("Constructing initial neighbor-joining tree:\n")
-			flush.console()
-		}
-		pBar <- txtProgressBar(min=0, max=100, initial=0, style=3)
-	} else {
-		pBar <- NULL
-	}
-	
-	if (method==1)
-		myClusters <- .Call("clusterNJ",
-			myDistMatrix,
-			cutoff[1],
-			verbose,
-			pBar,
-			processors,
-			PACKAGE="DECIPHER")
-	
-	if (method==2 ||
-		method==4 ||
-		method==5 ||
-		method==6)
-		myClusters <- .Call("clusterUPGMA",
-			myDistMatrix,
-			cutoff[1],
-			method,
-			verbose,
-			pBar,
-			processors,
-			PACKAGE="DECIPHER")
-	
-	if (method==3) {
-		# create NJ for use as initial tree
-		myClusters <- .Call("clusterNJ",
-			myDistMatrix,
-			cutoff=-Inf,
-			verbose,
-			pBar,
-			processors,
-			PACKAGE="DECIPHER")
-		myClusters <- .reorderClusters(myClusters)
-		
-		m <- matrix(NA,
-			nrow=length(model),
-			ncol=10,
-			dimnames=list(model,
-				c("FreqA", "FreqC", "FreqG", "FreqT",
-					"A2G", "C2T", "alpha",
-					"-LnL", "AICc", "BIC")))
-		
-		if (!(length(model)==1 && model[1]=="JC69")) {
-			N <- sum(ifelse(apply(consensusMatrix(myDNAStringSet),
-						2,
-						function(x)
-							return(length(which(x[1:14] > 0)))) > 1,
-					1,
-					0))
-			if (verbose)
-				cat("\n")
-			for (i in 1:length(model)) {
-				m[model[i],] <- .optimizeModel(myClusters,
-					model[i],
-					myDNAStringSet,
-					N,
-					processors=processors)
-				if (verbose)
-					cat("\n", model[i],
-						":", paste(rep(" ",
-								max(nchar(rownames(m))) - nchar(model[i]) + 1),
-							collapse=""),
-						"-ln(L)=", round(m[model[i], "-LnL"], 0),
-						", AICc=", round(m[model[i], "AICc"], 0),
-						", BIC=", round(m[model[i], "BIC"], 0),
-						sep="")
-			}
+			wordSize <- ceiling(mean(width(myXStringSet))^0.25) # always >= 1
+			if (wordSize > 15)
+				wordSize <- 15
 		}
 		
-		if (length(model) > 1) { # choose the best model
-			w <- which.min(m[,"BIC"])
-			l <- logical(nrow(m))
-			l[w] <- TRUE
-			m <- subset(m, l)
-		}
-		
-		if (verbose) {
-			params <- formatC(round(m, 3),
-				digits=3,
-				format="f")
-			cat("\n\nThe selected model was:  ",
-				rownames(m),
-				ifelse(any(grepl("NA", params[1], fixed=TRUE)),
-					"",
-					"\n\nWith optimized parameters:"),
-				ifelse(grepl("NA", params[1], fixed=TRUE),
-					"",
-					ifelse(grepl("T92", rownames(m), fixed=TRUE),
-						paste("\nFrequency(A) = Frequency(T) = ", params[1],
-							"\nFrequency(C) = Frequency(G) = ", params[2],
-							sep=""),
-						paste("\nFrequency(A) = ", params[1],
-							"\nFrequency(C) = ", params[2],
-							"\nFrequency(G) = ", params[3],
-							"\nFrequency(T) = ", params[4],
-							sep=""))),
-				ifelse(grepl("NA", params[5], fixed=TRUE),
-					"",
-					ifelse(grepl("TN93", rownames(m), fixed=TRUE),
-						paste("\nRate A <-> G = ", params[5],
-							"\nRate C <-> T = ", params[6],
-							"\nTransversion rates = 1",
-							sep=""),
-						paste("\nTransition rates = ", params[5],
-							"\nTransversion rates = 1",
-							sep=""))),
-				ifelse(grepl("NA", params[7], fixed=TRUE),
-					"",
-					paste("\nAlpha = ", params[7], sep="")),
-				sep="")
-		}
-		
-		model_params <- as.numeric(m[1:7])
-		w <- which(is.na(model_params))
-		if (length(w) > 0) {
-			model_params[w] <- c(0.25, 0.25, 0.25, 0.25, 1, 1, NA)[w]
-		}
-		if (is.na(model_params[7])) {
-			model_params <- c(model_params[1:6], 1, 1)
+		if (is.null(names(myXStringSet))) {
+			dNames <- 1:length(myXStringSet)
 		} else {
-			model_params <- c(model_params[1:6], .rates(model_params[7], as.integer(sub("([^+]*)(\\+G(\\d+))?", "\\3", rownames(m)))))
-		}
-		
-		# given myClusters return adjusted heights
-		adjustTreeHeights <- function(myClusters) {
-			cumHeight <- numeric(max(myClusters[, 3]))
-			for (i in 1:dim(myClusters)[1]) {
-				if (myClusters[i, 1] < 0 && myClusters[i, 2] < 0) {
-					cumHeight[myClusters[i, 3]] <- max(myClusters[i, 4], myClusters[i, 5])
-					myClusters[i, 6] <- cumHeight[myClusters[i, 3]]
-				} else if (myClusters[i, 1] > 0 && myClusters[i, 2] > 0) {
-					cumHeight[myClusters[i, 3]] <- max(myClusters[i, 4] + cumHeight[myClusters[i, 1]],
-						myClusters[i, 5] + cumHeight[myClusters[i, 2]])
-					myClusters[i, 6] <- cumHeight[myClusters[i, 3]]
-				} else if (myClusters[i, 1] > 0) {
-					cumHeight[myClusters[i, 3]] <- cumHeight[myClusters[i, 1]] + myClusters[i, 4]
-					if (myClusters[i, 5] > cumHeight[myClusters[i, 3]])
-						cumHeight[myClusters[i, 3]] <- myClusters[i, 5]
-					myClusters[i, 6] <- cumHeight[myClusters[i, 3]]
-				} else {
-					cumHeight[myClusters[i, 3]] <- cumHeight[myClusters[i, 2]] + myClusters[i, 5]
-					if (myClusters[i, 4] > cumHeight[myClusters[i, 3]])
-						cumHeight[myClusters[i, 3]] <- myClusters[i, 4]
-					myClusters[i, 6] <- cumHeight[myClusters[i, 3]]
-				}
-			}
-			
-			myClusters <- .Call("adjustHeights",
-				myClusters,
-				PACKAGE="DECIPHER")
-			return(myClusters)
-		}
-		
-		# print progress of likelihood maximization
-		.startLnL <- Inf
-		.bestLnL <- Inf
-		.NNIs <- 0L
-		if (verbose) {
-			setTxtProgressBar(pBar,100)
-			close(pBar)
-			cat("\nMaximizing Likelihood of Tree:\n")
-			flush.console()
-			printLine <- function(value, percentComplete) {
-				cat("\r-ln(Likelihood) = ",
-					formatC(round(value, 0),
-						digits=0,
-						format="f"),
-					" (",
-					formatC(round(-100*(value - .startLnL)/.startLnL,
-							2),
-						digits=2,
-						format="f"),
-					"% increase), ",
-					.NNIs,
-					ifelse(.NNIs==1, " NNI  ", " NNIs "),
-					sep="")
-				flush.console()
-				invisible(value)
-			}
-		}
-		
-		# given branch lengths return -LnL
-		maximizeLikelihood <- function(x, branches=integer(), lengths=numeric()) {
-			myClusters[, 4:5] <- x
-			LnL <- .Call("clusterML",
-				myClusters,
-				myDNAStringSet,
-				model_params,
-				branches,
-				lengths,
-				processors,
-				PACKAGE="DECIPHER")
-			
-			w <- which.min(LnL)
-			if (LnL[w] < .bestLnL) {
-				if (w > 1) {
-					x[branches[w - 1]] <- lengths[w - 1]
-					params <<- x
-				} else {
-					params <<- x
-				}
-				.bestLnL <<- LnL[w]
-				if (verbose) {
-					if (is.infinite(.startLnL))
-						.startLnL <<- LnL[1]
-					printLine(LnL[w])
-				}
-			}
-			
-			return(LnL)
-		}
-		
-		maximizeLikelihood2 <- function(myClusters, NNIs, tol) {
-			LnL <- .Call("clusterML",
-				myClusters,
-				myDNAStringSet,
-				model_params,
-				integer(),
-				numeric(),
-				processors,
-				PACKAGE="DECIPHER")
-			
-			if (LnL < .bestLnL - tol) {
-				.bestLnL <<- LnL
-				if (verbose) {
-					.NNIs <<- NNIs
-					if (is.infinite(.startLnL))
-						.startLnL <<- LnL
-					printLine(LnL)
-				}
-			}
-			
-			return(LnL)
-		}
-		
-		# maximize likelihood of tree
-		index <- rep(TRUE, 2*dim(myClusters)[1])
-		repeat {
-			currentLnL <- .bestLnL
-			currentNNIs <- .NNIs
-			params <- as.numeric(myClusters[, 4:5])
-			tempClusters <- paste(myClusters[, 7], myClusters[, 8])
-			.simultaneousBrent(maximizeLikelihood,
-				ifelse(index, 0, params),
-				params,
-				ifelse(index, 10*params, params))
-			myClusters[, 4:5] <- params
-			
-			myClusters <- .NNI(myClusters,
-				.bestLnL,
-				.NNIs,
-				maximizeLikelihood2)
-			
-			if (abs(.bestLnL - currentLnL) < 1e0 || # negligible improvement in likelihood
-				currentNNIs==.NNIs) # no new nearest neighbor interchanges (NNIs)
-				break
-			index <- rep(!(paste(myClusters[, 7], myClusters[, 8]) %in% tempClusters), 2)
-		}
-		
-		myClusters <- .reorderClusters(myClusters, all=TRUE)
-		myClusters <- adjustTreeHeights(myClusters)
-		myClusters <- .Call("reclusterNJ",
-			myClusters,
-			cutoff[1],
-			PACKAGE="DECIPHER")
-		
-		if (verbose) {
-			printLine(.bestLnL, 100)
-			cat("\n")
-			flush.console()
-		}
-	}
-	
-	m <- max(myClusters[,9:10])
-	
-	if (showPlot || asDendrogram) {
-		# create a dendrogram object
-		myClustersList <- list()
-		if (is.null(dimnames(myDistMatrix)[[1]])) {
-			myClustersList$labels <- 1:(dim(myClusters)[1] + 1)
-		} else {
-			myClustersList$labels <- dimnames(myDistMatrix)[[1]]
-			
-			w <- which(duplicated(dimnames(myDistMatrix)[[1]]))
+			dNames <- names(myXStringSet)
+			w <- which(duplicated(dNames))
 			if (length(w) > 0) {
-				warning("Duplicated dimnames in dendrogram appended with index.")
-				myClustersList$labels[w] <- paste(myClustersList$labels[w],
+				warning("Duplicated names of myXStringSet appended with index.")
+				dNames[w] <- paste(dNames[w],
 					w,
 					sep="_")
 			}
 		}
-		
-		myClustersList$merge <- matrix(myClusters[,7:8], ncol=2)
-		myClustersList$height <- matrix(myClusters[,6], ncol=1)
-		myClustersList$lengths <- matrix(myClusters[,4:5], ncol=2)
-		myClustersList$clusters <- matrix(myClusters[,9:10], ncol=2)
-		if (dim > 100) {
-			fontSize <- .6
-		} else if (dim > 70) {
-			fontSize <- .7
-		} else if (dim > 40) {
-			fontSize <- .8
-		} else {
-			fontSize <- .9
-		}
-		if (dim > 300) {
-			leaves <- "none"
-		} else {
-			leaves <- "perpendicular"
-		}
-		d <- to.dendrogram(myClustersList)
-		
-		# specify the order of clusters that
-		# will match the plotted dendrogram
-		orderDendrogram <- order.dendrogram(d)
-		
-		myClusters <- .organizeClusters(myClusters, myClustersList$labels, orderDendrogram)
-		
-		# create a visibily different vector of colors
-		cl <- colors()
-		v1 <- c(117,254,73,69,152,51,26,450,503,596,652,610,563,552,97)
-		r <- cl[v1]
-		
-		# color edges by cluster
-		colEdge <- function(n, myClusters, colors) {
-			if (is.leaf(n)) {
-				a <- attributes(n)
-				num <- myClusters$cluster[which(myClustersList$labels==as.character(a$label))]
-				attr(n, "edgePar") <- list(col=colors[num %% 15 + 1])
-			}
-			n
-		}
-		if (is.finite(cutoff)) {
-			d <- dendrapply(d, colEdge, myClusters, r)
-			d <- reorder(d, myClusters[, 1])
-		}
-	} else { # not plotting
-		if (is.null(dimnames(myDistMatrix)[[1]])) {
-			dNames <- 1:(dim(myClusters)[1] + 1)
-		} else {
-			dNames <- dimnames(myDistMatrix)[[1]]
-		}
-		
-		# do not number clusters by order of appearance
-		c <- .organizeClustersFast(myClusters, dNames)
 		if (length(cutoff) > 1) {
-			names(c) <- paste("cluster",
-				gsub("\\.","_",100*cutoff[1]),
+			cNames <- paste("cluster",
+				gsub("\\.", "_", cutoff),
 				METHODS[method],
 				sep="")
-			for (i in 2:length(cutoff)) {
-				if (method==2 ||
-					method==4 ||
-					method==5 ||
-					method==6)
-					myClusters <- .Call("reclusterUPGMA",
-						myClusters,
-						cutoff[i],
-						PACKAGE="DECIPHER")
-				if (method==1 ||
-					method==3)
-					myClusters <- .Call("reclusterNJ",
-						myClusters,
-						cutoff[i],
-						PACKAGE="DECIPHER")
-				x <- .organizeClustersFast(myClusters, dNames)
-				names(x) <- paste("cluster",
-					gsub("\\.","_",100*cutoff[i]),
-					METHODS[method],
-					sep="")
-				c <- cbind(c, x)
-				m <- c(m, max(myClusters[,9:10]))
+		} else {
+			cNames <- "cluster"
+		}
+		c <- matrix(0L,
+			nrow=length(myXStringSet),
+			ncol=length(cutoff),
+			dimnames=list(dNames,
+				cNames))
+		
+		#cutoff <- cutoff/2 # cluster radius is half the diameter
+		dists <- numeric()
+		for (i in length(cutoff):1L) {
+			if (i < length(cutoff)) {
+				o <- order(c[, i + 1], width(myXStringSet), decreasing=TRUE)
+			} else {
+				o <- order(width(myXStringSet), decreasing=TRUE)
+			}
+			cluster_num <- 1L
+			offset <- 0L
+			c[o[cluster_num], i] <- cluster_num
+			
+			if (is(myXStringSet, "AAStringSet")) {
+				v <- .Call("enumerateSequenceAA",
+					myXStringSet[o[1:ifelse(length(myXStringSet) > 999, 999, length(myXStringSet))]],
+					wordSize,
+					PACKAGE="DECIPHER")
+			} else { # DNAStringSet or RNAStringSet
+				v <- .Call("enumerateSequence",
+					myXStringSet[o[1:ifelse(length(myXStringSet) > 999, 999, length(myXStringSet))]],
+					wordSize,
+					PACKAGE="DECIPHER")
+			}
+			
+			seeds.nums <- v[1L]
+			names(seeds.nums)[length(seeds.nums)] <- o[cluster_num]
+			seeds.seqs <- myXStringSet[o[1]]
+			names(seeds.seqs) <- cluster_num
+			
+			index <- 1L
+			if (length(o) > 1L) {
+				for (j in 2L:length(o)) {
+					if (verbose)
+						setTxtProgressBar(pBar, ((length(cutoff) - i)*length(o) + j)/length(cutoff)/length(o))
+					
+					if (j %% 1000 == 0) {
+						index <- 1L
+						if (is(myXStringSet, "AAStringSet")) {
+							v <- .Call("enumerateSequenceAA",
+								myXStringSet[o[j:ifelse(j + 999 > length(myXStringSet), length(myXStringSet), j + 999)]],
+								wordSize,
+								PACKAGE="DECIPHER")
+						} else { # DNAStringSet or RNAStringSet
+							v <- .Call("enumerateSequence",
+								myXStringSet[o[j:ifelse(j + 999 > length(myXStringSet), length(myXStringSet), j + 999)]],
+								wordSize,
+								PACKAGE="DECIPHER")
+						}
+					} else {
+						index <- index + 1L
+					}
+					
+					if (i < length(cutoff)) {
+						if (c[o[j], i + 1] != c[o[j - 1], i + 1]) {
+							# different clusters in last cutoff
+							offset <- offset + cluster_num
+							cluster_num <- 1L
+							c[o[j], i] <- cluster_num + offset
+							seeds.nums <- list()
+							seeds.nums[cluster_num] <- v[index]
+							names(seeds.nums)[length(seeds.nums)] <- o[j]
+							seeds.seqs <- myXStringSet[o[j]]
+							names(seeds.seqs) <- cluster_num + offset
+							next
+						}
+					}
+					
+					d <- dists[paste(o[j], names(seeds.nums))]
+					w <- which(d < cutoff[i])
+					matched <- FALSE
+					if (length(w) > 0) {
+						matched <- TRUE
+						c[o[j], i] <- w[1] + offset
+					} else {
+						m <- .Call("matchOrderDual",
+							v[index],
+							seeds.nums,
+							processors,
+							PACKAGE="DECIPHER")
+						m <- m*0.5 # approximately scale to percent distance
+						
+						w <- which(m < cutoff[i])
+						if (length(w) > 0) {
+							matched <- TRUE
+							c[o[j], i] <- w[1] + offset
+						} else {
+							weights <- 1 - m
+							weights <- weights/mean(weights)
+							if (any(!is.finite(weights)))
+								weights <- 1
+							temp <- AlignProfiles(myXStringSet[o[j]],
+								seeds.seqs,
+								s.weight=weights,
+								processors=processors)
+							d <- .Call("distMatrix",
+								temp,
+								ifelse(is(myXStringSet, "AAStringSet"), 3L, 1L),
+								FALSE, # includeTerminalGaps
+								FALSE, # penalizeGapGapMatches
+								TRUE, # penalizeGapLetterMatches
+								FALSE, # full matrix
+								FALSE,
+								NULL,
+								processors,
+								PACKAGE="DECIPHER")[1, 2:length(temp)]
+							w <- which(d < cutoff[i])
+							if (length(w) > 0) {
+								matched <- TRUE
+								c[o[j], i] <- w[1] + offset
+								dists <- c(dists, setNames(d, paste(o[j], names(seeds.nums)[w[1]])))
+							}
+						}
+					}
+					if (!matched) {
+						cluster_num <- cluster_num + 1L
+						c[o[j], i] <- cluster_num + offset
+						seeds.nums[cluster_num] <- v[index]
+						names(seeds.nums)[length(seeds.nums)] <- o[j]
+						seeds.seqs <- temp
+						names(seeds.seqs)[1] <- cluster_num + offset
+					}
+				}
 			}
 		}
-		myClusters <- c
+		myClusters <- as.data.frame(c)
+	} else {
+		w1 <- which(is.infinite(myDistMatrix[lower.tri(myDistMatrix, diag=FALSE)]))
+		if (length(w1) > 0) {
+			if (verbose)
+				warning("\n\nDistance Matrix contains infinite values.\n",
+					"Replaced infinite values with max distance >= 1.\n")
+			myDistMatrix[lower.tri(myDistMatrix, diag=FALSE)][w1] <- NA
+		}
+		
+		w2 <- which(is.na(myDistMatrix[lower.tri(myDistMatrix, diag=FALSE)]))
+		if (length(w2) > 0) {
+			if (verbose &&
+				length(w2) > length(w1))
+				warning("\n\nDistance Matrix contains NA values.\n",
+					"Replaced NA values with max distance >= 1.\n")
+			max.dist <- max(myDistMatrix[lower.tri(myDistMatrix, diag=FALSE)], na.rm=TRUE)
+			if (max.dist <= 1) {
+				myDistMatrix[lower.tri(myDistMatrix, diag=FALSE)][w2] <- 1
+			} else {
+				myDistMatrix[lower.tri(myDistMatrix, diag=FALSE)][w2] <- max.dist
+			}
+		}
+		
+		# initialize a progress bar
+		if (verbose) {
+			if (method==3) {
+				cat("Constructing initial neighbor-joining tree:\n")
+				flush.console()
+			}
+			pBar <- txtProgressBar(min=0, max=100, initial=0, style=3)
+		} else {
+			pBar <- NULL
+		}
+		
+		if (method==1)
+			myClusters <- .Call("clusterNJ",
+				myDistMatrix,
+				cutoff[1],
+				verbose,
+				pBar,
+				processors,
+				PACKAGE="DECIPHER")
+		
+		if (method==2 ||
+			method==4 ||
+			method==5 ||
+			method==6)
+			myClusters <- .Call("clusterUPGMA",
+				myDistMatrix,
+				cutoff[1],
+				method,
+				verbose,
+				pBar,
+				processors,
+				PACKAGE="DECIPHER")
+		
+		if (method==3) {
+			# create NJ for use as initial tree
+			myClusters <- .Call("clusterNJ",
+				myDistMatrix,
+				cutoff=-Inf,
+				verbose,
+				pBar,
+				processors,
+				PACKAGE="DECIPHER")
+			myClusters <- .reorderClusters(myClusters)
+			
+#			# rescale total height of tree to
+#			# normalize myDistMatrix scaling
+#			adjustTreeHeight <- function(scalar) {
+#				myClusters[, 4:5] <- myClusters[, 4:5]*scalar
+#				LnL <- .Call("clusterML",
+#					myClusters,
+#					myXStringSet,
+#					c(0.25, 0.25, 0.25, 0.25, 1, 1, 1, 1),
+#					integer(),
+#					numeric(),
+#					processors,
+#					PACKAGE="DECIPHER")
+#			}
+#			o <- optimize(adjustTreeHeight,
+#				c(0.001, 1000),
+#				tol=1e-2)
+#			myClusters[, 4:5] <- myClusters[, 4:5]*o$minimum
+			
+			m <- matrix(NA,
+				nrow=length(model),
+				ncol=10,
+				dimnames=list(model,
+					c("FreqA", "FreqC", "FreqG", "FreqT",
+						"A2G", "C2T", "alpha",
+						"-LnL", "AICc", "BIC")))
+			
+			if (!(length(model)==1 && model[1]=="JC69")) {
+				N <- sum(ifelse(apply(consensusMatrix(myXStringSet),
+							2,
+							function(x)
+								return(length(which(x[1:14] > 0)))) > 1,
+						1,
+						0))
+				if (verbose)
+					cat("\n")
+				for (i in 1:length(model)) {
+					m[model[i],] <- .optimizeModel(myClusters,
+						model[i],
+						myXStringSet,
+						N,
+						processors=processors)
+					if (verbose)
+						cat("\n", model[i],
+							":", paste(rep(" ",
+									max(nchar(rownames(m))) - nchar(model[i]) + 1),
+								collapse=""),
+							"-ln(L)=", round(m[model[i], "-LnL"], 0),
+							", AICc=", round(m[model[i], "AICc"], 0),
+							", BIC=", round(m[model[i], "BIC"], 0),
+							sep="")
+				}
+			}
+			
+			if (length(model) > 1) { # choose the best model
+				w <- which.min(m[,"BIC"])
+				l <- logical(nrow(m))
+				l[w] <- TRUE
+				m <- subset(m, l)
+			}
+			
+			if (verbose) {
+				if (length(model) > 1)
+					cat("\n\nThe selected model was:  ",
+						rownames(m),
+						sep="")
+			}
+			
+			.giveParams <- function(model_params) {
+				w <- which(is.na(model_params))
+				if (length(w) > 0) {
+					model_params[w] <- c(0.25, 0.25, 0.25, 0.25, 1, 1, NA)[w]
+				}
+				if (is.na(model_params[7])) {
+					model_params <- c(model_params[1:6], 1, 1)
+				} else {
+					model_params <- c(model_params[1:6], .rates(model_params[7], as.integer(sub("([^+]*)(\\+G(\\d+))?", "\\3", rownames(m)))))
+				}
+			}
+			model_params <- .giveParams(as.numeric(m[1:7]))
+			
+			# given myClusters return adjusted heights
+			adjustTreeHeights <- function(myClusters) {
+				cumHeight <- numeric(max(myClusters[, 3]))
+				for (i in 1:dim(myClusters)[1]) {
+					if (myClusters[i, 1] < 0 && myClusters[i, 2] < 0) {
+						cumHeight[myClusters[i, 3]] <- max(myClusters[i, 4], myClusters[i, 5])
+						myClusters[i, 6] <- cumHeight[myClusters[i, 3]]
+					} else if (myClusters[i, 1] > 0 && myClusters[i, 2] > 0) {
+						cumHeight[myClusters[i, 3]] <- max(myClusters[i, 4] + cumHeight[myClusters[i, 1]],
+							myClusters[i, 5] + cumHeight[myClusters[i, 2]])
+						myClusters[i, 6] <- cumHeight[myClusters[i, 3]]
+					} else if (myClusters[i, 1] > 0) {
+						cumHeight[myClusters[i, 3]] <- cumHeight[myClusters[i, 1]] + myClusters[i, 4]
+						if (myClusters[i, 5] > cumHeight[myClusters[i, 3]])
+							cumHeight[myClusters[i, 3]] <- myClusters[i, 5]
+						myClusters[i, 6] <- cumHeight[myClusters[i, 3]]
+					} else {
+						cumHeight[myClusters[i, 3]] <- cumHeight[myClusters[i, 2]] + myClusters[i, 5]
+						if (myClusters[i, 4] > cumHeight[myClusters[i, 3]])
+							cumHeight[myClusters[i, 3]] <- myClusters[i, 4]
+						myClusters[i, 6] <- cumHeight[myClusters[i, 3]]
+					}
+				}
+				
+				myClusters <- .Call("adjustHeights",
+					myClusters,
+					PACKAGE="DECIPHER")
+				return(myClusters)
+			}
+			
+			# print progress of likelihood maximization
+			.startLnL <- Inf
+			.bestLnL <- Inf
+			.NNIs <- 0L
+			if (verbose) {
+				setTxtProgressBar(pBar,100)
+				close(pBar)
+				cat("\nMaximizing Likelihood of Tree:\n")
+				flush.console()
+				printLine <- function(value, percentComplete) {
+					cat("\r-ln(Likelihood) = ",
+						formatC(round(value, 0),
+							digits=0,
+							format="f"),
+						" (",
+						formatC(round(-100*(value - .startLnL)/.startLnL,
+								2),
+							digits=2,
+							format="f"),
+						"% improvement), ",
+						.NNIs,
+						ifelse(.NNIs==1, " NNI  ", " NNIs "),
+						sep="")
+					flush.console()
+					invisible(value)
+				}
+			}
+			
+			# given branch lengths return -LnL
+			maximizeLikelihood <- function(x, branches=integer(), lengths=numeric()) {
+				myClusters[, 4:5] <- x
+				LnL <- .Call("clusterML",
+					myClusters,
+					myXStringSet,
+					model_params,
+					branches,
+					lengths,
+					processors,
+					PACKAGE="DECIPHER")
+				
+				w <- which.min(LnL)
+				if (LnL[w] < .bestLnL) {
+					if (w > 1) {
+						x[branches[w - 1]] <- lengths[w - 1]
+						params <<- x
+					} else {
+						params <<- x
+					}
+					.bestLnL <<- LnL[w]
+					if (verbose) {
+						if (is.infinite(.startLnL))
+							.startLnL <<- LnL[1]
+						printLine(LnL[w])
+					}
+				}
+				
+				return(LnL)
+			}
+			
+			maximizeLikelihood2 <- function(myClusters, NNIs, tol) {
+				LnL <- .Call("clusterML",
+					myClusters,
+					myXStringSet,
+					model_params,
+					integer(),
+					numeric(),
+					processors,
+					PACKAGE="DECIPHER")
+				
+				if (LnL < .bestLnL - tol) {
+					.bestLnL <<- LnL
+					if (verbose) {
+						.NNIs <<- NNIs
+						if (is.infinite(.startLnL))
+							.startLnL <<- LnL
+						printLine(LnL)
+					}
+				}
+				
+				return(LnL)
+			}
+			
+			# maximize likelihood of tree
+			index <- rep(TRUE, 2*dim(myClusters)[1])
+			repeat {
+				currentLnL <- .bestLnL
+				currentNNIs <- .NNIs
+				params <- as.numeric(myClusters[, 4:5])
+				tempClusters <- paste(myClusters[, 7], myClusters[, 8])
+				.simultaneousBrent(maximizeLikelihood,
+					ifelse(index, 0, params),
+					params,
+					ifelse(index, 10*params, params))
+				myClusters[, 4:5] <- params
+				
+				myClusters <- .NNI(myClusters,
+					.bestLnL,
+					.NNIs,
+					maximizeLikelihood2)
+				
+				if (abs(.bestLnL - currentLnL) < 1e0 &&
+					currentNNIs==.NNIs) {
+					temp_params <- model_params
+				} else {
+					m[1,] <- .optimizeModel(myClusters,
+						rownames(m),
+						myXStringSet,
+						N,
+						processors=processors)
+					temp_params <- .giveParams(as.numeric(m[1:7]))
+				}
+				
+				if ((abs(.bestLnL - currentLnL) < 1e0 || # negligible improvement in likelihood
+					currentNNIs==.NNIs) && # no new nearest neighbor interchanges (NNIs)
+					all(abs(temp_params - model_params) < 0.01)) # negligible change in model_params
+					break
+				model_params <- temp_params
+				index <- rep(!(paste(myClusters[, 7], myClusters[, 8]) %in% tempClusters), 2)
+			}
+			
+			myClusters <- .reorderClusters(myClusters, all=TRUE)
+			myClusters <- adjustTreeHeights(myClusters)
+			myClusters <- .Call("reclusterNJ",
+				myClusters,
+				cutoff[1],
+				PACKAGE="DECIPHER")
+			
+			if (verbose) {
+				printLine(.bestLnL, 100)
+				flush.console()
+				params <- formatC(round(m, 3),
+					digits=3,
+					format="f")
+				cat(ifelse(any(grepl("NA", params[1], fixed=TRUE)),
+						"",
+						"\n\nModel parameters:"),
+					ifelse(grepl("NA", params[1], fixed=TRUE),
+						"",
+						ifelse(grepl("T92", rownames(m), fixed=TRUE),
+							paste("\nFrequency(A) = Frequency(T) = ", params[1],
+								"\nFrequency(C) = Frequency(G) = ", params[2],
+								sep=""),
+							paste("\nFrequency(A) = ", params[1],
+								"\nFrequency(C) = ", params[2],
+								"\nFrequency(G) = ", params[3],
+								"\nFrequency(T) = ", params[4],
+								sep=""))),
+					ifelse(grepl("NA", params[5], fixed=TRUE),
+						"",
+						ifelse(grepl("TN93", rownames(m), fixed=TRUE),
+							paste("\nRate A <-> G = ", params[5],
+								"\nRate C <-> T = ", params[6],
+								"\nTransversion rates = 1",
+								sep=""),
+							paste("\nTransition rates = ", params[5],
+								"\nTransversion rates = 1",
+								sep=""))),
+					ifelse(grepl("NA", params[7], fixed=TRUE),
+						"",
+						paste("\nAlpha = ", params[7], sep="")),
+					sep="")
+				cat("\n")
+			}
+		}
+		
+		m <- max(myClusters[,9:10])
+		
+		if (showPlot || asDendrogram) {
+			# create a dendrogram object
+			myClustersList <- list()
+			if (is.null(dimnames(myDistMatrix)[[1]])) {
+				myClustersList$labels <- 1:(dim(myClusters)[1] + 1)
+			} else {
+				myClustersList$labels <- dimnames(myDistMatrix)[[1]]
+				
+				w <- which(duplicated(dimnames(myDistMatrix)[[1]]))
+				if (length(w) > 0) {
+					warning("Duplicated dimnames in dendrogram appended with index.")
+					myClustersList$labels[w] <- paste(myClustersList$labels[w],
+						w,
+						sep="_")
+				}
+			}
+			
+			myClustersList$merge <- matrix(myClusters[,7:8], ncol=2)
+			myClustersList$height <- matrix(myClusters[,6], ncol=1)
+			myClustersList$lengths <- matrix(myClusters[,4:5], ncol=2)
+			myClustersList$clusters <- matrix(myClusters[,9:10], ncol=2)
+			if (dim > 100) {
+				fontSize <- .6
+			} else if (dim > 70) {
+				fontSize <- .7
+			} else if (dim > 40) {
+				fontSize <- .8
+			} else {
+				fontSize <- .9
+			}
+			if (dim > 300) {
+				leaves <- "none"
+			} else {
+				leaves <- "perpendicular"
+			}
+			d <- to.dendrogram(myClustersList)
+			
+			# specify the order of clusters that
+			# will match the plotted dendrogram
+			orderDendrogram <- order.dendrogram(d)
+			
+			myClusters <- .organizeClusters(myClusters, myClustersList$labels, orderDendrogram)
+			
+			# create a visibily different vector of colors
+			cl <- colors()
+			v1 <- c(117,254,73,69,152,51,26,450,503,596,652,610,563,552,97)
+			r <- cl[v1]
+			
+			# color edges by cluster
+			colEdge <- function(n, myClusters, colors) {
+				if (is.leaf(n)) {
+					a <- attributes(n)
+					num <- myClusters$cluster[which(myClustersList$labels==as.character(a$label))]
+					attr(n, "edgePar") <- list(col=colors[num %% 15 + 1])
+				}
+				n
+			}
+			if (is.finite(cutoff)) {
+				d <- dendrapply(d, colEdge, myClusters, r)
+				d <- reorder(d, myClusters[, 1])
+			}
+		} else { # not plotting
+			if (is.null(dimnames(myDistMatrix)[[1]])) {
+				dNames <- 1:(dim(myClusters)[1] + 1)
+			} else {
+				dNames <- dimnames(myDistMatrix)[[1]]
+				
+				w <- which(duplicated(dNames))
+				if (length(w) > 0) {
+					warning("Duplicated dimnames in myDistMatrix appended with index.")
+					dNames[w] <- paste(dNames[w],
+						w,
+						sep="_")
+				}
+			}
+			
+			# do not number clusters by order of appearance
+			c <- .organizeClustersFast(myClusters, dNames)
+			if (length(cutoff) > 1) {
+				names(c) <- paste("cluster",
+					gsub("\\.", "_", cutoff[1]),
+					METHODS[method],
+					sep="")
+				for (i in 2:length(cutoff)) {
+					if (method==2 ||
+						method==4 ||
+						method==5 ||
+						method==6)
+						myClusters <- .Call("reclusterUPGMA",
+							myClusters,
+							cutoff[i],
+							PACKAGE="DECIPHER")
+					if (method==1 ||
+						method==3)
+						myClusters <- .Call("reclusterNJ",
+							myClusters,
+							cutoff[i],
+							PACKAGE="DECIPHER")
+					x <- .organizeClustersFast(myClusters, dNames)
+					names(x) <- paste("cluster",
+						gsub("\\.", "_", cutoff[i]),
+						METHODS[method],
+						sep="")
+					c <- cbind(c, x)
+					m <- c(m, max(myClusters[,9:10]))
+				}
+			}
+			myClusters <- c
+		}
+		
+		if (showPlot)
+			plot(d,
+				horiz=FALSE,
+				leaflab=leaves,	
+				nodePar = list(lab.cex=fontSize, pch = NA))
 	}
-	
-	if (showPlot)
-		plot(d,
-			horiz=FALSE,
-			leaflab=leaves,	
-			nodePar = list(lab.cex=fontSize, pch = NA))
 	
 	if (is.character(add2tbl) || add2tbl)
 		Add2DB(myData=myClusters,
@@ -1316,7 +1575,7 @@ IdClusters <- function(myDistMatrix,
 	
 	if (verbose) {
 		if (method != 3) { # already closed pBar
-			setTxtProgressBar(pBar,100)
+			setTxtProgressBar(pBar, 100)
 			close(pBar)
 		}
 		
@@ -1340,8 +1599,10 @@ IdClusters <- function(myDistMatrix,
 			digits=2))
 		cat("\n")
 	}
-	if (asDendrogram)
+	
+	if (asDendrogram) {
 		return(d)
-	else
+	} else {
 		return(myClusters)
+	}
 }

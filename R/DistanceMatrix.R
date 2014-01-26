@@ -1,4 +1,4 @@
-DistanceMatrix <- function(myDNAStringSet,
+DistanceMatrix <- function(myXStringSet,
 	includeTerminalGaps=FALSE,
 	penalizeGapLetterMatches=TRUE,
 	penalizeGapGapMatches=FALSE,
@@ -29,8 +29,10 @@ DistanceMatrix <- function(myDNAStringSet,
 		stop("removeDuplicates must be a logical.")
 	if (!is.logical(verbose))
 		stop("verbose must be a logical.")
-	if (!is(myDNAStringSet, "DNAStringSet"))
-		stop("myDNAStringSet must be a DNAStringSet.")
+	if (!is(myXStringSet, "XStringSet"))
+		stop("myXStringSet must be an XStringSet.")
+	if (is(myXStringSet, "BStringSet"))
+		stop("myXStringSet cannot be a BStringSet.")
 	if (!is.null(processors) && !is.numeric(processors))
 		stop("processors must be a numeric.")
 	if (!is.null(processors) && floor(processors)!=processors)
@@ -43,7 +45,7 @@ DistanceMatrix <- function(myDNAStringSet,
 		processors <- as.integer(processors)
 	}
 	
-	maxW <- unique(width(myDNAStringSet))
+	maxW <- unique(width(myXStringSet))
 	if (length(maxW)!=1) {
 		if (verbose)
 			warning("\n",
@@ -51,7 +53,7 @@ DistanceMatrix <- function(myDNAStringSet,
 				" different sequence lengths.\n",
 				"Using shorter length in each comparison.\n")
 	}
-	numF <- length(myDNAStringSet)
+	numF <- length(myXStringSet)
 	if (numF < 2) {
 		stop("Too few sequences!")
 	}
@@ -64,35 +66,52 @@ DistanceMatrix <- function(myDNAStringSet,
 	}
 	
 	if (removeDuplicates) {
-		nRemoved <- length(myDNAStringSet)
-		myDNAStringSet <- unique(myDNAStringSet)
-		nRemoved <- nRemoved - length(myDNAStringSet)
+		nRemoved <- length(myXStringSet)
+		myXStringSet <- unique(myXStringSet)
+		nRemoved <- nRemoved - length(myXStringSet)
 	}
 	
 	# calculate the distance matrix
 	distMatrix <- .Call("distMatrix",
-		myDNAStringSet,
+		myXStringSet,
+		ifelse(is(myXStringSet, "AAStringSet"), 3L, 1L),
 		includeTerminalGaps,
 		penalizeGapGapMatches,
 		penalizeGapLetterMatches,
+		TRUE, # full matrix
 		verbose,
 		pBar,
 		processors,
 		PACKAGE="DECIPHER")
-	dimnames(distMatrix) <- list(names(myDNAStringSet),
-		names(myDNAStringSet))
+	dimnames(distMatrix) <- list(names(myXStringSet),
+		names(myXStringSet))
 	
 	# apply distance correction
 	if (correction==2) { # Jukes-Cantor
-		# JC func is undefined above p = .75
-		w <- which(distMatrix > .75)
-		if (length(w) > 0) {
-			# rather than produce NaNs
-			# make the distance infinite
-			distMatrix[w] <- .75
+		if (is(myXStringSet, "DNAStringSet") || is(myXStringSet, "RNAStringSet")) {
+			# JC func is undefined above p = .75
+			w <- which(distMatrix > .75)
+			if (length(w) > 0) {
+				# rather than produce NaNs
+				# make the distance infinite
+				distMatrix[w] <- .75
+			}
+			distMatrix <- -3/4*log(1 - 4/3*distMatrix)
+			attr(distMatrix, "correction") <- "Jukes-Cantor"
+		} else if (is(myXStringSet, "AAStringSet")) {
+			# JC func is undefined above p = .95
+			w <- which(distMatrix > .95)
+			if (length(w) > 0) {
+				# rather than produce NaNs
+				# make the distance infinite
+				distMatrix[w] <- .95
+			}
+			distMatrix <- -19/20*log(1 - 20/19*distMatrix)
+			attr(distMatrix, "correction") <- "Jukes-Cantor"
+		} else {
+			warning("Jukes-Cantor correction is not available for a BStringSet input.")
+			attr(distMatrix, "correction") <- "none"
 		}
-		distMatrix <- -3/4*log(1 - 4/3*distMatrix)
-		attr(distMatrix, "correction") <- "Jukes-Cantor"
 	} else {
 		attr(distMatrix, "correction") <- "none"
 	}

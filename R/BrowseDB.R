@@ -13,6 +13,8 @@ BrowseDB <- function(dbFile,
 			stop("htmlFile must be a character string or connection.")
 	if (!is.character(tblName))
 		stop("tblName must be a character string.")
+	if (substr(tblName, 1, 1) == "_")
+		stop("Invalid tblName.")
 	if (!is.character(identifier))
 		stop("identifier must be a character string.")
 	if (!is.character(orderBy))
@@ -246,5 +248,5 @@ BrowseDB <- function(dbFile,
 		"\n</table></div></div></html>")
 	writeLines(html, htmlFile)
 	browseURL(htmlFile)
-	return(TRUE)
+	return(htmlFile)
 }

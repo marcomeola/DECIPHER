@@ -1,7 +1,9 @@
 IdLengths <- function(dbFile,
 	tblName="DNA",
 	identifier="",
+	type="DNAStringSet",
 	add2tbl=FALSE,
+	batchSize=10000,
 	verbose=TRUE) {
 	
 	# error checking
@@ -9,8 +11,22 @@ IdLengths <- function(dbFile,
 		stop("identifier must be a character string.")
 	if (!is.character(tblName))
 		stop("tblName must be a character string.")
+	TYPES <- c("DNAStringSet", "RNAStringSet", "AAStringSet", "BStringSet")
+	type <- pmatch(type[1], TYPES)
+	if (is.na(type))
+		stop("Invalid type.")
+	if (type == -1)
+		stop("Ambiguous type.")
+	if (type > 2)
+		stop('type must be one of either "DNAStringSet" or "RNAStringSet".')
 	if (!is.logical(add2tbl) && !is.character(add2tbl))
 		stop("add2tbl must be a logical or table name.")
+	if (!is.numeric(batchSize))
+		stop("batchSize must be a numeric.")
+	if (floor(batchSize)!=batchSize)
+		stop("batchSize must be a whole number.")
+	if (batchSize <= 0)
+		stop("batchSize must be greater than zero.")
 	if (!is.logical(verbose))
 		stop("verbose must be a logical.")
 	# initialize database
@@ -32,34 +48,35 @@ IdLengths <- function(dbFile,
 		countOnly=TRUE,
 		verbose=FALSE)
 	
-	if (count > 10000) {
+	if (count > batchSize) {
 		
 		# initialize a progress bar
 		if (verbose)
 			pBar <- txtProgressBar(min=0, max=100, initial=0, style=3)
 		
-		for (i in 1:ceiling(count/10000)) {
-			myDNAStringSet <- SearchDB(dbFile=dbFile,
+		for (i in 1:ceiling(count/batchSize)) {
+			myXStringSet <- SearchDB(dbFile=dbFile,
 				identifier=identifier,
 				tblName=tblName,
-				limit=paste((i - 1)*10000,
+				type=TYPES[type],
+				limit=paste((i - 1)*batchSize,
 					",",
-					10000,
+					batchSize,
 					sep=""),
 				verbose=FALSE)
 			
-			numF <- length(myDNAStringSet)
+			numF <- length(myXStringSet)
 			
-			alphabetTable <- alphabetFrequency(myDNAStringSet)
+			alphabetTable <- alphabetFrequency(myXStringSet)
 			
 			if (i==1) {
 				lengths <- data.frame(bases=integer(numF),
 					nonbases=integer(numF),
 					width=integer(numF),
-					row.names=names(myDNAStringSet))
+					row.names=names(myXStringSet))
 				
 				lengths$bases = (alphabetTable[,"A"] +
-					alphabetTable[,"T"] +
+					alphabetTable[,ifelse(type==1, "T", "U")] +
 					alphabetTable[,"G"] +
 					alphabetTable[,"C"])
 				lengths$nonbases = (alphabetTable[,"M"] +
@@ -73,7 +90,7 @@ IdLengths <- function(dbFile,
 					alphabetTable[,"D"] +
 					alphabetTable[,"B"] +
 					alphabetTable[,"N"])
-				lengths$width <- width(myDNAStringSet)
+				lengths$width <- width(myXStringSet)
 					
 				if (is.character(add2tbl) || add2tbl)
 					Add2DB(myData=lengths,
@@ -84,10 +101,10 @@ IdLengths <- function(dbFile,
 				lengths_temp <- data.frame(bases=integer(numF),
 					nonbases=integer(numF),
 					width=integer(numF),
-					row.names=names(myDNAStringSet))
+					row.names=names(myXStringSet))
 				
 				lengths_temp$bases = (alphabetTable[,"A"] +
-					alphabetTable[,"T"] +
+					alphabetTable[,ifelse(type==1, "T", "U")] +
 					alphabetTable[,"G"] +
 					alphabetTable[,"C"])
 				lengths_temp$nonbases = (alphabetTable[,"M"] +
@@ -101,7 +118,7 @@ IdLengths <- function(dbFile,
 					alphabetTable[,"D"] +
 					alphabetTable[,"B"] +
 					alphabetTable[,"N"])
-				lengths_temp$width <- width(myDNAStringSet)
+				lengths_temp$width <- width(myXStringSet)
 				
 				lengths <- rbind(lengths, lengths_temp)
 				
@@ -114,24 +131,25 @@ IdLengths <- function(dbFile,
 			
 			if (verbose)
 				setTxtProgressBar(pBar,
-					floor(100*i/ceiling(count/10000)))
+					floor(100*i/ceiling(count/batchSize)))
 		}
 	} else {
-		myDNAStringSet <- SearchDB(dbFile=dbFile,
+		myXStringSet <- SearchDB(dbFile=dbFile,
 			identifier=identifier,
 			tblName=tblName,
+			type=TYPES[type],
 			verbose=FALSE)
 		
-		numF <- length(myDNAStringSet)
+		numF <- length(myXStringSet)
 		
-		alphabetTable <- alphabetFrequency(myDNAStringSet)
+		alphabetTable <- alphabetFrequency(myXStringSet)
 		lengths <- data.frame(bases=integer(numF),
 			nonbases=integer(numF),
 			width=integer(numF),
-			row.names=names(myDNAStringSet))
+			row.names=names(myXStringSet))
 		
 		lengths$bases = (alphabetTable[,"A"] +
-			alphabetTable[,"T"] +
+			alphabetTable[,ifelse(type==1, "T", "U")] +
 			alphabetTable[,"G"] +
 			alphabetTable[,"C"])
 		lengths$nonbases = (alphabetTable[,"M"] +
@@ -145,7 +163,7 @@ IdLengths <- function(dbFile,
 			alphabetTable[,"D"] +
 			alphabetTable[,"B"] +
 			alphabetTable[,"N"])
-		lengths$width <- width(myDNAStringSet)
+		lengths$width <- width(myXStringSet)
 		
 		if (is.character(add2tbl) || add2tbl)
 			Add2DB(myData=lengths,
@@ -155,10 +173,10 @@ IdLengths <- function(dbFile,
 	}
 	
 	if (verbose) {
-		cat("\nLengths counted for ",count," sequences.", sep="")
+		cat("\nLengths counted for ", count, " sequences.", sep="")
 		if (is.character(add2tbl) || add2tbl)
 			cat("\nAdded to ",
-				ifelse(is.character(add2tbl),add2tbl,tblName),
+				ifelse(is.character(add2tbl), add2tbl, tblName),
 				":  \"bases\", \"nonbases\", and \"width\".",
 				sep="")
 		cat("\n\n")

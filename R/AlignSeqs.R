@@ -1,54 +1,29 @@
-AlignSeqs <- function(myDNAStringSet,
-	perfectMatch=2,
-	misMatch=-3,
-	gapOpening=-6,
-	gapExtension=-4,
-	terminalGap=-1,
-	doNotAlign=0.75,
+AlignSeqs <- function(myXStringSet,
 	guideTree=NULL,
-	orient=TRUE,
+	orient=FALSE,
 	processors=NULL,
-	verbose=TRUE) {
+	verbose=TRUE,
+	...) {
 	
 	# error checking
-	if (!is(myDNAStringSet, "DNAStringSet"))
-		stop("myDNAStringSet must be a DNAStringSet.")
-	if (min(width(myDNAStringSet)) < 2)
-		stop("All sequences in myDNAStringSet must be at least two nucleotides long.")
-	if (length(myDNAStringSet) < 2)
+	if (!is(myXStringSet, "DNAStringSet") && !is(myXStringSet, "RNAStringSet") && !is(myXStringSet, "AAStringSet"))
+		stop("myXStringSet must be an AAStringSet, DNAStringSet, or RNAStringSet.")
+	if (length(myXStringSet) < 2)
 		stop("At least two sequences are required.")
 	if (!is.null(guideTree)) {
 		if (!is.data.frame(guideTree))
 			stop("guideTree must be a data.frame.")
-		if (dim(guideTree)[1] != length(myDNAStringSet))
-			stop("guideTree have as many rows as sequences in myDNAStringSet.")
+		if (dim(guideTree)[1] != length(myXStringSet))
+			stop("guideTree must have as many rows as sequences in myXStringSet.")
 		if (!all(apply(guideTree, 2, is.numeric)))
 			stop("guideTree must be a data.frame of numerics.")
 	}
-	if (!is.numeric(perfectMatch))
-		stop("perfectMatch must be a numeric.")
-	if (!is.numeric(misMatch))
-		stop("misMatch must be a numeric.")
-	if (!is.numeric(gapOpening))
-		stop("gapOpening must be a numeric.")
-	if (!is.numeric(gapExtension))
-		stop("gapExtension must be a numeric.")
-	if (!all(is.numeric(terminalGap)))
-		stop("terminalGap must be a numeric.")
-	if (length(terminalGap) > 2 || length(terminalGap) < 1)
-		stop("terminalGap must be of length 1 or 2.")
-	if (length(terminalGap)==1)
-		terminalGap[2] <- terminalGap[1]
-	if (!all(is.numeric(doNotAlign)))
-		stop("doNotAlign must be a numeric.")
-	if (length(doNotAlign)!=1)
-		stop("doNotAlign must be length 1.")
 	if (!is.logical(orient))
 		stop("orient must be a logical.")
 	if (!is.logical(verbose))
 		stop("verbose must be a logical.")
-	a <- alphabetFrequency(myDNAStringSet)
-	if (any(a[, "-"]) > 0)
+	a <- vcountPattern("-", myXStringSet)
+	if (any(a) > 0)
 		stop("Gaps must be removed before alignment.")
 	if (!is.null(processors) && !is.numeric(processors))
 		stop("processors must be a numeric.")
@@ -65,49 +40,65 @@ AlignSeqs <- function(myDNAStringSet,
 	if (verbose)
 		time.1 <- Sys.time()
 	
-	wordSize <- ceiling(mean(width(myDNAStringSet))^0.25)
-	if (wordSize > 10)
-		wordSize <- 10
-	doNotAlign <- c(1 - (1 - doNotAlign)^wordSize*mean(width(myDNAStringSet)), doNotAlign)
-	if (doNotAlign[1] < 0)
-		doNotAlign[1] <- doNotAlign[2]
+	if (is(myXStringSet, "AAStringSet")) {
+		wordSize <- ceiling(mean(width(myXStringSet))^0.2) # always >= 1
+		if (wordSize > 7)
+			wordSize <- 7
+	} else {
+		wordSize <- ceiling(mean(width(myXStringSet))^0.25) # always >= 1
+		if (wordSize > 15)
+			wordSize <- 15
+	}
 	
-	if (orient) {
-		tuples <- DNAStringSet(mkAllStrings(c("A", "C", "T", "G"), width=wordSize))
-		pdict <- PDict(tuples,
-			algorithm="ACtree2",
-			tb.end=wordSize)
-		v1 <- vwhichPDict(pdict,
-			myDNAStringSet,
-			fixed=TRUE)
-		v1 <- unlist(lapply(v1, length))
+	if (orient && !is(myXStringSet, "AAStringSet")) {
+		w <- which.max(width(myXStringSet))
+		v1 <- .Call("enumerateSequence",
+			myXStringSet,
+			wordSize,
+			PACKAGE="DECIPHER")
+		X <- v1[[w]]
 		
-		tuples <- reverseComplement(tuples)
-		pdict <- PDict(tuples,
-			algorithm="ACtree2",
-			tb.end=wordSize)
-		v2 <- vwhichPDict(pdict,
-			myDNAStringSet,
-			fixed=TRUE)
-		v2 <- unlist(lapply(v2, length))
+		f <- function(x) {
+			m <- match(x, X)
+			return(length(which(!is.na(m))))
+		}
+		v1 <- unlist(lapply(v1, f))
 		
-		w <- which(v2*0.5 > v1) # reverseComplement >> given orientation
-		if (length(w) > 0)
-			myDNAStringSet[w] <- reverseComplement(myDNAStringSet[w])
+		v2 <- .Call("enumerateSequence",
+			reverseComplement(myXStringSet),
+			wordSize,
+			PACKAGE="DECIPHER")
+		v2 <- unlist(lapply(v2, f))
+		
+		v3 <- .Call("enumerateSequence",
+			reverse(myXStringSet),
+			wordSize,
+			PACKAGE="DECIPHER")
+		v3 <- unlist(lapply(v3, f))
+		
+		v4 <- .Call("enumerateSequence",
+			complement(myXStringSet),
+			wordSize,
+			PACKAGE="DECIPHER")
+		v4 <- unlist(lapply(v4, f))
+		
+		w <- which(v2*0.5 > v1 & v2 > v3 & v2 > v4)
+		if (length(w) > 0) # reverseComplement >> given orientation
+			myXStringSet[w] <- reverseComplement(myXStringSet[w])
+		w <- which(v3*0.5 > v1 & v3 > v2 & v3 > v4)
+		if (length(w) > 0) # reverse >> given orientation
+			myXStringSet[w] <- reverse(myXStringSet[w])
+		w <- which(v4*0.5 > v1 & v4 > v2 & v4 > v3)
+		if (length(w) > 0) # complement >> given orientation
+			myXStringSet[w] <- complement(myXStringSet[w])
+	} else if (orient && is(myXStringSet, "AAStringSet")) {
+		warning("orient is ignored when myXStringSet is an AAStringSet.")
 	}
 	
 	cluster <- FALSE
 	cutoffs <- 0
 	if (is.null(guideTree)) {
 		cluster <- TRUE
-		
-		tuples <- mkAllStrings(c("A", "C", "T", "G"), width=wordSize)
-		pdict <- PDict(tuples,
-			algorithm="ACtree2",
-			tb.end=wordSize)
-		v <- vwhichPDict(pdict,
-			myDNAStringSet,
-			fixed=TRUE)
 		
 		if (verbose) {
 			cat("Determining distance matrix based on shared ",
@@ -120,12 +111,19 @@ AlignSeqs <- function(myDNAStringSet,
 			pBar <- NULL
 		}
 		
-		d <- .Call("matchLists", v, verbose, pBar, processors, PACKAGE="DECIPHER")
-		if (doNotAlign[1] < 1) {
-			w <- which(is.na(d))
-			if (length(w) > 0)
-				d[w] <- doNotAlign[1] - 0.01
+		if (is(myXStringSet, "AAStringSet")) {
+			v <- .Call("enumerateSequenceAA",
+				myXStringSet,
+				wordSize,
+				PACKAGE="DECIPHER")
+		} else { # DNAStringSet or RNAStringSet
+			v <- .Call("enumerateSequence",
+				myXStringSet,
+				wordSize,
+				PACKAGE="DECIPHER")
 		}
+		
+		d <- .Call("matchOrder", v, verbose, pBar, processors, PACKAGE="DECIPHER")
 		
 		if (verbose) {
 			setTxtProgressBar(pBar, 100)
@@ -144,10 +142,12 @@ AlignSeqs <- function(myDNAStringSet,
 		}
 		cutoffs <- seq(0, max(d, na.rm=TRUE), 0.01)
 		dimnames(d) <- NULL
-		guideTree <- IdClusters(d, method="UPGMA", cutoff=cutoffs, verbose=verbose, processors=processors)
+		guideTree <- suppressWarnings(IdClusters(d, method="UPGMA", cutoff=cutoffs, verbose=verbose, processors=processors))
+	} else {
+		cutoffs <- rep(1, dim(guideTree)[2])
 	}
 	guideTree$Top <- 1
-	cutoffs <- c(cutoffs, doNotAlign[1])
+	cutoffs <- c(cutoffs, 1)
 	
 	# calculate weights based on branch lengths
 	lastSplit <- numeric(dim(guideTree)[1])
@@ -176,19 +176,17 @@ AlignSeqs <- function(myDNAStringSet,
 	}
 	
 	# determine the number of steps
-	dna <- myDNAStringSet
-	ns <- names(myDNAStringSet)
+	seqs <- myXStringSet
+	ns <- names(myXStringSet)
 	steps <- 0
 	for (i in 1:dim(guideTree)[2]) {
-		if (cutoffs[i] > doNotAlign[1])
-			break
 		for (u in unique(guideTree[, i])) {
 			w <- which(guideTree[, i]==u) # groups
 			if (length(w)==1)
 				next
 			if (i==1) {
 				for (j in 2:length(w)) {
-					if (length(which(duplicated(dna[w[1:j]]))) == (j - 1))
+					if (length(which(duplicated(seqs[w[1:j]]))) == (j - 1))
 						next
 					steps <- steps + 1
 				}
@@ -203,19 +201,22 @@ AlignSeqs <- function(myDNAStringSet,
 	mergers <- character(l)
 	
 	for (i in 1:dim(guideTree)[2]) {
-		if (cutoffs[i] > doNotAlign[1]) {
-			dna <- xscat(dna,
-				unlist(lapply(max(width(dna)) - width(dna),
-					function(x) paste(rep("-", times=x), collapse=""))))
-			break
-		}
+		subMatrix <- ifelse(cutoffs[i] < 0.01,
+			"BLOSUM100",
+				ifelse(cutoffs[i] < 0.2,
+					"BLOSUM80",
+					ifelse(cutoffs[i] < 0.4,
+						"BLOSUM62",
+						ifelse(cutoffs[i] < 0.5,
+							"BLOSUM50",
+							"BLOSUM45"))))
 		for (u in unique(guideTree[, i])) {
 			w <- which(guideTree[, i]==u) # groups
 			if (length(w)==1)
 				next
 			if (i==1) {
 				for (j in 2:length(w)) {
-					if (length(which(duplicated(dna[w[1:j]]))) == (j - 1))
+					if (length(which(duplicated(seqs[w[1:j]]))) == (j - 1))
 						next
 					
 					p.weight <- weights[w[1:(j - 1)]]
@@ -223,16 +224,13 @@ AlignSeqs <- function(myDNAStringSet,
 					s.weight <- weights[w[j]]
 					s.weight <- s.weight/mean(s.weight)
 					
-					dna[w[1:j]] <- AlignProfiles(dna[w[1:(j - 1)]],
-						dna[w[j]],
-						p.weight,
-						s.weight,
-						perfectMatch,
-						misMatch,
-						gapOpening,
-						gapExtension,
-						terminalGap,
-						processors=processors)
+					seqs[w[1:j]] <- AlignProfiles(pattern=seqs[w[1:(j - 1)]],
+						subject=seqs[w[j]],
+						p.weight=p.weight,
+						s.weight=s.weight,
+						substitutionMatrix="BLOSUM100",
+						processors=processors,
+						...)
 					
 					steps <- steps + 1
 					x <- grep(w[1], mergers[1:steps], fixed=TRUE)
@@ -262,16 +260,13 @@ AlignSeqs <- function(myDNAStringSet,
 					s.weight <- weights[w[g2]]
 					s.weight <- s.weight/mean(s.weight)
 					
-					dna[w[c(g1, g2)]] <- AlignProfiles(dna[w[g1]],
-						dna[w[g2]],
-						p.weight,
-						s.weight,
-						perfectMatch,
-						misMatch,
-						gapOpening,
-						gapExtension,
-						terminalGap,
-						processors=processors)
+					seqs[w[c(g1, g2)]] <- AlignProfiles(pattern=seqs[w[g1]],
+						subject=seqs[w[g2]],
+						p.weight=p.weight,
+						s.weight=s.weight,
+						substitutionMatrix=subMatrix,
+						processors=processors,
+						...)
 					
 					steps <- steps + 1
 					x <- grep(w[g1[1]], mergers[1:steps], fixed=TRUE)
@@ -304,7 +299,7 @@ AlignSeqs <- function(myDNAStringSet,
 			}
 		}
 	}
-	names(dna) <- ns
+	names(seqs) <- ns
 	
 	if (cluster) {
 		if (verbose) {
@@ -320,12 +315,7 @@ AlignSeqs <- function(myDNAStringSet,
 			flush.console()
 		}
 		
-		suppressWarnings(d <- DistanceMatrix(dna, verbose=verbose, processors=processors))
-		if (doNotAlign[2] < 1) {
-			w <- which(is.na(d))
-			if (length(w) > 0)
-				d[w] <- doNotAlign[2] - 0.01
-		}
+		suppressWarnings(d <- DistanceMatrix(seqs, verbose=verbose, processors=processors))
 		
 		if (verbose) {
 			cat("Reclustering into groups by similarity:\n")
@@ -334,9 +324,9 @@ AlignSeqs <- function(myDNAStringSet,
 		orgTree <- guideTree
 		cutoffs <- seq(0, max(d, na.rm=TRUE), length.out=100)
 		dimnames(d) <- NULL
-		suppressWarnings(guideTree <- IdClusters(d, cutoff=cutoffs, verbose=verbose, method="UPGMA", processors=processors))
+		suppressWarnings(guideTree <- suppressWarnings(IdClusters(d, cutoff=cutoffs, verbose=verbose, method="UPGMA", processors=processors)))
 		guideTree$Top <- 1
-		cutoffs <- c(cutoffs, doNotAlign[2])
+		cutoffs <- c(cutoffs, 1)
 		w <- which(is.na(d))
 		if (length(w) > 0)
 			d[w] <- 1
@@ -370,15 +360,13 @@ AlignSeqs <- function(myDNAStringSet,
 		# determine the number of steps
 		steps <- 0
 		for (i in 1:dim(guideTree)[2]) {
-			if (cutoffs[i] > doNotAlign[2])
-				break
 			for (u in unique(guideTree[, i])) {
 				w <- which(guideTree[, i]==u) # groups
 				if (length(w)==1)
 					next
 				if (i==1) {
 					for (j in 2:length(w)) {
-						if (length(which(duplicated(myDNAStringSet[w[1:j]]))) == (j - 1))
+						if (length(which(duplicated(myXStringSet[w[1:j]]))) == (j - 1))
 							next
 						steps <- steps + 1
 					}
@@ -392,14 +380,17 @@ AlignSeqs <- function(myDNAStringSet,
 		steps <- 0
 		mergers2 <- character(l)
 		
-		ns <- names(myDNAStringSet)
+		ns <- names(myXStringSet)
 		for (i in 1:dim(guideTree)[2]) {
-			if (cutoffs[i] > doNotAlign[2]) {
-				myDNAStringSet <- xscat(myDNAStringSet,
-					unlist(lapply(max(width(myDNAStringSet)) - width(myDNAStringSet),
-						function(x) paste(rep("-", times=x), collapse=""))))
-				break
-			}
+			subMatrix <- ifelse(cutoffs[i] < 0.01,
+				"BLOSUM100",
+					ifelse(cutoffs[i] < 0.2,
+						"BLOSUM80",
+						ifelse(cutoffs[i] < 0.4,
+							"BLOSUM62",
+							ifelse(cutoffs[i] < 0.5,
+								"BLOSUM50",
+								"BLOSUM45"))))
 			for (u in unique(guideTree[, i])) {
 				w <- which(guideTree[, i]==u) # groups
 				if (length(w)==1)
@@ -407,7 +398,7 @@ AlignSeqs <- function(myDNAStringSet,
 				
 				if (i==1) {
 					for (j in 2:length(w)) {
-						if (length(which(duplicated(myDNAStringSet[w[1:j]]))) == (j - 1))
+						if (length(which(duplicated(myXStringSet[w[1:j]]))) == (j - 1))
 							next
 						
 						steps <- steps + 1
@@ -422,9 +413,19 @@ AlignSeqs <- function(myDNAStringSet,
 								sep="|")
 						}
 						if (length(grep(mergers2[steps], mergers, fixed=TRUE) > 0)) {
-							myDNAStringSet[w[1:j]] <- DNAStringSet(.Call("commonGaps",
-								substr(dna[w[1:j]], 1, width(dna[w[1]])),
-								PACKAGE="DECIPHER"))
+							if (is(myXStringSet, "AAStringSet")) {
+								myXStringSet[w[1:j]] <- AAStringSet(.Call("commonGaps",
+									substr(seqs[w[1:j]], 1, width(seqs[w[1]])),
+									PACKAGE="DECIPHER"))
+							} else if (is(myXStringSet, "DNAStringSet")) {
+								myXStringSet[w[1:j]] <- DNAStringSet(.Call("commonGaps",
+									substr(seqs[w[1:j]], 1, width(seqs[w[1]])),
+									PACKAGE="DECIPHER"))
+							} else { # RNAStringSet
+								myXStringSet[w[1:j]] <- RNAStringSet(.Call("commonGaps",
+									substr(seqs[w[1:j]], 1, width(seqs[w[1]])),
+									PACKAGE="DECIPHER"))
+							}
 							next
 						}
 						
@@ -433,16 +434,13 @@ AlignSeqs <- function(myDNAStringSet,
 						s.weight <- weights[w[j]]
 						s.weight <- s.weight/mean(s.weight)
 						
-						myDNAStringSet[w[1:j]] <- AlignProfiles(myDNAStringSet[w[1:(j - 1)]],
-							myDNAStringSet[w[j]],
-							p.weight,
-							s.weight,
-							perfectMatch,
-							misMatch,
-							gapOpening,
-							gapExtension,
-							terminalGap,
-							processors=processors)
+						myXStringSet[w[1:j]] <- AlignProfiles(pattern=myXStringSet[w[1:(j - 1)]],
+							subject=myXStringSet[w[j]],
+							p.weight=p.weight,
+							s.weight=s.weight,
+							substitutionMatrix="BLOSUM100",
+							processors=processors,
+							...)
 						
 						if (verbose)
 							setTxtProgressBar(pBar, steps/l)
@@ -478,9 +476,20 @@ AlignSeqs <- function(myDNAStringSet,
 									sep="|")
 							}
 							if (length(grep(mergers2[steps], mergers, fixed=TRUE) > 0)) {
-								myDNAStringSet[c(w[g1], w[g2])] <- DNAStringSet(.Call("commonGaps",
-									substr(dna[c(w[g1], w[g2])], 1, width(dna[w[g1[1]]])),
-									PACKAGE="DECIPHER"))
+								if (is(myXStringSet, "AAStringSet")) {
+									myXStringSet[c(w[g1], w[g2])] <- AAStringSet(.Call("commonGaps",
+										substr(seqs[c(w[g1], w[g2])], 1, width(seqs[w[g1[1]]])),
+										PACKAGE="DECIPHER"))
+								} else if (is(myXStringSet, "DNAStringSet")) {
+									myXStringSet[c(w[g1], w[g2])] <- DNAStringSet(.Call("commonGaps",
+										substr(seqs[c(w[g1], w[g2])], 1, width(seqs[w[g1[1]]])),
+										PACKAGE="DECIPHER"))
+								} else { # RNAStringSet
+									myXStringSet[c(w[g1], w[g2])] <- RNAStringSet(.Call("commonGaps",
+										substr(seqs[c(w[g1], w[g2])], 1, width(seqs[w[g1[1]]])),
+										PACKAGE="DECIPHER"))
+								}
+								
 								if (verbose)
 									setTxtProgressBar(pBar, steps/l)
 								g1 <- c(g1, g2)
@@ -493,16 +502,13 @@ AlignSeqs <- function(myDNAStringSet,
 						s.weight <- weights[w[g2]]
 						s.weight <- s.weight/mean(s.weight)
 						
-						myDNAStringSet[w[c(g1, g2)]] <- AlignProfiles(myDNAStringSet[w[g1]],
-								myDNAStringSet[w[g2]],
-								p.weight,
-								s.weight,
-								perfectMatch,
-								misMatch,
-								gapOpening,
-								gapExtension,
-								terminalGap,
-								processors=processors)
+						myXStringSet[w[c(g1, g2)]] <- AlignProfiles(pattern=myXStringSet[w[g1]],
+								subject=myXStringSet[w[g2]],
+								p.weight=p.weight,
+								s.weight=s.weight,
+								substitutionMatrix=subMatrix,
+								processors=processors,
+								...)
 						
 						if (verbose)
 							setTxtProgressBar(pBar, steps/l)
@@ -511,9 +517,9 @@ AlignSeqs <- function(myDNAStringSet,
 				}
 			}
 		}
-		names(myDNAStringSet) <- ns
+		names(myXStringSet) <- ns
 	} else {
-		myDNAStringSet <- dna
+		myXStringSet <- seqs
 	}
 	
 	if (verbose) {
@@ -528,5 +534,5 @@ AlignSeqs <- function(myDNAStringSet,
 		cat("\n")
 	}
 	
-	return(myDNAStringSet)
+	return(myXStringSet)
 }

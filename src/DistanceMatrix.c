@@ -84,6 +84,56 @@ static double distance(const Chars_holder *P, const Chars_holder *S, int start, 
 	return distance;
 }
 
+static double distanceAA(const Chars_holder *P, const Chars_holder *S, int start, int end, int pGapsGaps, int pGapLetters)
+{
+	double distance;
+	int i, j, mismatches, gapGapMatches, gapLetterMatches, count;
+	const char *p, *s;
+	
+	distance = 0;
+	gapGapMatches = 0;
+	gapLetterMatches = 0;
+	mismatches = 0;
+	count = 0;
+	
+	// walk along the sequence from (position start + 1) to (length - end - 1)
+	for (i = start, j = start, p = (P->seq + start), s = (S->seq + start);
+	     (i < (P->length - end)) && (i < (S->length - end));
+	     i++, j++, p++, s++)
+	{
+		count++; // increment the length covered
+		if ((*p) ^ (*s) && // sequences are not equal
+			!(!((*p) ^ 0x58) && !(!((*s) ^ 0x2D) || !((*s) ^ 0x2B) || !((*s) ^ 0x2A))) && !(!((*s) ^ 0x58) && !(!((*p) ^ 0x2D) || !((*p) ^ 0x2B) || !((*p) ^ 0x2A))) && // not (X && !(non-letter))
+			!(!((*p) ^ 0x42) && (!((*s) ^ 0x4E) || !((*s) ^ 0x44))) && !(!((*s) ^ 0x42) && (!((*p) ^ 0x4E) || !((*p) ^ 0x44))) && // not (B && (N or D))
+			!(!((*p) ^ 0x5A) && (!((*s) ^ 0x51) || !((*s) ^ 0x45))) && !(!((*s) ^ 0x5A) && (!((*p) ^ 0x51) || !((*p) ^ 0x45)))) { // not (Z && (Q or E))
+			if (!((*p) ^ 0x2D) || !((*s) ^ 0x2D)) { // gap-letter match
+				if (!pGapLetters) { // don't penalize gap-letter matches
+					gapLetterMatches++; // don't include gap-letter matches in length
+				} else { // penalize gap-letter matches
+					mismatches++; // count gap-letter matches as mis-matches
+				}
+			} else {
+				mismatches++; // mis-match
+			}
+		} else {
+			if (!((*p) ^ 0x2D) && !((*s) ^ 0x2D)) { // gap-gap match
+				if (!pGapsGaps) { // don't penalize gap-gap matches
+					gapGapMatches++; // don't include gap-gap matches in length
+				} else { // penalize gap-gap matches
+					mismatches++; // count gap-gap matches as mis-matches
+				}
+			}
+		}
+	}
+	
+	//Rprintf("start%d end%d",start,end);
+	//Rprintf("\nmismatches:%d gapGapMatches:%d gapLetterMatches:%d count:%d",mismatches,gapGapMatches,gapLetterMatches,count);
+	
+	// calculate distance as the percent mis-matches
+	distance = (double)mismatches/((double)count - (double)gapGapMatches - (double)gapLetterMatches);
+	return distance;
+}
+
 static int frontTerminalGaps(const Chars_holder *P)
 {
 	int i, gaps;
@@ -124,13 +174,53 @@ static int endTerminalGaps(const Chars_holder *P)
 	return gaps;
 }
 
+static int frontTerminalGapsAA(const Chars_holder *P)
+{
+	int i, gaps;
+	const char *p;
+	gaps = 0;
+	
+	// start from the beginning of the sequence
+	for (i = 0, p = P->seq;
+	     i < P->length;
+	     i++, p++)
+	{
+		if (!((*p) ^ 0x2D)) { // gap character
+			gaps++; // count gaps
+		} else { // not a gap
+			return gaps;
+		}
+	}
+	return gaps;
+}
+
+static int endTerminalGapsAA(const Chars_holder *P)
+{
+	int i, gaps;
+	const char *p;
+	gaps = 0;
+	
+	// start from the end of the sequence
+	for (i = (P->length - 1), p = (P->seq + P->length - 1);
+	     i >= 0;
+	     i--, p--)
+	{
+		if (!((*p) ^ 0x2D)) { // gap character
+			gaps++; // count gaps
+		} else { // not a gap
+			return gaps;
+		}
+	}
+	return gaps;
+}
+
 //ans_start <- .Call("distMatrix", myDNAStringSet, pBar, PACKAGE="DECIPHER")
-SEXP distMatrix(SEXP x, SEXP terminalGaps, SEXP penalizeGapGaps, SEXP penalizeGapLetters, SEXP verbose, SEXP pBar, SEXP nThreads)
+SEXP distMatrix(SEXP x, SEXP t, SEXP terminalGaps, SEXP penalizeGapGaps, SEXP penalizeGapLetters, SEXP fullMatrix, SEXP verbose, SEXP pBar, SEXP nThreads)
 {
 	XStringSet_holder x_set;
 	Chars_holder x_i, x_j;
-	int x_length, start, end, i, j, seqLength_i, seqLength_j;
-	int pGapLetters, pGapsGaps, tGaps;
+	int x_length, start, end, i, j, seqLength_i, seqLength_j, last;
+	int pGapLetters, pGapsGaps, tGaps, fM = asLogical(fullMatrix);
 	int soFar, before, v, *rPercentComplete;
 	double *rans;
 	int nthreads = asInteger(nThreads);
@@ -152,22 +242,37 @@ SEXP distMatrix(SEXP x, SEXP terminalGaps, SEXP penalizeGapGaps, SEXP penalizeGa
 	if (x_length < 2) { // there is only one sequence
 		PROTECT(ans = NEW_INTEGER(0));
 	} else {
-		PROTECT(ans = allocMatrix(REALSXP, x_length, x_length));
+		if (fM) {
+			last = x_length - 1;
+			PROTECT(ans = allocMatrix(REALSXP, x_length, x_length));
+		} else {
+			last = 1;
+			PROTECT(ans = allocMatrix(REALSXP, 1, x_length));
+		}
 		rans = REAL(ans);
 		
 		// find the terminal gap lengths
 		// always needed to identify no-overlap
-		for (i = 0; i < x_length; i++) {
-			x_i = get_elt_from_XStringSet_holder(&x_set, i);
-			gapLengths[i][0] = frontTerminalGaps(&x_i);
-			gapLengths[i][1] = endTerminalGaps(&x_i);
-			//Rprintf("\nstart:%dend:%d",gapLengths[i][0],gapLengths[i][1]);
+		if (asInteger(t)==3) { // AAStringSet
+			for (i = 0; i < x_length; i++) {
+				x_i = get_elt_from_XStringSet_holder(&x_set, i);
+				gapLengths[i][0] = frontTerminalGapsAA(&x_i);
+				gapLengths[i][1] = endTerminalGapsAA(&x_i);
+				//Rprintf("\nstart:%dend:%d",gapLengths[i][0],gapLengths[i][1]);
+			}
+		} else { // DNAStringSet or RNAStringSet
+			for (i = 0; i < x_length; i++) {
+				x_i = get_elt_from_XStringSet_holder(&x_set, i);
+				gapLengths[i][0] = frontTerminalGaps(&x_i);
+				gapLengths[i][1] = endTerminalGaps(&x_i);
+				//Rprintf("\nstart:%dend:%d",gapLengths[i][0],gapLengths[i][1]);
+			}
 		}
 		
 		tGaps = asLogical(terminalGaps);
 		pGapsGaps = asLogical(penalizeGapGaps);
 		pGapLetters = asLogical(penalizeGapLetters);
-		for (i = 0; i < (x_length - 1); i++) {
+		for (i = 0; i < last; i++) {
 			// extract each ith DNAString from the DNAStringSet
 			x_i = get_elt_from_XStringSet_holder(&x_set, i);
 			seqLength_i = x_i.length;
@@ -179,10 +284,10 @@ SEXP distMatrix(SEXP x, SEXP terminalGaps, SEXP penalizeGapGaps, SEXP penalizeGa
 				seqLength_j = x_j.length;
 				
 				// find the distance for each row of the matrix
-				if ((seqLength_i - gapLengths[i][1]) < gapLengths[j][0] ||
-					gapLengths[i][0] > (seqLength_j - gapLengths[j][1])) {
+				if ((seqLength_i - gapLengths[i][1]) <= gapLengths[j][0] ||
+					gapLengths[i][0] >= (seqLength_j - gapLengths[j][1])) {
 					// no overlap between sequences
-					rans[i + x_length*j] = NA_REAL;
+					rans[j + x_length*i] = NA_REAL;
 				} else {
 					if (!tGaps) { // don't include terminal gaps
 						// find the intersection of both string's ranges
@@ -197,15 +302,22 @@ SEXP distMatrix(SEXP x, SEXP terminalGaps, SEXP penalizeGapGaps, SEXP penalizeGa
 						} else {
 							end = gapLengths[j][1];
 						}
-						rans[i + x_length*j] = distance(&x_i, &x_j, start, end, pGapsGaps, pGapLetters);
+						
 					} else { // use whole sequence including terminal gaps
-						rans[i + x_length*j] = distance(&x_i, &x_j, 0, 0, pGapsGaps, pGapLetters);
+						start = 0;
+						end = 0;
 					}
-
+					if (asInteger(t)==3) { // AAStringSet
+						rans[j + x_length*i] = distanceAA(&x_i, &x_j, start, end, pGapsGaps, pGapLetters);
+					} else {
+						rans[j + x_length*i] = distance(&x_i, &x_j, start, end, pGapsGaps, pGapLetters);
+					}
 				}
-				// make the matrix symetrical
-				rans[j + x_length*i] = rans[i + x_length*j];
 			}
+			if (fM) // make the matrix symetrical
+				for (j = (i+1); j < x_length; j++)
+					rans[i + x_length*j] = rans[j + x_length*i];
+			
 			// set the matrix diagonal to zero distance
 			rans[i*x_length+i] = 0;
 			
@@ -221,8 +333,8 @@ SEXP distMatrix(SEXP x, SEXP terminalGaps, SEXP penalizeGapGaps, SEXP penalizeGa
 				R_CheckUserInterrupt();
 			}
 		}
-		// set the last element of the diagonal to zero
-		rans[(x_length - 1)*x_length+(x_length - 1)] = 0;
+		if (fM) // set the last element of the diagonal to zero
+			rans[(x_length - 1)*x_length+(x_length - 1)] = 0;
 	}
 	
 	if (v) {
@@ -234,8 +346,8 @@ SEXP distMatrix(SEXP x, SEXP terminalGaps, SEXP penalizeGapGaps, SEXP penalizeGa
 	return ans;	
 }
 
-//ans_start <- .Call("gaps", myDNAStringSet, PACKAGE="DECIPHER")
-SEXP gaps(SEXP x)
+//ans_start <- .Call("gaps", myDNAStringSet, 1L, PACKAGE="DECIPHER")
+SEXP gaps(SEXP x, SEXP t)
 {
 	XStringSet_holder x_set;
 	Chars_holder x_i;
@@ -250,13 +362,62 @@ SEXP gaps(SEXP x)
 	rans = REAL(ans);
 	
 	// find the three lengths for each sequence
-	for (i = 0; i < x_length; i++) {
-		x_i = get_elt_from_XStringSet_holder(&x_set, i);
-		rans[i + x_length*0] = frontTerminalGaps(&x_i);
-		rans[i + x_length*1] = endTerminalGaps(&x_i);
-		rans[i + x_length*2] = x_i.length - rans[i + x_length*1] - rans[i + x_length*0];
+	if (asInteger(t)==3) { // AAStringSet
+		for (i = 0; i < x_length; i++) {
+			x_i = get_elt_from_XStringSet_holder(&x_set, i);
+			rans[i + x_length*0] = frontTerminalGapsAA(&x_i);
+			rans[i + x_length*1] = endTerminalGapsAA(&x_i);
+			rans[i + x_length*2] = x_i.length - rans[i + x_length*1] - rans[i + x_length*0];
+		}
+	} else { // DNAStringSet or RNAStringSet
+		for (i = 0; i < x_length; i++) {
+			x_i = get_elt_from_XStringSet_holder(&x_set, i);
+			rans[i + x_length*0] = frontTerminalGaps(&x_i);
+			rans[i + x_length*1] = endTerminalGaps(&x_i);
+			rans[i + x_length*2] = x_i.length - rans[i + x_length*1] - rans[i + x_length*0];
+		}
 	}
 	
 	UNPROTECT(1);
 	return ans;
+}
+
+//ans_start <- .Call("firstSeqsEqual", dna1, dna2, start1, end1, start2, end2, PACKAGE="DECIPHER")
+SEXP firstSeqsEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, SEXP end_y)
+{	
+	int i, j;
+	XStringSet_holder x_set;
+	XStringSet_holder y_set;
+	Chars_holder x_i, y_i;
+	int sx = asInteger(start_x);
+	int ex = asInteger(end_x);
+	int sy = asInteger(start_y);
+	int ey = asInteger(end_y);
+	
+	
+	SEXP ans;
+	PROTECT(ans = NEW_INTEGER(1));
+	int *rans;
+	rans = INTEGER(ans);
+	*(rans) = 1; // equal
+	if ((sx - ex) != (sy - ey)) { // different sequence lengths
+		*(rans) = 0; // not equal
+	} else {
+		x_set = hold_XStringSet(x);
+		y_set = hold_XStringSet(y);
+		x_i = get_elt_from_XStringSet_holder(&x_set, 0);
+		y_i = get_elt_from_XStringSet_holder(&y_set, 0);
+		for (i = sx - 1, j = sy - 1;
+			 i < ex; // i <= ex - 1 covers j <= ey - 1 because equal length
+			 i++, j++) {
+			if (x_i.seq[i] != y_i.seq[j]) {
+				*(rans) = 0; // not equal
+				break;
+			}
+		}
+	}
+	
+	UNPROTECT(1);
+	
+	return(ans);
 }

@@ -1,7 +1,10 @@
 useDynLib(DECIPHER)
 
-import(Biostrings)
+import(methods)
 import(IRanges)
+import(XVector)
+import(Biostrings)
+import(RSQLite)
 
 export(
 # interacting with a database:
@@ -25,5 +28,5 @@ CalculateEfficiencyFISH, DesignProbes,
 # viewing information:
 BrowseSequences, BrowseDB,
 # multiple alignment
-AlignSeqs, AlignProfiles, MaskAlignment
+AlignSeqs, AlignProfiles, AlignTranslation, MaskAlignment
 )

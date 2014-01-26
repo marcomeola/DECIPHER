@@ -3,7 +3,6 @@ DB2FASTA <- function(file,
 	tblName="DNA",
 	identifier="",
 	limit=-1,
-	replaceChar=NULL,
 	orderBy="row_names",
 	append=FALSE,
 	comments=FALSE,
@@ -145,13 +144,6 @@ DB2FASTA <- function(file,
 			type="gzip",
 			asChar=TRUE)
 		searchResult2$sequence <- paste(searchResult2$sequence)
-		
-		if (!is.null(replaceChar))
-			# replace all characters not in the DNA_ALPHABET
-			searchResult2$sequence <- .Call("replaceChars",
-				searchResult2$sequence,
-				replaceChar,
-				PACKAGE="DECIPHER")
 		
 		# remove gaps if applicable
 		if (removeGaps==2) {

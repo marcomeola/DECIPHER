@@ -69,6 +69,46 @@ static int endTerminalGaps(const Chars_holder *P)
 	return gaps;
 }
 
+static int frontTerminalGapsAA(const Chars_holder *P)
+{
+	int i, gaps;
+	const char *p;
+	gaps = 0;
+	
+	// start from the beginning of the sequence
+	for (i = 0, p = P->seq;
+	     i < P->length;
+	     i++, p++)
+	{
+		if (!((*p) ^ 0x2D)) { // gap character
+			gaps++; // count gaps
+		} else { // not a gap
+			return gaps;
+		}
+	}
+	return gaps;
+}
+
+static int endTerminalGapsAA(const Chars_holder *P)
+{
+	int i, gaps;
+	const char *p;
+	gaps = 0;
+	
+	// start from the end of the sequence
+	for (i = (P->length - 1), p = (P->seq + P->length - 1);
+	     i >= 0;
+	     i--, p--)
+	{
+		if (!((*p) ^ 0x2D)) { // gap character
+			gaps++; // count gaps
+		} else { // not a gap
+			return gaps;
+		}
+	}
+	return gaps;
+}
+
 static void alphabetFrequency(const Chars_holder *P, double *bits, int seqLength, int degeneracy, int ignore, int start, int end, double weight)
 {
 	int j;
@@ -178,6 +218,136 @@ static void alphabetFrequency(const Chars_holder *P, double *bits, int seqLength
 	}
 }
 
+static void alphabetFrequencyAA(const Chars_holder *P, double *bits, int seqLength, int degeneracy, int ignore, int start, int end, double weight)
+{
+	int j, i;
+	const char *p;
+	
+	for (j = start, p = (P->seq + start);
+		 j < (P->length - end);
+		 j++, p++)
+	{
+		// another base counted
+		*(bits + 25*seqLength + j) += weight;
+		
+		// tally the bases into the encoded array
+		switch (*p) {
+			case 65: // A
+				*(bits + 0*seqLength + j) += weight;
+				break;
+			case 82: // R
+				*(bits + 1*seqLength + j) += weight;
+				break;
+			case 78: // N
+				*(bits + 2*seqLength + j) += weight;
+				break;
+			case 68: // D
+				*(bits + 3*seqLength + j) += weight;
+				break;
+			case 67: // C
+				*(bits + 4*seqLength + j) += weight;
+				break;
+			case 81: // Q
+				*(bits + 5*seqLength + j) += weight;
+				break;
+			case 69: // E
+				*(bits + 6*seqLength + j) += weight;
+				break;
+			case 71: // G
+				*(bits + 7*seqLength + j) += weight;
+				break;
+			case 72: // H
+				*(bits + 8*seqLength + j) += weight;
+				break;
+			case 73: // I
+				*(bits + 9*seqLength + j) += weight;
+				break;
+			case 76: // L
+				*(bits + 10*seqLength + j) += weight;
+				break;
+			case 75: // K
+				*(bits + 11*seqLength + j) += weight;
+				break;
+			case 77: // M
+				*(bits + 12*seqLength + j) += weight;
+				break;
+			case 70: // F
+				*(bits + 13*seqLength + j) += weight;
+				break;
+			case 80: // P
+				*(bits + 14*seqLength + j) += weight;
+				break;
+			case 83: // S
+				*(bits + 15*seqLength + j) += weight;
+				break;
+			case 84: // T
+				*(bits + 16*seqLength + j) += weight;
+				break;
+			case 87: // W
+				*(bits + 17*seqLength + j) += weight;
+				break;
+			case 89: // Y
+				*(bits + 18*seqLength + j) += weight;
+				break;
+			case 86: // V
+				*(bits + 19*seqLength + j) += weight;
+				break;
+			case 85: // U
+				*(bits + 20*seqLength + j) += weight;
+				break;
+			case 79: // O
+				*(bits + 21*seqLength + j) += weight;
+				break;
+			case 66: // B = N or D
+				if (degeneracy==1) { // include degeneracy codes
+					*(bits + 2*seqLength + j) += 0.5*weight;
+					*(bits + 3*seqLength + j) += 0.5*weight;
+				} else { // don't include degeneracy codes
+					*(bits + 25*seqLength + j) -= weight;
+				}
+				break;
+			case 90: // Z = Q or E
+				if (degeneracy==1) { // include degeneracy codes
+					*(bits + 5*seqLength + j) += 0.5*weight;
+					*(bits + 6*seqLength + j) += 0.5*weight;
+				} else { // don't include degeneracy codes
+					*(bits + 25*seqLength + j) -= weight;
+				}
+				break;
+			case 88: // X = any letter
+				if (degeneracy==1) { // include degeneracy codes
+					for (i = 0; i < 20; i++) {
+						// split between the 20 canonical amino acids
+						*(bits + i*seqLength + j) += weight/20;
+					}
+				} else { // don't include degeneracy codes
+					*(bits + 25*seqLength + j) -= weight;
+				}
+				break;
+			case 42: // * (stop)
+				*(bits + 22*seqLength + j) += weight;
+				break;
+			case 45: // -
+				if (ignore==1) { // don't include gaps
+					*(bits + 25*seqLength + j) -= weight;
+				} else { // include gaps
+					*(bits + 23*seqLength + j) += weight;
+				}
+				break;
+			case 43: // +
+				if (ignore==1) { // don't include masks
+					*(bits + 25*seqLength + j) -= weight;
+				} else { // include masks
+					*(bits + 24*seqLength + j) += weight;
+				}
+				break;
+			default:
+				error("not AA!");
+				break;
+		}
+	}
+}
+
 static void makeConsensus(double *bits, char *seq, int seqLength, int x_length, double threshold, double minInfo, int tGaps)
 {
 	int j;
@@ -201,7 +371,7 @@ static void makeConsensus(double *bits, char *seq, int seqLength, int x_length, 
 		information = 0;
 		
 		// determine the most common base over the threshold percentage
-		if (percentA >= threshold && percentC >= threshold && percentG >= threshold && percentT >= threshold) {
+		if (percentA > threshold && percentC > threshold && percentG > threshold && percentT > threshold) {
 			if ((percentA + percentC + percentG + percentT) >= percentGap &&
 				(percentA + percentC + percentG + percentT) >= percentMask) {
 				*(seq + j) = 'N';
@@ -215,7 +385,7 @@ static void makeConsensus(double *bits, char *seq, int seqLength, int x_length, 
 					information = percentMask;
 				}
 			}
-		} else if (percentC >= threshold && percentG >= threshold && percentT >= threshold) {
+		} else if (percentC > threshold && percentG > threshold && percentT > threshold) {
 			if ((percentC + percentG + percentT) >= percentGap &&
 				(percentC + percentG + percentT) >= percentMask) {
 				*(seq + j) = 'B';
@@ -229,7 +399,7 @@ static void makeConsensus(double *bits, char *seq, int seqLength, int x_length, 
 					information = percentMask;
 				}
 			}
-		} else if (percentA >= threshold && percentG >= threshold && percentT >= threshold) {
+		} else if (percentA > threshold && percentG > threshold && percentT > threshold) {
 			if ((percentA + percentG + percentT) >= percentGap &&
 				(percentA + percentG + percentT) >= percentMask) {
 				*(seq + j) = 'D';
@@ -243,7 +413,7 @@ static void makeConsensus(double *bits, char *seq, int seqLength, int x_length, 
 					information = percentMask;
 				}
 			}
-		} else if (percentA >= threshold && percentC >= threshold && percentT >= threshold) {
+		} else if (percentA > threshold && percentC > threshold && percentT > threshold) {
 			if ((percentA + percentC + percentT) >= percentGap &&
 				(percentA + percentC + percentT) >= percentMask) {
 				*(seq + j) = 'H';
@@ -257,7 +427,7 @@ static void makeConsensus(double *bits, char *seq, int seqLength, int x_length, 
 					information = percentMask;
 				}
 			}
-		} else if (percentA >= threshold && percentC >= threshold && percentG >= threshold) {
+		} else if (percentA > threshold && percentC > threshold && percentG > threshold) {
 			if ((percentA + percentC + percentG) >= percentGap &&
 				(percentA + percentC + percentG) >= percentMask) {
 				*(seq + j) = 'V';
@@ -271,7 +441,7 @@ static void makeConsensus(double *bits, char *seq, int seqLength, int x_length, 
 					information = percentMask;
 				}
 			}
-		} else if (percentC >= threshold && percentT >= threshold) {
+		} else if (percentC > threshold && percentT > threshold) {
 			if ((percentC + percentT) >= percentGap &&
 				(percentC + percentT) >= percentMask) {
 				*(seq + j) = 'Y';
@@ -285,7 +455,7 @@ static void makeConsensus(double *bits, char *seq, int seqLength, int x_length, 
 					information = percentMask;
 				}
 			}
-		} else if (percentG >= threshold && percentT >= threshold) {
+		} else if (percentG > threshold && percentT > threshold) {
 			if ((percentG + percentT) >= percentGap &&
 				(percentG + percentT) >= percentMask) {
 				*(seq + j) = 'K';
@@ -299,7 +469,7 @@ static void makeConsensus(double *bits, char *seq, int seqLength, int x_length, 
 					information = percentMask;
 				}
 			}
-		} else if (percentA >= threshold && percentT >= threshold) {
+		} else if (percentA > threshold && percentT > threshold) {
 			if ((percentA + percentT) >= percentGap &&
 				(percentA + percentT) >= percentMask) {
 				*(seq + j) = 'W';
@@ -313,7 +483,7 @@ static void makeConsensus(double *bits, char *seq, int seqLength, int x_length, 
 					information = percentMask;
 				}
 			}
-		} else if (percentC >= threshold && percentG >= threshold) {
+		} else if (percentC > threshold && percentG > threshold) {
 			if ((percentC + percentG) >= percentGap &&
 				(percentC + percentG) >= percentMask) {
 				*(seq + j) = 'S';
@@ -327,7 +497,7 @@ static void makeConsensus(double *bits, char *seq, int seqLength, int x_length, 
 					information = percentMask;
 				}
 			}
-		} else if (percentA >= threshold && percentG >= threshold) {
+		} else if (percentA > threshold && percentG > threshold) {
 			if ((percentA + percentG) >= percentGap &&
 				(percentA + percentG) >= percentMask) {
 				*(seq + j) = 'R';
@@ -341,7 +511,7 @@ static void makeConsensus(double *bits, char *seq, int seqLength, int x_length, 
 					information = percentMask;
 				}
 			}
-		} else if (percentA >= threshold && percentC >= threshold) {
+		} else if (percentA > threshold && percentC > threshold) {
 			if ((percentA + percentC) >= percentGap &&
 				(percentA + percentC) >= percentMask) {
 				*(seq + j) = 'M';
@@ -427,6 +597,382 @@ static void makeConsensus(double *bits, char *seq, int seqLength, int x_length, 
 	}
 }
 
+static void makeConsensusAA(double *bits, char *seq, int seqLength, int x_length, double threshold, double minInfo, int tGaps)
+{
+	int j, i, X;
+	double information, AAs[22], S, percentGap, percentMask;
+	
+	for (j = 0; j < seqLength; j++) {
+		
+		if (!tGaps && (*(bits + 25*seqLength + j)==0)) {
+			*(seq + j) = '-';
+			continue;
+		}
+		
+		// find the percentage of each base in position j
+		S = 0;
+		for (i = 0; i < 22; i++) {
+			AAs[i] = (double)(*(bits + i*seqLength + j))/(*(bits + 25*seqLength + j));
+			S += AAs[i];
+		}
+		percentGap = (double)(*(bits + 23*seqLength + j))/(*(bits + 25*seqLength + j));
+		percentMask = (double)(*(bits + 24*seqLength + j))/(*(bits + 25*seqLength + j));
+		information = 0;
+		
+		// determine the most common base over the threshold percentage
+		if (AAs[0] >= threshold) {
+			if (AAs[0] >= percentGap &&
+				AAs[0] >= percentMask) {
+				*(seq + j) = 'A';
+				information = AAs[0];
+			} else {
+				if (percentGap >= percentMask) {
+					*(seq + j) = '-';
+					information = percentGap;
+				} else {
+					*(seq + j) = '+';
+					information = percentMask;
+				}
+			}
+		} else if (AAs[1] >= threshold) {
+			if (AAs[1] >= percentGap &&
+				AAs[1] >= percentMask) {
+				*(seq + j) = 'R';
+				information = AAs[1];
+			} else {
+				if (percentGap >= percentMask) {
+					*(seq + j) = '-';
+					information = percentGap;
+				} else {
+					*(seq + j) = '+';
+					information = percentMask;
+				}
+			}
+		} else if (AAs[2] >= threshold) {
+			if (AAs[2] >= percentGap &&
+				AAs[2] >= percentMask) {
+				*(seq + j) = 'N';
+				information = AAs[2];
+			} else {
+				if (percentGap >= percentMask) {
+					*(seq + j) = '-';
+					information = percentGap;
+				} else {
+					*(seq + j) = '+';
+					information = percentMask;
+				}
+			}
+		} else if (AAs[3] >= threshold) {
+			if (AAs[3] >= percentGap &&
+				AAs[3] >= percentMask) {
+				*(seq + j) = 'D';
+				information = AAs[3];
+			} else {
+				if (percentGap >= percentMask) {
+					*(seq + j) = '-';
+					information = percentGap;
+				} else {
+					*(seq + j) = '+';
+					information = percentMask;
+				}
+			}
+		} else if (AAs[4] >= threshold) {
+			if (AAs[4] >= percentGap &&
+				AAs[4] >= percentMask) {
+				*(seq + j) = 'C';
+				information = AAs[4];
+			} else {
+				if (percentGap >= percentMask) {
+					*(seq + j) = '-';
+					information = percentGap;
+				} else {
+					*(seq + j) = '+';
+					information = percentMask;
+				}
+			}
+		} else if (AAs[5] >= threshold) {
+			if (AAs[5] >= percentGap &&
+				AAs[5] >= percentMask) {
+				*(seq + j) = 'Q';
+				information = AAs[5];
+			} else {
+				if (percentGap >= percentMask) {
+					*(seq + j) = '-';
+					information = percentGap;
+				} else {
+					*(seq + j) = '+';
+					information = percentMask;
+				}
+			}
+		} else if (AAs[6] >= threshold) {
+			if (AAs[6] >= percentGap &&
+				AAs[6] >= percentMask) {
+				*(seq + j) = 'E';
+				information = AAs[6];
+			} else {
+				if (percentGap >= percentMask) {
+					*(seq + j) = '-';
+					information = percentGap;
+				} else {
+					*(seq + j) = '+';
+					information = percentMask;
+				}
+			}
+		} else if (AAs[7] >= threshold) {
+			if (AAs[7] >= percentGap &&
+				AAs[7] >= percentMask) {
+				*(seq + j) = 'G';
+				information = AAs[7];
+			} else {
+				if (percentGap >= percentMask) {
+					*(seq + j) = '-';
+					information = percentGap;
+				} else {
+					*(seq + j) = '+';
+					information = percentMask;
+				}
+			}
+		} else if (AAs[8] >= threshold) {
+			if (AAs[8] >= percentGap &&
+				AAs[8] >= percentMask) {
+				*(seq + j) = 'H';
+				information = AAs[8];
+			} else {
+				if (percentGap >= percentMask) {
+					*(seq + j) = '-';
+					information = percentGap;
+				} else {
+					*(seq + j) = '+';
+					information = percentMask;
+				}
+			}
+		} else if (AAs[9] >= threshold) {
+			if (AAs[9] >= percentGap &&
+				AAs[9] >= percentMask) {
+				*(seq + j) = 'I';
+				information = AAs[9];
+			} else {
+				if (percentGap >= percentMask) {
+					*(seq + j) = '-';
+					information = percentGap;
+				} else {
+					*(seq + j) = '+';
+					information = percentMask;
+				}
+			}
+		} else if (AAs[10] >= threshold) {
+			if (AAs[10] >= percentGap &&
+				AAs[10] >= percentMask) {
+				*(seq + j) = 'L';
+				information = AAs[10];
+			} else {
+				if (percentGap >= percentMask) {
+					*(seq + j) = '-';
+					information = percentGap;
+				} else {
+					*(seq + j) = '+';
+					information = percentMask;
+				}
+			}
+		} else if (AAs[11] >= threshold) {
+			if (AAs[11] >= percentGap &&
+				AAs[11] >= percentMask) {
+				*(seq + j) = 'K';
+				information = AAs[11];
+			} else {
+				if (percentGap >= percentMask) {
+					*(seq + j) = '-';
+					information = percentGap;
+				} else {
+					*(seq + j) = '+';
+					information = percentMask;
+				}
+			}
+		} else if (AAs[12] >= threshold) {
+			if (AAs[12] >= percentGap &&
+				AAs[12] >= percentMask) {
+				*(seq + j) = 'M';
+				information = AAs[12];
+			} else {
+				if (percentGap >= percentMask) {
+					*(seq + j) = '-';
+					information = percentGap;
+				} else {
+					*(seq + j) = '+';
+					information = percentMask;
+				}
+			}
+		} else if (AAs[13] >= threshold) {
+			if (AAs[13] >= percentGap &&
+				AAs[13] >= percentMask) {
+				*(seq + j) = 'F';
+				information = AAs[13];
+			} else {
+				if (percentGap >= percentMask) {
+					*(seq + j) = '-';
+					information = percentGap;
+				} else {
+					*(seq + j) = '+';
+					information = percentMask;
+				}
+			}
+		} else if (AAs[14] >= threshold) {
+			if (AAs[14] >= percentGap &&
+				AAs[14] >= percentMask) {
+				*(seq + j) = 'P';
+				information = AAs[14];
+			} else {
+				if (percentGap >= percentMask) {
+					*(seq + j) = '-';
+					information = percentGap;
+				} else {
+					*(seq + j) = '+';
+					information = percentMask;
+				}
+			}
+		} else if (AAs[15] >= threshold) {
+			if (AAs[15] >= percentGap &&
+				AAs[15] >= percentMask) {
+				*(seq + j) = 'S';
+				information = AAs[15];
+			} else {
+				if (percentGap >= percentMask) {
+					*(seq + j) = '-';
+					information = percentGap;
+				} else {
+					*(seq + j) = '+';
+					information = percentMask;
+				}
+			}
+		} else if (AAs[16] >= threshold) {
+			if (AAs[16] >= percentGap &&
+				AAs[16] >= percentMask) {
+				*(seq + j) = 'T';
+				information = AAs[16];
+			} else {
+				if (percentGap >= percentMask) {
+					*(seq + j) = '-';
+					information = percentGap;
+				} else {
+					*(seq + j) = '+';
+					information = percentMask;
+				}
+			}
+		} else if (AAs[17] >= threshold) {
+			if (AAs[17] >= percentGap &&
+				AAs[17] >= percentMask) {
+				*(seq + j) = 'W';
+				information = AAs[17];
+			} else {
+				if (percentGap >= percentMask) {
+					*(seq + j) = '-';
+					information = percentGap;
+				} else {
+					*(seq + j) = '+';
+					information = percentMask;
+				}
+			}
+		} else if (AAs[18] >= threshold) {
+			if (AAs[18] >= percentGap &&
+				AAs[18] >= percentMask) {
+				*(seq + j) = 'Y';
+				information = AAs[18];
+			} else {
+				if (percentGap >= percentMask) {
+					*(seq + j) = '-';
+					information = percentGap;
+				} else {
+					*(seq + j) = '+';
+					information = percentMask;
+				}
+			}
+		} else if (AAs[19] >= threshold) {
+			if (AAs[19] >= percentGap &&
+				AAs[19] >= percentMask) {
+				*(seq + j) = 'V';
+				information = AAs[19];
+			} else {
+				if (percentGap >= percentMask) {
+					*(seq + j) = '-';
+					information = percentGap;
+				} else {
+					*(seq + j) = '+';
+					information = percentMask;
+				}
+			}
+		} else if (AAs[20] >= threshold) {
+			if (AAs[20] >= percentGap &&
+				AAs[20] >= percentMask) {
+				*(seq + j) = 'U';
+				information = AAs[20];
+			} else {
+				if (percentGap >= percentMask) {
+					*(seq + j) = '-';
+					information = percentGap;
+				} else {
+					*(seq + j) = '+';
+					information = percentMask;
+				}
+			}
+		} else if (AAs[21] >= threshold) {
+			if (AAs[21] >= percentGap &&
+				AAs[21] >= percentMask) {
+				*(seq + j) = 'O';
+				information = AAs[21];
+			} else {
+				if (percentGap >= percentMask) {
+					*(seq + j) = '-';
+					information = percentGap;
+				} else {
+					*(seq + j) = '+';
+					information = percentMask;
+				}
+			}
+		} else if (AAs[22] >= threshold) {
+			if (AAs[22] >= percentGap &&
+				AAs[22] >= percentMask) {
+				*(seq + j) = '*';
+				information = AAs[21];
+			} else {
+				if (percentGap >= percentMask) {
+					*(seq + j) = '-';
+					information = percentGap;
+				} else {
+					*(seq + j) = '+';
+					information = percentMask;
+				}
+			}
+		} else if (S >= threshold) {
+			if (S >= percentGap &&
+				S >= percentMask) {
+				*(seq + j) = 'X';
+				information = S;
+			} else {
+				if (percentGap >= percentMask) {
+					*(seq + j) = '-';
+					information = percentGap;
+				} else {
+					*(seq + j) = '+';
+					information = percentMask;
+				}
+			}
+		} else if (percentGap >= threshold ||
+				   percentMask >= threshold) {
+			if (percentGap >= percentMask) {
+				*(seq + j) = '-';
+				information = percentGap;
+			} else {
+				*(seq + j) = '+';
+				information = percentMask;
+			}
+		}
+		
+		if (information < minInfo) {
+			*(seq + j) = '?'; // no consensus above threshold
+		}
+	}
+}
+
 //ans_start <- .Call("consensusSequence", myDNAStringSet, threshold, ambiguity, minInformation, ignoreNonLetters, terminalGaps, PACKAGE="DECIPHER")
 SEXP consensusSequence(SEXP x, SEXP threshold, SEXP ambiguity, SEXP minInformation, SEXP ignoreNonLetters, SEXP terminalGaps)
 {
@@ -490,6 +1036,70 @@ SEXP consensusSequence(SEXP x, SEXP threshold, SEXP ambiguity, SEXP minInformati
 	return consensusSeq;
 }
 
+//ans_start <- .Call("consensusSequenceAA", myDNAStringSet, threshold, ambiguity, minInformation, ignoreNonLetters, terminalGaps, PACKAGE="DECIPHER")
+SEXP consensusSequenceAA(SEXP x, SEXP threshold, SEXP ambiguity, SEXP minInformation, SEXP ignoreNonLetters, SEXP terminalGaps)
+{
+	XStringSet_holder x_set;
+	Chars_holder x_i;
+	int x_length, i, j, seqLength, degeneracy, ignore, tGaps;
+	double *thresh, *minInfo;
+	SEXP consensusSeq;
+	
+	// initialize the XStringSet
+	x_set = hold_XStringSet(x);
+	x_length = get_length_from_XStringSet_holder(&x_set);
+	int gapLengths[x_length][2];
+	degeneracy = asLogical(ambiguity);
+	ignore = asLogical(ignoreNonLetters);
+	tGaps = asLogical(terminalGaps);
+	
+	// find the longest length XString
+	seqLength = 0;
+	for (i = 0; i < x_length; i++) {
+		x_i = get_elt_from_XStringSet_holder(&x_set, i);
+		if (x_i.length > seqLength) {
+			seqLength = x_i.length;
+		}
+	}
+	// initialize an array of encoded base counts
+	double bases[26][seqLength];
+	// 2D arrays cannot be set to zero at initialization so loops are needed
+	for (i = 0; i < 26; i++) {
+		for (j = 0; j < seqLength; j++) {
+			bases[i][j] = 0;
+		}
+	}
+	
+	// loop through each sequence in the DNAStringSet
+	for (i = 0; i < x_length; i++) {
+		// extract each ith DNAString from the DNAStringSet
+		x_i = get_elt_from_XStringSet_holder(&x_set, i);
+		
+		// update the alphabet for this string
+		if (!tGaps) { // don't include terminal gaps
+			gapLengths[i][0] = frontTerminalGapsAA(&x_i);
+			gapLengths[i][1] = endTerminalGapsAA(&x_i);
+			alphabetFrequencyAA(&x_i, &bases[0][0], seqLength, degeneracy, ignore, gapLengths[i][0], gapLengths[i][1], 1);
+		} else { // include terminal gaps
+			alphabetFrequencyAA(&x_i, &bases[0][0], seqLength, degeneracy, ignore, 0, 0, 1);
+		}
+	}
+	
+	thresh = REAL(threshold);
+	*thresh = 1 - *thresh;
+	minInfo = REAL(minInformation);
+	char seq[seqLength + 1]; // last position is for null terminating
+	makeConsensusAA(&bases[0][0], &seq[0], seqLength, x_length, *thresh, *minInfo, tGaps);
+	seq[seqLength] = '\0'; // end (null terminate) the string
+	
+	PROTECT(consensusSeq = allocVector(STRSXP, 1));
+	SET_STRING_ELT(consensusSeq, 0, mkChar(seq));
+	
+	UNPROTECT(1);
+	
+	return consensusSeq;
+}
+
 //ans_start <- .Call("consensusProfile", myDNAStringSet, weight, PACKAGE="DECIPHER")
 SEXP consensusProfile(SEXP x, SEXP weight)
 {
@@ -497,7 +1107,7 @@ SEXP consensusProfile(SEXP x, SEXP weight)
 	Chars_holder x_i;
 	int x_length, i, j, seqLength;
 	SEXP ans;//, subM, ret_list
-	double *rans, *w = REAL(weight);//, *m
+	double *rans, *w = REAL(weight), sum;//, *m
 	
 	// initialize the XStringSet
 	x_set = hold_XStringSet(x);
@@ -543,7 +1153,8 @@ SEXP consensusProfile(SEXP x, SEXP weight)
 		for (j = gapLengths[i][0] + 1; j < seqLength - gapLengths[i][1] - 1; j++) {
 			if (!(x_i.seq[j - 1] & 0x10) && (x_i.seq[j] & 0x10)) {
 				gaps[0][j] += w[i]; // gap opening
-			} else if ((x_i.seq[j] & 0x10) && !(x_i.seq[j + 1] & 0x10)) {
+			}
+			if ((x_i.seq[j] & 0x10) && !(x_i.seq[j + 1] & 0x10)) {
 				gaps[1][j] += w[i]; // gap closing
 			}
 		}
@@ -587,11 +1198,105 @@ SEXP consensusProfile(SEXP x, SEXP weight)
 		*(rans + i*7 + 4) = bases[4][i]/x_length;
 		*(rans + i*7 + 5) = gaps[0][i]/x_length;
 		*(rans + i*7 + 6) = gaps[1][i]/x_length;
+		sum = *(rans + i*7 + 0) + *(rans + i*7 + 1) + *(rans + i*7 + 2) + *(rans + i*7 + 3) + *(rans + i*7 + 4);
+		if (sum > 0) { // normalize the profile
+			*(rans + i*7 + 0) /= sum;
+			*(rans + i*7 + 1) /= sum;
+			*(rans + i*7 + 2) /= sum;
+			*(rans + i*7 + 3) /= sum;
+			*(rans + i*7 + 4) /= sum;
+		}
 	}
 	
 	//PROTECT(ret_list = allocVector(VECSXP, 2));
 	//SET_VECTOR_ELT(ret_list, 0, ans);
 	//SET_VECTOR_ELT(ret_list, 1, subM);
+	
+	UNPROTECT(1);
+	
+	return ans;
+}
+
+//ans_start <- .Call("consensusProfileAA", myAAStringSet, weight, PACKAGE="DECIPHER")
+SEXP consensusProfileAA(SEXP x, SEXP weight)
+{
+	XStringSet_holder x_set;
+	Chars_holder x_i;
+	int x_length, i, j, seqLength;
+	SEXP ans;
+	double *rans, *w = REAL(weight), sum;
+	
+	// initialize the XStringSet
+	x_set = hold_XStringSet(x);
+	x_length = get_length_from_XStringSet_holder(&x_set);
+	double gapLengths[x_length][2];
+	
+	// find the longest length XString
+	seqLength = 0;
+	for (i = 0; i < x_length; i++) {
+		x_i = get_elt_from_XStringSet_holder(&x_set, i);
+		if (x_i.length > seqLength) {
+			seqLength = x_i.length;
+		}
+	}
+	// initialize an array of encoded base counts
+	double bases[26][seqLength];
+	// 2D arrays cannot be set to zero at initialization so loops are needed
+	for (i = 0; i < 26; i++) {
+		for (j = 0; j < seqLength; j++) {
+			bases[i][j] = 0;
+		}
+	}
+	
+	// initialize an array of encoded base counts
+	double gaps[2][seqLength];
+	// 2D arrays cannot be set to zero at initialization so loops are needed
+	for (i = 0; i < 2; i++) {
+		for (j = 0; j < seqLength; j++) {
+			gaps[i][j] = 0;
+		}
+	}
+	
+	// loop through each sequence in the DNAStringSet
+	for (i = 0; i < x_length; i++) {
+		// extract each ith DNAString from the DNAStringSet
+		x_i = get_elt_from_XStringSet_holder(&x_set, i);
+		
+		// update the alphabet for this string
+		gapLengths[i][0] = frontTerminalGapsAA(&x_i);
+		gapLengths[i][1] = endTerminalGapsAA(&x_i);
+		// for AA degeneracy = 0, otherwise results in pooly aligned X's
+		alphabetFrequencyAA(&x_i, &bases[0][0], seqLength, 0, 0, gapLengths[i][0], gapLengths[i][1], w[i]);
+		
+		for (j = gapLengths[i][0] + 1; j < seqLength - gapLengths[i][1] - 1; j++) {
+			if ((x_i.seq[j - 1] ^ 0x2D) && !(x_i.seq[j] ^ 0x2D)) {
+				gaps[0][j] += w[i]; // gap opening
+			}
+			if (!(x_i.seq[j] ^ 0x2D) && (x_i.seq[j + 1] ^ 0x2D)) {
+				gaps[1][j] += w[i]; // gap closing
+			}
+		}
+	}
+	
+	PROTECT(ans = allocMatrix(REALSXP, 26, seqLength));
+	rans = REAL(ans);
+	
+	for (i = 0; i < seqLength; i++) {
+		for (j = 0; j < 24; j++) {
+			*(rans + i*26 + j) = bases[j][i]/x_length;
+		}
+		sum = 0;
+		for (j = 0; j < 24; j++) {
+			sum += *(rans + i*26 + j);
+		}
+		if (sum > 0) {
+			for (j = 0; j < 24; j++) {
+				*(rans + i*26 + j) /= sum;
+			}
+		}
+		*(rans + i*26 + 24) = gaps[0][i]/x_length;
+		*(rans + i*26 + 25) = gaps[1][i]/x_length;
+	}
 	
 	UNPROTECT(1);
 	

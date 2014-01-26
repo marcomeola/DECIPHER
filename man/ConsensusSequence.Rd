@@ -7,18 +7,18 @@ Create A Consensus Sequence
 Forms a consensus sequence representing a set of sequences.
 }
 \usage{
-ConsensusSequence(myDNAStringSet,
+ConsensusSequence(myXStringSet,
                   threshold = 0.05,
                   ambiguity = TRUE,
-                  noConsensusChar = "N",
+                  noConsensusChar = "+",
                   minInformation = 0.75,
                   ignoreNonBases = FALSE,
                   includeTerminalGaps = FALSE,
                   verbose = TRUE)
 }
 \arguments{
-  \item{myDNAStringSet}{
-A \code{DNAStringSet} object of aligned sequences.
+  \item{myXStringSet}{
+An \code{AAStringSet}, \code{DNAStringSet}, or \code{RNAStringSet} object of aligned sequences.
 }
   \item{threshold}{
 Maximum fraction of sequence information that may be lost in forming the consensus.
@@ -27,7 +27,7 @@ Maximum fraction of sequence information that may be lost in forming the consens
 Logical specifying whether to consider ambiguity as split between their respective nucleotides.  Degeneracy codes are specified in the \code{IUPAC_CODE_MAP}.
 }
   \item{noConsensusChar}{
-Single character from the \code{DNA_ALPHABET} giving the base to use when there is no consensus in a position.
+Single character from the sequence's alphabet giving the base to use when there is no consensus in a position.
 }
   \item{minInformation}{
 Minimum fraction of information required to form consensus in each position.
@@ -45,10 +45,10 @@ Logical indicating whether to print the elapsed time upon completion.
 \details{
 Two key parameters control the degree of consensus.  The default \code{threshold} (0.05) indicates that at least 95\% of sequence information will be represented by the consensus sequence.  The default \code{minInformation} (0.75) specifies that at least 75\% of sequences must contain the information in the consensus, otherwise the \code{noConsensusChar} is used.
 
-If \code{ambiguity = TRUE} (the default) then degeneracy codes are split between their respective bases according to the \code{IUPAC_CODE_MAP}.  For example, an "R" would count as half an "A" and half a "G".  If \code{ambiguity = FALSE} then degeneracy codes are not considered in forming the consensus.  If \code{includeNonBases = TRUE} (the default) then gap ("-") and mask ("+") characters are counted towards the consensus, otherwise they are omitted from development of the consensus.
+If \code{ambiguity = TRUE} (the default) then degeneracy codes are split between their respective bases according to the \code{IUPAC_CODE_MAP}, or \code{AMINO_ACID_CODE} for \code{AAStringSet}s.  For example, an "R" in a \code{DNAStringSet} would count as half an "A" and half a "G".  If \code{ambiguity = FALSE} then degeneracy codes are not considered in forming the consensus.  If \code{includeNonBases = TRUE} (the default) then gap ("-") and mask ("+") characters are counted towards the consensus, otherwise they are omitted from calculation of the consensus.  For an \code{AAStringSet} input, the lack of degeneracy codes generally results in ``X'' in positions with mismatches, unless the \code{threshold} is set higher than 0.05.
 }
 \value{
-A \code{DNAStringSet} with a single consensus sequence.
+An \code{XStringSet} matching the input type with a single consensus sequence.
 }
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}

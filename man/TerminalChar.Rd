@@ -4,15 +4,15 @@
 Determine the Number of Terminal Characters
 }
 \description{
-Counts the number of terminal characters for every sequence in a \code{DNAStringSet}.  Terminal characters are defined as a specific character repeated at the beginning and end of a sequence.
+Counts the number of terminal characters for every sequence in an \code{XStringSet}.  Terminal characters are defined as a specific character repeated at the beginning and end of a sequence.
 }
 \usage{
-TerminalChar(myDNAStringSet,
+TerminalChar(myXStringSet,
              char = "-")
 }
 \arguments{
-  \item{myDNAStringSet}{
-A \code{DNAStringSet} object of sequences.
+  \item{myXStringSet}{
+An \code{XStringSet} object of sequences.
 }
   \item{char}{
 A single character giving the terminal character to count.

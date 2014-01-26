@@ -12,7 +12,6 @@ DB2FASTA(file,
          tblName = "DNA",
          identifier = "",
          limit = -1,
-         replaceChar = NULL,
          orderBy = "row_names",
          append = FALSE,
          comments = FALSE,
@@ -36,9 +35,6 @@ Optional character string used to narrow the search results to those matching a 
 }
   \item{limit}{
 Number of results to display.  The default (\code{-1}) does not limit the number of results.
-}
-  \item{replaceChar}{
-Optional character used to replace any sequence characters not present in the \code{DNA_ALPHABET}.  If \code{NULL} (the default) then no replacement occurs and the sequences are exported identical to how they were upon import.
 }
   \item{orderBy}{
 Character string giving the column name for sorting the results.  Defaults to the order of entries in the database.  Optionally can be followed by \code{" ASC"} or \code{" DESC"} to specify ascending (the default) or descending order.

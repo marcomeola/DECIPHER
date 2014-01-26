@@ -32,8 +32,8 @@
 // DECIPHER header file
 #include "DECIPHER.h"
 
-//ans_start <- .Call("replaceChars", sequences, replaceChar, PACKAGE="DECIPHER")
-SEXP replaceChars(SEXP x, SEXP r)
+//ans_start <- .Call("replaceChars", sequences, replaceChar, type, PACKAGE="DECIPHER")
+SEXP replaceChars(SEXP x, SEXP r, SEXP t)
 {
 	int i, j, l, count;
 	int n = length(x);
@@ -51,46 +51,258 @@ SEXP replaceChars(SEXP x, SEXP r)
 	char *s = Calloc(longest + 1, char); // each sequence
 	
 	// write new character vector
-	for (i = 0; i < n; i++) {
-		l = length(STRING_ELT(x, i));
-		seq = CHAR(STRING_ELT(x, i));
-		count = 0;
-		for (j = 0; j < l; j++) {
-			if (seq[j]!='U' && seq[j]!='u') {
+	if (asInteger(t)==1) {
+		for (i = 0; i < n; i++) {
+			l = length(STRING_ELT(x, i));
+			seq = CHAR(STRING_ELT(x, i));
+			count = 0;
+			for (j = 0; j < l; j++) {
+				if (seq[j]!='U' && seq[j]!='u') {
+					switch (seq[j]) {
+						case '-':
+						case 'A':
+						case 'a':
+						case 'C':
+						case 'c':
+						case 'G':
+						case 'g':
+						case 'T':
+						case 't':
+						case 'N':
+						case 'n':
+						case 'M':
+						case 'm':
+						case 'R':
+						case 'r':
+						case 'W':
+						case 'w':
+						case 'S':
+						case 's':
+						case 'Y':
+						case 'y':
+						case 'K':
+						case 'k':
+						case 'V':
+						case 'v':
+						case 'H':
+						case 'h':
+						case 'D':
+						case 'd':
+						case 'B':
+						case 'b':
+						case '+':
+							s[count] = seq[j];
+							count++;
+							break;
+						default:
+							if (repChar[0] != '\0') {
+								s[count] = repChar[0];
+								count++;
+							}
+							break;
+					}
+				} else {
+					s[count] = 'T';
+					count++;
+				}
+			}
+			s[count] = '\0'; // null-terminate
+			SET_STRING_ELT(seqs, i, mkChar(s));
+		}
+	} else if (asInteger(t)==2) {
+		for (i = 0; i < n; i++) {
+			l = length(STRING_ELT(x, i));
+			seq = CHAR(STRING_ELT(x, i));
+			count = 0;
+			for (j = 0; j < l; j++) {
+				if (seq[j]!='T' && seq[j]!='t') {
+					switch (seq[j]) {
+						case '-':
+						case 'A':
+						case 'a':
+						case 'C':
+						case 'c':
+						case 'G':
+						case 'g':
+						case 'T':
+						case 't':
+						case 'N':
+						case 'n':
+						case 'M':
+						case 'm':
+						case 'R':
+						case 'r':
+						case 'W':
+						case 'w':
+						case 'S':
+						case 's':
+						case 'Y':
+						case 'y':
+						case 'K':
+						case 'k':
+						case 'V':
+						case 'v':
+						case 'H':
+						case 'h':
+						case 'D':
+						case 'd':
+						case 'B':
+						case 'b':
+						case '+':
+							s[count] = seq[j];
+							count++;
+							break;
+						default:
+							if (repChar[0] != '\0') {
+								s[count] = repChar[0];
+								count++;
+							}
+							break;
+					}
+				} else {
+					s[count] = 'U';
+					count++;
+				}
+			}
+			s[count] = '\0'; // null-terminate
+			SET_STRING_ELT(seqs, i, mkChar(s));
+		}
+	} else {
+		for (i = 0; i < n; i++) {
+			l = length(STRING_ELT(x, i));
+			seq = CHAR(STRING_ELT(x, i));
+			count = 0;
+			for (j = 0; j < l; j++) {
 				switch (seq[j]) {
 					case '-':
 					case 'A':
-					case 'a':
-					case 'C':
-					case 'c':
-					case 'G':
-					case 'g':
-					case 'T':
-					case 't':
-					case 'N':
-					case 'n':
-					case 'M':
-					case 'm':
 					case 'R':
-					case 'r':
-					case 'W':
-					case 'w':
-					case 'S':
-					case 's':
-					case 'Y':
-					case 'y':
-					case 'K':
-					case 'k':
-					case 'V':
-					case 'v':
-					case 'H':
-					case 'h':
+					case 'N':
 					case 'D':
-					case 'd':
+					case 'C':
+					case 'Q':
+					case 'E':
+					case 'G':
+					case 'H':
+					case 'I':
+					case 'L':
+					case 'K':
+					case 'M':
+					case 'F':
+					case 'P':
+					case 'S':
+					case 'T':
+					case 'W':
+					case 'Y':
+					case 'V':
+					case 'U':
+					case 'O':
 					case 'B':
-					case 'b':
+					case 'Z':
+					case 'X':
+					case '*':
 					case '+':
 						s[count] = seq[j];
+						count++;
+						break;
+					case 'a':
+						s[count] = 'A';
+						count++;
+						break;
+					case 'r':
+						s[count] = 'R';
+						count++;
+						break;
+					case 'n':
+						s[count] = 'N';
+						count++;
+						break;
+					case 'd':
+						s[count] = 'D';
+						count++;
+						break;
+					case 'c':
+						s[count] = 'C';
+						count++;
+						break;
+					case 'q':
+						s[count] = 'Q';
+						count++;
+						break;
+					case 'e':
+						s[count] = 'E';
+						count++;
+						break;
+					case 'g':
+						s[count] = 'G';
+						count++;
+						break;
+					case 'h':
+						s[count] = 'H';
+						count++;
+						break;
+					case 'i':
+						s[count] = 'I';
+						count++;
+						break;
+					case 'l':
+						s[count] = 'L';
+						count++;
+						break;
+					case 'k':
+						s[count] = 'K';
+						count++;
+						break;
+					case 'm':
+						s[count] = 'M';
+						count++;
+						break;
+					case 'f':
+						s[count] = 'F';
+						count++;
+						break;
+					case 'p':
+						s[count] = 'P';
+						count++;
+						break;
+					case 's':
+						s[count] = 'S';
+						count++;
+						break;
+					case 't':
+						s[count] = 'T';
+						count++;
+						break;
+					case 'w':
+						s[count] = 'W';
+						count++;
+						break;
+					case 'y':
+						s[count] = 'Y';
+						count++;
+						break;
+					case 'v':
+						s[count] = 'V';
+						count++;
+						break;
+					case 'u':
+						s[count] = 'U';
+						count++;
+						break;
+					case 'o':
+						s[count] = 'O';
+						count++;
+						break;
+					case 'b':
+						s[count] = 'B';
+						count++;
+						break;
+					case 'z':
+						s[count] = 'Z';
+						count++;
+						break;
+					case 'x':
+						s[count] = 'X';
 						count++;
 						break;
 					default:
@@ -100,13 +312,10 @@ SEXP replaceChars(SEXP x, SEXP r)
 						}
 						break;
 				}
-			} else {
-				s[count] = 'T';
-				count++;
 			}
+			s[count] = '\0'; // null-terminate
+			SET_STRING_ELT(seqs, i, mkChar(s));
 		}
-		s[count] = '\0'; // null-terminate
-		SET_STRING_ELT(seqs, i, mkChar(s));
 	}
 	
 	Free(s);

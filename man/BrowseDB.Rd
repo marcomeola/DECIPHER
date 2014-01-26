@@ -45,7 +45,7 @@ Additional expressions to add as part of a where clause in the query.  Further a
 \value{
 Creates a table containing all the fields of the database table and opens it in the web browser for easy viewing.
 
-Returns \code{TRUE} if the html file was written successfully.
+Returns \code{htmlFile} if the html file was written successfully.
 }
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}

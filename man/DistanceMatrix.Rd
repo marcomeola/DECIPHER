@@ -1,13 +1,13 @@
 \name{DistanceMatrix}
 \alias{DistanceMatrix}
 \title{
-Calculate the Distance Between DNA Sequences
+Calculate the Distances Between Sequences
 }
 \description{
-Calculates a distance matrix for a \code{DNAStringSet}.  Each element of the distance matrix corresponds to the dissimilarity between two sequences in the \code{DNAStringSet}.
+Calculates a distance matrix for an \code{XStringSet}.  Each element of the distance matrix corresponds to the dissimilarity between two sequences in the \code{XStringSet}.
 }
 \usage{
-DistanceMatrix(myDNAStringSet,
+DistanceMatrix(myXStringSet,
                includeTerminalGaps = FALSE,
                penalizeGapLetterMatches = TRUE,
                penalizeGapGapMatches = FALSE,
@@ -17,8 +17,8 @@ DistanceMatrix(myDNAStringSet,
                verbose = TRUE)
 }
 \arguments{
-  \item{myDNAStringSet}{
-A \code{DNAStringSet} object of aligned sequences.
+  \item{myXStringSet}{
+An \code{XStringSet} object of aligned sequences (\code{DNAStringSet}, \code{RNAStringSet}, or \code{AAStringSet}).
 }
   \item{includeTerminalGaps}{
 Logical specifying whether or not to include terminal gaps ("-" characters on each end of the sequence) into the calculation of distance.
@@ -30,7 +30,7 @@ Logical specifying whether or not to consider gap-to-letter matches as mismatche
 Logical specifying whether or not to consider gap-to-gap matches as mismatches.
 }
   \item{removeDuplicates}{
-Logical specifying whether to remove any identical sequences from the input sequences before calculating distance.  If \code{FALSE} (the default) then the distance matrix is calculated with the entire \code{DNAStringSet} provided as input.
+Logical specifying whether to remove any identical sequences from the input sequences before calculating distance.  If \code{FALSE} (the default) then the distance matrix is calculated with the entire \code{XStringSet} provided as input.
 }
   \item{correction}{
 The substitution model used for distance correction.  This should be (an unambiguous abbreviation of) one of \code{"none"} or \code{"Jukes-Cantor"}.
@@ -43,14 +43,14 @@ Logical indicating whether to display progress.
 }
 }
 \details{
-The uncorrected distance matrix represents the percent distance between each of the sequences in the \code{DNAStringSet}.  Ambiguity can be represented using the characters of the \code{IUPAC_CODE_MAP}.  For example, the distance between an 'N' and any other base is zero.
+The uncorrected distance matrix represents the percent distance between each of the sequences in the \code{XStringSet}.  Ambiguity can be represented using the characters of the \code{IUPAC_CODE_MAP} for \code{DNAStringSet} and \code{RNAStringSet} inputs, or using the \code{AMINO_ACID_CODE} for an \code{AAStringSet} input.  For example, the distance between an 'N' and any other nucleotide base is zero.  The letters B (N or D), Z (Q or E), and X (any letter) are degenerate in the \code{AMINO_ACID_CODE}.
 
-If \code{includeTerminalGaps = FALSE} then terminal gaps are not included in sequence length.  This can be faster since only the positions common to each pair of sequences are compared.  Similarly, if \code{removeDuplicates = TRUE} then the distance matrix will only represent unique sequences in the \code{DNAStringSet}.  This is can be faster because less sequences need to be compared.  For example, if only two sequences in the set are exact duplicates then one is removed and the distance is calculated on the remaining set.  Note that the distance matrix can still contain values of 100\% after removing duplicates because only exact duplicates are removed without taking into account ambiguous matches represented by the \code{IUPAC_CODE_MAP} or the treatment of gaps.
+If \code{includeTerminalGaps = FALSE} then terminal gaps are not included in sequence length.  This can be faster since only the positions common to each pair of sequences are compared.  Similarly, if \code{removeDuplicates = TRUE} then the distance matrix will only represent unique sequences in the \code{XStringSet}.  This is can be faster because less sequences need to be compared.  For example, if two sequences in the set are exact duplicates then one is removed and the distance is calculated on the remaining set.  Note that the distance matrix can still contain values of 100\% after removing duplicates because only exact duplicates are removed without taking into account ambiguous matches or the treatment of gaps.
 
-The elements of the distance matrix can be referenced by \code{dimnames} corresponding to the \code{names} of the \code{DNAStringSet}.  Additionally, an attribute named "correction" specifying the method of correction used can be accessed using the function \code{attr}.
+The elements of the distance matrix can be referenced by \code{dimnames} corresponding to the \code{names} of the \code{XStringSet}.  Additionally, an attribute named "correction" specifying the method of correction used can be accessed using the function \code{attr}.
 }
 \value{
-A symmetric matrix where each element is the distance between the sequences referenced by the respective row and column.  The \code{dimnames} of the matrix correspond to the \code{names} of the \code{DNAStringSet}.  Sequences with no overlapping positions in the alignment are given a value of \code{NA}.
+A symmetric matrix where each element is the distance between the sequences referenced by the respective row and column.  The \code{dimnames} of the matrix correspond to the \code{names} of the \code{XStringSet}.  Sequences with no overlapping positions in the alignment are given a value of \code{NA}.
 }
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}

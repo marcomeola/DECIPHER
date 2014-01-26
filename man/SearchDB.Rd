@@ -10,9 +10,10 @@ Returns the set of sequences meeting the search criteria.
 SearchDB(dbFile,
          tblName = "DNA",
          identifier = "",
+         type = "DNAStringSet",
          limit = -1,
          replaceChar = "-",
-         nameBy="row_names",
+         nameBy = "row_names",
          orderBy = "row_names",
          countOnly = FALSE,
          removeGaps = "none",
@@ -27,16 +28,19 @@ A SQLite connection object or a character string specifying the path to the data
 Character string specifying the table where the sequences are located.
 }
   \item{identifier}{
-Optional character string used to narrow the search results to those matching a specific identifier.  If "" then all identifiers are selected.
+Optional character string used to narrow the search results to those matching a specific identifier.  If "" (the default) then all identifiers are selected.
+}
+  \item{type}{
+The type of \code{XStringSet} (sequences) to return.  This should be (an unambiguous abbreviation of) one of \code{"DNAStringSet"}, \code{"RNAStringSet"}, \code{"AAStringSet"}, \code{"BStringSet"}, \code{"QualityScaledDNAStringSet"}, \code{"QualityScaledRNAStringSet"}, \code{"QualityScaledAAStringSet"}, or \code{"QualityScaledBStringSet"}.
 }
   \item{limit}{
 Number of results to display.  The default (\code{-1}) does not limit the number of results.
 }
   \item{replaceChar}{
-Optional character used to replace any characters of the sequence that are not present in the \code{DNA_ALPHABET}.
+Optional character used to replace any characters of the sequence that are not present in the \code{XStringSet}'s alphabet.  Not applicable if \code{type=="BStringSet"}.  (See details section below.)
 }
   \item{nameBy}{
-Character string giving the column name for naming the DNAStringSet.
+Character string giving the column name for naming the \code{XStringSet}.
 }
   \item{orderBy}{
 Character string giving the column name for sorting the results.  Defaults to the order of entries in the database.  Optionally can be followed by \code{" ASC"} or \code{" DESC"} to specify ascending (the default) or descending order.
@@ -55,10 +59,10 @@ Additional expressions to add as part of a where clause in the query.  Further a
 }
 }
 \details{
-If RNA is present in the database then all U's are converted to T's before creating the \code{DNAStringSet}.
+If \code{seqtype} is \code{"DNA"} then all U's are converted to T's before creating the \code{DNAStringSet}, and vise-versa if \code{seqtype} is \code{"RNAStringSet"}.  All remaining characters not in the \code{XStringSet}'s alphabet are converted to \code{replaceChar}.  Quality information is interpreted as \code{PredQuality} scores.
 }
 \value{
-A \code{DNAStringSet} with the sequences that meet the specified criteria.  The \code{names} of the \code{DNAStringSet} correspond to the value in the "row_names" column of the database.
+An \code{XStringSet} or \code{QualityScaledXStringSet} with the sequences that meet the specified criteria.  The \code{names} of the object correspond to the value in the \code{nameBy} column of the database.
 }
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}

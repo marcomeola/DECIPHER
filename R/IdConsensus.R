@@ -1,7 +1,8 @@
 IdConsensus <- function(dbFile,
 	tblName="DNA",
 	identifier="",
-	colName="cluster",
+	type="DNAStringSet",
+	colName="id",
 	add2tbl=FALSE,
 	verbose=TRUE,
 	...) {
@@ -12,6 +13,12 @@ IdConsensus <- function(dbFile,
 	# error checking
 	if (!is.character(identifier))
 		stop("identifier must be a character string.")
+	TYPES <- c("DNAStringSet", "RNAStringSet", "AAStringSet", "BStringSet")
+	type <- pmatch(type[1], TYPES)
+	if (is.na(type))
+		stop("Invalid type.")
+	if (type == -1)
+		stop("Ambiguous type.")
 	if (!is.character(tblName))
 		stop("tblName must be a character string.")
 	if (!is.character(colName))
@@ -66,13 +73,23 @@ IdConsensus <- function(dbFile,
 	if (verbose)
 		pBar <- txtProgressBar(min=0, max=100, initial=0, style=3)
 	
-	consensus <- DNAStringSet()
+	if (type==1) {
+		consensus <- DNAStringSet()
+	} else if (type==2) {
+		consensus <- RNAStringSet()
+	} else if (type==3) {
+		consensus <- AAStringSet()
+	} else { # type==4
+		consensus <- BStringSet()
+	}
+	
 	seqCount <- numeric(length(groups))
 	j <- 0L
 	for (i in groups) {
 		j <- j + 1L
-		dna_subset <- SearchDB(dbFile,
+		x_subset <- SearchDB(dbFile,
 			tblName=tblName,
+			type=TYPES[type],
 			verbose=FALSE,
 			identifier=identifier,
 			...=paste(colName,
@@ -81,17 +98,29 @@ IdConsensus <- function(dbFile,
 				"'",
 				sep=""))
 		
-		if (length(consensus)==0)
-			consensus <- ConsensusSequence(dna_subset,
+		if (length(consensus)==0) {
+			if (type!=4) {
+				consensus <- ConsensusSequence(myXStringSet=x_subset,
 					verbose=FALSE,
 					...)
-		else
-			consensus <-c(consensus,
-				 ConsensusSequence(dna_subset,
-					verbose=FALSE,
-					...))
+			} else {
+				consensus <- consensusString(x=x_subset,
+					...)
+			}
+		} else {
+			if (type!=4) {
+				consensus <- c(consensus,
+					 ConsensusSequence(myXStringSet=x_subset,
+						verbose=FALSE,
+						...))
+			} else {
+				consensus <- c(consensus,
+					 consensusString(x=x_subset,
+						...))
+			}
+		}
 		
-		seqCount[j] <- length(dna_subset)
+		seqCount[j] <- length(x_subset)
 		if (verbose)
 			setTxtProgressBar(pBar, 100*j/length(groups))
 	}
@@ -113,7 +142,7 @@ IdConsensus <- function(dbFile,
 	
 	if (is.character(add2tbl) || add2tbl) {
 		Seqs2DB(consensus,
-			type="D",
+			type="XStringSet",
 			dbFile=dbFile,
 			tblName=ifelse(is.character(add2tbl),add2tbl,tblName),
 			identifier=identifier,

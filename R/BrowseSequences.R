@@ -1,11 +1,26 @@
-BrowseSequences <- function(myDNAStringSet,
-	htmlFile=paste(tempdir(),"/dna.html",sep=""),
-	colorBases=TRUE,
+BrowseSequences <- function(myXStringSet,
+	htmlFile=paste(tempdir(),"/myXStringSet.html",sep=""),
+	colorPatterns=TRUE,
 	highlight=0,
+	patterns=c("-", alphabet(myXStringSet, baseOnly=TRUE)),
+	colors=substring(rainbow(length(patterns), v=0.8, start=0.9, end=0.7), 1, 7),
+	colWidth=Inf,
 	...) {
+	
 	# error checking
-	if (!is(myDNAStringSet, "DNAStringSet"))
-		stop("myDNAStringSet must be a DNAStringSet.")
+	if (!is(myXStringSet, "XStringSet"))
+		stop("myXStringSet must be an XStringSet.")
+	if (!is.null(patterns) && !is.character(patterns))
+		stop("patterns must be a character vector.")
+	if (any(grepl("=|\"|<|>|[1-9]|[a-z]", patterns)))
+		stop("patters cannot contain numbers, lower case characters, or the characters (=, <, >, \")")
+	w <- which(patterns %in% c("?", "*", "+"))
+	if (length(w) > 0)
+		patterns[w] <- paste("\\", patterns[w], sep="")
+	if (length(colors) != length(patterns) || !is.character(colors))
+		stop("colors must be a character vector of the same length as patterns.")
+	#if (length(colWidth) != 1 || !is.numeric(colWidth) || colWidth < 20 || (!is.infinite(colWidth) && (colWidth %% 20) != 0))
+	#	stop("colWidth must be a positive numeric evenly divisible by twenty.")
 	# check that the file exist
 	if (is.character(htmlFile)) {
 		htmlfile <- file(htmlFile, "w")
@@ -13,127 +28,177 @@ BrowseSequences <- function(myDNAStringSet,
 	} else {
 		stop("'htmlFile' must be a character string or connection.")
 	}
-	if (!is.logical(colorBases) && !is.numeric(colorBases))
-		stop("colorBases must be a logical or numeric.")
-	if (is.numeric(colorBases)) {
-		if ((length(colorBases) %% 2) == 1 || length(colorBases) == 0)
-			stop("colorBases must specify all start and endpoints.")
-		if (any((colorBases[seq(2, length(colorBases), 2)] - colorBases[seq(1, length(colorBases), 2)]) <= 0))
-			stop("colorBases specifies a negative or zero length range.")
-		if (any(colorBases <= 0))
-			stop("colorBases must be a positive numeric.")
-		if (length(colorBases) > 2)
-			if (any((colorBases[seq(3, length(colorBases), 2)] - colorBases[seq(2, length(colorBases) - 2, 2)]) <= 0))
-				stop("Ranges specified in colorBases must be non-overlapping.")
+	if (!is.logical(colorPatterns) && !is.numeric(colorPatterns))
+		stop("colorPatterns must be a logical or numeric.")
+	if (is.numeric(colorPatterns)) {
+		if ((length(colorPatterns) %% 2) == 1 || length(colorPatterns) == 0)
+			stop("colorPatterns must specify all start and endpoints.")
+		if (any((colorPatterns[seq(2, length(colorPatterns), 2)] - colorPatterns[seq(1, length(colorPatterns), 2)]) <= 0))
+			stop("colorPatterns specifies a negative or zero length range.")
+		if (any(colorPatterns <= 0))
+			stop("colorPatterns must be a positive numeric.")
+		if (length(colorPatterns) > 2)
+			if (any((colorPatterns[seq(3, length(colorPatterns), 2)] - colorPatterns[seq(2, length(colorPatterns) - 2, 2)]) <= 0))
+				stop("Ranges specified in colorPatterns must be non-overlapping.")
+		if (max(colorPatterns) > max(width(myXStringSet)))
+			stop("Ranges specified in colorPatterns are out-of-bounds.")
 	}
-	if (is.null(names(myDNAStringSet)))
-		names(myDNAStringSet) <- 1:length(myDNAStringSet)
+	if (is.numeric(colorPatterns) & !is.infinite(colWidth))
+		stop("colWidth must be Inf if colorPatterns is numeric.")
+	if (is.null(names(myXStringSet)))
+		names(myXStringSet) <- 1:length(myXStringSet)
 	
-	# convert the DNAStringSet to character strings
-	html <- sapply(myDNAStringSet, toString)
-	if (highlight %in% 1:length(myDNAStringSet)) {
+	# add a consensus sequence to myXStringSet
+	if (is(myXStringSet, "DNAStringSet") || is(myXStringSet, "RNAStringSet") || is(myXStringSet, "AAStringSet")) {
+		myXStringSet <- c(myXStringSet,
+			ConsensusSequence(myXStringSet,
+				...,
+				verbose=FALSE))
+	} else {
+		myXStringSet <- c(myXStringSet,
+			as(consensusString(myXStringSet,
+					...),
+				class(myXStringSet)))
+	}
+	l <- length(myXStringSet)
+	names(myXStringSet)[l] <- "Consensus"
+	
+	# convert the XStringSet to character strings
+	html <- sapply(myXStringSet, toString)
+	if (highlight %in% 1:l) {
 		html <- sapply(html, strsplit, split="", fixed=TRUE)
-		for (i in (1:length(html))[-highlight]) {
-			l <- min(length(html[[highlight]]), length(html[[i]]))
-			w <- which(html[[i]][1:l]==html[[highlight]][1:l])
+		for (i in (1:(length(html) - 1L))[-highlight]) {
+			L <- min(length(html[[highlight]]), length(html[[i]]))
+			w <- which(html[[i]][1:L]==html[[highlight]][1:L])
 			if (length(w) > 0)
 				html[[i]][w] <- "."
 		}
 		html <- sapply(html, paste, collapse="")
 	}
 	
-	# pad shorter sequences with periods
-	maxW <- max(width(myDNAStringSet))
-	for (i in 1:length(myDNAStringSet)) {
+	# pad shorter sequences with tildes
+	maxW <- max(width(myXStringSet))
+	if (colWidth > maxW)
+		colWidth <- maxW
+	for (i in 1:l) {
 		html[i] <- paste(html[i],
 			paste(rep("~", maxW - nchar(html[i])), collapse=""),
 			sep="")
 	}
 	
-	# add the lengths on the right
-	alphabetTable <- alphabetFrequency(myDNAStringSet)
-	myLengths <- (alphabetTable[,"A"] +
-		alphabetTable[,"T"] +
-		alphabetTable[,"G"] +
-		alphabetTable[,"C"])
-	
 	# create a legend that gives position
 	counter <- 20
-	if (counter > max(width(myDNAStringSet)))
-		counter <- max(width(myDNAStringSet))
+	if (counter > maxW)
+		counter <- maxW
 	offset <- (counter - 1) - nchar(maxW)
 	legend <- paste(paste(rep(" ", offset), collapse=""), format(seq(counter, maxW, by=counter)), collapse="")
 	counter <- ceiling(counter/2)
 	tickmarks <- paste(paste(rep("'", counter - 1), collapse=""), rep("|", floor(maxW/counter)), collapse="", sep="")
 	tickmarks <- paste(tickmarks, paste(rep("'", maxW - counter*floor(maxW/counter)), collapse=""), sep="")
 	
-	if (is.numeric(colorBases) || colorBases) {
-		# build a consensus sequence
-		consensusSeq <- toString(ConsensusSequence(myDNAStringSet, ..., verbose=FALSE))
-		
-		if (is.numeric(colorBases)) {
-			cs <- substr(consensusSeq, 0, colorBases[1] - 1)
-			for (i in seq(1, length(colorBases), 2)) {
-				csi <- substr(consensusSeq, colorBases[i], colorBases[i + 1])
-				csi <- gsub("A", "<span class=\"A\">A</span>", csi)
-				csi <- gsub("T", "<span class=\"T\">T</span>", csi)
-				csi <- gsub("C", "<span class=\"C\">C</span>", csi)
-				csi <- gsub("G", "<span class=\"G\">G</span>", csi)
-				end <- ifelse(i==(length(colorBases) - 1),
-					nchar(consensusSeq),
-					colorBases[i + 2] - 1)
-				cs <- paste(cs, csi, substr(consensusSeq, colorBases[i + 1] + 1, end), sep="")
-			}
-			consensusSeq <- paste(cs, maxW, sep="    ")
-			
-			htm <- substr(html, 0, colorBases[1] - 1)
-			for (i in seq(1, length(colorBases), 2)) {
-				htmi <- substr(html, colorBases[i], colorBases[i + 1])
-				htmi <- gsub("A", "<span class=\"A\">A</span>", htmi)
-				htmi <- gsub("T", "<span class=\"T\">T</span>", htmi)
-				htmi <- gsub("C", "<span class=\"C\">C</span>", htmi)
-				htmi <- gsub("G", "<span class=\"G\">G</span>", htmi)
-				end <- ifelse(i==(length(colorBases) - 1),
-					nchar(html),
-					colorBases[i + 2] - 1)
-				htm <- paste(htm, htmi, substr(html, colorBases[i + 1] + 1, end), sep="")
+	# split the html into multiple pages
+	starts <- seq(1, maxW, colWidth)
+	stops <- starts + colWidth - 1L
+	stops[length(stops)] <- maxW
+	temp <- character((length(html) + 5L)*length(starts))
+	count <- 1L
+	for (i in 1:length(starts)) {
+		temp[count:(count + 1L)] <- substring(c(legend, tickmarks), starts[i], stops[i])
+		count <- count + 2L
+		temp[c(count:(count + length(html) - 2L), count + length(html))] <- substring(html, starts[i], stops[i])
+		count <- count + length(html) + 3L
+	}
+	html <- temp
+	
+	# add the cumulative nucleotide lengths on the right
+	if (length(starts) > 1) {
+		lengths <- numeric(length(starts)*l)
+		myLengths <- character(length(starts)*(l + 5L))
+		for (i in 1:length(starts)) {
+			lengths[((i - 1L)*l + 1L):(i*l)] <- stops[i] - starts[i] + 1L - rowSums(letterFrequency(BStringSet(substring(myXStringSet,
+					starts[i],
+					stops[i])),
+				"-"))
+			if (i > 1)
+				lengths[((i - 1L)*l + 1L):(i*l)] <- lengths[((i - 1L)*l + 1L):(i*l)] + lengths[((i - 2L)*l + 1L):((i - 1L)*l)]
+			myLengths[((i - 1L)*(l + 5L) + 3L):(i*(l + 5L) - 4L)] <- lengths[((i - 1L)*l + 1L):(i*l - 1L)]
+			myLengths[(i*(l + 5L) - 2L)] <- lengths[i*l]
+		}
+	} else {
+		lengths <- width(myXStringSet) - rowSums(letterFrequency(myXStringSet, "-"))
+		myLengths <- c("", "", lengths[-seq(l, length(lengths), l)], "", lengths[seq(l, length(lengths), l)], "", "")
+	}
+	
+	if (is.numeric(colorPatterns) || colorPatterns) {
+		if (is.numeric(colorPatterns)) {
+			htm <- substring(html, 0, colorPatterns[1] - 1)
+			for (i in seq(1, length(colorPatterns), 2)) {
+				htmi <- substring(html, colorPatterns[i], colorPatterns[i + 1])
+				for (j in 1:length(colors)) {
+					htmi <- gsub(paste("(",
+							patterns[j],
+							ifelse(nchar(patterns[j]) == 1, "+)", ")"),
+							sep=""),
+						paste("<span class=\"_",
+							j,
+							"\">\\1</span>",
+							sep=""),
+						htmi)
+				}
+				end <- ifelse(i==(length(colorPatterns) - 1),
+					max(nchar(html)),
+					colorPatterns[i + 2] - 1)
+				
+				htm <- paste(htm, htmi, substring(html, colorPatterns[i + 1] + 1, end), sep="")
 			}
 			html <- paste(htm, myLengths, sep="    ")
 		} else {
-			consensusSeq <- gsub("A", "<span class=\"A\">A</span>", consensusSeq)
-			consensusSeq <- gsub("T", "<span class=\"T\">T</span>", consensusSeq)
-			consensusSeq <- gsub("C", "<span class=\"C\">C</span>", consensusSeq)
-			consensusSeq <- gsub("G", "<span class=\"G\">G</span>", consensusSeq)
-			consensusSeq <- paste(consensusSeq, maxW, sep="    ")
-			
 			# add color tags to each nucleotide
-			html <- gsub("A", "<span class=\"A\">A</span>", html)
-			html <- gsub("T", "<span class=\"T\">T</span>", html)
-			html <- gsub("C", "<span class=\"C\">C</span>", html)
-			html <- gsub("G", "<span class=\"G\">G</span>", html)
+			if (length(colors) > 0) {
+				for (j in 1:length(colors)) {
+					html <- gsub(paste("(",
+							patterns[j],
+							ifelse(nchar(patterns[j]) == 1, "+)", ")"),
+							sep=""),
+						paste("<span class=\"_",
+							j,
+							"\">\\1</span>",
+							sep=""),
+						html)
+				}
+			}
 			html <- paste(html, myLengths, sep="    ")
 		}
 		
 		# add the legend and consensus sequence
-		html <- paste(format(c("", "", names(myDNAStringSet), "", "Consensus"), justify="right"),		c(legend, tickmarks, html, "", consensusSeq), sep="    ")
+		html <- paste(format(c("", "", names(myXStringSet)[1:(l - 1)], "", "Consensus", "", ""), justify="right"),
+				html,
+			sep="    ")
 		
-		styles <- paste("<style type=text/css>",
-			"span.A {background: #1E90FF; color: #FFF;}",
-			"span.C {background: #32CD32; color: #FFF;}",
-			"span.G {background: #9400D3; color: #FFF;}",
-			"span.T {background: #000; color: #FFF;}",
-			"</style>")
+		styles <- character()
+		if (length(colors) > 0) {
+			for (i in 1:length(colors)) {
+				styles <- paste(styles,
+					"span._", i,
+					" {background:", colors[i],
+					"; color: #FFF;} ",
+					sep="")
+			}
+		}
+		styles <- paste("<style type=text/css> ",
+			styles,
+			"</style>",
+			sep="")
 		html <- c("<html>",styles,"<pre>", html, "</pre></html>")
 	} else {
-		# build a consensus sequence
-		consensusSeq <- paste(toString(ConsensusSequence(myDNAStringSet, ..., verbose=FALSE)), maxW, sep="    ")
-		
 		# add the legend and consensus sequence
-		html <- paste(format(c("", "", names(myDNAStringSet), "", "Consensus"), justify="right"),		c(legend, tickmarks, html, "", consensusSeq), sep="    ")
+		html <- paste(format(c("", "", names(myXStringSet)[1:(l - 1)], "", "Consensus", "", ""), justify="right"),	
+			html,
+			sep="    ")
 		
 		html <- c("<html>","<pre>", html, "</pre></html>")
 	}
 	writeLines(html, htmlfile)
 	browseURL(htmlFile)
-	return(TRUE)
+	return(htmlFile)
 }

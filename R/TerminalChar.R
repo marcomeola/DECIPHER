@@ -1,30 +1,29 @@
-TerminalChar <- function(myDNAStringSet,
+TerminalChar <- function(myXStringSet,
 	char="-") {
 	
 	# error checking
-	if (!is(myDNAStringSet, "DNAStringSet"))
-		stop("myDNAStringSet must be a DNAStringSet.")
-	if (is.na(pmatch(char, DNA_ALPHABET)))
-		stop("char must be a character in the DNA_ALPHABET")
+	if (!is(myXStringSet, "XStringSet"))
+		stop("myXStringSet must be an XStringSet.")
 	
-	if (char=="-") {
+	if (char=="-" && !is(myXStringSet, "BStringSet")) {
 		gaps <- .Call("gaps",
-			myDNAStringSet,
+			myXStringSet,
+			ifelse(is(myXStringSet, "AAStringSet"), 3L, 1L),
 			PACKAGE="DECIPHER")
-		dimnames(gaps) <- list(names(myDNAStringSet),
+		dimnames(gaps) <- list(names(myXStringSet),
 			c("leadingChar","trailingChar","difference"))
 	} else {
-		numF <- length(myDNAStringSet)
-		maxW <- max(width(myDNAStringSet))
+		numF <- length(myXStringSet)
+		maxW <- max(width(myXStringSet))
 		
 		gaps <- matrix(data=0, nrow=numF, ncol=3,
-		dimnames=list(names(myDNAStringSet),
+		dimnames=list(names(myXStringSet),
 			c("leadingChar","trailingChar","difference")))
-		myDNAStringSetRev <- reverse(myDNAStringSet)
+		myXStringSetRev <- reverse(myXStringSet)
 		
-		lead <- isMatchingAt(char, myDNAStringSet,
+		lead <- isMatchingAt(char, myXStringSet,
 			seq_len(maxW))
-		trail <- isMatchingAt(char, myDNAStringSetRev,
+		trail <- isMatchingAt(char, myXStringSetRev,
 			seq_len(maxW))
 		
 		for (i in 1:numF) {
@@ -32,8 +31,8 @@ TerminalChar <- function(myDNAStringSet,
 			index <- which(!lead[,i])[1L]
 			
 			if (is.na(index)) { # sequence is all that character
-				gaps[i,1] <- width(myDNAStringSet[i])
-				gaps[i,2] <- width(myDNAStringSet[i])
+				gaps[i,1] <- width(myXStringSet[i])
+				gaps[i,2] <- width(myXStringSet[i])
 				gaps[i,3] <- NA
 			} else {
 				gaps[i,1] <- index - 1L
@@ -43,7 +42,7 @@ TerminalChar <- function(myDNAStringSet,
 				gaps[i,2] <- index - 1L
 				
 				# difference between leading and trailing gaps
-				gaps[i,3] <- width(myDNAStringSet[i]) - gaps[i,2] - gaps[i,1]
+				gaps[i,3] <- width(myXStringSet[i]) - gaps[i,2] - gaps[i,1]
 			}
 		}
 	}

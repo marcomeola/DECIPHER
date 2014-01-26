@@ -34,7 +34,7 @@ Additional expressions to add as part of a where clause in the query.  Further a
 Data contained in \code{myData} will be added to the \code{tblName} by its respective \code{row.names}.
 }
 \value{
-Returns \code{TRUE} if the data was added successfully.
+Returns \code{TRUE} if the data was added successfully, or \code{FALSE} otherwise.
 }
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}

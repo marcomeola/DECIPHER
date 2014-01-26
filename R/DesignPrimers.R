@@ -351,7 +351,7 @@ DesignPrimers <- function(tiles,
 				tiles$end_aligned <= end)
 		}
 		if (length(w)==0) {
-			warning("No target sites met the specified constraints: ", id)
+			warning("Skipped because no target sites met the specified constraints: ", id)
 			next
 		}
 		
@@ -359,7 +359,13 @@ DesignPrimers <- function(tiles,
 		
 		uw <- unique(target$width)
 		if (length(uw) > 1) {
-			warning("Multiple sequence widths: ", id)
+			warning("Skipped due to multiple sequence widths: ", id)
+			next
+		}
+		
+		max_w <- max(nchar(target$target_site))
+		if (max_w < maxLength) {
+			warning("Skipped because maxLength is greater than width of target sites: ", id)
 			next
 		}
 		
@@ -447,7 +453,7 @@ DesignPrimers <- function(tiles,
 		
 		w <- which(primers$permutations_forward==0)
 		if (length(w)==dim(primers)[1]) {
-			warning("All target sites have too many permutations: ", id)
+			warning("Skipped because all target sites have too many permutations: ", id)
 			next
 		}
 		if (length(w) > 0) {
@@ -579,6 +585,8 @@ DesignPrimers <- function(tiles,
 						primers$forward_coverage[i,] <- c(primers$forward_coverage[i,!df],
 							rep(NA, l))
 					}
+					if (ragged5Prime) # correct starting position
+						primers$start_forward[i] <- primers$start_forward[i] + max_w - max(nchar(primers$forward_primer[i,]))
 				}
 				if (p != pr) {
 					primers$permutations_reverse[i] <- 0
@@ -602,6 +610,8 @@ DesignPrimers <- function(tiles,
 						primers$reverse_coverage[i,] <- c(primers$reverse_coverage[i,!dr],
 							rep(NA, l))
 					}
+					if (ragged5Prime) # correct starting position
+						primers$start_reverse[i] <- primers$start_reverse[i] - max_w + max(nchar(primers$reverse_primer[i,]))
 				}
 			}
 		}

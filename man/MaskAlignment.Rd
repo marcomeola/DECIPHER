@@ -7,15 +7,15 @@ Masks Highly Variable Regions of An Alignment
 Automatically masks poorly aligned regions of an alignment based on sequence conservation and gap frequency.
 }
 \usage{
-MaskAlignment(myDNAStringSet,
+MaskAlignment(myXStringSet,
               windowSize = 5,
               threshold = 1,
               maxFractionGaps = 0.2,
               showPlot = FALSE)
 }
 \arguments{
-  \item{myDNAStringSet}{
-A \code{DNAStringSet} object of aligned sequences.
+  \item{myXStringSet}{
+An \code{AAStringSet}, \code{DNAStringSet}, or \code{RNAStringSet} object of aligned sequences.
 }
   \item{windowSize}{
 Integer value specifying the size of the center-point moving average to use in determining variable regions.
@@ -31,12 +31,12 @@ Logical specifying whether or not to show a plot of the positions that were kept
 }
 }
 \details{
-Poorly aligned regions of a multiple sequence alignment may lead to incorrect results in downstream analyses.  One method to mitigate their effects is to mask columns of the alignment that may be poorly aligned, such as highly-variable regions or regions with many insertions and deletions (gaps).
+Poorly aligned regions of a multiple sequence alignment may lead to incorrect results in downstream analyses, and require extra processing time.  One method to mitigate their effects is to mask columns of the alignment that may be poorly aligned, such as highly-variable regions or regions with many insertions and deletions (gaps).
 
 Highly variable regions are detected by their signature of having low information content.  A moving average of \code{windowSize} nucleotides to the left and right of the center-point is applied to smooth noise in the information content signal along the sequence.  Regions dropping below \code{threshold} bits or more than \code{maxFractionGaps} are masked in the returned alignment.
 }
 \value{
-A \code{DNAMultipleAlignment} object with masked columns where the input criteria are met.
+An \code{XMultipleAlignment} object of the input type with masked columns where the input criteria are met.
 }
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}

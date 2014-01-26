@@ -4,7 +4,7 @@
 Predicts the Hybridization Efficiency of Probe/Target Sequence Pairs
 }
 \description{
-Calculates the Gibb's free energy and hybridization efficiency of probe/target pairs at varying concentrations of the denaturant formamide.
+Calculates the Gibbs free energy and hybridization efficiency of probe/target pairs at varying concentrations of the denaturant formamide.
 }
 \usage{
 CalculateEfficiencyArray(probe,
@@ -51,7 +51,7 @@ Probe and target input sequences must be entered in pairwise alignment, such as 
 If deltaGrules is NULL then the rules defined in \code{data(deltaGrules)} are used.
 }
 \value{
-A \code{matrix} with the predicted Gibb's free energy (dG) and hybridization efficiency (HE) at each concentration of formamide ([FA]).
+A \code{matrix} with the predicted Gibbs free energy (dG) and hybridization efficiency (HE) at each concentration of formamide ([FA]).
 }
 \references{
 Yilmaz LS, Loy A, Wright ES, Wagner M, Noguera DR (2012) Modeling Formamide Denaturation of Probe-Target Hybrids for Improved Microarray Probe Design in Microbial Diagnostics. PLoS ONE 7(8): e43862. doi:10.1371/journal.pone.0043862.

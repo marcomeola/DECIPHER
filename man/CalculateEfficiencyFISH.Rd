@@ -4,7 +4,7 @@
 Predicts Thermodynamic Parameters of Probe/Target Sequence Pairs
 }
 \description{
-Calculates the Gibb's free energy, formamide melt point, and hybridization efficiency of probe/target (DNA/RNA) pairs.
+Calculates the Gibbs free energy, formamide melt point, and hybridization efficiency of probe/target (DNA/RNA) pairs.
 }
 \usage{
 CalculateEfficiencyFISH(probe,
@@ -39,7 +39,7 @@ Integer specifying the number of probes to simulate hybridization per batch.  Se
 }
 }
 \details{
-Hybridization efficiency of pairwise probe/target (DNA/RNA) pairs is simulated \emph{in silico}.  Gibb's free energies are obtained from system calls to OligoArrayAux, which must be properly installed (see the Notes section below).  Probe/target pairs are sent to OligoArrayAux in batches of \code{batchSize}, which prevents systems calls from being too many characters.
+Hybridization efficiency of pairwise probe/target (DNA/RNA) pairs is simulated \emph{in silico}.  Gibbs free energies are obtained from system calls to OligoArrayAux, which must be properly installed (see the Notes section below).  Probe/target pairs are sent to OligoArrayAux in batches of \code{batchSize}, which prevents systems calls from being too many characters.
 }
 \value{
 A matrix of predicted hybridization efficiency (\code{HybEff}), formamide melt point (\code{FAm}), and free energy (\code{ddG1} and \code{dG1}) for each probe/target pair.

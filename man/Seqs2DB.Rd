@@ -18,10 +18,10 @@ Seqs2DB(seqs,
 }
 \arguments{
   \item{seqs}{
-Either a character string specifying the file path to the file containing the sequences, or a \code{DNAStringSet} object.
+A connection object or a character string specifying the file path to the file containing the sequences, a \code{QualityScaledXStringSet} object if \code{type} is \code{QualityScaledXStringSet}, or an \code{XStringSet} object if \code{type} is \code{XStringSet}.
 }
   \item{type}{
-The type of sequences being imported.  This should be (an unambiguous abbreviation of) one of \code{"FASTA"}, \code{"GenBank"}, or \code{"DNAStringSet"}.
+The type of sequences being imported.  This should be (an unambiguous abbreviation of) one of \code{"FASTA"}, \code{"FASTQ"}, \code{"GenBank"}, \code{"XStringSet"}, or \code{"QualityScaledXStringSet"}.
 }
   \item{dbFile}{
 A SQLite connection object or a character string specifying the path to the database file.  If the \code{dbFile} does not exist then a new database is created at this location.

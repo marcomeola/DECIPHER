@@ -137,6 +137,7 @@ SEXP clusterUPGMA(SEXP x, SEXP cutoff, SEXP method, SEXP verbose, SEXP pBar, SEX
 	double *dMatrix = (double *) R_alloc(size*size, sizeof(double)); // final row & col contain cluster numbers
 	double dTemp[size - 2], dist1, dist2;
 	double cumHeight[size - 2];
+	int weight1, weight2;
 	int clusterNums[size - 2];
 	cut = REAL(cutoff);
 	met = asInteger(method);
@@ -211,7 +212,7 @@ SEXP clusterUPGMA(SEXP x, SEXP cutoff, SEXP method, SEXP verbose, SEXP pBar, SEX
 			rans[2*(length - 1) + k] = clusterNum; // cluster formed
 			// calculate both branch lengths
 			rans[4*(length - 1) + k] = *(dMatrix + minRow*length + minCol)/2; // col
-			rans[3*(length - 1) + k] = *(dMatrix + minRow*length + minCol)/2; // row
+			rans[3*(length - 1) + k] = rans[4*(length - 1) + k]; // row
 			
 			// add longest path to cumulative height
 			if ((rans[0*(length - 1) + k] < 0) && (rans[1*(length - 1) + k] < 0)) {
@@ -317,7 +318,37 @@ SEXP clusterUPGMA(SEXP x, SEXP cutoff, SEXP method, SEXP verbose, SEXP pBar, SEX
 					index++;
 				}
 			}
-		} else { // UPGMA/average
+		} else if (met==2) { // UPGMA
+			index = 0;
+			if (*(dMatrix + minRow*length + length - 1) < 0) {
+				weight1 = 1;
+			} else {
+				weight1 = 2;
+			}
+			if (*(dMatrix + (length - 1)*length + minCol) < 0) {
+				weight2 = 1;
+			} else {
+				weight2 = 2;
+			}
+			for (i = -1; i < (size - 1); i++) {
+				if (!(i==minRow) && !(i==minCol - 1)) {
+					dTemp[index] = 0;
+					// calculate distance from the new node
+					if (minRow >= i) {
+						dTemp[index] += *(dMatrix + minRow*length + (i + 1))*weight1;
+					} else {
+						dTemp[index] += *(dMatrix + i*length + (minRow + 1))*weight1;
+					}
+					if (i >= minCol) {
+						dTemp[index] += *(dMatrix + i*length + minCol)*weight2;
+					} else {
+						dTemp[index] += *(dMatrix + (minCol - 1)*length + (i + 1))*weight2;
+					}
+					dTemp[index] /= (weight1 + weight2); // average distance
+					index++;
+				}
+			}
+		} else { // WPGMA (met==6)
 			index = 0;
 			for (i = -1; i < (size - 1); i++) {
 				if (!(i==minRow) && !(i==minCol - 1)) {

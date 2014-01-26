@@ -10,7 +10,9 @@ Counts the number of bases (A, C, G, T) and ambiguities/degeneracies in each seq
 IdLengths(dbFile,
           tblName = "DNA",
           identifier = "",
+	  type = "DNAStringSet",
           add2tbl = FALSE,
+          batchSize = 10000,
           verbose = TRUE)
 }
 \arguments{
@@ -23,8 +25,14 @@ Character string specifying the table where the sequences are located.
   \item{identifier}{
 Optional character string used to narrow the search results to those matching a specific identifier.  If "" then all identifiers are selected.
 }
+  \item{type}{
+The type of \code{XStringSet} being processed.  This should be (an unambiguous abbreviation of) one of \code{"DNAStringSet"} or \code{"RNAStringSet"}.
+}
   \item{add2tbl}{
 Logical or a character string specifying the table name in which to add the result.
+}
+  \item{batchSize}{
+Integer specifying the number of sequences to process at a time.
 }
   \item{verbose}{
 Logical indicating whether to display progress.

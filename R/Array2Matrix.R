@@ -1,5 +1,6 @@
 Array2Matrix <- function(probes,
 	verbose=TRUE) {
+	
 	if (!is.logical(verbose))
 		stop("verbose must be a logical.")
 	if (verbose) {

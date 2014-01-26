@@ -11,7 +11,7 @@ Seqs2DB <- function(seqs,
 	time.1 <- Sys.time()
 	
 	# error checking
-	SEQTYPES <- c("FASTA","GenBank","DNAStringSet")
+	SEQTYPES <- c("FASTA", "FASTQ", "GenBank", "XStringSet", "DNAStringSet", "RNAStringSet", "AAStringSet", "BStringSet", "QualityScaledXStringSet", "QualityScaledDNAStringSet", "QualityScaledRNAStringSet", "QualityScaledAAStringSet", "QualityScaledBStringSet")
 	type <- pmatch(type, SEQTYPES)
 	if (is.na(type))
 		stop("Invalid seqs type.")
@@ -37,12 +37,10 @@ Seqs2DB <- function(seqs,
 		stop("replaceTbl must be a logical.")
 	if (!is.logical(verbose))
 		stop("verbose must be a logical.")
-	if (!is.character(seqs) &&
-		(type==1 || type==2))
-		stop("seqs must be a character string.")
-	if (!is(seqs, "DNAStringSet") &&
-		type==3)
-		stop("seqs must be a DNAStringSet.")
+	if (!is(seqs, "XStringSet") &&
+		!is(seqs, "QualityScaledXStringSet") &&
+		type > 3)
+		stop("seqs must be an XStringSet or QualityScaledXStringSet.")
 	
 	# initialize database
 	driver = dbDriver("SQLite")
@@ -69,11 +67,11 @@ Seqs2DB <- function(seqs,
 		searchExpression <- paste("select max(row_names) from _", tblName, sep="")
 		if (as.integer(dbGetQuery(dbConn, searchExpression)) != numSeq)
 			stop("Table is corrupted.")
-		f <- dbListFields(dbConn, paste("_", tblName, sep=""))
 		
 		# make sure all the necessary fields exist
-		colIDs <- c("row_names", "sequence")
-		types <- c("INTEGER PRIMARY KEY ASC", "BLOB")
+		f <- dbListFields(dbConn, paste("_", tblName, sep=""))
+		colIDs <- c("row_names", "sequence", "quality")
+		types <- c("INTEGER PRIMARY KEY ASC", "BLOB", "BLOB")
 		for (i in 1:length(colIDs)) {
 			if (is.na(match(colIDs[i], f))) {
 				# first add the column if it does not already exist
@@ -90,13 +88,12 @@ Seqs2DB <- function(seqs,
 			}
 		}
 		
-		f <- dbListFields(dbConn, tblName)
-		
 		# make sure all the necessary fields exist
-		if (type==1 || type==3) {
+		f <- dbListFields(dbConn, tblName)
+		if (type != 3) {
 			colIDs <- c("row_names", "id", "description")
 			types <- c("INTEGER PRIMARY KEY ASC", "TEXT", "TEXT")
-		} else if (type==2) {
+		} else {
 			colIDs <- c("row_names", "id", "rank", "accession", "description")
 			fts <- c("INTEGER PRIMARY KEY ASC", "TEXT", "TEXT", "TEXT", "TEXT")
 		}
@@ -127,7 +124,15 @@ Seqs2DB <- function(seqs,
 		l <- 0L
 		newSeqs <- 0
 		buffer <- character()
-		con <- file(seqs, "r")
+		if (is.character(seqs)) {
+			con <- file(seqs, "r")
+			on.exit(close(con))
+		} else if (!isOpen(seqs, "r")) {
+			con <- open(seqs, "r")
+			on.exit(close(con))
+		} else {
+			con <- seqs
+		}
 		
 		while (length(s1)==(chunkSize + l)) {
 			# scan piece of file into memory
@@ -164,7 +169,7 @@ Seqs2DB <- function(seqs,
 			# numF contains the number of sequences for this iteration
 			numF <- length(descriptions)
 			if (numF == 0)
-				stop("No FASTA sequences found, try increasing chunkSize.")
+				stop("No complete FASTA sequences found, try increasing chunkSize.")
 			
 			# build the data frame sequence by sequence
 			myData <- data.frame(row_names=seq(from=(numSeq + 1),
@@ -189,6 +194,117 @@ Seqs2DB <- function(seqs,
 					to=(numSeq + length(descriptions))),
 				sequence=I(lapply(sequence,
 					memCompress,
+					type="gzip")),
+				quality=I(raw(length(sequence))))
+			
+			# add database columns to the data frame
+			if (length(f) > 0) {
+				for (i in 1:length(f)) {
+					if (is.na(match(f[i], names(myData)))) {
+						d <- data.frame(rep(NA, numF))
+						names(d) <- f[i]
+						myData <- data.frame(myData, d)
+					}
+				}
+			}
+			
+			# numSeq contains the total number of sequences so far
+			numSeq <- numSeq + length(descriptions)
+			newSeqs <- newSeqs + length(descriptions)
+			
+			if (replaceTbl) {
+				ft <- list(row_names="INTEGER PRIMARY KEY ASC",
+					id="TEXT",
+					description="TEXT")
+				ft_ <- list(row_names="INTEGER PRIMARY KEY ASC",
+					sequence="BLOB",
+					quality="BLOB")
+			} else {
+				ft <- ft_ <- NULL
+			}
+			
+			dbWriteTable(dbConn,
+				tblName,
+				myData,
+				row.names=FALSE,
+				overwrite=replaceTbl,
+				append=!replaceTbl,
+				field.types=ft)
+			dbWriteTable(dbConn,
+				paste("_", tblName, sep=""),
+				myData_,
+				row.names=FALSE,
+				overwrite=replaceTbl,
+				append=!replaceTbl,
+				field.types=ft_)
+			
+			replaceTbl <- FALSE
+		}
+	} else if (type==2) { # FASTQ
+		# scan in the FASTQ file
+		skipSize <- 1L
+		s1 <- character(chunkSize)
+		l <- 0L
+		newSeqs <- 0
+		buffer <- character()
+		if (is.character(seqs)) {
+			con <- file(seqs, "r")
+			on.exit(close(con))
+		} else if (!isOpen(seqs, "r")) {
+			con <- open(seqs, "r")
+			on.exit(close(con))
+		} else {
+			con <- seqs
+		}
+		
+		while (length(s1)==(chunkSize + l)) {
+			# scan piece of file into memory
+			if (verbose) {
+				digits <- nchar(as.character(floor(skipSize/chunkSize)))
+				cat("Reading FASTQ file from line ",
+					formatC(skipSize, digits=digits),
+					" to ",
+					formatC(skipSize + chunkSize - 1, digits=digits),
+					"\n",
+					sep="")
+			}
+			s1 <- c(buffer, readLines(con=con, n=chunkSize))
+			skipSize <- skipSize + chunkSize
+			
+			# descriptions contains the line index of each sequence
+			descriptions <- which(substr(s1, 1L, 1L) == "@")
+			descriptions <- descriptions[which((descriptions - descriptions[1]) %% 4 == 0)]
+			
+			# remove the last incomplete sequence unless it is the end of file
+			l <- length(buffer)
+			if (length(s1)==(chunkSize + l)) {
+				buffer <- s1[descriptions[length(descriptions)]:length(s1)]
+				length(descriptions) <- length(descriptions) - 1L
+			} else {
+				buffer <- character()
+			}
+			
+			# numF contains the number of sequences for this iteration
+			numF <- length(descriptions)
+			if (numF == 0)
+				stop("No complete FASTQ sequences found, try increasing chunkSize.")
+			
+			# build the data frame sequence by sequence
+			myData <- data.frame(row_names=seq(from=(numSeq + 1),
+					to=(numSeq + length(descriptions))),
+				id=identifier)
+			
+			myData$description <- substr(s1[descriptions],
+				2L,
+				nchar(s1[descriptions]))
+			
+			myData_ <- data.frame(row_names=seq(from=(numSeq + 1),
+					to=(numSeq + length(descriptions))),
+				sequence=I(lapply(s1[descriptions + 1L],
+					memCompress,
+					type="gzip")),
+				quality=I(lapply(s1[descriptions + 3L],
+					memCompress,
 					type="gzip")))
 			
 			# add database columns to the data frame
@@ -211,7 +327,8 @@ Seqs2DB <- function(seqs,
 					id="TEXT",
 					description="TEXT")
 				ft_ <- list(row_names="INTEGER PRIMARY KEY ASC",
-					sequence="BLOB")
+					sequence="BLOB",
+					quality="BLOB")
 			} else {
 				ft <- ft_ <- NULL
 			}
@@ -233,15 +350,22 @@ Seqs2DB <- function(seqs,
 			
 			replaceTbl <- FALSE
 		}
-		close(con)
-	} else if (type==2) { # GenBank
+	} else if (type==3) { # GenBank
 		# scan in the GenBank file
 		skipSize <- 1L
 		s1 <- character(chunkSize)
 		l <- 0L
 		newSeqs <- 0
 		buffer <- character()
-		con <- file(seqs, "r")
+		if (is.character(seqs)) {
+			con <- file(seqs, "r")
+			on.exit(close(con))
+		} else if (!isOpen(seqs, "r")) {
+			con <- open(seqs, "r")
+			on.exit(close(con))
+		} else {
+			con <- seqs
+		}
 		
 		while (length(s1)==(chunkSize + l)) {
 			# scan piece of file into memory
@@ -276,7 +400,7 @@ Seqs2DB <- function(seqs,
 			# numF contains the number of sequences for this iteration
 			numF <- length(descriptions)
 			if (numF == 0)
-				stop("No GenBank records found, try increasing chunkSize.")
+				stop("No complete GenBank records found, try increasing chunkSize.")
 			
 			# build the data frame sequence by sequence
 			myData <- data.frame(row_names=seq(from=(numSeq + 1),
@@ -309,7 +433,8 @@ Seqs2DB <- function(seqs,
 					to=(numSeq + length(descriptions))),
 				sequence=I(lapply(sequence,
 					memCompress,
-					type="gzip")))
+					type="gzip")),
+				quality=I(raw(length(sequence))))
 			
 			# parse the ORGANISM lines into a rank field
 			ranks <- character(numF)
@@ -352,7 +477,8 @@ Seqs2DB <- function(seqs,
 					accession="TEXT",
 					rank="TEXT")
 				ft_ <- list(row_names="INTEGER PRIMARY KEY ASC",
-					sequence="BLOB")
+					sequence="BLOB",
+					quality="BLOB")
 			} else {
 				ft <- ft_ <- NULL
 			}
@@ -374,8 +500,7 @@ Seqs2DB <- function(seqs,
 			
 			replaceTbl <- FALSE
 		}
-		close(con)
-	} else if (type==3) { # DNAStringSet
+	} else { # XStringSet or QualityScaledXStringSet
 		# add the sequences to the database
 		newSeqs <- length(seqs)
 		
@@ -392,12 +517,22 @@ Seqs2DB <- function(seqs,
 			id=identifier,
 			description=names(seqs))
 		
+		if (type > 8) {
+			quality <- lapply(lapply(quality(seqs),
+					toString),
+				memCompress,
+				type="gzip")
+		} else {
+			quality <- raw(length(seqs))
+		}
+		
 		myData_ <- data.frame(row_names=seq(from=(numSeq + 1),
 			to=(numSeq + newSeqs)),
 			sequence=I(lapply(lapply(seqs,
 					toString),
 				memCompress,
-				type="gzip")))
+				type="gzip")),
+			quality=I(quality))
 		
 		# add database columns to the data frame
 		if (length(f) > 0) {
@@ -415,7 +550,8 @@ Seqs2DB <- function(seqs,
 				id="TEXT",
 				description="TEXT")
 			ft_ <- list(row_names="INTEGER PRIMARY KEY ASC",
-				sequence="BLOB")
+				sequence="BLOB",
+				quality="BLOB")
 		} else {
 			ft <- ft_ <- NULL
 		}
