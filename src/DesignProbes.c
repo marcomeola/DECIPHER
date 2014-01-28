@@ -266,6 +266,9 @@ SEXP designProbes(SEXP x, SEXP max_pl, SEXP min_pl, SEXP max_c, SEXP numMMs, SEX
 			double dG, dGmin;
 			int MM, num, thisStart, thisEnd, lastCycle, thisCycle, cycles;
 			int pers[maxCombos][max_probeLength]; // all permutations of the oligo
+			for (k = 0; k < max_probeLength; k++)
+				for (p = 0; p < maxCombos; p++)
+					pers[p][k] = 0;
 			int lengths[maxCombos]; // the length of each oligo
 			double FAms[maxCombos]; // the FAm of each oligo
 			int c; // count of oligos that meet criteria
@@ -281,8 +284,10 @@ SEXP designProbes(SEXP x, SEXP max_pl, SEXP min_pl, SEXP max_c, SEXP numMMs, SEX
 				lengths[p] = 0;
 			
 			for (k = 0; k < max_probeLength; k++) {
-				if (combos*pos[j + k][1] > maxCombos)
+				if (combos*pos[j + k][1] > maxCombos) {
+					combos = maxCombos + 1;
 					break;
+				}
 				if ((pos[j + k][1] > 1) && // ambiguity AND
 					(!((combos & 1) ^ // XOR
 					  (pos[j + k][1] & 1)) || // both odd or even OR
