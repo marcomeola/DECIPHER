@@ -8,7 +8,7 @@ import(RSQLite)
 
 export(
 # interacting with a database:
-Add2DB, Seqs2DB, SearchDB, DB2FASTA,
+Add2DB, Seqs2DB, SearchDB, DB2Seqs,
 # assigning an identifier:
 FormGroups, IdentifyByRank,
 # lengths:
@@ -28,5 +28,5 @@ CalculateEfficiencyFISH, DesignProbes,
 # viewing information:
 BrowseSequences, BrowseDB,
 # multiple alignment
-AlignSeqs, AlignProfiles, AlignTranslation, MaskAlignment
+AlignSeqs, AlignProfiles, AlignTranslation, MaskAlignment, AlignDB
 )

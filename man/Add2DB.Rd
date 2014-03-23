@@ -10,8 +10,8 @@ Adds a \code{data.frame} to a database table by \code{row.names}.
 Add2DB(myData,
        dbFile,
        tblName = "DNA",
-       verbose = TRUE,
-       ...)
+       clause = "",
+       verbose = TRUE)
 }
 \arguments{
   \item{myData}{
@@ -23,11 +23,11 @@ A SQLite connection object or a character string specifying the path to the data
   \item{tblName}{
 Character string specifying the table in which to add the data.
 }
+  \item{clause}{
+An optional character string to append to the query as a clause.
+}
   \item{verbose}{
 Logical indicating whether to display each query as it is sent to the database.
-}
-  \item{\dots}{
-Additional expressions to add as part of a where clause in the query.  Further arguments provided in \dots will be added to the query separated by \code{" and "} as part of the where clause.
 }
 }
 \details{

@@ -64,22 +64,8 @@ Chimeras are a common type of sequence anomaly that result from the use of PCR a
 The \Rfunction{FindChimeras} algorithm works by finding suspect sequence fragments that are uncommon in the group where the sequence belongs, but very common in another group where the sequence does not belong.  Each sequence in the \Rfunarg{dbFile} is tiled into short sequence segments called fragments.  If the fragments are infrequent in their respective group in the \Rfunarg{dbFileReference} then they are considered suspect.  If enough suspect fragments from a sequence meet the specified constraints then the sequence is flagged as a chimera.
 
 %------------------------------------------------------------
-\section{Steps to Find Chimeras}
+\section{Getting Started}
 %------------------------------------------------------------
-
-\subsection{Obtaining A Reference Database}
-
-The first step necessary to use \Rfunction{FindChimeras} is to obtain a reference database (\Rfunarg{dbFileReference}) of good sequences.  In order for the algorithm to work accurately, it is crucial that the reference database is free of any chimeras.  The examples given in this document use 16S rRNA sequences, and a suitable reference database can be found at \url{http://DECIPHER.cee.wisc.edu}.  The 16S reference database must be unzipped after download.
-
-If a reference database is not present then it is feasible to create a one if a significantly large repository of sequences is available.  By using the input database as the reference database it is possible to remove chimeras from the database.  Iteratively repeating the process can eventually result in a clean reference database that is chimera free.
-
-The reference database is required to have several fields of information that are not found in a newly created sequence database:
-\begin{enumerate}
-\item \term{bases} and \term{nonbases} as provided by the function \Rfunction{IdLengths}.
-\item \term{origin} as provided by the function \Rfunction{FormGroups}.  The origin column contains the taxonomic rank above the level shared by the whole group.  For example, the origin of the group \textit{Nanoarchaeum} would be \textit{Root; Archaea; Nanoarchaeota}.  Without the taxonomic rank it would be possible to substitute numbers.  For example, the rank 3.1.4.2 with a group named 4 that included 4.1 and 4.2 would have origin 3.1.
-\end{enumerate}
-
-\subsection{Assigning Sequences To A Reference Group}
 
 \newlength\tindent
 \setlength{\tindent}{\parindent}
@@ -91,7 +77,7 @@ To get started we need to load the \Rpackage{DECIPHER} package, which automatica
 library(DECIPHER)
 @
 
-Help for the \Rfunction{FindChimeras} function can be accessed through
+Help for any \Rpackage{DECIPHER} function, such as \Rfunction{FindChimeras}, can be accessed through
 \begin{Schunk}
 \begin{Sinput}
 > ? FindChimeras
@@ -105,9 +91,87 @@ If this vignette was installed on your system then the code in each example can 
 \end{Sinput}
 \end{Schunk}
 
+%------------------------------------------------------------
+\section{Obtaining/Building A Reference Database}
+%------------------------------------------------------------
+
+The first step necessary to use \Rfunction{FindChimeras} is to obtain a reference database (\Rfunarg{dbFileReference}) of good sequences.  In order for the algorithm to work accurately, it is crucial that the reference database is free of any chimeras.  The examples given in this document use 16S rRNA sequences, and a suitable reference database can be found at \url{http://DECIPHER.cee.wisc.edu/Download.html}.  The 16S reference database must be unzipped after download.
+
+If a reference database is not present then it is feasible to create a one if a significantly large repository of sequences is available.  By using the input database as the reference database it is possible to remove chimeras from the database.  Iteratively repeating the process can eventually result in a clean reference database that is chimera free.
+
+The reference database is required to have several fields of information that are not found in a newly created sequence database:
+\begin{enumerate}
+\item \term{bases} and \term{nonbases} as provided by the function \Rfunction{IdLengths}.
+\item \term{origin} as provided by the function \Rfunction{FormGroups}.  The origin column contains the taxonomic rank above the level shared by the whole group.  For example, the origin of the group \textit{Nanoarchaeum} would be \textit{Root; Archaea; Nanoarchaeota}.  Without the taxonomic rank it would be possible to substitute numbers.  For example, the rank 3.1.4.2 with a group named 4 that included 4.1 and 4.2 would have origin 3.1.  These numbers could be generated using \Rfunction{IdClusters} with multiple \Rfunarg{cutoffs}.
+\end{enumerate}
+
+Below is an example of building a reference database \textit{de novo} from a FASTA file of LSU rRNA (23S) sequences downloaded from SILVA (http://www.arb-silva.de/).  Of course, the reference database must match the type of the query sequences, so in the remainder of this vignette we use a comprehensive SSU rRNA (16S) database.  The information in this section is only given as an example of how to build a reference database from scratch.
+
+\begin{Schunk}
+\begin{Sinput}
+> dbConn <- dbConnect(SQLite(), "SILVA-117 23S Reference Database.sqlite")
+> Seqs2DB("SILVA 23S RefDB.fasta", "FASTA", dbConn, "")
+
+50675 total sequences in the table DNA.
+Time difference of 192.56 secs
+
+[1] 50675
+\end{Sinput}
+\end{Schunk}
+
+When importing a GenBank file the rank (classification) information is automatically imported from the ORGANISM field.  The classification is simply the levels of taxonomic rank separated by semicolons.  In this case the classification must be parsed from each sequence's description information following the ``>'' symbol.
+
+\begin{Schunk}
+\begin{Sinput}
+> class <- dbGetQuery(dbConn, "select description from DNA")
+> f <- function (x) {paste(x[2:length(x)], collapse="")}
+> class <- unlist(lapply(strsplit(class$description, " ", fixed=TRUE), f))
+> Add2DB(data.frame(rank=class), dbConn)
+Expression:  alter table DNA add column rank TEXT
+Expression:  update or replace DNA set rank = :rank where row_names = :row_names 
+
+Added to table DNA:  "rank".
+Time difference of 0.88 secs
+
+[1] TRUE
+\end{Sinput}
+\end{Schunk}
+
+We can now screen the reference database for chimeras.  This process can be repeated until no new chimeras can be found in the reference database.  After completing this process the reference database will be ready for checking new sequences.
+
+\begin{Schunk}
+\begin{Sinput}
+> lengths <- IdLengths(dbConn, add2tbl=TRUE)
+  |===============================================================| 100%
+Lengths counted for 50675 sequences.
+Added to DNA:  "bases", "nonbases", and "width".
+
+> groups <- FormGroups(dbConn, add2tbl=TRUE)
+  |===============================================================| 100%
+Updating column: "id"...
+Updating column: "origin"...
+Formed 72 distinct groups.
+Added to table DNA: "id", "origin".
+Time difference of 917.76 secs
+
+> chimeras <- FindChimeras(dbConn, dbFileReference=dbConn, add2tbl=TRUE)
+Found 102 possible chimeras.
+Added to table DNA:  "chimera".
+Time difference of 13387.34 secs
+
+> dbDisconnect(dbConn)
+\end{Sinput}
+\end{Schunk}
+
+%------------------------------------------------------------
+\section{Steps to Find Chimeras}
+%------------------------------------------------------------
+
+\subsection{Assigning Sequences To A Reference Group}
+
 \subsubsection{Classifying Sequences}
 
-In order to assign new sequences to a group in the reference database, it is necessary to first classify the sequences.  For this purpose we can make use of the RDP Multiclassifier available from \url{http://rdp.cme.msu.edu/classifier/}.  After downloading the multiclassifier.jar we need to use it to classify our sequences.  Be sure to change the path names to those on your system by replacing all of the text inside quotes labeled ``$<<$path to ...$>>$'' with the actual path on your system.
+In order to assign new sequences to a group in the reference database, it is necessary to first classify the sequences.  There are a wide variety of classification methods that would work for this purpose.  Here we make use of the RDP Multiclassifier available from \url{http://rdp.cme.msu.edu/classifier/}.  After downloading the multiclassifier.jar we need to use it to classify our sequences.  Be sure to change the path names to those on your system by replacing all of the text inside quotes labeled ``$<<$path to ...$>>$'' with the actual path on your system.
 
 <<expr1,eval=FALSE>>=
 output.file <- tempfile()

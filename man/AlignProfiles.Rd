@@ -79,7 +79,7 @@ Needleman S., Wunsch, C. (1970).  A general method applicable to the search for 
 Erik Wright \email{DECIPHER@cae.wisc.edu}
 }
 \seealso{
-\code{\link{AlignSeqs}}, \code{\link{AlignTranslation}}
+\code{\link{AlignDB}}, \code{\link{AlignSeqs}}, \code{\link{AlignTranslation}}
 }
 \examples{
 db <- system.file("extdata", "Bacteria_175seqs.sqlite", package="DECIPHER")

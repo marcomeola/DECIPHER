@@ -19,6 +19,9 @@
 /* for R_CheckUserInterrupt */
 #include <R_ext/Utils.h>
 
+/* for Calloc/Free */
+#include <R_ext/RS.h>
+
 // for math functions
 #include <math.h>
 
@@ -99,11 +102,9 @@ SEXP enumerateSequence(SEXP x, SEXP wordSize)
 					ambiguous = 1;
 				for (k = 1; k < wS; k++) {
 					sum += bases[k]*pwv[k];
-					if (bases[k] < 0) {
+					if (bases[k] < 0)
 						ambiguous = 1;
-					} else {
-						bases[k - 1] = bases[k]; // shift numbers left
-					}
+					bases[k - 1] = bases[k]; // shift numbers left
 				}
 				if (ambiguous) {
 					*(rans + j - wS + 1) = NA_INTEGER;
@@ -237,11 +238,9 @@ SEXP enumerateSequenceAA(SEXP x, SEXP wordSize)
 					ambiguous = 1;
 				for (k = 1; k < wS; k++) {
 					sum += bases[k]*pwv[k];
-					if (bases[k] < 0) {
+					if (bases[k] < 0)
 						ambiguous = 1;
-					} else {
-						bases[k - 1] = bases[k]; // shift numbers left
-					}
+					bases[k - 1] = bases[k]; // shift numbers left
 				}
 				if (ambiguous) {
 					*(rans + j - wS + 1) = NA_INTEGER;
@@ -290,8 +289,8 @@ SEXP enumerateGappedSequence(SEXP x, SEXP wordSize)
 			PROTECT(ans = allocVector(INTSXP, 0));
 			PROTECT(pos = allocVector(INTSXP, 0));
 		} else {
-			int POS[x_i.length - wS + 1];
-			int ANS[x_i.length - wS + 1];
+			int *POS = Calloc(x_i.length - wS + 1, int); // initialized to zero
+			int *ANS = Calloc(x_i.length - wS + 1, int); // initialized to zero
 			int bases[wS];
 			int count = 0;
 			for (j = 0; j < x_i.length; j++) {
@@ -306,23 +305,21 @@ SEXP enumerateGappedSequence(SEXP x, SEXP wordSize)
 					continue;
 				alphabetFrequency(&x_i, &bases[wS - 1], j);
 				count++;
-				POS[count - wS] = j + 1;
+				*(POS + count - wS) = j + 1;
 				sum = bases[0];
 				ambiguous = 0;
 				if (bases[0] < 0)
 					ambiguous = 1;
 				for (k = 1; k < wS; k++) {
 					sum += bases[k]*pwv[k];
-					if (bases[k] < 0) {
+					if (bases[k] < 0)
 						ambiguous = 1;
-					} else {
-						bases[k - 1] = bases[k]; // shift numbers left
-					}
+					bases[k - 1] = bases[k]; // shift numbers left
 				}
 				if (ambiguous) {
-					ANS[count - wS] = -1;
+					*(ANS + count - wS) = -1;
 				} else {
-					ANS[count - wS] = sum;
+					*(ANS + count - wS) = sum;
 				}
 			}
 			
@@ -335,12 +332,12 @@ SEXP enumerateGappedSequence(SEXP x, SEXP wordSize)
 				rans = INTEGER(ans);
 				p = INTEGER(pos);
 				for (j = 0; j <= count - wS; j++) {
-					if (ANS[j] == -1) {
+					if (*(ANS + j) == -1) {
 						*(rans + j) = NA_INTEGER;
 					} else {
-						*(rans + j) = ANS[j];
+						*(rans + j) = *(ANS + j);
 					}
-					*(p + j) = POS[j];
+					*(p + j) = *(POS + j);
 				}
 			}
 		}
@@ -385,8 +382,8 @@ SEXP enumerateGappedSequenceAA(SEXP x, SEXP wordSize)
 			PROTECT(ans = allocVector(INTSXP, 0));
 			PROTECT(pos = allocVector(INTSXP, 0));
 		} else {
-			int POS[x_i.length - wS + 1];
-			int ANS[x_i.length - wS + 1];
+			int *POS = Calloc(x_i.length - wS + 1, int); // initialized to zero
+			int *ANS = Calloc(x_i.length - wS + 1, int); // initialized to zero
 			int bases[wS];
 			int count = 0;
 			for (j = 0; j < x_i.length; j++) {
@@ -401,23 +398,21 @@ SEXP enumerateGappedSequenceAA(SEXP x, SEXP wordSize)
 					continue;
 				alphabetFrequencyAA(&x_i, &bases[wS - 1], j);
 				count++;
-				POS[count - wS] = j + 1;
+				*(POS + count - wS) = j + 1;
 				sum = bases[0];
 				ambiguous = 0;
 				if (bases[0] < 0)
 					ambiguous = 1;
 				for (k = 1; k < wS; k++) {
 					sum += bases[k]*pwv[k];
-					if (bases[k] < 0) {
+					if (bases[k] < 0)
 						ambiguous = 1;
-					} else {
-						bases[k - 1] = bases[k]; // shift numbers left
-					}
+					bases[k - 1] = bases[k]; // shift numbers left
 				}
 				if (ambiguous) {
-					ANS[count - wS] = -1;
+					*(ANS + count - wS) = -1;
 				} else {
-					ANS[count - wS] = sum;
+					*(ANS + count - wS) = sum;
 				}
 			}
 			
@@ -430,12 +425,12 @@ SEXP enumerateGappedSequenceAA(SEXP x, SEXP wordSize)
 				rans = INTEGER(ans);
 				p = INTEGER(pos);
 				for (j = 0; j <= count - wS; j++) {
-					if (ANS[j] == -1) {
+					if (*(ANS + j) == -1) {
 						*(rans + j) = NA_INTEGER;
 					} else {
-						*(rans + j) = ANS[j];
+						*(rans + j) = *(ANS + j);
 					}
-					*(p + j) = POS[j];
+					*(p + j) = *(POS + j);
 				}
 			}
 		}
@@ -446,6 +441,143 @@ SEXP enumerateGappedSequenceAA(SEXP x, SEXP wordSize)
 	}
 	
 	UNPROTECT(1 + 2*x_length);
+	
+	return ret_list;
+}
+
+static void alphabetFrequencyReducedAA(const Chars_holder *P, int *bits, int position, int *alpha)
+{
+	const char *p;
+	p = (P->seq + position);
+	
+	switch (*p) {
+		case 65: // A
+			*(bits) = *(alpha);
+			break;
+		case 82: // R
+			*(bits) = *(alpha + 1);
+			break;
+		case 78: // N
+			*(bits) = *(alpha + 2);
+			break;
+		case 68: // D
+			*(bits) = *(alpha + 3);
+			break;
+		case 67: // C
+			*(bits) = *(alpha + 4);
+			break;
+		case 81: // Q
+			*(bits) = *(alpha + 5);
+			break;
+		case 69: // E
+			*(bits) = *(alpha + 6);
+			break;
+		case 71: // G
+			*(bits) = *(alpha + 7);
+			break;
+		case 72: // H
+			*(bits) = *(alpha + 8);
+			break;
+		case 73: // I
+			*(bits) = *(alpha + 9);
+			break;
+		case 76: // L
+			*(bits) = *(alpha + 10);
+			break;
+		case 75: // K
+			*(bits) = *(alpha + 11);
+			break;
+		case 77: // M
+			*(bits) = *(alpha + 12);
+			break;
+		case 70: // F
+			*(bits) = *(alpha + 13);
+			break;
+		case 80: // P
+			*(bits) = *(alpha + 14);
+			break;
+		case 83: // S
+			*(bits) = *(alpha + 15);
+			break;
+		case 84: // T
+			*(bits) = *(alpha + 16);
+			break;
+		case 87: // W
+			*(bits) = *(alpha + 17);
+			break;
+		case 89: // Y
+			*(bits) = *(alpha + 18);
+			break;
+		case 86: // V
+			*(bits) = *(alpha + 19);
+			break;
+		default: // other
+			*(bits) = -1;
+			break;
+	}
+}
+
+//ans_start <- .Call("enumerateReducedSequenceAA", myDNAStringSet, wordSize, alphabet, PACKAGE="DECIPHER")
+SEXP enumerateSequenceReducedAA(SEXP x, SEXP wordSize, SEXP alphabet)
+{
+	XStringSet_holder x_set;
+	Chars_holder x_i;
+	int x_length, i, j, k, wS, sum, ambiguous, *rans;
+	int *alpha = INTEGER(alphabet);
+	
+	// initialize the XStringSet
+	x_set = hold_XStringSet(x);
+	x_length = get_length_from_XStringSet_holder(&x_set);
+	wS = asInteger(wordSize); // [1 to 13]
+	
+	SEXP ret_list;
+	PROTECT(ret_list = allocVector(VECSXP, x_length));
+	
+	// fill the position weight vector
+	int pwv[wS]; // wS[0] is ignored
+	if (wS > 1)
+		pwv[1] = 5;
+	for (i = 2; i < wS; i++) {
+		pwv[i] = pwv[i - 1]*5;
+	}
+	
+	for (i = 0; i < x_length; i++) {
+		x_i = get_elt_from_XStringSet_holder(&x_set, i);
+		SEXP ans;
+		if ((x_i.length - wS + 1) < 1) {
+			PROTECT(ans = allocVector(INTSXP, 0));
+		} else {
+			PROTECT(ans = allocVector(INTSXP, x_i.length - wS + 1));
+			rans = INTEGER(ans);
+			int bases[wS];
+			for (j = 0; j < (wS - 1); j++) {
+				alphabetFrequencyReducedAA(&x_i, &bases[j], j, alpha); // fill initial numbers
+			}
+			for (j = wS - 1; j < x_i.length; j++) {
+				alphabetFrequencyReducedAA(&x_i, &bases[wS - 1], j, alpha);
+				sum = bases[0];
+				ambiguous = 0;
+				if (bases[0] < 0)
+					ambiguous = 1;
+				for (k = 1; k < wS; k++) {
+					sum += bases[k]*pwv[k];
+					if (bases[k] < 0)
+						ambiguous = 1;
+					bases[k - 1] = bases[k]; // shift numbers left
+				}
+				if (ambiguous) {
+					*(rans + j - wS + 1) = NA_INTEGER;
+				} else {
+					*(rans + j - wS + 1) = sum;
+				}
+			}
+		}
+		
+		SET_VECTOR_ELT(ret_list, i, ans);
+		R_CheckUserInterrupt();
+	}
+	
+	UNPROTECT(1 + x_length);
 	
 	return ret_list;
 }

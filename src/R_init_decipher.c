@@ -60,6 +60,7 @@ static const R_CallMethodDef callMethods[] = { // method call, pointer, num args
 	{"adjustHeights", (DL_FUNC) &adjustHeights, 1},
 	{"enumerateSequence", (DL_FUNC) &enumerateSequence, 2},
 	{"enumerateSequenceAA", (DL_FUNC) &enumerateSequenceAA, 2},
+	{"enumerateSequenceAA", (DL_FUNC) &enumerateSequenceReducedAA, 3},
 	{"enumerateGappedSequence", (DL_FUNC) &enumerateGappedSequence, 2},
 	{"enumerateGappedSequenceAA", (DL_FUNC) &enumerateGappedSequenceAA, 2},
 	{"matchOrder", (DL_FUNC) &matchOrder, 4},

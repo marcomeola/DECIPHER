@@ -149,13 +149,15 @@ FindChimeras <- function(dbFile,
 				identifier=group,
 				verbose=FALSE,
 				limit=maxGroupSize,
-				...="nonbases < 20")
+				removeGaps="all",
+				clause="and nonbases < 20")
 		} else {
 			group_dna <- SearchDB(dbConn2,
 				identifier=group,
 				verbose=FALSE,
 				limit=maxGroupSize,
-				...="chimera is NULL and nonbases < 20")
+				removeGaps="all",
+				clause="and chimera is NULL and nonbases < 20")
 		}
 		numG <- length(group_dna)
 		
@@ -176,7 +178,7 @@ FindChimeras <- function(dbFile,
 				replaceChar="",
 				removeGaps="all",
 				verbose=FALSE,
-				...="chimera is NULL")
+				clause="and chimera is NULL")
 		}
 		
 		# reduce to the set of unique dna sequences
@@ -479,13 +481,15 @@ FindChimeras <- function(dbFile,
 						identifier=other,
 						verbose=FALSE,
 						limit=maxGroupSize,
-						...="nonbases < 20")
+						removeGaps="all",
+						clause="and nonbases < 20")
 				} else {
 					other_dna <- SearchDB(dbConn2,
 						identifier=other,
 						verbose=FALSE,
 						limit=maxGroupSize,
-						...="nonbases < 20 and chimera is NULL")
+						removeGaps="all",
+						clause="and nonbases < 20 and chimera is NULL")
 				}
 				
 				if (length(other_dna) <= multiplier)
@@ -689,7 +693,9 @@ FindChimeras <- function(dbFile,
 		} else {
 			cat("\nFound",
 				dim(all_results)[1],
-				"possible chimeras.")
+				ifelse(dim(all_results)[1] > 1,
+					"possible chimeras.",
+					"possible chimera."))
 			if ((is.character(add2tbl) || add2tbl) && !is.null(all_results))
 				cat("\nAdded to table ",
 					ifelse(is.character(add2tbl),add2tbl,tblName),

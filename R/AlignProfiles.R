@@ -151,9 +151,9 @@ AlignProfiles <- function(pattern,
 	}
 	
 	f <- function(pattern, subject, tGaps=terminalGap) {
-		if (length(pattern)*length(subject) > 2147483647) # maximum when indexing by signed integer
+		if (width(pattern)[1]*width(subject)[1] > 2147483647) # maximum when indexing by signed integer
 			stop(paste("Alignment larger (",
-				length(pattern)*length(subject),
+				width(pattern)[1]*width(subject)[1],
 				") than the maximum allowable size (2,147,483,647).",
 				sep=""))
 		if (is(pattern, "AAStringSet")) {
@@ -215,9 +215,9 @@ AlignProfiles <- function(pattern,
 		w.s <- width(subject[1])
 		
 		if (is(pattern, "AAStringSet")) {
-				wordSize <- 7
+			wordSize <- 7
 		} else {
-				wordSize <- 15
+			wordSize <- 15
 		}
 		l <- min(length(pattern), length(subject))
 		o.p <- order(p.weight, decreasing=TRUE)

@@ -155,6 +155,14 @@ DesignPrimers <- function(tiles,
 	if (minLength < 7)
 		stop("minLength must be at least 7 nucleotides.")
 	ids <- unique(tiles$id)
+	if (length(ids)==0)
+		stop("No identifiers found in tiles.")
+	if (any(grepl("%,", ids, fixed=TRUE)))
+		stop("Identifiers in tiles cannot include '%,'.")
+	if (any(grepl(" (", ids, fixed=TRUE)))
+		stop("Identifiers in tiles cannot include ' ('.")
+	if (any(grepl(") ", ids, fixed=TRUE)))
+		stop("Identifiers in tiles cannot include ') '.")
 	if (!is.numeric(annealingTemp))
 		stop("annealingTemp must be a numeric.")
 	if (annealingTemp < 10)
@@ -280,6 +288,8 @@ DesignPrimers <- function(tiles,
 	} else {
 		processors <- as.integer(processors)
 	}
+	if (class(try(system("hybrid-min -V", intern=TRUE), silent=TRUE))=="try-error")
+		stop("OligoArrayAux must be properly installed.  See the Note section in the help page for DesignPrimers (enter: ?DesignPrimers).")
 	
 	primers_all <- data.frame()
 	

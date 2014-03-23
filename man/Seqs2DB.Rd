@@ -18,10 +18,10 @@ Seqs2DB(seqs,
 }
 \arguments{
   \item{seqs}{
-A connection object or a character string specifying the file path to the file containing the sequences, a \code{QualityScaledXStringSet} object if \code{type} is \code{QualityScaledXStringSet}, or an \code{XStringSet} object if \code{type} is \code{XStringSet}.
+A connection object or a character string specifying the file path to the file containing the sequences, an \code{XStringSet} object if \code{type} is \code{XStringSet}, or a \code{QualityScaledXStringSet} object if \code{type} is \code{QualityScaledXStringSet}.
 }
   \item{type}{
-The type of sequences being imported.  This should be (an unambiguous abbreviation of) one of \code{"FASTA"}, \code{"FASTQ"}, \code{"GenBank"}, \code{"XStringSet"}, or \code{"QualityScaledXStringSet"}.
+The type of the sequences (\code{seqs}) being imported.  This should be (an unambiguous abbreviation of) one of \code{"FASTA"}, \code{"FASTQ"}, \code{"GenBank"}, \code{"XStringSet"}, or \code{"QualityScaledXStringSet"}.
 }
   \item{dbFile}{
 A SQLite connection object or a character string specifying the path to the database file.  If the \code{dbFile} does not exist then a new database is created at this location.
@@ -52,7 +52,7 @@ The total number of sequences in the database table is returned after import.
 Erik Wright \email{DECIPHER@cae.wisc.edu}
 }
 \seealso{
-\code{\link{SearchDB}}, \code{\link{DB2FASTA}}
+\code{\link{SearchDB}}, \code{\link{DB2Seqs}}
 }
 \examples{
 gen <- system.file("extdata", "Bacteria_175seqs.gen", package="DECIPHER")

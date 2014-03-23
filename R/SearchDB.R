@@ -8,10 +8,8 @@ SearchDB <- function(dbFile,
 	orderBy="row_names",
 	countOnly=FALSE,
 	removeGaps="none",
-	verbose=TRUE,
-	...) {
-	
-	time.1 <- Sys.time()
+	clause="",
+	verbose=TRUE) {
 	
 	# error checking
 	GAPS <- c("none", "all", "common")
@@ -35,6 +33,8 @@ SearchDB <- function(dbFile,
 		stop("orderBy must be a character string.")
 	if (!is.logical(countOnly))
 		stop("countOnly must be a logical.")
+	if (!is.character(clause))
+		stop("clause must be a character string.")
 	if (!is.logical(verbose))
 		stop("verbose must be a logical.")
 	if (type==1 || type==5) {
@@ -61,6 +61,9 @@ SearchDB <- function(dbFile,
 	}
 	if (limit > 0 && countOnly)
 		stop("limit cannot be specified when countOnly is TRUE.")
+	
+	if (verbose)
+		time.1 <- Sys.time()
 	
 	# initialize database
 	driver = dbDriver("SQLite")
@@ -118,28 +121,16 @@ SearchDB <- function(dbFile,
 			sep="")
 	}
 	
-	args <- list(...)
-	if (identifier!="" ||
-		length(args) > 0)
-		searchExpression <- paste(searchExpression,
-			' where',
-			sep="")
 	if (identifier!="")
 		searchExpression <- paste(searchExpression,
-			' id like "',
+			' where id like "',
 			identifier,
 			'"',
 			sep="")
-	firstTime <- TRUE
-	for (a in args) {
-		if (identifier!="" ||
-			!firstTime)
-			searchExpression <- paste(searchExpression,
-				'and')
+	if (clause!="")
 		searchExpression <- paste(searchExpression,
-				a)
-		firstTime <- FALSE
-	}
+			clause)
+	
 	if (!countOnly)
 		searchExpression <- paste(searchExpression, ")", sep="")
 	
@@ -153,7 +144,7 @@ SearchDB <- function(dbFile,
 			limit)
 	
 	if (verbose)
-		cat("Search Expression:","\n",searchExpression,sep="")
+		cat("Search Expression:", "\n", searchExpression,sep="")
 	
 	rs <- dbSendQuery(dbConn, searchExpression)
 	searchResult <- fetch(rs, n=-1)
@@ -168,26 +159,29 @@ SearchDB <- function(dbFile,
 			type="gzip",
 			asChar=TRUE))
 		
-		# replace characters that are not in the DNA_ALPHABET
-		searchResult$sequence <- .Call("replaceChars",
-			searchResult$sequence,
-			replaceChar,
-			type,
-			PACKAGE="DECIPHER")
+		if (type!=4 && type!=8) {
+			# replace characters that are not in the DNA_ALPHABET
+			searchResult$sequence <- .Call("replaceChars",
+				searchResult$sequence,
+				replaceChar,
+				type,
+				PACKAGE="DECIPHER")
+		}
 		
 		# remove gaps if applicable
-		if (removeGaps==2)
+		if (removeGaps==2) {
 			searchResult$sequence <- .Call("replaceChar",
 				searchResult$sequence,
 				"-",
 				"",
 				PACKAGE="DECIPHER")
-		else if (removeGaps==3)
+		} else if (removeGaps==3) {
 			searchResult$sequence <- .Call("commonGaps",
 				searchResult$sequence,
 				PACKAGE="DECIPHER")
+		}
 		
-		# build an XStringSet based on the database
+		# build an XStringSet based on the database sequences
 		if (type==1) {
 			myXStringSet <- DNAStringSet(searchResult$sequence)
 		} else if (type==2) {

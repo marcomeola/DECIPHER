@@ -50,49 +50,48 @@ FormGroups <- function(dbFile,
 	searchResult <- searchResult[order(searchResult$count,
 		decreasing=FALSE),]
 	
-	searchResult$id <- ""
-	searchResult$oneup <- ""
 	searchResult$origin <- ""
+	searchResult$id <- ""
 	
 	if (verbose)
 		pBar <- txtProgressBar(style=3)
 	
-	for (i in 1:length(searchResult$rank)) {		if (searchResult$id[i]=="") {			lineage <- unlist(strsplit(as.character(searchResult$rank[i]),				"; ",				fixed=TRUE))			for (j in length(lineage):1) {				if (substr(lineage[j], 1, 1)==" ") {					# remove leading spaces					lineage[j] <- substr(lineage[j],						2,						nchar(lineage[j]))				}								w <- which(grepl(lineage[j], searchResult$rank, fixed=TRUE))				counts <- sum(searchResult$count[w])				if (counts >= maxGroupSize) {					if (j < length(lineage))						j <- j + 1 # go down one rank					w <- which(grepl(lineage[j], searchResult$rank, fixed=TRUE))										# report conflicts					# w1 <- which(searchResult$id[w]!="" && searchResult$count[w] > 0)
-					# if (length(w1) > 0)
-						# warning(lineage[j],
-							# " replaced ",
-							# paste(searchResult$id[w[w1]],
-								# collapse=", "),
-							# ".",
-							#sep="")										# mark for later inclusion					counts <- sum(searchResult$count[w])					if (counts < minGroupSize) {						searchResult$count[w] <- -counts						if (j > 3)							searchResult$oneup[w] <- lineage[j - 1]					} else if (j > 3) {						# try to include a little more						w2 <- which(searchResult$count < 0)						w3 <- c()						if (length(w2) > 0)							w3 <- which(grepl(lineage[j - 1], searchResult$oneup[w2], fixed=TRUE))						if (length(w3) > 0) {
-							if ((counts + sum(-1*searchResult$count[w2[w3]])) < maxGroupSize) {
-								# total group size will be less than than the maximum								searchResult$count[w2[w3]] <- -1*searchResult$count[w2[w3]]								w <- c(w, w2[w3])
-							}						}					}										# record origin before lineage					origin <- unlist(strsplit(as.character(searchResult$rank[i]),						lineage[j],						fixed=TRUE))[1]
-					if (substr(origin,
-						nchar(origin),
-						nchar(origin))=='"')
-						origin <- substr(origin,
-							1,
-							nchar(origin) - 1)					searchResult$origin[w] <- origin										# remove some punctuation					lineage[j] <- gsub('"', '', lineage[j], fixed=TRUE)					lineage[j] <- gsub('.', '', lineage[j], fixed=TRUE)					searchResult$id[w] <- lineage[j]					break				} else if (counts > goalSize && counts < maxGroupSize) {					# report conflicts
-					# w1 <- which(searchResult$id[w]!="" && searchResult$count[w] > 0)
-					# if (length(w1) > 0)
-						# warning(lineage[j],
-							# " replaced ",
-							# paste(searchResult$id[w[w1]],
-								# collapse=", "),
-							# ".",
-							# sep="")										# try to include a little more					if (j > 3) {						w2 <- which(searchResult$count < 0)						w3 <- c()						if (length(w2) > 0)							w3 <- which(grepl(lineage[j - 1], searchResult$oneup[w2], fixed=TRUE))						if (length(w3) > 0) {
-							if ((counts + sum(-1*searchResult$count[w2[w3]])) < maxGroupSize) {
-								# total group size will be less than than the maximum
-								searchResult$count[w2[w3]] <- -1*searchResult$count[w2[w3]]
-								w <- c(w, w2[w3])
-							}						}					}										# record origin before lineage					origin <- unlist(strsplit(as.character(searchResult$rank[i]),						lineage[j],						fixed=TRUE))[1]
-					if (substr(origin,
-						nchar(origin),
-						nchar(origin))=='"')
-						origin <- substr(origin,
-							1,
-							nchar(origin) - 1)					searchResult$origin[w] <- origin										# remove some punctuation					lineage[j] <- gsub('"', '', lineage[j], fixed=TRUE)					lineage[j] <- gsub('.', '', lineage[j], fixed=TRUE)					searchResult$id[w] <- lineage[j]					break				}			}		}
+	for (i in 1:length(searchResult$rank)) {		if (searchResult$id[i]=="") {			lineage <- unlist(strsplit(as.character(searchResult$rank[i]),				";",				fixed=TRUE))
+			# remove leading/trailing spaces
+			lineage <- gsub("^ .", "", lineage)
+			lineage <- gsub(". $", "", lineage)			for (j in length(lineage):1) {				w <- which(grepl(paste(lineage[1:j], collapse=";"),
+					searchResult$rank,
+					fixed=TRUE))				counts <- sum(abs(searchResult$count[w]))				
+				if (counts > goalSize) {					if (counts > maxGroupSize && j < length(lineage)) {						j <- j + 1 # go down one rank						w <- which(grepl(paste(lineage[1:j], collapse=";"),
+							searchResult$rank,
+							fixed=TRUE))
+						counts <- sum(abs(searchResult$count[w]))					}
+					
+					if (j > 1) {
+						origin <- paste(lineage[1:j], collapse=";")
+					} else {
+						origin <- ""
+					}
+										if (counts < minGroupSize) { # mark for later inclusion						searchResult$count[w] <- -abs(searchResult$count[w])					} else if (j > 1) { # try to include a little more						w2 <- which(searchResult$count < 0)						if (length(w2) > 0) {							w3 <- which(origin==searchResult$origin[w2])							if (length(w3) > 0) {
+								if ((counts - sum(searchResult$count[w2[w3]])) <= maxGroupSize) {
+									searchResult$count[w2[w3]] <- -abs(searchResult$count[w2[w3]])									w <- c(w, w2[w3])
+								}							}
+						}					}
+					
+#					if (substr(origin,
+#						nchar(origin),
+#						nchar(origin))=='"')
+#						origin <- substr(origin,
+#							1,
+#							nchar(origin) - 1)					searchResult$origin[w] <- origin										# remove some punctuation					lineage[j] <- gsub('"', '', lineage[j], fixed=TRUE)					lineage[j] <- gsub('.', '', lineage[j], fixed=TRUE)					searchResult$id[w] <- lineage[j]					break				} else if (j==1 && counts < goalSize) {
+					searchResult$origin[i] <- ""
+					
+					# remove some punctuation
+					lineage[j] <- gsub('"', '', lineage[j], fixed=TRUE)
+					lineage[j] <- gsub('.', '', lineage[j], fixed=TRUE)
+					searchResult$id[i] <- lineage[j]
+				}
+			}		}
 		if (verbose)
 			setTxtProgressBar(pBar, i/length(searchResult$rank))	}
 	
@@ -101,28 +100,27 @@ FormGroups <- function(dbFile,
 			cat("\nUpdating column: \"id\"...")		searchExpression <- paste("update or replace ",
 			tblName,
 			" set id = (select id from taxa where ",
-			ifelse(is.character(add2tbl),add2tbl,tblName),
+			ifelse(is.character(add2tbl), add2tbl, tblName),
 			".rank = taxa.rank) where ",
-			ifelse(is.character(add2tbl),add2tbl,tblName),
+			ifelse(is.character(add2tbl), add2tbl, tblName),
 			".rank in (select rank from taxa)",
 			sep="")		dbGetQuery(dbConn, searchExpression)		
 		if (is.na(match("origin",
 			dbListFields(dbConn,
-				ifelse(is.character(add2tbl),add2tbl,tblName))))) {			searchExpression <- paste("alter table ",
-				ifelse(is.character(add2tbl),add2tbl,tblName),
+				ifelse(is.character(add2tbl), add2tbl, tblName))))) {			searchExpression <- paste("alter table ",
+				ifelse(is.character(add2tbl), add2tbl, tblName),
 				" add column origin",
 				sep="")			dbGetQuery(dbConn, searchExpression)		}
 		
 		if (verbose)
 			cat("\nUpdating column: \"origin\"...")		searchExpression <- paste("update or replace ",
-			ifelse(is.character(add2tbl),add2tbl,tblName),
+			ifelse(is.character(add2tbl), add2tbl, tblName),
 			" set origin = (select origin from taxa where ",
-			ifelse(is.character(add2tbl),add2tbl,tblName),
+			ifelse(is.character(add2tbl), add2tbl, tblName),
 			".rank = taxa.rank) where ",
-			ifelse(is.character(add2tbl),add2tbl,tblName),
+			ifelse(is.character(add2tbl), add2tbl, tblName),
 			".rank in (select rank from taxa)",
 			sep="")		dbGetQuery(dbConn, searchExpression)				searchExpression <- "drop table taxa"		dbGetQuery(dbConn, searchExpression)	}
-	
 	
 	if (verbose) {
 		cat("\nFormed",
@@ -130,7 +128,7 @@ FormGroups <- function(dbFile,
 			"distinct groups.")
 		if (is.character(add2tbl) || add2tbl)
 			cat("\nAdded to table ",
-				ifelse(is.character(add2tbl),add2tbl,tblName),
+				ifelse(is.character(add2tbl), add2tbl, tblName),
 				": \"id\", \"origin\".",
 				sep="")
 		
@@ -143,8 +141,7 @@ FormGroups <- function(dbFile,
 		cat("\n")
 	}
 	
-	searchResult <- searchResult[,-match("oneup",
-		names(searchResult))]
+	searchResult$count <- abs(searchResult$count)
 	
 	return(searchResult)
 }

@@ -71,7 +71,7 @@ Seqs2DB <- function(seqs,
 		# make sure all the necessary fields exist
 		f <- dbListFields(dbConn, paste("_", tblName, sep=""))
 		colIDs <- c("row_names", "sequence", "quality")
-		types <- c("INTEGER PRIMARY KEY ASC", "BLOB", "BLOB")
+		fts <- c("INTEGER PRIMARY KEY ASC", "BLOB", "BLOB")
 		for (i in 1:length(colIDs)) {
 			if (is.na(match(colIDs[i], f))) {
 				# first add the column if it does not already exist
@@ -92,7 +92,7 @@ Seqs2DB <- function(seqs,
 		f <- dbListFields(dbConn, tblName)
 		if (type != 3) {
 			colIDs <- c("row_names", "id", "description")
-			types <- c("INTEGER PRIMARY KEY ASC", "TEXT", "TEXT")
+			fts <- c("INTEGER PRIMARY KEY ASC", "TEXT", "TEXT")
 		} else {
 			colIDs <- c("row_names", "id", "rank", "accession", "description")
 			fts <- c("INTEGER PRIMARY KEY ASC", "TEXT", "TEXT", "TEXT", "TEXT")
@@ -145,7 +145,7 @@ Seqs2DB <- function(seqs,
 					"\n",
 					sep="")
 			}
-			s1 <- c(buffer, readLines(con=con, n=chunkSize))
+			s1 <- c(buffer, suppressWarnings(readLines(con=con, n=chunkSize)))
 			skipSize <- skipSize + chunkSize
 			
 			# descriptions contains the line index of each sequence
@@ -268,7 +268,7 @@ Seqs2DB <- function(seqs,
 					"\n",
 					sep="")
 			}
-			s1 <- c(buffer, readLines(con=con, n=chunkSize))
+			s1 <- c(buffer, suppressWarnings(readLines(con=con, n=chunkSize)))
 			skipSize <- skipSize + chunkSize
 			
 			# descriptions contains the line index of each sequence
@@ -378,7 +378,7 @@ Seqs2DB <- function(seqs,
 					"\n",
 					sep="")
 			}
-			s1 <- c(buffer, readLines(con, n=chunkSize))
+			s1 <- c(buffer, suppressWarnings(readLines(con, n=chunkSize)))
 			skipSize <- skipSize + chunkSize
 			
 			# descriptions contains the line index of each sequence
@@ -505,7 +505,7 @@ Seqs2DB <- function(seqs,
 		newSeqs <- length(seqs)
 		
 		if (verbose)
-			cat("Adding", newSeqs, "sequences to the database...\n")
+			cat("Adding", newSeqs, "sequences to the database.\n")
 		
 		# give the seqs names if they do not have any
 		if (is.null(names(seqs)))
@@ -600,5 +600,5 @@ Seqs2DB <- function(seqs,
 			digits=2))
 		cat("\n")
 	}
-	return(numSeq)
+	invisible(numSeq)
 }

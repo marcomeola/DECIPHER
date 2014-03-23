@@ -47,7 +47,8 @@ BrowseSequences <- function(myXStringSet,
 		stop("colWidth must be Inf if colorPatterns is numeric.")
 	if (is.null(names(myXStringSet)))
 		names(myXStringSet) <- 1:length(myXStringSet)
-	
+	if (highlight < 0 || highlight > length(myXStringSet))
+		stop("highlight must be 0 or the index of a sequence in myXStringSet.")
 	# add a consensus sequence to myXStringSet
 	if (is(myXStringSet, "DNAStringSet") || is(myXStringSet, "RNAStringSet") || is(myXStringSet, "AAStringSet")) {
 		myXStringSet <- c(myXStringSet,
@@ -200,5 +201,5 @@ BrowseSequences <- function(myXStringSet,
 	}
 	writeLines(html, htmlfile)
 	browseURL(htmlFile)
-	return(htmlFile)
+	invisible(htmlFile)
 }

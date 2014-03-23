@@ -1,8 +1,8 @@
 Add2DB <- function(myData,
 	dbFile,
 	tblName="DNA",
-	verbose=TRUE,
-	...) {
+	clause="",
+	verbose=TRUE) {
 	
 	time.1 <- Sys.time()
 	
@@ -11,6 +11,12 @@ Add2DB <- function(myData,
 		stop("myData must be a data frame object.")
 	if (!is.character(tblName))
 		stop("tblName must be a character string.")
+	if (substr(tblName, 1, 1) == "_")
+		stop("Invalid tblName.")
+	if (tblName == "taxa")
+		stop("taxa is a reserved tblName.")
+	if (!is.character(clause))
+		stop("clause must be a character string.")
 	if (!is.logical(verbose))
 		stop("verbose must be a logical.")
 	
@@ -68,11 +74,9 @@ Add2DB <- function(myData,
 				colName,
 				" where row_names = :row_names",
 				sep="")
-			args <- list(...)
-			for (a in args)
+			if (clause!="")
 				expression2 <- paste(expression2,
-						'and',
-						a)
+					clause)
 			if (verbose)
 				cat("Expression: ", expression2, "\n\n")
 			dbBeginTransaction(dbConn)
@@ -81,7 +85,7 @@ Add2DB <- function(myData,
 				bind.data=myData)
 			if (!dbCommit(dbConn)) {
 				warning("Unsucessful transaction!")
-				return(FALSE)
+				invisible(FALSE)
 			}
 		}
 	}
@@ -103,5 +107,5 @@ Add2DB <- function(myData,
 			digits=2))
 		cat("\n")
 	}
-	return(TRUE)
+	invisible(TRUE)
 }

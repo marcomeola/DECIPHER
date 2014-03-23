@@ -22,6 +22,8 @@ LazyLoad: \tab yes\cr
 Index:
 \preformatted{
 Add2DB                   Add Data To A Database
+AlignDB                  Aligns Two Sets of Aligned Sequences In A Sequence
+                         Database
 AlignProfiles            Aligns Two Sets of Aligned Sequences
 AlignSeqs                Aligns A Set of Unaligned Sequences
 AlignTranslation         Aligns Sequences By Their Amino Acid Translation
@@ -35,7 +37,7 @@ CalculateEfficiencyFISH  Predicts Thermodynamic Parameters of Probe/Target
 CalculateEfficiencyPCR   Predicts Amplification Efficiency of Primer Sequences
 ConsensusSequence        Create A Consensus Sequence
 CreateChimeras           Creates Artificial Chimeras
-DB2FASTA                 Export Database Sequences to FASTA File
+DB2Seqs                  Export Database Sequences to a FASTA or FASTQ File
 deltaGrules              Free Energy of Hybridization of Probe/Target
                          Quadruplets
 DesignArray              Designs a set of DNA Microarray Probes for Detecting

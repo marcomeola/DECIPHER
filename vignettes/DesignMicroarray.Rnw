@@ -166,7 +166,7 @@ head(u)
 
 \subsection{Validating the Probe Set}
 
-Before fabrication onto a DNA microarray it may be useful to predict whether the probe set will adequately discriminate between the OTUs.  This can be accomplished by simulating the hybridization process multiple times while incorporating error.  We begin by converting the predicted cross-hybridization efficiencies into a sparse matrix that mathematically represents the microarray (\textbf{A}).  We can neglect all hybridization efficiencies less than 5\% because these will likely not hybridize.
+Before fabrication onto a DNA microarray it may be useful to predict whether the probe set will adequately discriminate between the OTUs.  This can be accomplished by simulating the hybridization process multiple times while incorporating error.  We begin by converting the predicted cross-hybridization efficiencies into a sparse matrix that mathematically represents the microarray (\textbf{A}).  Here the rows of the matrix represent each probe, and the columns of the matrix represent each OTU.  The entries of the matrix therefore give the hybridization efficiency of probe \textit{i} with OTU \textit{j}.  We can neglect all hybridization efficiencies less than 5\% because these will likely not hybridize or have insufficient brightness.
 
 <<expr8,eval=TRUE>>=
 A <- Array2Matrix(probes, verbose=FALSE)

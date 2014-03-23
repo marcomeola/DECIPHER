@@ -113,7 +113,7 @@ Logical specifying whether the 5' end or 3' end of primer permutations targeting
 Logical determining whether to make use of elongation efficiency and maxDistance to increase predictive accuracy for \emph{Taq} DNA Polymerase amplifying primers with mismatches near the 3' terminus.  Note that this should be set to FALSE if using a high-fidelity polymerase with 3' to 5' exonuclease activity.
 }
   \item{induceMismatch}{
-Logical or integer specifying whether to induce a mismatch in the primer with the template DNA.  If \code{TRUE} then a mismatch is induced at the 6th primer position.  If an integer value is provided between 2 and 6 then a mismatch is induced in that primer position.
+Logical or integer specifying whether to induce a mismatch in the primer with the template DNA.  If \code{TRUE} then a mismatch is induced at the 6th primer position.  If an integer value is provided between 2 and 6 then a mismatch is induced in that primer position, where the 3'-end is defined as position 1.
 }
   \item{processors}{
 The number of processors to use, or \code{NULL} (the default) for all available processors.
@@ -142,6 +142,16 @@ Erik Wright \email{DECIPHER@cae.wisc.edu}
 The program OligoArrayAux (\url{http://mfold.rna.albany.edu/?q=DINAMelt/OligoArrayAux}) must be installed in a location accessible by the system.  For example, the following code should print the installed OligoArrayAux version when executed from the R console:
 
 \code{system("hybrid-min -V")}
+
+To install OligoArrayAux from the downloaded source folder on Unix-like platforms, open the shell (or Terminal on Mac OS) and type:
+
+\code{cd oligoarrayaux # change directory to the correct folder name}
+
+\code{./configure}
+
+\code{make}
+
+\code{sudo make install}
 }
 \seealso{
 \code{\link{CalculateEfficiencyPCR}}, \code{\link{TileSeqs}}

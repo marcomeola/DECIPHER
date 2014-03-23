@@ -5,7 +5,7 @@ BrowseDB <- function(dbFile,
 	limit=-1,
 	orderBy="row_names",
 	maxChars=50,
-	...) {
+	clause="") {
 	
 	# error checking
 	if (!is.character(htmlFile))
@@ -35,6 +35,8 @@ BrowseDB <- function(dbFile,
 		stop("maxChars must be a whole number.")
 	if (maxChars <= 0)
 		stop("maxChars must be greater than zero.")
+	if (!is.character(clause))
+		stop("clause must be a character string.")
 	
 	# initialize database
 	driver = dbDriver("SQLite")
@@ -53,28 +55,15 @@ BrowseDB <- function(dbFile,
 	searchExpression <- paste('select count(*) from ',
 		tblName,
 		sep="")
-	args <- list(...)
-	if (identifier!="" ||
-		length(args) > 0)
-		searchExpression <- paste(searchExpression,
-			' where',
-			sep="")
 	if (identifier!="")
 		searchExpression <- paste(searchExpression,
-			' id like "',
+			' where id like "',
 			identifier,
 			'"',
 			sep="")
-	firstTime <- TRUE
-	for (a in args) {
-		if (identifier!="" ||
-			!firstTime)
-			searchExpression <- paste(searchExpression,
-				'and')
+	if (clause!="")
 		searchExpression <- paste(searchExpression,
-				a)
-		firstTime <- FALSE
-	}
+			clause)
 	if (orderBy!="row_names") # default ordering is row_names
 		searchExpression <- paste(searchExpression,
 			'order by',
@@ -121,28 +110,15 @@ BrowseDB <- function(dbFile,
 			') from ',
 			tblName,
 			sep="")
-		args <- list(...)
-		if (identifier!="" ||
-			length(args) > 0)
-			searchExpression <- paste(searchExpression,
-				' where',
-				sep="")
 		if (identifier!="")
 			searchExpression <- paste(searchExpression,
-				' id like "',
+				' where id like "',
 				identifier,
 				'"',
 				sep="")
-		firstTime <- TRUE
-		for (a in args) {
-			if (identifier!="" ||
-				!firstTime)
-				searchExpression <- paste(searchExpression,
-					'and')
+		if (clause!="")
 			searchExpression <- paste(searchExpression,
-					a)
-			firstTime <- FALSE
-		}
+				clause)
 		if (orderBy!="row_names") # default ordering is row_names
 			searchExpression <- paste(searchExpression,
 				'order by',
@@ -248,5 +224,5 @@ BrowseDB <- function(dbFile,
 		"\n</table></div></div></html>")
 	writeLines(html, htmlFile)
 	browseURL(htmlFile)
-	return(htmlFile)
+	invisible(htmlFile)
 }

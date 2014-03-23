@@ -106,6 +106,16 @@ Erik Wright \email{DECIPHER@cae.wisc.edu}
 The program OligoArrayAux (\url{http://mfold.rna.albany.edu/?q=DINAMelt/OligoArrayAux}) must be installed in a location accessible by the system.  For example, the following code should print the installed OligoArrayAux version when executed from the R console:
 
 \code{system("hybrid-min -V")}
+
+To install OligoArrayAux from the downloaded source folder on Unix-like platforms, open the shell (or Terminal on Mac OS) and type:
+
+\code{cd oligoarrayaux # change directory to the correct folder name}
+
+\code{./configure}
+
+\code{make}
+
+\code{sudo make install}
 }
 \seealso{
 \code{\link{CalculateEfficiencyFISH}}, \code{\link{TileSeqs}}

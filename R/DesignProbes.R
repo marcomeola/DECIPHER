@@ -706,6 +706,16 @@ DesignProbes <- function(tiles,
 	if (minLength > maxLength)
 		stop("minLength must be less or equal to maxLength.")
 	ids <- unique(tiles$id)
+	if (length(ids)==0)
+		stop("No identifiers found in tiles.")
+	if (any(grepl("mol,", ids, fixed=TRUE)))
+		stop("Identifiers in tiles cannot include 'mol,'.")
+	if (any(grepl("%;", ids, fixed=TRUE)))
+		stop("Identifiers in tiles cannot include '%;'.")
+	if (any(grepl(" (", ids, fixed=TRUE)))
+		stop("Identifiers in tiles cannot include ' ('.")
+	if (any(grepl(") ", ids, fixed=TRUE)))
+		stop("Identifiers in tiles cannot include ') '.")
 	if (!is.numeric(hybTemp))
 		stop("hybTemp must be a numeric.")
 	if (hybTemp < 10)
@@ -782,6 +792,8 @@ DesignProbes <- function(tiles,
 			stop("identifier not in tiles: ",
 				paste(identifier[w], collapse=", "))
 	}
+	if (class(try(system("hybrid-min -V", intern=TRUE), silent=TRUE))=="try-error")
+		stop("OligoArrayAux must be properly installed.  See the Note section in the help page for DesignProbes (enter: ?DesignProbes).")
 	
 	probes_all <- data.frame()
 	

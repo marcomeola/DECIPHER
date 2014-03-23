@@ -17,8 +17,8 @@ SearchDB(dbFile,
          orderBy = "row_names",
          countOnly = FALSE,
          removeGaps = "none",
-         verbose = TRUE,
-         ...)
+         clause = "",
+         verbose = TRUE)
 }
 \arguments{
   \item{dbFile}{
@@ -51,15 +51,15 @@ Logical specifying whether to return only the number of sequences.
   \item{removeGaps}{
 Determines how gaps are removed in the sequences.  This should be (an unambiguous abbreviation of) one of \code{"none"}, \code{"all"} or \code{"common"}.
 }
+  \item{clause}{
+An optional character string to append to the query as a clause.
+}
   \item{verbose}{
 Logical indicating whether to display queries as they are sent to the database.
 }
-  \item{\dots}{
-Additional expressions to add as part of a where clause in the query.  Further arguments provided in \dots will be added to the query separated by \code{" and "} as part of the where clause.
-}
 }
 \details{
-If \code{seqtype} is \code{"DNA"} then all U's are converted to T's before creating the \code{DNAStringSet}, and vise-versa if \code{seqtype} is \code{"RNAStringSet"}.  All remaining characters not in the \code{XStringSet}'s alphabet are converted to \code{replaceChar}.  Quality information is interpreted as \code{PredQuality} scores.
+If \code{type} is \code{"DNAStringSet"} then all U's are converted to T's before creating the \code{DNAStringSet}, and vise-versa if \code{type} is \code{"RNAStringSet"}.  All remaining characters not in the \code{XStringSet}'s alphabet are converted to \code{replaceChar}.  Quality information is interpreted as \code{PredQuality} scores.
 }
 \value{
 An \code{XStringSet} or \code{QualityScaledXStringSet} with the sequences that meet the specified criteria.  The \code{names} of the object correspond to the value in the \code{nameBy} column of the database.
@@ -68,7 +68,7 @@ An \code{XStringSet} or \code{QualityScaledXStringSet} with the sequences that m
 Erik Wright \email{DECIPHER@cae.wisc.edu}
 }
 \seealso{
-\code{\link{Seqs2DB}}, \code{\link{DB2FASTA}}
+\code{\link{Seqs2DB}}, \code{\link{DB2Seqs}}
 }
 \examples{
 db <- system.file("extdata", "Bacteria_175seqs.sqlite", package="DECIPHER")

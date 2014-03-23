@@ -107,3 +107,5 @@ SEXP enumerateSequenceAA(SEXP x, SEXP wordSize);
 SEXP enumerateGappedSequence(SEXP x, SEXP wordSize);
 
 SEXP enumerateGappedSequenceAA(SEXP x, SEXP wordSize);
+
+SEXP enumerateSequenceReducedAA(SEXP x, SEXP wordSize, SEXP alphabet);

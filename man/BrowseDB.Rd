@@ -14,7 +14,7 @@ BrowseDB(dbFile,
          limit = -1,
          orderBy = "row_names",
          maxChars = 50,
-         ...)
+         clause="")
 }
 \arguments{
   \item{dbFile}{
@@ -38,8 +38,8 @@ Character string giving the column name for sorting the results.  Defaults to th
   \item{maxChars}{
 Maximum number of characters to display in each column.
 }
-  \item{\dots}{
-Additional expressions to add as part of a where clause in the query.  Further arguments provided in \dots will be added to the query separated by \code{" and "} as part of the where clause.
+  \item{clause}{
+An optional character string to append to the query as a clause.
 }
 }
 \value{

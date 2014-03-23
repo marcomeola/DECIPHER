@@ -96,7 +96,7 @@ The amount of DNA sequence information available is currently increasing at a ph
 The functions of DECIPHER can be grouped into several categories based on intended use:
 \begin{enumerate}
 \item Primary functions for interacting with a sequence database:
-\begin{enumerate} \item \Rfunction{Add2DB} \item \Rfunction{DB2FASTA} \item \Rfunction{SearchDB} \item \Rfunction{Seqs2DB} \end{enumerate}
+\begin{enumerate} \item \Rfunction{Add2DB} \item \Rfunction{DB2Seqs} \item \Rfunction{SearchDB} \item \Rfunction{Seqs2DB} \end{enumerate}
 \item Secondary functions for typical database tasks:
 \begin{enumerate} \item \Rfunction{IdConsensus} \item \Rfunction{IdentifyByRank} \item \Rfunction{IdLengths} \end{enumerate}
 \item Functions for phylogenetics with a set of sequences:
@@ -104,7 +104,7 @@ The functions of DECIPHER can be grouped into several categories based on intend
 \item Functions for visualization with a web browser:
 \begin{enumerate} \item \Rfunction{BrowseDB} \item \Rfunction{BrowseSequences} \end{enumerate}
 \item Functions for multiple sequence alignment:
-\begin{enumerate} \item \Rfunction{AlignProfiles} \item \Rfunction{AlignSeqs} \item \Rfunction{AlignTranslation} \item \Rfunction{MaskAlignment} \end{enumerate}
+\begin{enumerate} \item \Rfunction{AlignDB} \item \Rfunction{AlignProfiles} \item \Rfunction{AlignSeqs} \item \Rfunction{AlignTranslation} \item \Rfunction{MaskAlignment} \end{enumerate}
 \item Functions related to chimeras:
 \begin{enumerate} \item \Rfunction{CreateChimeras} \item \Rfunction{FindChimeras} \item \Rfunction{FormGroups} \end{enumerate}
 \item Functions related to DNA microarrays:
@@ -127,7 +127,7 @@ The functions of DECIPHER can be grouped into several categories based on intend
 \subsection{Typical Installation (recommended)}
 
 \begin{enumerate}
-\item Install \R{} (version >= 2.13.0) from \url{http://www.r-project.org/}.
+\item Install the latest version of \R{} from \url{http://www.r-project.org/}.
 \item Install \Rpackage{DECIPHER} in R by entering:
 \begin{Schunk}
 \begin{Sinput}
@@ -188,7 +188,7 @@ The functions of DECIPHER can be grouped into several categories based on intend
 \item Open Terminal, and in the command prompt enter:
 \begin{Schunk}
 \begin{Sinput}
-R CMD build --no-vignettes "<<path to DECIPHER source>>"
+R CMD build --no-build-vignettes "<<path to DECIPHER source>>"
 R CMD INSTALL "<<path to newly built DECIPHER.tar.gz>>"
 \end{Sinput}
 \end{Schunk}
@@ -199,7 +199,7 @@ R CMD INSTALL "<<path to newly built DECIPHER.tar.gz>>"
 In a shell enter:
 \begin{Schunk}
 \begin{Sinput}
-R CMD build --no-vignettes "<<path to DECIPHER source>>"
+R CMD build --no-build-vignettes "<<path to DECIPHER source>>"
 R CMD INSTALL "<<path to newly built DECIPHER.tar.gz>>"
 \end{Sinput}
 \end{Schunk}
@@ -221,7 +221,7 @@ Two options are available:  the first is simplest, but requires the pre-built bi
 \item In the command prompt enter:
 \begin{Schunk}
 \begin{Sinput}
-R CMD build --no-vignettes "<<path to DECIPHER source>>"
+R CMD build --no-build-vignettes "<<path to DECIPHER source>>"
 R CMD INSTALL "<<path to newly built DECIPHER.zip>>"
 \end{Sinput}
 \end{Schunk}

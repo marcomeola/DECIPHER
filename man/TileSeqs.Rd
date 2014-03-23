@@ -58,7 +58,7 @@ Target sites with one more more tiles not meeting a set of requirements are mark
 \value{
 A \code{data.frame} with a row for each tile, and multiple columns of information.  The \code{row_names} column gives the row number.  The \code{start}, \code{end}, \code{start_aligned}, and \code{end_aligned} columns provide positioning of the tile in a consensus sequence formed from the group.  The column \code{misprime} is a logical specifying whether the tile meets the specified constraints.  The columns \code{width} and \code{id} indicate the tiles length and group of origin, respectively.
 
-The \code{coverage} field gives the fraction of sequences containing the tile in the group that encompass the tiles start and end positions in the alignment, whereas the \code{groupCoverage} contains the fraction of all sequences in the group containing a tile at their respective target site.  For example, if 10% of sequences have a certain tile permutation in the first alignment position, but only a single sequence includes this position in the alignment then \code{coverage} would be 100%, while \code{groupCoverage} would be 10%.
+The \code{coverage} field gives the fraction of sequences containing the tile in the group that encompass the tiles start and end positions in the alignment, whereas the \code{groupCoverage} contains the fraction of all sequences in the group containing a tile at their respective target site.  For example, if 100\% of sequences have a certain tile permutation in the first alignment position, but only a single sequence includes this position in the alignment then \code{coverage} would be 100\% (1.0), while \code{groupCoverage} would be 10\% (0.1).
 
 The final column, \code{target_site}, provides the sequence of the tile.
 }

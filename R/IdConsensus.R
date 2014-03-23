@@ -92,7 +92,10 @@ IdConsensus <- function(dbFile,
 			type=TYPES[type],
 			verbose=FALSE,
 			identifier=identifier,
-			...=paste(colName,
+			clause=paste(ifelse(identifier=="",
+					"where ",
+					"and "),
+				colName,
 				"= '",
 				gsub("'", "''", i, fixed=TRUE),
 				"'",
@@ -124,21 +127,8 @@ IdConsensus <- function(dbFile,
 		if (verbose)
 			setTxtProgressBar(pBar, 100*j/length(groups))
 	}
-	if (identifier=="") {
-		names(consensus) <- paste(groups,
-			"_",
-			seqCount,
-			"seqs",
-			sep="")
-	} else {
-		names(consensus) <- paste(groups,
-			"_",
-			seqCount,
-			"seqs",
-			"_",
-			identifier,
-			sep="")
-	}
+	
+	names(consensus) <- groups
 	
 	if (is.character(add2tbl) || add2tbl) {
 		Seqs2DB(consensus,

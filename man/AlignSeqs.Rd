@@ -44,7 +44,7 @@ An \code{XStringSet} of aligned sequences.
 Erik Wright \email{DECIPHER@cae.wisc.edu}
 }
 \seealso{
-\code{\link{AlignProfiles}}, \code{\link{AlignTranslation}}, \code{\link{IdClusters}}
+\code{\link{AlignDB}}, \code{\link{AlignProfiles}}, \code{\link{AlignTranslation}}, \code{\link{IdClusters}}
 }
 \examples{
 db <- system.file("extdata", "Bacteria_175seqs.sqlite", package="DECIPHER")

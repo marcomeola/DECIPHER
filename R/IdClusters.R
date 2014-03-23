@@ -11,9 +11,7 @@
 }
 
 # below function modified from stats package
-to.dendrogram <- function (object,
-	hang = -1,
-	...) {
+to.dendrogram <- function (object) {
 	
     z <- list()
     oHgts <- object$lengths
@@ -921,6 +919,8 @@ IdClusters <- function(myDistMatrix=NULL,
 		dim <- dim[1]
 		if (dim < 2)
 			stop("myDistMatrix is too small.")
+		if (typeof(myDistMatrix)=="integer")
+			myDistMatrix[] <- as.numeric(myDistMatrix)
 	}
 	if (method == 3) {
 		if (!is(myXStringSet, "DNAStringSet"))
