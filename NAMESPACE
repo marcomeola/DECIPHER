@@ -1,6 +1,7 @@
 useDynLib(DECIPHER)
 
 import(methods)
+import(S4Vectors)
 import(IRanges)
 import(XVector)
 import(Biostrings)
