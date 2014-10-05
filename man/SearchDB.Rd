@@ -49,7 +49,7 @@ Character string giving the column name for sorting the results.  Defaults to th
 Logical specifying whether to return only the number of sequences.
 }
   \item{removeGaps}{
-Determines how gaps are removed in the sequences.  This should be (an unambiguous abbreviation of) one of \code{"none"}, \code{"all"} or \code{"common"}.
+Determines how gaps ("-" or "." characters) are removed in the sequences.  This should be (an unambiguous abbreviation of) one of \code{"none"}, \code{"all"} or \code{"common"}.
 }
   \item{clause}{
 An optional character string to append to the query as a clause.
@@ -72,5 +72,12 @@ Erik Wright \email{DECIPHER@cae.wisc.edu}
 }
 \examples{
 db <- system.file("extdata", "Bacteria_175seqs.sqlite", package="DECIPHER")
+# get all sequences in the default table:
 dna <- SearchDB(db)
+# select a random sequence:
+dna <- SearchDB(db, orderBy="random()", limit=1)
+# remove gaps from "Mycobacterium" sequences:
+dna <- SearchDB(db, identifier="Mycobacterium", removeGaps="all")
+# provide a more complex query:
+dna <- SearchDB(db, nameBy="description", orderBy="bases", removeGaps="common", clause="where nonbases is 0")
 }

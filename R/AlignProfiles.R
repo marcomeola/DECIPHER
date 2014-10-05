@@ -6,16 +6,16 @@
 	count <- t[5] - 4
 	t <- t[-1:-5]
 	
-	p.inserts <- character()
-	s.inserts <- character()
+	p.inserts <- integer()
+	s.inserts <- integer()
 	p.ats <- integer()
 	s.ats <- integer()
 	
 	if (start.s < start.p) {
-		s.inserts <- paste(rep("-", start.p - 1), collapse="")
+		s.inserts <- start.p - 1
 		s.ats <- 1
 	} else if (start.p < start.s) {
-		p.inserts <- paste(rep("-", start.s - 1), collapse="")
+		p.inserts <- start.s - 1
 		p.ats <- 1
 	}
 	
@@ -30,11 +30,11 @@
 				i <- i + l
 				j <- j + l
 			} else if (t[k] > 0) {
-				p.inserts <- c(p.inserts, paste(rep("-", l), collapse=""))
+				p.inserts <- c(p.inserts, l)
 				p.ats <- c(p.ats, i)
 				j <- j + l
 			} else {
-				s.inserts <- c(s.inserts, paste(rep("-", l), collapse=""))
+				s.inserts <- c(s.inserts, l)
 				s.ats <- c(s.ats, j)
 				i <- i + l
 			}
@@ -43,13 +43,34 @@
 	}
 	
 	if (ls - end.s > 0) {
-		p.inserts <- c(p.inserts, paste(rep("-", ls - end.s), collapse=""))
+		p.inserts <- c(p.inserts, ls - end.s)
 		p.ats <- c(p.ats, lp + 1)
 	}
 	
 	if (lp - end.p > 0) {
-		s.inserts <- c(s.inserts, paste(rep("-", lp - end.p), collapse=""))
+		s.inserts <- c(s.inserts, lp - end.p)
 		s.ats <- c(s.ats, ls + 1)
+	}
+	
+	if (length(p.inserts) > 0) {
+		u <- unique(p.inserts)
+		r <- sapply(u,
+			function(x) {
+				paste(rep("-", x), collapse="")
+			})
+		p.inserts <- r[match(p.inserts, u)]
+	} else {
+		p.inserts <- character()
+	}
+	if (length(s.inserts) > 0) {
+		u <- unique(s.inserts)
+		r <- sapply(u,
+			function(x) {
+				paste(rep("-", x), collapse="")
+			})
+		s.inserts <- r[match(s.inserts, u)]
+	} else {
+		s.inserts <- character()
 	}
 	
 	return(list(p.ats, p.inserts, s.ats, s.inserts))
@@ -59,14 +80,14 @@ AlignProfiles <- function(pattern,
 	subject,
 	p.weight=1,
 	s.weight=1,
-	perfectMatch=6,
-	misMatch=0,
-	gapOpening=-9,
-	gapExtension=-3,
-	terminalGap=-2,
+	perfectMatch=NULL,
+	misMatch=NULL,
+	gapOpening=NULL,
+	gapExtension=NULL,
+	terminalGap=-1,
 	restrict=-1000,
 	anchor=0.7,
-	substitutionMatrix="BLOSUM62",
+	substitutionMatrix=NULL,
 	processors=NULL) {
 	
 	# error checking
@@ -80,18 +101,58 @@ AlignProfiles <- function(pattern,
 		stop("pattern and subject must be of the same type.")
 	if (length(subject) < 1)
 		stop("At least one sequence is required in the subject.")
+	if (length(unique(width(pattern)))!=1)
+		stop("Sequences in pattern must be the same width (aligned).")
+	if (length(unique(width(subject)))!=1)
+		stop("Sequences in subject must be the same width (aligned).")
 	if (!is.numeric(p.weight))
 		stop("p.weight must be a numeric.")
 	if (length(p.weight)!=1 && length(p.weight)!=length(pattern))
 		stop("Length of p.weight must equal one or the length of the pattern.")
-	if (length(p.weight)==1)
+	if (length(p.weight)==1) {
 		p.weight <- rep(1, length(pattern))
+	} else {
+		if (!isTRUE(all.equal(1, mean(p.weight))))
+			stop("The mean of p.weight must be 1.")
+	}
 	if (!is.numeric(s.weight))
 		stop("s.weight must be a numeric.")
 	if (length(s.weight)!=1 && length(s.weight)!=length(subject))
 		stop("Length of s.weight must equal one or the length of the subject.")
-	if (length(s.weight)==1)
+	if (length(s.weight)==1) {
 		s.weight <- rep(1, length(subject))
+	} else {
+		if (!isTRUE(all.equal(1, mean(s.weight))))
+			stop("The mean of s.weight must be 1.")
+	}
+	if (is(pattern, "DNAStringSet")) {
+		if (is.null(perfectMatch))
+			perfectMatch <- 6
+		if (is.null(misMatch))
+			misMatch <- -3
+		if (is.null(gapOpening))
+			gapOpening <- -11
+		if (is.null(gapExtension))
+			gapExtension <- -3
+	} else if (is(pattern, "RNAStringSet")) {
+		if (is.null(perfectMatch))
+			perfectMatch <- 4
+		if (is.null(misMatch))
+			misMatch <- 0
+		if (is.null(gapOpening))
+			gapOpening <- -4
+		if (is.null(gapExtension))
+			gapExtension <- -1
+	} else { # AAStringSet
+		if (is.null(perfectMatch))
+			perfectMatch <- 4
+		if (is.null(misMatch))
+			misMatch <- 0
+		if (is.null(gapOpening))
+			gapOpening <- -3
+		if (is.null(gapExtension))
+			gapExtension <- -5
+	}
 	if (!is.numeric(perfectMatch))
 		stop("perfectMatch must be a numeric.")
 	if (!is.numeric(misMatch))
@@ -103,7 +164,7 @@ AlignProfiles <- function(pattern,
 	if (!all(is.numeric(terminalGap)))
 		stop("terminalGap must be a numeric.")
 	if (length(terminalGap) > 2 || length(terminalGap) < 1)
-		stop("terminalGap must be of length 1 or 2.")
+		stop("Length of terminalGap must be 1 or 2.")
 	if (any(is.infinite(terminalGap)))
 		stop("terminalGap must be finite.")
 	if (length(terminalGap)==1)
@@ -118,9 +179,6 @@ AlignProfiles <- function(pattern,
 		stop("anchor must be greater than zero.")
 	if (is.numeric(anchor) && anchor > 1)
 		stop("anchor must be less than or equal to one.")
-	if (!(substitutionMatrix %in% c("BLOSUM45", "BLOSUM50", "BLOSUM62", "BLOSUM80", "BLOSUM100",
-		"PAM30", "PAM40", "PAM70", "PAM120", "PAM250")))
-		stop("Invalid substitutionMatrix.")
 	if (!is.null(processors) && !is.numeric(processors))
 		stop("processors must be a numeric.")
 	if (!is.null(processors) && floor(processors)!=processors)
@@ -144,10 +202,36 @@ AlignProfiles <- function(pattern,
 			sep=""))
 	
 	if (is(pattern, "AAStringSet")) {
+		if (is.null(substitutionMatrix)) {
+			substitutionMatrix <- "BLOSUM62"
+		} else if (is.character(substitutionMatrix)) {
+			if (!(substitutionMatrix %in% c("BLOSUM45", "BLOSUM50", "BLOSUM62", "BLOSUM80", "BLOSUM100",
+		"PAM30", "PAM40", "PAM70", "PAM120", "PAM250")))
+				stop("Invalid substitutionMatrix.")
+		}
 		AAs <- c("A", "R", "N", "D", "C", "Q", "E", "G", "H", "I",
 			"L", "K", "M", "F", "P", "S", "T", "W", "Y", "V", "*")
-		subMatrix <- eval(parse(text=data(list=substitutionMatrix)))
+		if (is.matrix(substitutionMatrix)) {
+			if (any(!(AAs %in% dimnames(substitutionMatrix)[[1]])) ||
+				any(!(AAs %in% dimnames(substitutionMatrix)[[2]])))
+				stop("substitutionMatrix is incomplete.")
+			subMatrix <- substitutionMatrix
+		} else {
+			subMatrix <- eval(parse(text=data(list=substitutionMatrix)))
+		}
 		subMatrix <- subMatrix[AAs, AAs]
+	} else {
+		if (!is.null(substitutionMatrix)) {
+			if (is.matrix(substitutionMatrix)) {
+				bases <- c("A", "C", "G", "T")
+				if (any(!(bases %in% dimnames(substitutionMatrix)[[1]])) ||
+					any(!(bases %in% dimnames(substitutionMatrix)[[2]])))
+					stop("substitutionMatrix is incomplete.")
+				substitutionMatrix <- substitutionMatrix[bases, bases]
+			} else {
+				stop("substitutionMatrix must be NULL or a matrix.")
+			}
+		}
 	}
 	
 	f <- function(pattern, subject, tGaps=terminalGap) {
@@ -169,7 +253,7 @@ AlignProfiles <- function(pattern,
 			t <- .Call("alignProfilesAA",
 				p.profile,
 				s.profile,
-				subMatrix,
+				as.numeric(subMatrix),
 				perfectMatch,
 				misMatch,
 				gapOpening,
@@ -192,6 +276,7 @@ AlignProfiles <- function(pattern,
 			t <- .Call("alignProfiles",
 				p.profile,
 				s.profile,
+				as.numeric(substitutionMatrix),
 				perfectMatch,
 				misMatch,
 				gapOpening,
@@ -262,7 +347,7 @@ AlignProfiles <- function(pattern,
 				PACKAGE="DECIPHER")) {
 				inserts <- f(subseq(pattern, 1L, anchors[1, 1]),
 					subseq(subject, 1L, anchors[3, 1]),
-					tGaps=c(terminalGap[1], -1000))
+					tGaps=c(terminalGap[1], -100))
 			} else {
 				inserts <- list(integer(), character(),
 					integer(), character())
@@ -278,7 +363,7 @@ AlignProfiles <- function(pattern,
 					PACKAGE="DECIPHER")) {
 					temp <- f(subseq(pattern, anchors[2, n - 1], anchors[1, n]),
 						subseq(subject, anchors[4, n - 1], anchors[3, n]),
-						tGaps=c(-1000, -1000))
+						tGaps=c(-100, -100))
 					inserts[[1]] <- c(inserts[[1]], temp[[1]] + anchors[2, n - 1] - 1L)
 					inserts[[3]] <- c(inserts[[3]], temp[[3]] + anchors[4, n - 1] - 1L)
 					inserts[[2]] <- c(inserts[[2]], temp[[2]])
@@ -297,7 +382,7 @@ AlignProfiles <- function(pattern,
 					PACKAGE="DECIPHER")) {
 					temp <- f(subseq(pattern, anchors[1, n], anchors[2, n]),
 						subseq(subject, anchors[3, n], anchors[4, n]),
-						tGaps=c(-1000, -1000))
+						tGaps=c(-100, -100))
 					inserts[[1]] <- c(inserts[[1]], temp[[1]] + anchors[1, n] - 1L)
 					inserts[[3]] <- c(inserts[[3]], temp[[3]] + anchors[3, n] - 1L)
 					inserts[[2]] <- c(inserts[[2]], temp[[2]])
@@ -324,7 +409,7 @@ AlignProfiles <- function(pattern,
 				PACKAGE="DECIPHER")) { # need to align
 				temp <- f(subseq(pattern, anchors[2, numAnchors], w.p),
 					subseq(subject, anchors[4, numAnchors], w.s),
-					tGaps=c(-1000, terminalGap[2]))
+					tGaps=c(-100, terminalGap[2]))
 				inserts[[1]] <- c(inserts[[1]], temp[[1]] + anchors[2, numAnchors] - 1L)
 				inserts[[3]] <- c(inserts[[3]], temp[[3]] + anchors[4, numAnchors] - 1L)
 				inserts[[2]] <- c(inserts[[2]], temp[[2]])

@@ -9,7 +9,7 @@ Identifies sequences by a specific level of their taxonomic rank.
 \usage{
 IdentifyByRank(dbFile,
                tblName = "DNA",
-               level = 3,
+               level = Inf,
                add2tbl = FALSE,
                verbose = TRUE)
 }
@@ -31,11 +31,11 @@ Logical indicating whether to print database queries and other information.
 }
 }
 \details{
-Simply identifies a sequence by a specific level of its taxonomic rank.  Requires that \code{rank} information be present in the \code{tblName}, such as that created when importing sequences from a GenBank file.
+\code{IdentifyByRank} simply identifies a sequence by a specific level of its taxonomic rank.  Requires that \code{rank} information be present in the \code{tblName}, such as that created when importing sequences from a GenBank formatted file.
 
-The input parameter \code{level} should be a non-zero integer giving the ``level'' of the taxonomic rank to choose as the identifier.  Negative \code{level}s are interpreted as that many levels from the final level.
+The input parameter \code{level} should be a non-zero integer giving the ``level'' of the taxonomic rank to choose as the identifier.  Negative \code{level}s are interpreted as that being many levels from the last level in each rank.
 
-If the specified level of rank does not exist then the closest rank is chosen.  This makes it possible to determine the lowest level classification (e.g., genus) by specifying \code{level = Inf}.
+If the specified level of rank does not exist then the closest rank is chosen.  Therefore, the default \code{level} (\code{Inf}) will always select the last taxonomic level (e.g., species).
 }
 \value{
 A \code{data.frame} with the \code{rank} and corresponding identifier as \code{"id"}.

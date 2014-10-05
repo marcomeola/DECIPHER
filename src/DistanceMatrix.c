@@ -56,7 +56,13 @@ static double distance(const Chars_holder *P, const Chars_holder *S, int start, 
 	{
 		count++; // increment the length covered
 		if (!((*p) & (*s))) { // sequences are not equal
-			if ((*p) & 0x10 || (*s) & 0x10) { // gap-letter match
+			if (((*p) & 0x40 && (*s) & 0x10) || ((*p) & 0x10 && (*s) & 0x40)) { // gap-gap match
+				if (!pGapsGaps) { // don't penalize gap-gap matches
+					gapGapMatches++; // don't include gap-gap matches in length
+				} else { // penalize gap-gap matches
+					mismatches++; // count gap-gap matches as mis-matches
+				}
+			} else if ((*p) & 0x10 || (*s) & 0x10 || (*p) & 0x40 || (*s) & 0x40) { // gap-letter match
 				if (!pGapLetters) { // don't penalize gap-letter matches
 					gapLetterMatches++; // don't include gap-letter matches in length
 				} else { // penalize gap-letter matches
@@ -65,8 +71,8 @@ static double distance(const Chars_holder *P, const Chars_holder *S, int start, 
 			} else {
 				mismatches++; // mis-match
 			}
-		} else {
-			if ((*p) & 0x10 && (*s) & 0x10) { // gap-gap match
+		} else { // sequences are equal
+			if (((*p) & 0x10 && (*s) & 0x10) || ((*p) & 0x40 && (*s) & 0x40)) { // gap-gap match
 				if (!pGapsGaps) { // don't penalize gap-gap matches
 					gapGapMatches++; // don't include gap-gap matches in length
 				} else { // penalize gap-gap matches
@@ -106,7 +112,13 @@ static double distanceAA(const Chars_holder *P, const Chars_holder *S, int start
 			!(!((*p) ^ 0x58) && !(!((*s) ^ 0x2D) || !((*s) ^ 0x2B) || !((*s) ^ 0x2A))) && !(!((*s) ^ 0x58) && !(!((*p) ^ 0x2D) || !((*p) ^ 0x2B) || !((*p) ^ 0x2A))) && // not (X && !(non-letter))
 			!(!((*p) ^ 0x42) && (!((*s) ^ 0x4E) || !((*s) ^ 0x44))) && !(!((*s) ^ 0x42) && (!((*p) ^ 0x4E) || !((*p) ^ 0x44))) && // not (B && (N or D))
 			!(!((*p) ^ 0x5A) && (!((*s) ^ 0x51) || !((*s) ^ 0x45))) && !(!((*s) ^ 0x5A) && (!((*p) ^ 0x51) || !((*p) ^ 0x45)))) { // not (Z && (Q or E))
-			if (!((*p) ^ 0x2D) || !((*s) ^ 0x2D)) { // gap-letter match
+			if ((!((*p) ^ 0x2D) && !((*s) ^ 0x2E)) || (!((*p) ^ 0x2E) && !((*s) ^ 0x2D))) { // gap-gap match
+				if (!pGapsGaps) { // don't penalize gap-gap matches
+					gapGapMatches++; // don't include gap-gap matches in length
+				} else { // penalize gap-gap matches
+					mismatches++; // count gap-gap matches as mis-matches
+				}
+			} else if (!((*p) ^ 0x2D) || !((*s) ^ 0x2D) || !((*p) ^ 0x2E) || !((*s) ^ 0x2E)) { // gap-letter match
 				if (!pGapLetters) { // don't penalize gap-letter matches
 					gapLetterMatches++; // don't include gap-letter matches in length
 				} else { // penalize gap-letter matches
@@ -115,8 +127,8 @@ static double distanceAA(const Chars_holder *P, const Chars_holder *S, int start
 			} else {
 				mismatches++; // mis-match
 			}
-		} else {
-			if (!((*p) ^ 0x2D) && !((*s) ^ 0x2D)) { // gap-gap match
+		} else { // sequences are equal
+			if ((!((*p) ^ 0x2D) && !((*s) ^ 0x2D)) || (!((*p) ^ 0x2E) && !((*s) ^ 0x2E))) { // gap-gap match
 				if (!pGapsGaps) { // don't penalize gap-gap matches
 					gapGapMatches++; // don't include gap-gap matches in length
 				} else { // penalize gap-gap matches
@@ -145,7 +157,7 @@ static int frontTerminalGaps(const Chars_holder *P)
 	     i < P->length;
 	     i++, p++)
 	{
-		if ((*p) & 0x10) { // gap character
+		if ((*p) & 0x10 || (*p) & 0x40) { // gap character
 			gaps++; // count gaps
 		} else { // not a gap
 			return gaps;
@@ -165,7 +177,7 @@ static int endTerminalGaps(const Chars_holder *P)
 	     i >= 0;
 	     i--, p--)
 	{
-		if ((*p) & 0x10) { // gap character
+		if ((*p) & 0x10 || (*p) & 0x40) { // gap character
 			gaps++; // count gaps
 		} else { // not a gap
 			return gaps;
@@ -185,7 +197,7 @@ static int frontTerminalGapsAA(const Chars_holder *P)
 	     i < P->length;
 	     i++, p++)
 	{
-		if (!((*p) ^ 0x2D)) { // gap character
+		if (!((*p) ^ 0x2D) || !((*p) ^ 0x2E)) { // gap character
 			gaps++; // count gaps
 		} else { // not a gap
 			return gaps;
@@ -205,7 +217,7 @@ static int endTerminalGapsAA(const Chars_holder *P)
 	     i >= 0;
 	     i--, p--)
 	{
-		if (!((*p) ^ 0x2D)) { // gap character
+		if (!((*p) ^ 0x2D) || !((*p) ^ 0x2E)) { // gap character
 			gaps++; // count gaps
 		} else { // not a gap
 			return gaps;
@@ -287,7 +299,11 @@ SEXP distMatrix(SEXP x, SEXP t, SEXP terminalGaps, SEXP penalizeGapGaps, SEXP pe
 				if ((seqLength_i - gapLengths[i][1]) <= gapLengths[j][0] ||
 					gapLengths[i][0] >= (seqLength_j - gapLengths[j][1])) {
 					// no overlap between sequences
-					rans[j + x_length*i] = NA_REAL;
+					if (tGaps) { // include terminal gaps
+						rans[j + x_length*i] = 1;
+					} else {
+						rans[j + x_length*i] = NA_REAL;
+					}
 				} else {
 					if (!tGaps) { // don't include terminal gaps
 						// find the intersection of both string's ranges

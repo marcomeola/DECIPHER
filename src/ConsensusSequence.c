@@ -16,6 +16,9 @@
  */
 #include <R_ext/Rdynload.h>
 
+/* for Calloc/Free */
+#include <R_ext/RS.h>
+
 // for math functions
 #include <math.h>
 
@@ -40,7 +43,7 @@ static int frontTerminalGaps(const Chars_holder *P)
 	     i < P->length;
 	     i++, p++)
 	{
-		if ((*p) & 0x10) { // gap character
+		if ((*p) & 0x10 || (*p) & 0x40) { // gap character ("-" or ".")
 			gaps++; // count gaps
 		} else { // not a gap
 			return gaps;
@@ -60,7 +63,7 @@ static int endTerminalGaps(const Chars_holder *P)
 	     i >= 0;
 	     i--, p--)
 	{
-		if ((*p) & 0x10) { // gap character
+		if ((*p) & 0x10 || (*p) & 0x40) { // gap character ("-" or ".")
 			gaps++; // count gaps
 		} else { // not a gap
 			return gaps;
@@ -80,7 +83,7 @@ static int frontTerminalGapsAA(const Chars_holder *P)
 	     i < P->length;
 	     i++, p++)
 	{
-		if (!((*p) ^ 0x2D)) { // gap character
+		if (!((*p) ^ 0x2D) || !((*p) ^ 0x2E)) { // gap character ("-" or ".")
 			gaps++; // count gaps
 		} else { // not a gap
 			return gaps;
@@ -100,7 +103,7 @@ static int endTerminalGapsAA(const Chars_holder *P)
 	     i >= 0;
 	     i--, p--)
 	{
-		if (!((*p) ^ 0x2D)) { // gap character
+		if (!((*p) ^ 0x2D) || !((*p) ^ 0x2E)) { // gap character ("-" or ".")
 			gaps++; // count gaps
 		} else { // not a gap
 			return gaps;
@@ -183,6 +186,13 @@ static void alphabetFrequency(const Chars_holder *P, double *bits, int seqLength
 						*(bits + 5*seqLength + j) += weight;
 					}
 					break;
+				case 64: // . treated as -
+					if (ignore==1) { // don't include gaps
+						*(bits + 6*seqLength + j) -= weight;
+					} else { // include gaps
+						*(bits + 4*seqLength + j) += weight;
+					}
+					break;
 				default:
 					error("not DNA!");
 					break;
@@ -212,6 +222,13 @@ static void alphabetFrequency(const Chars_holder *P, double *bits, int seqLength
 				case 32: // +
 					*(bits + 5*seqLength + j) += weight;
 					*(bits + 6*seqLength + j) += weight;
+					break;
+				case 64: // . treated as -
+					*(bits + 4*seqLength + j) += weight;
+					*(bits + 6*seqLength + j) += weight;
+					break;
+				default:
+					error("not DNA!");
 					break;
 			}
 		}
@@ -339,6 +356,13 @@ static void alphabetFrequencyAA(const Chars_holder *P, double *bits, int seqLeng
 					*(bits + 25*seqLength + j) -= weight;
 				} else { // include masks
 					*(bits + 24*seqLength + j) += weight;
+				}
+				break;
+			case 46: // . treated as -
+				if (ignore==1) { // don't include gaps
+					*(bits + 25*seqLength + j) -= weight;
+				} else { // include gaps
+					*(bits + 23*seqLength + j) += weight;
 				}
 				break;
 			default:
@@ -599,8 +623,8 @@ static void makeConsensus(double *bits, char *seq, int seqLength, int x_length, 
 
 static void makeConsensusAA(double *bits, char *seq, int seqLength, int x_length, double threshold, double minInfo, int tGaps)
 {
-	int j, i, X;
-	double information, AAs[22], S, percentGap, percentMask;
+	int j, i;
+	double information, AAs[23], S, percentGap, percentMask;
 	
 	for (j = 0; j < seqLength; j++) {
 		
@@ -611,7 +635,7 @@ static void makeConsensusAA(double *bits, char *seq, int seqLength, int x_length
 		
 		// find the percentage of each base in position j
 		S = 0;
-		for (i = 0; i < 22; i++) {
+		for (i = 0; i < 23; i++) {
 			AAs[i] = (double)(*(bits + i*seqLength + j))/(*(bits + 25*seqLength + j));
 			S += AAs[i];
 		}
@@ -932,7 +956,7 @@ static void makeConsensusAA(double *bits, char *seq, int seqLength, int x_length
 			if (AAs[22] >= percentGap &&
 				AAs[22] >= percentMask) {
 				*(seq + j) = '*';
-				information = AAs[21];
+				information = AAs[22];
 			} else {
 				if (percentGap >= percentMask) {
 					*(seq + j) = '-';
@@ -985,7 +1009,8 @@ SEXP consensusSequence(SEXP x, SEXP threshold, SEXP ambiguity, SEXP minInformati
 	// initialize the XStringSet
 	x_set = hold_XStringSet(x);
 	x_length = get_length_from_XStringSet_holder(&x_set);
-	int gapLengths[x_length][2];
+	//int gapLengths[x_length][2];
+	int gapL, gapR;
 	degeneracy = asLogical(ambiguity);
 	ignore = asLogical(ignoreNonLetters);
 	tGaps = asLogical(terminalGaps);
@@ -998,6 +1023,7 @@ SEXP consensusSequence(SEXP x, SEXP threshold, SEXP ambiguity, SEXP minInformati
 			seqLength = x_i.length;
 		}
 	}
+	/*
 	// initialize an array of encoded base counts
 	double bases[7][seqLength];
 	// 2D arrays cannot be set to zero at initialization so loops are needed
@@ -1006,6 +1032,9 @@ SEXP consensusSequence(SEXP x, SEXP threshold, SEXP ambiguity, SEXP minInformati
 			bases[i][j] = 0;
 		}
 	}
+	*/
+	// initialize an array of encoded base counts
+	double *bases = Calloc(7*seqLength, double); // initialized to zero
 	
 	// loop through each sequence in the DNAStringSet
 	for (i = 0; i < x_length; i++) {
@@ -1014,22 +1043,29 @@ SEXP consensusSequence(SEXP x, SEXP threshold, SEXP ambiguity, SEXP minInformati
 		
 		// update the alphabet for this string
 		if (!tGaps) { // don't include terminal gaps
-			gapLengths[i][0] = frontTerminalGaps(&x_i);
-			gapLengths[i][1] = endTerminalGaps(&x_i);
-			alphabetFrequency(&x_i, &bases[0][0], seqLength, degeneracy, ignore, gapLengths[i][0], gapLengths[i][1], 1);
+			//gapLengths[i][0] = frontTerminalGaps(&x_i);
+			//gapLengths[i][1] = endTerminalGaps(&x_i);
+			gapL = frontTerminalGaps(&x_i);
+			gapR = endTerminalGaps(&x_i);
+			//alphabetFrequency(&x_i, &bases[0][0], seqLength, degeneracy, ignore, gapLengths[i][0], gapLengths[i][1], 1);
+			alphabetFrequency(&x_i, bases, seqLength, degeneracy, ignore, gapL, gapR, 1);
 		} else { // include terminal gaps
-			alphabetFrequency(&x_i, &bases[0][0], seqLength, degeneracy, ignore, 0, 0, 1);
+			//alphabetFrequency(&x_i, &bases[0][0], seqLength, degeneracy, ignore, 0, 0, 1);
+			alphabetFrequency(&x_i, bases, seqLength, degeneracy, ignore, 0, 0, 1);
 		}
 	}
 	
 	thresh = REAL(threshold);
 	minInfo = REAL(minInformation);
 	char seq[seqLength + 1]; // last position is for null terminating
-	makeConsensus(&bases[0][0], &seq[0], seqLength, x_length, *thresh, *minInfo, tGaps);
+	//makeConsensus(&bases[0][0], &seq[0], seqLength, x_length, *thresh, *minInfo, tGaps);
+	makeConsensus(bases, &seq[0], seqLength, x_length, *thresh, *minInfo, tGaps);
 	seq[seqLength] = '\0'; // end (null terminate) the string
 	
 	PROTECT(consensusSeq = allocVector(STRSXP, 1));
 	SET_STRING_ELT(consensusSeq, 0, mkChar(seq));
+	
+	Free(bases);
 	
 	UNPROTECT(1);
 
@@ -1042,13 +1078,14 @@ SEXP consensusSequenceAA(SEXP x, SEXP threshold, SEXP ambiguity, SEXP minInforma
 	XStringSet_holder x_set;
 	Chars_holder x_i;
 	int x_length, i, j, seqLength, degeneracy, ignore, tGaps;
-	double *thresh, *minInfo;
+	double thresh, minInfo;
 	SEXP consensusSeq;
 	
 	// initialize the XStringSet
 	x_set = hold_XStringSet(x);
 	x_length = get_length_from_XStringSet_holder(&x_set);
-	int gapLengths[x_length][2];
+	//int gapLengths[x_length][2];
+	int gapL, gapR;
 	degeneracy = asLogical(ambiguity);
 	ignore = asLogical(ignoreNonLetters);
 	tGaps = asLogical(terminalGaps);
@@ -1061,6 +1098,7 @@ SEXP consensusSequenceAA(SEXP x, SEXP threshold, SEXP ambiguity, SEXP minInforma
 			seqLength = x_i.length;
 		}
 	}
+	/*
 	// initialize an array of encoded base counts
 	double bases[26][seqLength];
 	// 2D arrays cannot be set to zero at initialization so loops are needed
@@ -1069,6 +1107,9 @@ SEXP consensusSequenceAA(SEXP x, SEXP threshold, SEXP ambiguity, SEXP minInforma
 			bases[i][j] = 0;
 		}
 	}
+	 */
+	// initialize an array of encoded base counts
+	double *bases = Calloc(26*seqLength, double); // initialized to zero
 	
 	// loop through each sequence in the DNAStringSet
 	for (i = 0; i < x_length; i++) {
@@ -1077,23 +1118,30 @@ SEXP consensusSequenceAA(SEXP x, SEXP threshold, SEXP ambiguity, SEXP minInforma
 		
 		// update the alphabet for this string
 		if (!tGaps) { // don't include terminal gaps
-			gapLengths[i][0] = frontTerminalGapsAA(&x_i);
-			gapLengths[i][1] = endTerminalGapsAA(&x_i);
-			alphabetFrequencyAA(&x_i, &bases[0][0], seqLength, degeneracy, ignore, gapLengths[i][0], gapLengths[i][1], 1);
+			//gapLengths[i][0] = frontTerminalGapsAA(&x_i);
+			//gapLengths[i][1] = endTerminalGapsAA(&x_i);
+			gapL = frontTerminalGapsAA(&x_i);
+			gapR = endTerminalGapsAA(&x_i);
+			//alphabetFrequencyAA(&x_i, &bases[0][0], seqLength, degeneracy, ignore, gapLengths[i][0], gapLengths[i][1], 1);
+			alphabetFrequencyAA(&x_i, bases, seqLength, degeneracy, ignore, gapL, gapR, 1);
 		} else { // include terminal gaps
-			alphabetFrequencyAA(&x_i, &bases[0][0], seqLength, degeneracy, ignore, 0, 0, 1);
+			//alphabetFrequencyAA(&x_i, &bases[0][0], seqLength, degeneracy, ignore, 0, 0, 1);
+			alphabetFrequencyAA(&x_i, bases, seqLength, degeneracy, ignore, 0, 0, 1);
 		}
 	}
 	
-	thresh = REAL(threshold);
-	*thresh = 1 - *thresh;
-	minInfo = REAL(minInformation);
+	thresh = asReal(threshold);
+	thresh = 1 - thresh;
+	minInfo = asReal(minInformation);
 	char seq[seqLength + 1]; // last position is for null terminating
-	makeConsensusAA(&bases[0][0], &seq[0], seqLength, x_length, *thresh, *minInfo, tGaps);
+	//makeConsensusAA(&bases[0][0], &seq[0], seqLength, x_length, thresh, minInfo, tGaps);
+	makeConsensusAA(bases, &seq[0], seqLength, x_length, thresh, minInfo, tGaps);
 	seq[seqLength] = '\0'; // end (null terminate) the string
 	
 	PROTECT(consensusSeq = allocVector(STRSXP, 1));
 	SET_STRING_ELT(consensusSeq, 0, mkChar(seq));
+	
+	Free(bases);
 	
 	UNPROTECT(1);
 	
@@ -1107,12 +1155,12 @@ SEXP consensusProfile(SEXP x, SEXP weight)
 	Chars_holder x_i;
 	int x_length, i, j, seqLength;
 	SEXP ans;//, subM, ret_list
-	double *rans, *w = REAL(weight), sum;//, *m
+	double *rans, *w = REAL(weight), sum, tot = 0;//, *m
 	
 	// initialize the XStringSet
 	x_set = hold_XStringSet(x);
 	x_length = get_length_from_XStringSet_holder(&x_set);
-	double gapLengths[x_length][2];
+	//int gapLengths[x_length][2];
 	
 	// find the longest length XString
 	seqLength = 0;
@@ -1122,6 +1170,8 @@ SEXP consensusProfile(SEXP x, SEXP weight)
 			seqLength = x_i.length;
 		}
 	}
+	
+	/*
 	// initialize an array of encoded base counts
 	double bases[7][seqLength];
 	// 2D arrays cannot be set to zero at initialization so loops are needed
@@ -1131,7 +1181,7 @@ SEXP consensusProfile(SEXP x, SEXP weight)
 		}
 	}
 	
-	// initialize an array of encoded base counts
+	// initialize an array for gap opening and closing
 	double gaps[2][seqLength];
 	// 2D arrays cannot be set to zero at initialization so loops are needed
 	for (i = 0; i < 2; i++) {
@@ -1140,22 +1190,45 @@ SEXP consensusProfile(SEXP x, SEXP weight)
 		}
 	}
 	
+	// initialize an array of positional weights
+	double totW[seqLength + 1];
+	// 2D arrays cannot be set to zero at initialization so loops are needed
+	for (j = 0; j <= seqLength; j++)
+		totW[j] = 0;
+	*/
+	// initialize an array of encoded base counts
+	double *bases = Calloc(7*seqLength, double); // initialized to zero
+	// initialize an array for gap opening and closing
+	double *gaps = Calloc(2*seqLength, double); // initialized to zero
+	// initialize an array of positional weights
+	double *totW = Calloc(seqLength + 1, double); // initialized to zero
+	// initialize an array of terminal gap lengths
+	int *gapLengths = Calloc(x_length*2, int); // initialized to zero
+	
 	// loop through each sequence in the DNAStringSet
 	for (i = 0; i < x_length; i++) {
+		if (w[i]==0)
+			continue;
+		
 		// extract each ith DNAString from the DNAStringSet
 		x_i = get_elt_from_XStringSet_holder(&x_set, i);
 		
 		// update the alphabet for this string
-		gapLengths[i][0] = frontTerminalGaps(&x_i);
-		gapLengths[i][1] = endTerminalGaps(&x_i);
-		alphabetFrequency(&x_i, &bases[0][0], seqLength, 1, 0, gapLengths[i][0], gapLengths[i][1], w[i]);
+		gapLengths[i*2] = frontTerminalGaps(&x_i);
+		if (gapLengths[i*2]==x_i.length) // all gaps
+			continue;
+		gapLengths[i*2 + 1] = endTerminalGaps(&x_i);
+		alphabetFrequency(&x_i, bases, seqLength, 1, 0, gapLengths[i*2], gapLengths[i*2 + 1], w[i]);
 		
-		for (j = gapLengths[i][0] + 1; j < seqLength - gapLengths[i][1] - 1; j++) {
-			if (!(x_i.seq[j - 1] & 0x10) && (x_i.seq[j] & 0x10)) {
-				gaps[0][j] += w[i]; // gap opening
+		totW[gapLengths[i*2]] += w[i];
+		totW[seqLength - gapLengths[i*2 + 1]] -= w[i];
+		
+		for (j = gapLengths[i*2] + 1; j < seqLength - gapLengths[i*2 + 1] - 1; j++) {
+			if (!(x_i.seq[j - 1] & 0x10 || x_i.seq[j - 1] & 0x40) && (x_i.seq[j] & 0x10 || x_i.seq[j] & 0x40)) {
+				gaps[2*j] += w[i]; // gap opening
 			}
-			if ((x_i.seq[j] & 0x10) && !(x_i.seq[j + 1] & 0x10)) {
-				gaps[1][j] += w[i]; // gap closing
+			if ((x_i.seq[j] & 0x10 || x_i.seq[j] & 0x40) && !(x_i.seq[j + 1] & 0x10 || x_i.seq[j + 1] & 0x40)) {
+				gaps[2*j + 1] += w[i]; // gap closing
 			}
 		}
 	}
@@ -1187,26 +1260,38 @@ SEXP consensusProfile(SEXP x, SEXP weight)
 	}
 	*/
 	
-	PROTECT(ans = allocMatrix(REALSXP, 7, seqLength));
+	PROTECT(ans = allocMatrix(REALSXP, 8, seqLength));
 	rans = REAL(ans);
 	
 	for (i = 0; i < seqLength; i++) {
-		*(rans + i*7 + 0) = bases[0][i]/x_length;
-		*(rans + i*7 + 1) = bases[1][i]/x_length;
-		*(rans + i*7 + 2) = bases[2][i]/x_length;
-		*(rans + i*7 + 3) = bases[3][i]/x_length;
-		*(rans + i*7 + 4) = bases[4][i]/x_length;
-		*(rans + i*7 + 5) = gaps[0][i]/x_length;
-		*(rans + i*7 + 6) = gaps[1][i]/x_length;
-		sum = *(rans + i*7 + 0) + *(rans + i*7 + 1) + *(rans + i*7 + 2) + *(rans + i*7 + 3) + *(rans + i*7 + 4);
-		if (sum > 0) { // normalize the profile
-			*(rans + i*7 + 0) /= sum;
-			*(rans + i*7 + 1) /= sum;
-			*(rans + i*7 + 2) /= sum;
-			*(rans + i*7 + 3) /= sum;
-			*(rans + i*7 + 4) /= sum;
+		tot += totW[i];
+		if (tot==0) {
+			for (j = 0; j < 8; j++)
+				*(rans + i*8 + j) = 0;
+		} else {
+			*(rans + i*8 + 0) = bases[i]/tot;
+			*(rans + i*8 + 1) = bases[1*seqLength + i]/tot;
+			*(rans + i*8 + 2) = bases[2*seqLength + i]/tot;
+			*(rans + i*8 + 3) = bases[3*seqLength + i]/tot;
+			*(rans + i*8 + 4) = bases[4*seqLength + i]/tot;
+			*(rans + i*8 + 5) = gaps[i*2]/tot;
+			*(rans + i*8 + 6) = gaps[i*2 + 1]/tot;
+			sum = *(rans + i*8) + *(rans + i*8 + 1) + *(rans + i*8 + 2) + *(rans + i*8 + 3) + *(rans + i*8 + 4);
+			if (sum > 0) { // normalize the profile
+				*(rans + i*8) /= sum;
+				*(rans + i*8 + 1) /= sum;
+				*(rans + i*8 + 2) /= sum;
+				*(rans + i*8 + 3) /= sum;
+				*(rans + i*8 + 4) /= sum;
+			}
+			*(rans + i*8 + 7) = tot/x_length;
 		}
 	}
+	
+	Free(bases);
+	Free(gaps);
+	Free(totW);
+	Free(gapLengths);
 	
 	//PROTECT(ret_list = allocVector(VECSXP, 2));
 	//SET_VECTOR_ELT(ret_list, 0, ans);
@@ -1224,12 +1309,12 @@ SEXP consensusProfileAA(SEXP x, SEXP weight)
 	Chars_holder x_i;
 	int x_length, i, j, seqLength;
 	SEXP ans;
-	double *rans, *w = REAL(weight), sum;
+	double *rans, *w = REAL(weight), sum, tot = 0;
 	
 	// initialize the XStringSet
 	x_set = hold_XStringSet(x);
 	x_length = get_length_from_XStringSet_holder(&x_set);
-	double gapLengths[x_length][2];
+	//int gapLengths[x_length][2];
 	
 	// find the longest length XString
 	seqLength = 0;
@@ -1239,6 +1324,7 @@ SEXP consensusProfileAA(SEXP x, SEXP weight)
 			seqLength = x_i.length;
 		}
 	}
+	/*
 	// initialize an array of encoded base counts
 	double bases[26][seqLength];
 	// 2D arrays cannot be set to zero at initialization so loops are needed
@@ -1248,7 +1334,7 @@ SEXP consensusProfileAA(SEXP x, SEXP weight)
 		}
 	}
 	
-	// initialize an array of encoded base counts
+	// initialize an array for gap opening and closing
 	double gaps[2][seqLength];
 	// 2D arrays cannot be set to zero at initialization so loops are needed
 	for (i = 0; i < 2; i++) {
@@ -1257,46 +1343,82 @@ SEXP consensusProfileAA(SEXP x, SEXP weight)
 		}
 	}
 	
+	// initialize an array of positional weights
+	double totW[seqLength + 1];
+	// 2D arrays cannot be set to zero at initialization so loops are needed
+	for (j = 0; j <= seqLength; j++)
+		totW[j] = 0;
+	*/
+	// initialize an array of encoded base counts
+	double *bases = Calloc(26*seqLength, double); // initialized to zero
+	// initialize an array for gap opening and closing
+	double *gaps = Calloc(2*seqLength, double); // initialized to zero
+	// initialize an array of positional weights
+	double *totW = Calloc(seqLength + 1, double); // initialized to zero
+	// initialize an array of terminal gap lengths
+	int *gapLengths = Calloc(x_length*2, int); // initialized to zero
+	
 	// loop through each sequence in the DNAStringSet
 	for (i = 0; i < x_length; i++) {
+		if (w[i]==0)
+			continue;
+		
 		// extract each ith DNAString from the DNAStringSet
 		x_i = get_elt_from_XStringSet_holder(&x_set, i);
 		
 		// update the alphabet for this string
-		gapLengths[i][0] = frontTerminalGapsAA(&x_i);
-		gapLengths[i][1] = endTerminalGapsAA(&x_i);
+		gapLengths[i*2] = frontTerminalGapsAA(&x_i);
+		if (gapLengths[i*2]==x_i.length) // all gaps
+			continue;
+		gapLengths[i*2 + 1] = endTerminalGapsAA(&x_i);
 		// for AA degeneracy = 0, otherwise results in pooly aligned X's
-		alphabetFrequencyAA(&x_i, &bases[0][0], seqLength, 0, 0, gapLengths[i][0], gapLengths[i][1], w[i]);
+		alphabetFrequencyAA(&x_i, bases, seqLength, 0, 0, gapLengths[i*2], gapLengths[i*2 + 1], w[i]);
 		
-		for (j = gapLengths[i][0] + 1; j < seqLength - gapLengths[i][1] - 1; j++) {
-			if ((x_i.seq[j - 1] ^ 0x2D) && !(x_i.seq[j] ^ 0x2D)) {
-				gaps[0][j] += w[i]; // gap opening
+		totW[gapLengths[i*2]] += w[i];
+		totW[seqLength - gapLengths[i*2 + 1]] -= w[i];
+		
+		for (j = gapLengths[i*2] + 1; j < seqLength - gapLengths[i*2 + 1] - 1; j++) {
+			if ((x_i.seq[j - 1] ^ 0x2D && x_i.seq[j - 1] ^ 0x2E) && (!(x_i.seq[j] ^ 0x2D) || !(x_i.seq[j] ^ 0x2E))) {
+				gaps[2*j] += w[i]; // gap opening
 			}
-			if (!(x_i.seq[j] ^ 0x2D) && (x_i.seq[j + 1] ^ 0x2D)) {
-				gaps[1][j] += w[i]; // gap closing
+			if ((x_i.seq[j + 1] ^ 0x2D && x_i.seq[j + 1] ^ 0x2E) && (!(x_i.seq[j] ^ 0x2D) || !(x_i.seq[j] ^ 0x2E))) {
+				gaps[2*j + 1] += w[i]; // gap closing
 			}
 		}
 	}
 	
-	PROTECT(ans = allocMatrix(REALSXP, 26, seqLength));
+	PROTECT(ans = allocMatrix(REALSXP, 27, seqLength));
 	rans = REAL(ans);
 	
 	for (i = 0; i < seqLength; i++) {
-		for (j = 0; j < 24; j++) {
-			*(rans + i*26 + j) = bases[j][i]/x_length;
-		}
-		sum = 0;
-		for (j = 0; j < 24; j++) {
-			sum += *(rans + i*26 + j);
-		}
-		if (sum > 0) {
+		tot += totW[i];
+		
+		if (tot==0) {
+			for (j = 0; j < 27; j++)
+				*(rans + i*27 + j) = 0;
+		} else {
 			for (j = 0; j < 24; j++) {
-				*(rans + i*26 + j) /= sum;
+				*(rans + i*27 + j) = bases[j*seqLength + i]/tot;
 			}
+			sum = 0;
+			for (j = 0; j < 24; j++) {
+				sum += *(rans + i*27 + j);
+			}
+			if (sum > 0) {
+				for (j = 0; j < 24; j++) {
+					*(rans + i*27 + j) /= sum;
+				}
+			}
+			*(rans + i*27 + 24) = gaps[i*2]/tot;
+			*(rans + i*27 + 25) = gaps[i*2 + 1]/tot;
+			*(rans + i*27 + 26) = tot/x_length;
 		}
-		*(rans + i*26 + 24) = gaps[0][i]/x_length;
-		*(rans + i*26 + 25) = gaps[1][i]/x_length;
 	}
+	
+	Free(bases);
+	Free(gaps);
+	Free(totW);
+	Free(gapLengths);
 	
 	UNPROTECT(1);
 	

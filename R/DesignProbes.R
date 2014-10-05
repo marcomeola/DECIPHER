@@ -1155,11 +1155,11 @@ DesignProbes <- function(tiles,
 			if (count==1) # sites do not overlap
 				next
 			
-			p <- pairwiseAlignment(nontargets[1:(count - 1)],
-				reverseComplement(DNAStringSet(targets[1:(count - 1)])),
-				type="local-global",
-				gapOpen=-10,
-				gapExtension=-10)
+#			p <- pairwiseAlignment(nontargets[1:(count - 1)],
+#				reverseComplement(DNAStringSet(targets[1:(count - 1)])),
+#				type="local-global",
+#				gapOpen=-10,
+#				gapExtension=-10)
 			
 			eff <- CalculateEfficiencyFISH(targets[1:(count - 1)],
 				nontargets[1:(count - 1)],
@@ -1262,6 +1262,10 @@ DesignProbes <- function(tiles,
 		}
 		
 		if (numProbeSets > 0) {
+			if (d==1) {
+				warning("Not enough probes to design a probe set:", id)
+				break
+			}
 			# order probes by score
 			searchSpace <- ifelse(numProbeSets > 100, numProbeSets, 100)
 			f <- which(is.finite(probes$score))
@@ -1273,7 +1277,7 @@ DesignProbes <- function(tiles,
 				decreasing=TRUE)
 			s <- ifelse(length(f) > searchSpace, searchSpace, length(f))
 			if (s < 2) { # need at least 2 probes to form a set
-				warnings("Not enough probe sets meet the specified constaints:", id)
+				warning("Not enough probe sets meet the specified constaints:", id)
 				
 				if (verbose) {
 					setTxtProgressBar(pBar, 100)
@@ -1359,7 +1363,7 @@ DesignProbes <- function(tiles,
 			dims <- dim(m)
 			for (k in 1:numProbeSets) {
 				if ((j + 1) > length(o)) {
-					warnings("Not enough probe sets meet the specified constaints:", id)
+					warning("Not enough probe sets meet the specified constaints:", id)
 					break
 				}
 				for (j in (j + 1):length(o)) {

@@ -50,7 +50,7 @@
 \SweaveOpts{keep.source=TRUE}
 <<echo=false>>=
 options(continue=" ")
-options(width=60)
+options(width=80)
 @
 
 \tableofcontents
@@ -59,7 +59,7 @@ options(width=60)
 \section{Introduction}
 %------------------------------------------------------------
 
-This document describes how to design group-specific primers using the \Rpackage{DECIPHER} package through the use of the \Rfunction{DesignPrimers} function.  As a case study, this tutorial focuses on the Internal Transcribed Spacer (ITS) of fully sequenced genomes belonging to different species of the genus \textit{Streptomyces}.  The ITS resides on the chromosome between the prokaryotic genes coding for the 16S and 23S ribosomal RNA.  The examples in this document are directed towards finding primers that target a single species of \textit{Streptomyces} amongst a number of closely related \textit{Streptomyces} species.  However, a similar strategy could be used with any set of aligned sequences that are separated into groups.  For example, genus-specific primers targeting the 16S gene that have been designed with this program are provided online at \url{http://DECIPHER.cee.wisc.edu}.
+This document describes how to design group-specific primers using the \Rpackage{DECIPHER} package through the use of the \Rfunction{DesignPrimers} function.  As a case study, this tutorial focuses on the Internal Transcribed Spacer (ITS) of fully sequenced genomes belonging to different species of the genus \textit{Streptomyces}.  The ITS resides on the chromosome between the genes coding for the 16S and 23S ribosomal RNA.  The examples in this document are directed towards finding primers that target a single species of \textit{Streptomyces} amongst a number of closely related \textit{Streptomyces} species.  However, a similar strategy could be used with any set of aligned sequences that are separated into groups.  For example, genus-specific primers targeting the 16S gene that have been designed with this program are provided online at \url{http://DECIPHER.cee.wisc.edu}.
 
 A database of aligned DNA sequences separated into groups is used as input to the program.  First the function \Rfunction{TileSeqs} is used to pre-process the sequences into overlapping tiles, which will serve as the template DNA for primer design.  Second, the \Rfunction{DesignPrimers} function determines the set of all possible primers that meet certain design constraints, such as the ability to amplify the group of interest under specified experimental conditions.  Next, the complete set of primers is scored for its predicted potential to cross-amplify with DNA belonging to other groups.  Finally, the optimal set of forward and reverse primers is chosen that could be used in a PCR experiment to enrich for the DNA of interest in a sample containing DNA from multiple groups.
 

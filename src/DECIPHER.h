@@ -66,6 +66,8 @@ SEXP matchOrderDual(SEXP x, SEXP y, SEXP nThreads);
 
 SEXP matchRanges(SEXP x, SEXP y, SEXP wordSize, SEXP maxLength, SEXP threshold);
 
+SEXP boundedMatches(SEXP x, SEXP bl, SEXP bu);
+
 // ReplaceChars.c
 
 SEXP replaceChars(SEXP x, SEXP r, SEXP t);
@@ -94,7 +96,7 @@ SEXP calculateFISH(SEXP probes, SEXP targets);
 
 // AlignProfiles.c
 
-SEXP alignProfiles(SEXP p, SEXP s, SEXP pm, SEXP mm, SEXP go, SEXP ge, SEXP endGapPenaltyLeft, SEXP endGapPenaltyRight, SEXP boundary, SEXP nThreads);
+SEXP alignProfiles(SEXP p, SEXP s, SEXP subMatrix, SEXP pm, SEXP mm, SEXP go, SEXP ge, SEXP endGapPenaltyLeft, SEXP endGapPenaltyRight, SEXP boundary, SEXP nThreads);
 
 SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP pm, SEXP mm, SEXP go, SEXP ge, SEXP endGapPenaltyLeft, SEXP endGapPenaltyRight, SEXP boundary, SEXP nThreads);
 
@@ -109,3 +111,15 @@ SEXP enumerateGappedSequence(SEXP x, SEXP wordSize);
 SEXP enumerateGappedSequenceAA(SEXP x, SEXP wordSize);
 
 SEXP enumerateSequenceReducedAA(SEXP x, SEXP wordSize, SEXP alphabet);
+
+// GC_Content.c
+
+SEXP gcContent(SEXP x, SEXP begins, SEXP ends);
+
+// IntDist.c
+
+SEXP intDist(SEXP x, SEXP levels, SEXP bins, SEXP maxBins, SEXP numRows, SEXP totRows);
+
+// MeltPolymer.c
+
+SEXP meltPolymer(SEXP x, SEXP temps, SEXP ions, SEXP output);

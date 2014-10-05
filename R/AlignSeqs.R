@@ -24,7 +24,13 @@ AlignSeqs <- function(myXStringSet,
 		stop("verbose must be a logical.")
 	a <- vcountPattern("-", myXStringSet)
 	if (any(a) > 0)
-		stop("Gaps must be removed before alignment.")
+		stop("Gap characters ('-') must be removed before alignment.")
+	a <- vcountPattern("+", myXStringSet)
+	if (any(a) > 0)
+		stop("Mask characters ('+') must be removed before alignment.")
+	a <- vcountPattern(".", myXStringSet)
+	if (any(a) > 0)
+		stop("Unknown characters ('.') must be removed before alignment.")
 	if (!is.null(processors) && !is.numeric(processors))
 		stop("processors must be a numeric.")
 	if (!is.null(processors) && floor(processors)!=processors)
@@ -35,6 +41,32 @@ AlignSeqs <- function(myXStringSet,
 		processors <- detectCores()
 	} else {
 		processors <- as.integer(processors)
+	}
+	
+	n <- names(list(...))
+	m <- character(length(n))
+	for (i in seq_along(n)) {
+		m[i] <- match.arg(n[i],
+			names(formals(AlignProfiles)))
+	}
+	subM <- ifelse(is(myXStringSet, "AAStringSet") &&
+		!any(m=="substitutionMatrix") &&
+		is.null(guideTree),
+		TRUE,
+		FALSE)
+	gapV <- FALSE
+	if (subM &&
+		!(any(m=="gapExtension") ||
+		any(m=="gapOpening") ||
+		any(m=="terminalGap") ||
+		any(m=="misMatch"))) {
+		gapV <- TRUE # use variable gap penalties
+		gapM <- matrix(c(-1, -7, -1,
+				-6, -7, -2,
+				-3, -5, -1),
+			nrow=3,
+			dimnames=list(c("gapExtension", "gapOpening", "terminalGap"),
+				c("BLOSUM80", "BLOSUM62", "BLOSUM45")))
 	}
 	
 	if (verbose)
@@ -48,6 +80,8 @@ AlignSeqs <- function(myXStringSet,
 		wordSize <- ceiling(mean(width(myXStringSet))^0.25) # always >= 1
 		if (wordSize > 15)
 			wordSize <- 15
+		if (wordSize < 8)
+			wordSize <- 8
 	}
 	
 	if (orient && !is(myXStringSet, "AAStringSet")) {
@@ -142,31 +176,36 @@ AlignSeqs <- function(myXStringSet,
 		}
 		cutoffs <- seq(0, max(d, na.rm=TRUE), 0.01)
 		dimnames(d) <- NULL
-		guideTree <- suppressWarnings(IdClusters(d, method="UPGMA", cutoff=cutoffs, verbose=verbose, processors=processors))
+		suppressWarnings(guideTree <- IdClusters(d, method="UPGMA", cutoff=cutoffs, verbose=verbose, processors=processors))
 	} else {
 		cutoffs <- rep(1, dim(guideTree)[2])
 	}
 	guideTree$Top <- 1
+	guideTree <- as.matrix(guideTree)
 	cutoffs <- c(cutoffs, 1)
 	
 	# calculate weights based on branch lengths
 	lastSplit <- numeric(dim(guideTree)[1])
-	lastSplit[] <- 1
 	weights <- numeric(dim(guideTree)[1])
 	numGroups <- 1
 	for (i in (dim(guideTree)[2] - 1):1) {
 		if (length(unique(guideTree[, i])) > numGroups) {
-			numGroups <- length(unique(guideTree[, i]))
-			for (j in unique(guideTree[, i + 1])) {
-				w <- which(guideTree[, i + 1]==j)
-				if (length(unique(guideTree[w, i])) > 1) {
-					weights[w] <- weights[w] + (lastSplit[w] - cutoffs[i])/length(w)
-					lastSplit[w] <- cutoffs[i]
+			if (numGroups==1) { # mid-point root of tree
+				lastSplit[] <- cutoffs[i]
+			} else {
+				for (j in unique(guideTree[, i + 1])) {
+					w <- which(guideTree[, i + 1]==j)
+					if (length(unique(guideTree[w, i])) > 1) {
+						weights[w] <- weights[w] + (lastSplit[w] - cutoffs[i])/length(w)
+						lastSplit[w] <- cutoffs[i]
+					}
 				}
 			}
+			numGroups <- length(unique(guideTree[, i]))
 		}
 	}
 	weights <- weights + lastSplit
+	weights <- ifelse(weights==0, 1, weights)
 	
 	if (verbose) {
 		time.1 <- Sys.time()
@@ -201,15 +240,12 @@ AlignSeqs <- function(myXStringSet,
 	mergers <- character(l)
 	
 	for (i in 1:dim(guideTree)[2]) {
-		subMatrix <- ifelse(cutoffs[i] < 0.01,
-			"BLOSUM100",
-				ifelse(cutoffs[i] < 0.2,
-					"BLOSUM80",
-					ifelse(cutoffs[i] < 0.4,
-						"BLOSUM62",
-						ifelse(cutoffs[i] < 0.5,
-							"BLOSUM50",
-							"BLOSUM45"))))
+		if (subM)
+			subMatrix <- ifelse(cutoffs[i] < 0.3,
+				"BLOSUM80",
+				ifelse(cutoffs[i] < 0.8,
+					"BLOSUM62",
+					"BLOSUM45"))
 		for (u in unique(guideTree[, i])) {
 			w <- which(guideTree[, i]==u) # groups
 			if (length(w)==1)
@@ -224,13 +260,35 @@ AlignSeqs <- function(myXStringSet,
 					s.weight <- weights[w[j]]
 					s.weight <- s.weight/mean(s.weight)
 					
-					seqs[w[1:j]] <- AlignProfiles(pattern=seqs[w[1:(j - 1)]],
-						subject=seqs[w[j]],
-						p.weight=p.weight,
-						s.weight=s.weight,
-						substitutionMatrix="BLOSUM100",
-						processors=processors,
-						...)
+					if (subM) {
+						if (gapV) { # specify gap penalties
+							seqs[w[1:j]] <- AlignProfiles(pattern=seqs[w[1:(j - 1)]],
+								subject=seqs[w[j]],
+								p.weight=p.weight,
+								s.weight=s.weight,
+								substitutionMatrix="BLOSUM80",
+								gapExtension=gapM["gapExtension", "BLOSUM80"],
+								gapOpening=gapM["gapOpening", "BLOSUM80"],
+								terminalGap=gapM["terminalGap", "BLOSUM80"],
+								processors=processors,
+								...)
+						} else {
+							seqs[w[1:j]] <- AlignProfiles(pattern=seqs[w[1:(j - 1)]],
+								subject=seqs[w[j]],
+								p.weight=p.weight,
+								s.weight=s.weight,
+								substitutionMatrix="BLOSUM80",
+								processors=processors,
+								...)
+						}
+					} else { # do not need to specify substitutionMatrix
+						seqs[w[1:j]] <- AlignProfiles(pattern=seqs[w[1:(j - 1)]],
+							subject=seqs[w[j]],
+							p.weight=p.weight,
+							s.weight=s.weight,
+							processors=processors,
+							...)
+					}
 					
 					steps <- steps + 1
 					x <- grep(w[1], mergers[1:steps], fixed=TRUE)
@@ -260,13 +318,35 @@ AlignSeqs <- function(myXStringSet,
 					s.weight <- weights[w[g2]]
 					s.weight <- s.weight/mean(s.weight)
 					
-					seqs[w[c(g1, g2)]] <- AlignProfiles(pattern=seqs[w[g1]],
-						subject=seqs[w[g2]],
-						p.weight=p.weight,
-						s.weight=s.weight,
-						substitutionMatrix=subMatrix,
-						processors=processors,
-						...)
+					if (subM) {
+						if (gapV) { # specify gap penalties
+							seqs[w[c(g1, g2)]] <- AlignProfiles(pattern=seqs[w[g1]],
+								subject=seqs[w[g2]],
+								p.weight=p.weight,
+								s.weight=s.weight,
+								substitutionMatrix=subMatrix,
+								gapExtension=gapM["gapExtension", subMatrix],
+								gapOpening=gapM["gapOpening", subMatrix],
+								terminalGap=gapM["terminalGap", subMatrix],
+								processors=processors,
+								...)
+						} else {
+							seqs[w[c(g1, g2)]] <- AlignProfiles(pattern=seqs[w[g1]],
+								subject=seqs[w[g2]],
+								p.weight=p.weight,
+								s.weight=s.weight,
+								substitutionMatrix=subMatrix,
+								processors=processors,
+								...)
+						}
+					} else { # do not need to specify substitutionMatrix
+						seqs[w[c(g1, g2)]] <- AlignProfiles(pattern=seqs[w[g1]],
+							subject=seqs[w[g2]],
+							p.weight=p.weight,
+							s.weight=s.weight,
+							processors=processors,
+							...)
+					}
 					
 					steps <- steps + 1
 					x <- grep(w[g1[1]], mergers[1:steps], fixed=TRUE)
@@ -315,7 +395,7 @@ AlignSeqs <- function(myXStringSet,
 			flush.console()
 		}
 		
-		suppressWarnings(d <- DistanceMatrix(seqs, verbose=verbose, processors=processors))
+		suppressWarnings(d <- DistanceMatrix(seqs, verbose=verbose, processors=processors, includeTerminalGaps=TRUE))
 		
 		if (verbose) {
 			cat("Reclustering into groups by similarity:\n")
@@ -324,8 +404,9 @@ AlignSeqs <- function(myXStringSet,
 		orgTree <- guideTree
 		cutoffs <- seq(0, max(d, na.rm=TRUE), length.out=100)
 		dimnames(d) <- NULL
-		suppressWarnings(guideTree <- suppressWarnings(IdClusters(d, cutoff=cutoffs, verbose=verbose, method="UPGMA", processors=processors)))
+		suppressWarnings(guideTree <- IdClusters(d, cutoff=cutoffs, verbose=verbose, method="UPGMA", processors=processors))
 		guideTree$Top <- 1
+		guideTree <- as.matrix(guideTree)
 		cutoffs <- c(cutoffs, 1)
 		w <- which(is.na(d))
 		if (length(w) > 0)
@@ -333,22 +414,26 @@ AlignSeqs <- function(myXStringSet,
 		
 		# calculate weights based on branch lengths
 		lastSplit <- numeric(dim(guideTree)[1])
-		lastSplit[] <- 1
 		weights <- numeric(dim(guideTree)[1])
 		numGroups <- 1
 		for (i in (dim(guideTree)[2] - 1):1) {
 			if (length(unique(guideTree[, i])) > numGroups) {
-				numGroups <- length(unique(guideTree[, i]))
-				for (j in unique(guideTree[, i + 1])) {
-					w <- which(guideTree[, i + 1]==j)
-					if (length(unique(guideTree[w, i])) > 1) {
-						weights[w] <- weights[w] + (lastSplit[w] - cutoffs[i])/length(w)
-						lastSplit[w] <- cutoffs[i]
+				if (numGroups==1) { # mid-point root of tree
+					lastSplit[] <- cutoffs[i]
+				} else {
+					for (j in unique(guideTree[, i + 1])) {
+						w <- which(guideTree[, i + 1]==j)
+						if (length(unique(guideTree[w, i])) > 1) {
+							weights[w] <- weights[w] + (lastSplit[w] - cutoffs[i])/length(w)
+							lastSplit[w] <- cutoffs[i]
+						}
 					}
 				}
+				numGroups <- length(unique(guideTree[, i]))
 			}
 		}
 		weights <- weights + lastSplit
+		weights <- ifelse(weights==0, 1, weights)
 		
 		if (verbose) {
 			time.1 <- Sys.time()
@@ -382,15 +467,12 @@ AlignSeqs <- function(myXStringSet,
 		
 		ns <- names(myXStringSet)
 		for (i in 1:dim(guideTree)[2]) {
-			subMatrix <- ifelse(cutoffs[i] < 0.01,
-				"BLOSUM100",
-					ifelse(cutoffs[i] < 0.2,
-						"BLOSUM80",
-						ifelse(cutoffs[i] < 0.4,
-							"BLOSUM62",
-							ifelse(cutoffs[i] < 0.5,
-								"BLOSUM50",
-								"BLOSUM45"))))
+			if (subM)
+				subMatrix <- ifelse(cutoffs[i] < 0.1,
+					"BLOSUM80",
+					ifelse(cutoffs[i] < 0.6,
+						"BLOSUM62",
+						"BLOSUM45"))
 			for (u in unique(guideTree[, i])) {
 				w <- which(guideTree[, i]==u) # groups
 				if (length(w)==1)
@@ -434,13 +516,35 @@ AlignSeqs <- function(myXStringSet,
 						s.weight <- weights[w[j]]
 						s.weight <- s.weight/mean(s.weight)
 						
-						myXStringSet[w[1:j]] <- AlignProfiles(pattern=myXStringSet[w[1:(j - 1)]],
-							subject=myXStringSet[w[j]],
-							p.weight=p.weight,
-							s.weight=s.weight,
-							substitutionMatrix="BLOSUM100",
-							processors=processors,
-							...)
+						if (subM) {
+							if (gapV) { # specify gap penalties
+								myXStringSet[w[1:j]] <- AlignProfiles(pattern=myXStringSet[w[1:(j - 1)]],
+									subject=myXStringSet[w[j]],
+									p.weight=p.weight,
+									s.weight=s.weight,
+									substitutionMatrix="BLOSUM80",
+									gapExtension=gapM["gapExtension", "BLOSUM80"],
+									gapOpening=gapM["gapOpening", "BLOSUM80"],
+									terminalGap=gapM["terminalGap", "BLOSUM80"],
+									processors=processors,
+									...)
+							} else {
+								myXStringSet[w[1:j]] <- AlignProfiles(pattern=myXStringSet[w[1:(j - 1)]],
+									subject=myXStringSet[w[j]],
+									p.weight=p.weight,
+									s.weight=s.weight,
+									substitutionMatrix="BLOSUM80",
+									processors=processors,
+									...)
+							}
+						} else { # do not need to specify substitutionMatrix
+							myXStringSet[w[1:j]] <- AlignProfiles(pattern=myXStringSet[w[1:(j - 1)]],
+								subject=myXStringSet[w[j]],
+								p.weight=p.weight,
+								s.weight=s.weight,
+								processors=processors,
+								...)
+						}
 						
 						if (verbose)
 							setTxtProgressBar(pBar, steps/l)
@@ -502,13 +606,35 @@ AlignSeqs <- function(myXStringSet,
 						s.weight <- weights[w[g2]]
 						s.weight <- s.weight/mean(s.weight)
 						
-						myXStringSet[w[c(g1, g2)]] <- AlignProfiles(pattern=myXStringSet[w[g1]],
+						if (subM) {
+							if (gapV) { # specify gap penalties
+								myXStringSet[w[c(g1, g2)]] <- AlignProfiles(pattern=myXStringSet[w[g1]],
+									subject=myXStringSet[w[g2]],
+									p.weight=p.weight,
+									s.weight=s.weight,
+									substitutionMatrix=subMatrix,
+									gapExtension=gapM["gapExtension", subMatrix],
+									gapOpening=gapM["gapOpening", subMatrix],
+									terminalGap=gapM["terminalGap", subMatrix],
+									processors=processors,
+									...)
+							} else {
+								myXStringSet[w[c(g1, g2)]] <- AlignProfiles(pattern=myXStringSet[w[g1]],
+									subject=myXStringSet[w[g2]],
+									p.weight=p.weight,
+									s.weight=s.weight,
+									substitutionMatrix=subMatrix,
+									processors=processors,
+									...)
+							}
+						} else { # do not need to specify substitutionMatrix
+							myXStringSet[w[c(g1, g2)]] <- AlignProfiles(pattern=myXStringSet[w[g1]],
 								subject=myXStringSet[w[g2]],
 								p.weight=p.weight,
 								s.weight=s.weight,
-								substitutionMatrix=subMatrix,
 								processors=processors,
 								...)
+						}
 						
 						if (verbose)
 							setTxtProgressBar(pBar, steps/l)

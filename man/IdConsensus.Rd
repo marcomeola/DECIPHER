@@ -43,7 +43,7 @@ Additional arguments to be passed directly to \code{\link{ConsensusSequence}} fo
 }
 }
 \details{
-Creates a consensus sequence for each of the distinct groups defined in \code{colName}.  The resulting \code{XStringSet} contains as many consensus sequences as there are groups in \code{colName}.  For example, it is possible to create a set of consensus sequences with one consensus sequence for each \code{"id"}, or the \code{"cluster"} output of \code{IdClusters}.
+Creates a consensus sequence for each of the distinct groups defined in \code{colName}.  The resulting \code{XStringSet} contains as many consensus sequences as there are distinct groups in \code{colName}.  For example, it is possible to create a set of consensus sequences with one consensus sequence for each \code{"id"} in the \code{tblName}.
 }
 \value{
 An \code{XStringSet} object containing the consensus sequence for each group.  The \code{names} of the \code{XStringSet} contain the number of sequences and name of each group.

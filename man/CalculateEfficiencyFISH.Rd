@@ -1,7 +1,7 @@
 \name{CalculateEfficiencyFISH}
 \alias{CalculateEfficiencyFISH}
 \title{
-Predicts Thermodynamic Parameters of Probe/Target Sequence Pairs
+Predict Thermodynamic Parameters of Probe/Target Sequence Pairs
 }
 \description{
 Calculates the Gibbs free energy, formamide melt point, and hybridization efficiency of probe/target (DNA/RNA) pairs.
@@ -39,13 +39,13 @@ Integer specifying the number of probes to simulate hybridization per batch.  Se
 }
 }
 \details{
-Hybridization efficiency of pairwise probe/target (DNA/RNA) pairs is simulated \emph{in silico}.  Gibbs free energies are obtained from system calls to OligoArrayAux, which must be properly installed (see the Notes section below).  Probe/target pairs are sent to OligoArrayAux in batches of \code{batchSize}, which prevents systems calls from being too many characters.
+Hybridization of pairwise \code{probe}/\code{target} (DNA/RNA) pairs is simulated \emph{in silico}.  Gibbs free energies are obtained from system calls to OligoArrayAux, which must be properly installed (see the Notes section below).  Probe/target pairs are sent to OligoArrayAux in batches of \code{batchSize}, which prevents systems calls from being too many characters.
 }
 \value{
-A matrix of predicted hybridization efficiency (\code{HybEff}), formamide melt point (\code{FAm}), and free energy (\code{ddG1} and \code{dG1}) for each probe/target pair.
+A matrix of predicted hybridization efficiency (\code{HybEff}), formamide melt point (\code{FAm}), and free energy (\code{ddG1} and \code{dG1}) for each \code{probe}/\code{target} pair of sequences.
 }
 \references{
-Coming Soon!
+ES Wright et al. (2014) "Automated Design of Probes for rRNA-Targeted Fluorescence In Situ Hybridization Reveals the Advantages of Using Dual Probes for Accurate Identification." Applied and Environmental Microbiology, doi:10.1128/AEM.01685-14.
 }
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}
@@ -62,5 +62,5 @@ The program OligoArrayAux (\url{http://mfold.rna.albany.edu/?q=DINAMelt/OligoArr
 probe <- c("GGGCTTTCACATCAGACTTAAGAAACC", "CCCCACGCTTTCGCGCC")
 target <- reverseComplement(DNAStringSet(probe))
 # not run (must have OligoArrayAux installed first):
-#CalculateEfficiencyFISH(probe, target, temp=46, P=250e-9, ions=1, FA=35)
+\dontrun{CalculateEfficiencyFISH(probe, target, temp=46, P=250e-9, ions=1, FA=35)}
 }

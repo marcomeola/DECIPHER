@@ -36,7 +36,7 @@ Poorly aligned regions of a multiple sequence alignment may lead to incorrect re
 Highly variable regions are detected by their signature of having low information content.  A moving average of \code{windowSize} nucleotides to the left and right of the center-point is applied to smooth noise in the information content signal along the sequence.  Regions dropping below \code{threshold} bits or more than \code{maxFractionGaps} are masked in the returned alignment.
 }
 \value{
-An \code{XMultipleAlignment} object of the input type with masked columns where the input criteria are met.
+A \code{MultipleAlignment} object of the input type with masked columns where the input criteria are met.
 }
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}

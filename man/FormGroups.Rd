@@ -4,7 +4,7 @@
 Forms Groups By Rank
 }
 \description{
-Agglomerates sequences into groups in a certain size range based on taxonomic rank.
+Agglomerates sequences into groups within a certain size range based on taxonomic rank.
 }
 \usage{
 FormGroups(dbFile,
@@ -39,7 +39,7 @@ Logical indicating whether to print database queries and other information.
 }
 }
 \details{
-\code{FormGroups} uses the ``rank'' field in the \code{dbFile} table to group sequences with similar taxonomic rank.  Requires that rank information be present in the \code{tblName}, such as that created when importing sequences from a GenBank file.  The rank information must not contain repeated names belonging to different lineages.
+\code{FormGroups} uses the ``rank'' field in the \code{dbFile} table to group sequences with similar taxonomic rank.  Rank information must be present in the \code{tblName}, such as that created when importing sequences from a GenBank formatted file.  The rank information must not contain repeated taxonomic names belonging to different lineages.
 
 Beginning with the least common ranks, the algorithm agglomerates groups with similar ranks until the \code{goalSize} is reached.  If the group size is below \code{minGroupSize} then further agglomeration is attempted with a larger group.  If additional agglomeration results in a group larger than \code{maxGroupSize} then the agglomeration is undone so that the group is smaller.
 }

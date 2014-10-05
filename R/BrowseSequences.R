@@ -13,8 +13,10 @@ BrowseSequences <- function(myXStringSet,
 	if (!is.null(patterns) && !is.character(patterns))
 		stop("patterns must be a character vector.")
 	if (any(grepl("=|\"|<|>|[1-9]|[a-z]", patterns)))
-		stop("patters cannot contain numbers, lower case characters, or the characters (=, <, >, \")")
-	w <- which(patterns %in% c("?", "*", "+"))
+		stop("patterns cannot contain numbers, lower case characters, or the characters (=, <, >, \").")
+	if (any(patterns==""))
+		stop("No patterns can be empty.")
+	w <- which(patterns %in% c("?", "*", "+", "."))
 	if (length(w) > 0)
 		patterns[w] <- paste("\\", patterns[w], sep="")
 	if (length(colors) != length(patterns) || !is.character(colors))
@@ -47,6 +49,7 @@ BrowseSequences <- function(myXStringSet,
 		stop("colWidth must be Inf if colorPatterns is numeric.")
 	if (is.null(names(myXStringSet)))
 		names(myXStringSet) <- 1:length(myXStringSet)
+	names(myXStringSet) <- gsub("\t", " ", names(myXStringSet), fixed=TRUE)
 	if (highlight < 0 || highlight > length(myXStringSet))
 		stop("highlight must be 0 or the index of a sequence in myXStringSet.")
 	# add a consensus sequence to myXStringSet
@@ -72,18 +75,20 @@ BrowseSequences <- function(myXStringSet,
 			L <- min(length(html[[highlight]]), length(html[[i]]))
 			w <- which(html[[i]][1:L]==html[[highlight]][1:L])
 			if (length(w) > 0)
-				html[[i]][w] <- "."
+				html[[i]][w] <- "\u00B7"
 		}
 		html <- sapply(html, paste, collapse="")
 	}
 	
 	# pad shorter sequences with tildes
 	maxW <- max(width(myXStringSet))
+	if (maxW==0)
+		stop("No sequence information to display.")
 	if (colWidth > maxW)
 		colWidth <- maxW
 	for (i in 1:l) {
 		html[i] <- paste(html[i],
-			paste(rep("~", maxW - nchar(html[i])), collapse=""),
+			paste(rep(" ", maxW - nchar(html[i])), collapse=""),
 			sep="")
 	}
 	
@@ -92,6 +97,8 @@ BrowseSequences <- function(myXStringSet,
 	if (counter > maxW)
 		counter <- maxW
 	offset <- (counter - 1) - nchar(maxW)
+	if (offset < 0)
+		offset <- 0
 	legend <- paste(paste(rep(" ", offset), collapse=""), format(seq(counter, maxW, by=counter)), collapse="")
 	counter <- ceiling(counter/2)
 	tickmarks <- paste(paste(rep("'", counter - 1), collapse=""), rep("|", floor(maxW/counter)), collapse="", sep="")
@@ -190,7 +197,7 @@ BrowseSequences <- function(myXStringSet,
 			styles,
 			"</style>",
 			sep="")
-		html <- c("<html>",styles,"<pre>", html, "</pre></html>")
+		html <- c('<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head>',styles,"<pre>", html, "</pre></html>")
 	} else {
 		# add the legend and consensus sequence
 		html <- paste(format(c("", "", names(myXStringSet)[1:(l - 1)], "", "Consensus", "", ""), justify="right"),	

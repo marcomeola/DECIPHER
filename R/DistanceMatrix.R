@@ -2,7 +2,6 @@ DistanceMatrix <- function(myXStringSet,
 	includeTerminalGaps=FALSE,
 	penalizeGapLetterMatches=TRUE,
 	penalizeGapGapMatches=FALSE,
-	removeDuplicates=FALSE,
 	correction="none",
 	processors=NULL,
 	verbose=TRUE) {
@@ -25,8 +24,6 @@ DistanceMatrix <- function(myXStringSet,
 		stop("penalizeGapGapMatches must be a logical.")
 	if (!is.logical(penalizeGapLetterMatches))
 		stop("penalizeGapLetterMatches must be a logical.")
-	if (!is.logical(removeDuplicates))
-		stop("removeDuplicates must be a logical.")
 	if (!is.logical(verbose))
 		stop("verbose must be a logical.")
 	if (!is(myXStringSet, "XStringSet"))
@@ -63,12 +60,6 @@ DistanceMatrix <- function(myXStringSet,
 		pBar <- txtProgressBar(min=0, max=100, initial=0, style=3)
 	} else {
 		pBar <- NULL
-	}
-	
-	if (removeDuplicates) {
-		nRemoved <- length(myXStringSet)
-		myXStringSet <- unique(myXStringSet)
-		nRemoved <- nRemoved - length(myXStringSet)
 	}
 	
 	# calculate the distance matrix
@@ -118,28 +109,6 @@ DistanceMatrix <- function(myXStringSet,
 	
 	if (verbose) {
 		close(pBar)
-		#if (removeDuplicates)
-		#	cat("\nRemoved", nRemoved, "exact duplicate sequences.")
-		#if (includeTerminalGaps==TRUE & penalizeGapGapMatches==FALSE)
-		#	cat("\nCompared the union of internal ranges.",
-		#		"\nGap-gap matches not included in distance.")
-		#if (includeTerminalGaps==FALSE & penalizeGapGapMatches==FALSE)
-		#	cat("\nCompared the intersection of internal ranges.",
-		#		"\nGap-gap matches not included in distance.")
-		#if (includeTerminalGaps==TRUE & penalizeGapGapMatches==TRUE)
-		#	cat("\nCompared the entire sequence length.",
-		#		"\nConsidered gap-gap matches as mis-matches.")
-		#if (includeTerminalGaps==FALSE & penalizeGapGapMatches==TRUE)
-		#	cat("\nCompared the intersection of internal ranges.",
-		#		"\nConsidered gap-gap matches as mis-matches.")
-		#if (penalizeGapLetterMatches)
-		#	cat("\nConsidered gap-letter matches as mis-matches.")
-		#else
-		#	cat("\nGap-letter matches not included in distance.")
-		#if (correction==2)
-		#	cat("\nApplied Jukes-Cantor correction.")
-		#else if (correction==3)
-		#	cat("\nApplied Huber-Hugenholtz correction.")
 		time.2 <- Sys.time()
 		cat("\n")
 		print(round(difftime(time.2,

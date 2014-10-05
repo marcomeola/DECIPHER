@@ -44,7 +44,7 @@ SEXP commonGaps(SEXP x)
 		seq = CHAR(STRING_ELT(x, i));
 		for (j = 0; j < l; j++) {
 			if (bits[j]==0) {
-				if (seq[j]!='-') {
+				if (!(seq[j]=='-' || seq[j]=='.')) {
 					bits[j] = 1;
 					p++;
 				}

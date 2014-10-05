@@ -29,6 +29,8 @@ SearchDB <- function(dbFile,
 		stop("tblName must be a character string.")
 	if (!is.character(identifier))
 		stop("identifier must be a character string.")
+	if (length(identifier) != 1)
+		stop("identifier must be a single character string.")
 	if (!is.character(orderBy))
 		stop("orderBy must be a character string.")
 	if (!is.logical(countOnly))
@@ -74,7 +76,7 @@ SearchDB <- function(dbFile,
 		dbConn = dbFile
 		if (!inherits(dbConn,"SQLiteConnection")) 
 			stop("'dbFile' must be a character string or SQLiteConnection.")
-		if (!isIdCurrent(dbConn))
+		if (!dbIsValid(dbConn))
 			stop("The connection has expired.")
 	}
 	
@@ -144,7 +146,7 @@ SearchDB <- function(dbFile,
 			limit)
 	
 	if (verbose)
-		cat("Search Expression:", "\n", searchExpression,sep="")
+		cat("Search Expression:", strwrap(searchExpression), sep="\n")
 	
 	rs <- dbSendQuery(dbConn, searchExpression)
 	searchResult <- fetch(rs, n=-1)
@@ -173,6 +175,11 @@ SearchDB <- function(dbFile,
 			searchResult$sequence <- .Call("replaceChar",
 				searchResult$sequence,
 				"-",
+				"",
+				PACKAGE="DECIPHER")
+			searchResult$sequence <- .Call("replaceChar",
+				searchResult$sequence,
+				".",
 				"",
 				PACKAGE="DECIPHER")
 		} else if (removeGaps==3) {

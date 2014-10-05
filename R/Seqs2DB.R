@@ -52,7 +52,7 @@ Seqs2DB <- function(seqs,
 		dbConn = dbFile
 		if (!inherits(dbConn,"SQLiteConnection")) 
 			stop("'dbFile' must be a character string or connection.")
-		if (!isIdCurrent(dbConn))
+		if (!dbIsValid(dbConn))
 			stop("The connection has expired.")
 	}
 	result <- dbListTables(dbConn)
@@ -583,13 +583,13 @@ Seqs2DB <- function(seqs,
 			cat("\n",
 				"Added ",
 				newSeqs,
-				" new sequences to the table ",
+				" new sequences to table ",
 				tblName,
 				".",
 				sep="")
 		cat("\n",
 			numSeq,
-			" total sequences in the table ",
+			" total sequences in table ",
 			tblName,
 			".",
 			"\n",

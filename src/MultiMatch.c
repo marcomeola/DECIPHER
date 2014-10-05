@@ -519,7 +519,8 @@ SEXP matchOrder(SEXP x, SEXP verbose, SEXP pBar, SEXP nThreads)
 		
 		if (v) {
 			// print the percent completed so far
-			*rPercentComplete = floor(100*((double)i/((double)size_x - 1)));
+			//*rPercentComplete = floor(100*((double)i/((double)size_x - 1)));
+			*rPercentComplete = floor(100*(double)((i + 1)*size_x+(i + 1))/((size_x - 1)*size_x+(size_x - 1)));
 			
 			if (*rPercentComplete > before) { // when the percent has changed
 				// tell the progress bar to update in the R console
@@ -625,7 +626,7 @@ SEXP matchOrderDual(SEXP x, SEXP y, SEXP nThreads)
 // returns shared ranges between pairs in two unordered lists
 SEXP matchRanges(SEXP x, SEXP y, SEXP wordSize, SEXP maxLength, SEXP threshold)
 {	
-	int i, j, k, size_x = length(x), size_y = length(y), size;
+	int i, j, size_x = length(x), size_y = length(y), size;
 	int lx, ly, *X, *Y, *X_pos, *Y_pos, wS, *rans;
 	int l = asInteger(maxLength);
 	double thresh = asReal(threshold);
@@ -667,7 +668,7 @@ SEXP matchRanges(SEXP x, SEXP y, SEXP wordSize, SEXP maxLength, SEXP threshold)
 						} else if (*(bits + l + X_pos[pos_x] - 1)==Y_pos[pos_y]) { // previous anchor
 							*(bits + X_pos[pos_x] - 1) += 1; // increment anchoring
 						} else { // does not match previous anchoring
-							*(bits + X_pos[pos_x] - 1) == 0; // reset inconsistent anchoring
+							*(bits + X_pos[pos_x] - 1) = 0; // reset inconsistent anchoring
 							*(bits + l + X_pos[pos_x] - 1) = 0;
 						}
 					}
@@ -734,6 +735,45 @@ SEXP matchRanges(SEXP x, SEXP y, SEXP wordSize, SEXP maxLength, SEXP threshold)
 	UNPROTECT(1);
 	Free(bits);
 	Free(temp);
+	
+	return ans;
+}
+
+// which (bl <= x <= bu)
+// x must be in ascending order
+SEXP boundedMatches(SEXP x, SEXP bl, SEXP bu)
+{	
+	int i, mid, start = 0, end = length(x), count = 0, size_x = length(x);
+	int lowBound = asInteger(bl);
+	int upBound = asInteger(bu);
+	int *v = INTEGER(x);
+	int *buffer = (int *) R_alloc(size_x, sizeof(int));
+	
+	while (start < end) {
+		mid = floor(start + (end - start)/2);
+		if (v[mid] >= lowBound) {
+			end = mid;
+		} else if (start == mid) {
+			break;
+		} else {
+			start = mid;
+		}
+	}
+	
+	for (i = end; i < size_x; i++) {
+		if (v[i] >= lowBound && v[i] <= upBound) {
+			buffer[count] = i + 1;
+			count++;
+		} else {
+			break;
+		}
+	}
+	
+	SEXP ans;
+	PROTECT(ans = allocVector(INTSXP, count));
+	memcpy(INTEGER(ans), buffer, sizeof(int) * count);
+	
+	UNPROTECT(1);
 	
 	return ans;
 }

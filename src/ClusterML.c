@@ -97,6 +97,9 @@ static void L_known(const char *p, double *Ls, int *length)
 		case 32: // +
 			//*(Ls) = .25; *(Ls + *length) = .25; *(Ls + 2*(*length)) = .25; *(Ls + 3*(*length)) = .25; // all possible
 			break;
+		case 64: // .
+			//*(Ls) = .25; *(Ls + *length) = .25; *(Ls + 2*(*length)) = .25; *(Ls + 3*(*length)) = .25; // all possible
+			break;
 		default:
 			error("not DNA!");
 			break;

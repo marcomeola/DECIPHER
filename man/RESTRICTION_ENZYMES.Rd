@@ -14,7 +14,7 @@ A character vector of common restriction sites named by the restriction enzyme(s
  - attr(*, "names")= chr [1:233] "AaaI/BseX3I/BstZI/EagI/"| __truncated__ "AagI/BanIII/BavCI/BbvAII/"| __truncated__ "AarI" "AasI/DrdI/DseDI" ...
 }
 \source{
-List of restriction enzymes available from:  \url{http://www.genscript.com/}.
+List of restriction enzymes available from:  \href{http://www.genscript.com/}{GenScript}.
 }
 \examples{
 data(RESTRICTION_ENZYMES)

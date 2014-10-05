@@ -10,7 +10,7 @@ Counts the number of bases (A, C, G, T) and ambiguities/degeneracies in each seq
 IdLengths(dbFile,
           tblName = "DNA",
           identifier = "",
-	  type = "DNAStringSet",
+          type = "DNAStringSet",
           add2tbl = FALSE,
           batchSize = 10000,
           verbose = TRUE)
@@ -39,7 +39,7 @@ Logical indicating whether to display progress.
 }
 }
 \value{
-A \code{data.frame} with the number of \code{bases}, \code{nonbases}, and \code{width} of each sequence.  The \code{width} is defined as the sum of \code{bases} and \code{nonbases} in each sequence.  The \code{row.names} of the \code{data.frame} correspond to the "row_names" in the \code{tblName} of the \code{dbFile}.
+A \code{data.frame} with the number of \code{bases} (``A'', ``C'', ``G'', or ``T''), \code{nonbases}, and \code{width} of each sequence.  The \code{width} is defined as the sum of \code{bases} and \code{nonbases} in each sequence.  The \code{row.names} of the \code{data.frame} correspond to the "row_names" in the \code{tblName} of the \code{dbFile}.
 }
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}

@@ -44,7 +44,7 @@
 \SweaveOpts{keep.source=TRUE}
 <<echo=false>>=
 options(continue=" ")
-options(width=60)
+options(width=80)
 @
 
 \tableofcontents

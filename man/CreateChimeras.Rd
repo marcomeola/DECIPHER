@@ -1,7 +1,7 @@
 \name{CreateChimeras}
 \alias{CreateChimeras}
 \title{
-Creates Artificial Chimeras
+Create Artificial Chimeras
 }
 \description{
 Creates artificial random chimeras from a set of sequences.
@@ -56,7 +56,7 @@ Forms a set of random chimeras from the input set of (typically good quality) se
 \value{
 A \code{DNAStringSet} object containing chimeras.  The \code{names} of the chimeras are specified as "parent #1 name [chimeric region] (distance from parent to chimera), ...".
 
-If \code{includeParents = TRUE} then the parents of the the chimeras are included at the end of the result.  The parents are made to be the same length as the chimera if \code{randomLengths = TRUE}.  The \code{names} of the parents are specified as "parent #1 name [region] (distance to parent #2, ...)".
+If \code{includeParents = TRUE} then the parents of the chimeras are included at the end of the result.  The parents are trimmed to the same length as the chimera if \code{randomLengths = TRUE}.  The \code{names} of the parents are specified as "parent #1 name [region] (distance to parent #2, ...)".
 }
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}

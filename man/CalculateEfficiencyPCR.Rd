@@ -1,7 +1,7 @@
 \name{CalculateEfficiencyPCR}
 \alias{CalculateEfficiencyPCR}
 \title{
-Predicts Amplification Efficiency of Primer Sequences
+Predict Amplification Efficiency of Primer Sequences
 }
 \description{
 Calculates the amplification efficiency of primers from their hybridization efficiency and elongation efficiency at the target site.
@@ -51,12 +51,12 @@ The number of processors to use, or \code{NULL} (the default) for all available 
 }
 }
 \details{
-Amplification of pairwise primer/target pairs is simulated \emph{in silico}.  A complex model of hybridization is employed that takes into account the side reactions resulting in probe-folding, target-folding, and primer-dimer formation.  The resulting hybridization efficiency is multiplied by the elongation efficiency to predict the overall efficiency of amplification.
+Amplification of pairwise \code{primer}/\code{target} pairs is simulated \emph{in silico}.  A complex model of hybridization is employed that takes into account the side reactions resulting from probe-folding, target-folding, and primer-dimer formation.  The resulting hybridization efficiency is multiplied by the elongation efficiency to predict the overall efficiency of amplification.
 
 Free energy is obtained from system calls to OligoArrayAux, which must be properly installed (see the Notes section below).  Primer/target pairs are sent to OligoArrayAux in batches of \code{batchSize}, which prevents systems calls from being too many characters.
 }
 \value{
-A vector of predicted efficiencies for amplifying each primer/target pair of sequences.
+A vector of predicted efficiencies for amplifying each \code{primer}/\code{target} pair of sequences.
 }
 \references{
 ES Wright et al. (2013) "Exploiting Extension Bias in PCR to Improve Primer Specificity in Ensembles of Nearly Identical DNA Templates." Environmental Microbiology, doi:10.1111/1462-2920.12259.
@@ -70,11 +70,11 @@ The program OligoArrayAux (\url{http://mfold.rna.albany.edu/?q=DINAMelt/OligoArr
 \code{system("hybrid-min -V")}
 }
 \seealso{
-\code{\link{DesignPrimers}}, \code{\link{TileSeqs}}
+\code{\link{Amplify}}, \code{\link{DesignPrimers}}
 }
 \examples{
 primers <- c("AAAAACGGGGAGCGGGGGG", "AAAAACTCAACCCGAGGAGCGCGT")
 targets <- reverseComplement(DNAStringSet(primers))
 # not run (must have OligoArrayAux installed first):
-#CalculateEfficiencyPCR(primers, targets, temp=75, P=4e-7, ions=.225)
+\dontrun{CalculateEfficiencyPCR(primers, targets, temp=75, P=4e-7, ions=0.225)}
 }

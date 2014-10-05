@@ -84,7 +84,7 @@ DB2Seqs <- function(file,
 		dbConn = dbFile
 		if (!inherits(dbConn,"SQLiteConnection")) 
 			stop("'dbFile' must be a character string or SQLiteConnection.")
-		if (!isIdCurrent(dbConn))
+		if (!dbIsValid(dbConn))
 			stop("The connection has expired.")
 	}
 	
@@ -197,6 +197,11 @@ DB2Seqs <- function(file,
 			searchResult2$sequence <- .Call("replaceChar",
 				searchResult2$sequence,
 				"-",
+				"",
+				PACKAGE="DECIPHER")
+			searchResult2$sequence <- .Call("replaceChar",
+				searchResult2$sequence,
+				".",
 				"",
 				PACKAGE="DECIPHER")
 		} else if (removeGaps==3) {

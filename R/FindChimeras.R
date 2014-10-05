@@ -7,7 +7,7 @@ FindChimeras <- function(dbFile,
 	tb.width=5,
 	multiplier=20,
 	minLength=70,
-	minCoverage=.6,
+	minCoverage=0.6,
 	overlap=100,
 	minSuspectFragments=6,
 	showPercentCoverage=FALSE,
@@ -78,7 +78,7 @@ FindChimeras <- function(dbFile,
 		dbConn1 = dbFile
 		if (!inherits(dbConn1,"SQLiteConnection")) 
 			stop("'dbFile' must be a character string or SQLiteConnection.")
-		if (!isIdCurrent(dbConn1))
+		if (!dbIsValid(dbConn1))
 			stop("The connection has expired.")
 	}
 	
@@ -89,7 +89,7 @@ FindChimeras <- function(dbFile,
 		dbConn2 = dbFileReference
 		if (!inherits(dbConn2,"SQLiteConnection")) 
 			stop("'dbFileReference' must be a character string or SQLiteConnection")
-		if (!isIdCurrent(dbConn2))
+		if (!dbIsValid(dbConn2))
 			stop("The connection has expired.")
 	}
 	

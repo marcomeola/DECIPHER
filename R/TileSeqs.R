@@ -4,7 +4,7 @@ TileSeqs <- function(dbFile,
 	minLength=26,
 	maxLength=27,
 	maxTilePermutations=10,
-	minCoverage=.9,
+	minCoverage=0.9,
 	add2tbl=FALSE,
 	verbose=TRUE,
 	...) {
@@ -20,7 +20,7 @@ TileSeqs <- function(dbFile,
 		dbConn = dbFile
 		if (!inherits(dbConn,"SQLiteConnection")) 
 			stop("'dbFile' must be a character string or SQLiteConnection.")
-		if (!isIdCurrent(dbConn))
+		if (!dbIsValid(dbConn))
 			stop("The connection has expired.")
 	}
 	if (!is.character(tblName))
@@ -107,6 +107,15 @@ TileSeqs <- function(dbFile,
 			next
 		}
 		
+		a <- alphabetFrequency(target)
+		if (length(target) > 1 && all(rowSums(a[,1:15]) < maxLength)) {
+			warning("Skipped because sequences shorter than maxLength: ", identifier[k])
+			next
+		} else if (length(target)==1 && sum(a[,1:15]) < maxLength) {
+			warning("Skipped because sequence shorter than maxLength: ", identifier[k])
+			next
+		}
+		
 		consensus <- ConsensusSequence(target,
 			verbose=FALSE)
 		
@@ -146,12 +155,17 @@ TileSeqs <- function(dbFile,
 			target_site <- subseq(target[w],
 				start=pos[i],
 				end=pos[i + maxLength - 1])
-			target_site <- gsub("-",
-					"",
-					strsplit(toString(target_site),
-						", ",
-						fixed=TRUE)[[1]],
-					fixed=TRUE)
+			target_site <- as.character(target_site)
+			target_site <- .Call("replaceChar",
+				target_site,
+				"-",
+				"",
+				PACKAGE="DECIPHER")
+			target_site <- .Call("replaceChar",
+				target_site,
+				".",
+				"",
+				PACKAGE="DECIPHER")
 			if (all(target_site=="")) # only gaps
 				next
 			

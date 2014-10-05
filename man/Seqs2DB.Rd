@@ -43,7 +43,7 @@ Logical indicating whether to display each query as it is sent to the database.
 }
 }
 \details{
-Sequences are imported into the database in chunks of lines specified by \code{chunkSize}.  The sequences can then be identified by searching the database for the \code{identifier} provided.  Sequences are added to the database verbatim, so that no sequence information is lost when the sequences are exported from the database.
+Sequences are imported into the database in chunks of lines specified by \code{chunkSize}.  The sequences can then be identified by searching the database for the \code{identifier} provided.  Sequences are added to the database verbatim, so that no sequence information is lost when the sequences are exported from the database.  The sequence names are recorded into a column named ``description'' in the database.
 }
 \value{
 The total number of sequences in the database table is returned after import.
@@ -59,5 +59,6 @@ gen <- system.file("extdata", "Bacteria_175seqs.gen", package="DECIPHER")
 dbConn <- dbConnect(SQLite(), ":memory:")
 Seqs2DB(gen, "GenBank", dbConn, "Bacteria")
 BrowseDB(dbConn)
+dna <- SearchDB(dbConn, nameBy="description")
 dbDisconnect(dbConn)
 }

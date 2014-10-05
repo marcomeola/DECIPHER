@@ -91,6 +91,7 @@ SEXP replaceChars(SEXP x, SEXP r, SEXP t)
 						case 'B':
 						case 'b':
 						case '+':
+						case '.':
 							s[count] = seq[j];
 							count++;
 							break;
@@ -149,6 +150,7 @@ SEXP replaceChars(SEXP x, SEXP r, SEXP t)
 						case 'B':
 						case 'b':
 						case '+':
+						case '.':
 							s[count] = seq[j];
 							count++;
 							break;
@@ -202,6 +204,7 @@ SEXP replaceChars(SEXP x, SEXP r, SEXP t)
 					case 'X':
 					case '*':
 					case '+':
+					case '.':
 						s[count] = seq[j];
 						count++;
 						break;

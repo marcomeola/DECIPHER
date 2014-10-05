@@ -5,7 +5,7 @@
 Free Energy of Hybridization of Probe/Target Quadruplets
 }
 \description{
-The 8D array works with four adjacent base pairs of the probe and target sequence at a time.  Each dimension has five elements defining the residue at that position ("A", "C", "G", "T", or "-").  The array contains the standard Gibbs free energy change of probe binding (dG, [kcal/mol]) for every quadruple base pairing.
+An 8D array with four adjacent base pairs of the probe and target sequence at a time.  Each dimension has five elements defining the residue at that position ("A", "C", "G", "T", or "-").  The array contains the standard Gibbs free energy change of probe binding (dG, [kcal/mol]) for every quadruple base pairing.
 }
 \usage{data(deltaGrules)}
 \format{

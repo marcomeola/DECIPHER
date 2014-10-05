@@ -44,14 +44,12 @@ Additional arguments to adjust the appearance of the consensus sequence at the b
 }
 }
 \details{
-Some web browsers cannot quickly display a large amount colored text, so it is recommended to use \code{color = FALSE} when viewing a large \code{XStringSet}.
+\code{BrowseSequences} converts an \code{XStringSet} into html format for viewing in a web browser.  If \code{patterns} are supplied then they are matched as regular expressions, and colored according to \code{colors}.  Some web browsers cannot quickly display a large amount colored text, so it is recommended to use \code{color = FALSE} or to \code{highlight} a sequence when viewing a large \code{XStringSet}.  Highlighting will only show all of the characters in the highlighted sequence, and convert all matching positions in the other sequences into dots without \code{color}.
 
 Patterns are not matched across column breaks, so multi-character \code{patterns} should be carefully considered when \code{colWidth} is less than the maximum sequence length.  Patterns are matched sequentially in the order provided, so it is feasible to use nested \code{patterns} such as \code{c("ACCTG", "CC")}.  In this case the ``CC'' could be colored differently inside the previously colored ``ACCTG''.  Note that \code{patterns} overlapping the boundaries of a previously matched pattern will not be matched.  For example, ``ACCTG'' would not be matched if \code{patterns=c("CC", "ACCTG")}.
-
-Column positions identical to the \code{highlight}ed sequence are replaced with a ``.'' character.  Patterns are not matched in ``.'' regions.
 }
 \value{
-Creates an html file containing sequence data and opens it in a web browser for easy viewing.  The viewer has the sequence name on the left, position legend on the top, cumulative number of nucleotides on the right, and consensus sequence on the bottom.
+Creates an html file containing sequence data and opens it in a web browser for easy viewing.  The layout has the sequence name on the left, position legend on the top, cumulative number of nucleotides on the right, and consensus sequence on the bottom.
 
 Returns \code{htmlFile} if the html file was written successfully.
 }

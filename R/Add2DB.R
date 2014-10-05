@@ -1,3 +1,27 @@
+# below function from RSQLite package version 0.11.4
+.sqliteDataType <- function(obj, ...) {
+	rs.class <- data.class(obj)
+	rs.mode <- storage.mode(obj)
+	switch(rs.class,
+		numeric = if (rs.mode=="integer") "INTEGER" else "REAL",
+		character = "TEXT",
+		logical = "INTEGER",
+		factor = "TEXT",
+		ordered = "TEXT",
+		## list maps to BLOB. Although not checked, the list must
+		## either be empty or contain only raw vectors or NULLs.
+		list = "BLOB",
+		## attempt to store obj according to its storage mode if it has
+		## an unrecognized class.
+		switch(rs.mode,
+			integer = "INTEGER",
+			double = "REAL",
+			## you'll get this if class is AsIs for a list column
+			## within a data.frame
+			list = if (rs.class == "AsIs") "BLOB" else "TEXT",
+			"TEXT"))
+}
+
 Add2DB <- function(myData,
 	dbFile,
 	tblName="DNA",
@@ -29,7 +53,7 @@ Add2DB <- function(myData,
 		dbConn = dbFile
 		if (!inherits(dbConn,"SQLiteConnection")) 
 			stop("'dbFile' must be a character string or SQLiteConnection.")
-		if (!isIdCurrent(dbConn))
+		if (!dbIsValid(dbConn))
 			stop("The connection has expired.")
 	}
 	
@@ -58,10 +82,14 @@ Add2DB <- function(myData,
 					" add column ",
 					colName,
 					" ",
-					sqliteDataType(myData[colIDs[i],1]),
+					.sqliteDataType(myData[colIDs[i], 1]),
 					sep="")
 				if (verbose)
-					cat("Expression:  ", expression1, "\n", sep="")
+					cat("Expression:\n",
+						paste(strwrap(expression1),
+							sep="\n"),
+						"\n\n",
+						sep="")
 				dbGetQuery(dbConn, expression1)
 			}
 			
@@ -78,8 +106,12 @@ Add2DB <- function(myData,
 				expression2 <- paste(expression2,
 					clause)
 			if (verbose)
-				cat("Expression: ", expression2, "\n\n")
-			dbBeginTransaction(dbConn)
+				cat("Expression:\n",
+					paste(strwrap(expression2),
+						sep="\n"),
+					"\n\n",
+					sep="")
+			dbBegin(dbConn)
 			dbGetPreparedQuery(dbConn,
 				expression2,
 				bind.data=myData)

@@ -827,6 +827,22 @@ MODELS <- c("JC69",
 	"TN93",
 	"TN93+G4")
 
+.splitClusters <- function(x, y) {
+	clusterNum <- 0L
+	X <- integer(length(x))
+	u.y <- unique(y)
+	for (i in u.y) {
+		w.y <- which(y==i)
+		u.x <- unique(x[w.y])
+		for (j in u.x) {
+			clusterNum <- clusterNum + 1L
+			w.x <- which(x[w.y]==j)
+			X[w.y[w.x]] <- clusterNum
+		}
+	}
+	return(X)
+}
+
 IdClusters <- function(myDistMatrix=NULL,
 	method="UPGMA",
 	cutoff=-Inf,
@@ -889,8 +905,20 @@ IdClusters <- function(myDistMatrix=NULL,
 		stop("showPlot must be FALSE if method is 'inexact'")
 	if (length(cutoff) > 1 && (showPlot || asDendrogram))
 		stop("Only one cutoff may be specified when showPlot or asDendrogram is TRUE.")
-	if (method==7 && is.unsorted(cutoff))
-		stop("cutoff must be sorted in ascending order.")
+	ASC <- TRUE
+	if (method==7) {
+		cutoff <- rev(cutoff)
+		if (is.unsorted(cutoff))
+			stop("cutoff must be sorted in descending order.")
+	} else { # method!=7
+		if (is.unsorted(cutoff)) {
+			if (is.unsorted(rev(cutoff))) {
+				stop("cutoff must be sorted.")
+			} else {
+				ASC <- FALSE
+			}
+		}
+	}
 	if (!is.logical(add2tbl) && !is.character(add2tbl))
 		stop("add2tbl must be a logical or table name.")
 	if (is.character(add2tbl) || add2tbl)
@@ -941,7 +969,13 @@ IdClusters <- function(myDistMatrix=NULL,
 			stop("myXStringSet must be a DNAStringSet, RNAStringSet, or AAStringSet.")
 		a <- vcountPattern("-", myXStringSet)
 		if (any(a) > 0)
-			stop("Gaps must be removed before inexact clustering.")
+			stop("Gap characters ('-') must be removed before inexact clustering.")
+		a <- vcountPattern("+", myXStringSet)
+		if (any(a) > 0)
+			stop("Mask characters ('+') must be removed before inexact clustering.")
+		a <- vcountPattern(".", myXStringSet)
+		if (any(a) > 0)
+			stop("Unknown characters ('.') must be removed before inexact clustering.")
 		if (verbose)
 			pBar <- txtProgressBar(style=3)
 		
@@ -1448,8 +1482,6 @@ IdClusters <- function(myDistMatrix=NULL,
 			}
 		}
 		
-		m <- max(myClusters[,9:10])
-		
 		if (showPlot || asDendrogram) {
 			# create a dendrogram object
 			myClustersList <- list()
@@ -1549,12 +1581,13 @@ IdClusters <- function(myDistMatrix=NULL,
 							cutoff[i],
 							PACKAGE="DECIPHER")
 					x <- .organizeClustersFast(myClusters, dNames)
+					if ((method==1 || method==3) && !ASC) # ensure clusters are subsets
+						x[, 1] <- .splitClusters(x[, 1], c[, dim(c)[2]])
 					names(x) <- paste("cluster",
 						gsub("\\.", "_", cutoff[i]),
 						METHODS[method],
 						sep="")
 					c <- cbind(c, x)
-					m <- c(m, max(myClusters[,9:10]))
 				}
 			}
 			myClusters <- c

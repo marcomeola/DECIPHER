@@ -1,11 +1,14 @@
 TerminalChar <- function(myXStringSet,
-	char="-") {
+	char="") {
 	
 	# error checking
 	if (!is(myXStringSet, "XStringSet"))
 		stop("myXStringSet must be an XStringSet.")
+		
 	
-	if (char=="-" && !is(myXStringSet, "BStringSet")) {
+	if (char=="") {
+		if (is(myXStringSet, "BStringSet"))
+			stop("A single character must be specified with a BStringSet input.")
 		gaps <- .Call("gaps",
 			myXStringSet,
 			ifelse(is(myXStringSet, "AAStringSet"), 3L, 1L),

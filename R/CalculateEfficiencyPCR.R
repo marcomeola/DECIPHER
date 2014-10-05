@@ -5,7 +5,7 @@ CalculateEfficiencyPCR <- function(primer,
 	ions,
 	batchSize=1000,
 	taqEfficiency=TRUE,
-	maxDistance=.4,
+	maxDistance=0.4,
 	maxGaps=2,
 	processors=NULL) {
 	
@@ -38,27 +38,6 @@ CalculateEfficiencyPCR <- function(primer,
 		stop("temp must be a numeric.")
 	if (!is.logical(taqEfficiency))
 		stop("taqEfficiency must be a logical.")
-	if (!is.numeric(maxDistance))
-		stop("maxDistance must be a numeric.")
-	if (maxDistance < 0)
-		stop("maxDistance must be greater or equal to zero.")
-	if (maxDistance > 1)
-		stop("maxDistance must be less than or equal to one.")
-	if (!is.numeric(maxGaps))
-		stop("maxGaps must be a numeric.")
-	if (maxGaps < 0)
-		stop("maxGaps must be at least zero.")
-	if (!is.null(processors) && !is.numeric(processors))
-		stop("processors must be a numeric.")
-	if (!is.null(processors) && floor(processors)!=processors)
-		stop("processors must be a whole number.")
-	if (!is.null(processors) && processors < 1)
-		stop("processors must be at least 1.")
-	if (is.null(processors)) {
-		processors <- detectCores()
-	} else {
-		processors <- as.integer(processors)
-	}
 	
 	RT <- .0019871*(273.15 + temp) # [kcal/mol]
 	l <- length(primer)
@@ -81,6 +60,28 @@ CalculateEfficiencyPCR <- function(primer,
 	t_END <- nchar(seqs2) - p@subject@range@start - 3
 	
 	if (taqEfficiency) {
+		if (!is.numeric(maxDistance))
+			stop("maxDistance must be a numeric.")
+		if (maxDistance < 0)
+			stop("maxDistance must be greater or equal to zero.")
+		if (maxDistance > 1)
+			stop("maxDistance must be less than or equal to one.")
+		if (!is.numeric(maxGaps))
+			stop("maxGaps must be a numeric.")
+		if (maxGaps < 0)
+			stop("maxGaps must be at least zero.")
+		if (!is.null(processors) && !is.numeric(processors))
+			stop("processors must be a numeric.")
+		if (!is.null(processors) && floor(processors)!=processors)
+			stop("processors must be a whole number.")
+		if (!is.null(processors) && processors < 1)
+			stop("processors must be at least 1.")
+		if (is.null(processors)) {
+			processors <- detectCores()
+		} else {
+			processors <- as.integer(processors)
+		}
+		
 		seqs1 <- unlist(strsplit(toString(pattern(p)), ", ", fixed=TRUE))
 		seqs2 <- unlist(strsplit(toString(subject(p)), ", ", fixed=TRUE))
 		seqs2 <- reverseComplement(DNAStringSet(seqs2))

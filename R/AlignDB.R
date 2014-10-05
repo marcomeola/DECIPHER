@@ -6,16 +6,16 @@
 	count <- t[5] - 4
 	t <- t[-1:-5]
 	
-	p.inserts <- character()
-	s.inserts <- character()
+	p.inserts <- integer()
+	s.inserts <- integer()
 	p.ats <- integer()
 	s.ats <- integer()
 	
 	if (start.s < start.p) {
-		s.inserts <- paste(rep("-", start.p - 1), collapse="")
+		s.inserts <- start.p - 1
 		s.ats <- 1
 	} else if (start.p < start.s) {
-		p.inserts <- paste(rep("-", start.s - 1), collapse="")
+		p.inserts <- start.s - 1
 		p.ats <- 1
 	}
 	
@@ -30,11 +30,11 @@
 				i <- i + l
 				j <- j + l
 			} else if (t[k] > 0) {
-				p.inserts <- c(p.inserts, paste(rep("-", l), collapse=""))
+				p.inserts <- c(p.inserts, l)
 				p.ats <- c(p.ats, i)
 				j <- j + l
 			} else {
-				s.inserts <- c(s.inserts, paste(rep("-", l), collapse=""))
+				s.inserts <- c(s.inserts, l)
 				s.ats <- c(s.ats, j)
 				i <- i + l
 			}
@@ -43,13 +43,34 @@
 	}
 	
 	if (ls - end.s > 0) {
-		p.inserts <- c(p.inserts, paste(rep("-", ls - end.s), collapse=""))
+		p.inserts <- c(p.inserts, ls - end.s)
 		p.ats <- c(p.ats, lp + 1)
 	}
 	
 	if (lp - end.p > 0) {
-		s.inserts <- c(s.inserts, paste(rep("-", lp - end.p), collapse=""))
+		s.inserts <- c(s.inserts, lp - end.p)
 		s.ats <- c(s.ats, ls + 1)
+	}
+	
+	if (length(p.inserts) > 0) {
+		u <- unique(p.inserts)
+		r <- sapply(u,
+			function(x) {
+				paste(rep("-", x), collapse="")
+			})
+		p.inserts <- r[match(p.inserts, u)]
+	} else {
+		p.inserts <- character()
+	}
+	if (length(s.inserts) > 0) {
+		u <- unique(s.inserts)
+		r <- sapply(u,
+			function(x) {
+				paste(rep("-", x), collapse="")
+			})
+		s.inserts <- r[match(s.inserts, u)]
+	} else {
+		s.inserts <- character()
 	}
 	
 	return(list(p.ats, p.inserts, s.ats, s.inserts))
@@ -61,12 +82,12 @@ AlignDB <- function(dbFile,
 	type="DNAStringSet",
 	add2tbl="DNA",
 	batchSize=10000,
-	perfectMatch=6,
-	misMatch=0,
-	gapOpening=-9,
-	gapExtension=-3,
-	terminalGap=-2,
-	substitutionMatrix="BLOSUM62",
+	perfectMatch=NULL,
+	misMatch=NULL,
+	gapOpening=NULL,
+	gapExtension=NULL,
+	terminalGap=-1,
+	substitutionMatrix=NULL,
 	processors=NULL,
 	verbose=TRUE) {
 	
@@ -107,8 +128,36 @@ AlignDB <- function(dbFile,
 		dbConn = dbFile
 		if (!inherits(dbConn,"SQLiteConnection")) 
 			stop("'dbFile' must be a character string or SQLiteConnection.")
-		if (!isIdCurrent(dbConn))
+		if (!dbIsValid(dbConn))
 			stop("The connection has expired.")
+	}
+	if (type==1) {
+		if (is.null(perfectMatch))
+			perfectMatch <- 6
+		if (is.null(misMatch))
+			misMatch <- -3
+		if (is.null(gapOpening))
+			gapOpening <- -11
+		if (is.null(gapExtension))
+			gapExtension <- -3
+	} else if (type==2) {
+		if (is.null(perfectMatch))
+			perfectMatch <- 4
+		if (is.null(misMatch))
+			misMatch <- 0
+		if (is.null(gapOpening))
+			gapOpening <- -4
+		if (is.null(gapExtension))
+			gapExtension <- -1
+	} else { # type==3
+		if (is.null(perfectMatch))
+			perfectMatch <- 4
+		if (is.null(misMatch))
+			misMatch <- 0
+		if (is.null(gapOpening))
+			gapOpening <- -5
+		if (is.null(gapExtension))
+			gapExtension <- -3
 	}
 	if (!is.numeric(perfectMatch))
 		stop("perfectMatch must be a numeric.")
@@ -121,7 +170,7 @@ AlignDB <- function(dbFile,
 	if (!all(is.numeric(terminalGap)))
 		stop("terminalGap must be a numeric.")
 	if (length(terminalGap) > 2 || length(terminalGap) < 1)
-		stop("terminalGap must be of length 1 or 2.")
+		stop("Length of terminalGap must be 1 or 2.")
 	if (any(is.infinite(terminalGap)))
 		stop("terminalGap must be finite.")
 	if (length(terminalGap)==1)
@@ -137,14 +186,38 @@ AlignDB <- function(dbFile,
 	} else {
 		processors <- as.integer(processors)
 	}
-	if (!(substitutionMatrix %in% c("BLOSUM45", "BLOSUM50", "BLOSUM62", "BLOSUM80", "BLOSUM100",
+	
+	if (type==3) {
+		if (is.null(substitutionMatrix)) {
+			substitutionMatrix <- "BLOSUM62"
+		} else if (is.character(substitutionMatrix)) {
+			if (!(substitutionMatrix %in% c("BLOSUM45", "BLOSUM50", "BLOSUM62", "BLOSUM80", "BLOSUM100",
 		"PAM30", "PAM40", "PAM70", "PAM120", "PAM250")))
-		stop("Invalid substitutionMatrix.")
-	if (is(type==3, "AAStringSet")) {
+				stop("Invalid substitutionMatrix.")
+		}
 		AAs <- c("A", "R", "N", "D", "C", "Q", "E", "G", "H", "I",
 			"L", "K", "M", "F", "P", "S", "T", "W", "Y", "V", "*")
-		subMatrix <- eval(parse(text=data(list=substitutionMatrix)))
+		if (is.matrix(substitutionMatrix)) {
+			if (any(!(AAs %in% dimnames(substitutionMatrix)[[1]])) ||
+				any(!(AAs %in% dimnames(substitutionMatrix)[[2]])))
+				stop("substitutionMatrix is incomplete.")
+			subMatrix <- substitutionMatrix
+		} else {
+			subMatrix <- eval(parse(text=data(list=substitutionMatrix)))
+		}
 		subMatrix <- subMatrix[AAs, AAs]
+	} else {
+		if (!is.null(substitutionMatrix)) {
+			if (is.matrix(substitutionMatrix)) {
+				bases <- c("A", "C", "G", "T")
+				if (any(!(bases %in% dimnames(substitutionMatrix)[[1]])) ||
+					any(!(bases %in% dimnames(substitutionMatrix)[[2]])))
+					stop("substitutionMatrix is incomplete.")
+				substitutionMatrix <- substitutionMatrix[bases, bases]
+			} else {
+				stop("substitutionMatrix must be NULL or a matrix.")
+			}
+		}
 	}
 	
 	count1 <- SearchDB(dbFile=dbConn,
@@ -274,6 +347,7 @@ AlignDB <- function(dbFile,
 		t <- .Call("alignProfiles",
 			p.profile,
 			s.profile,
+			substitutionMatrix,
 			perfectMatch,
 			misMatch,
 			gapOpening,

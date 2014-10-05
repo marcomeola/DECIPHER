@@ -1,7 +1,7 @@
 \name{DesignProbes}
 \alias{DesignProbes}
 \title{
-Designs FISH Probes Targeting a Specific Group of Sequences
+Design FISH Probes Targeting a Specific Group of Sequences
 }
 \description{
 Assists in the design of single or dual probes targeting a specific group of sequences while minimizing the potential to cross-hybridize with other groups of sequences.
@@ -97,7 +97,7 @@ Two models are used in design, both of which were experimentally calibrated usin
 A different \code{data.frame} will be returned depending on number of primer sets requested.  If no probe sets are required then columns contain the designed probes for every possible position scored by their potential to cross-hybridize with other identified groups.  If one or more probe sets are requested then columns contain information for the optimal set of probes (probe one and probe two) that could be used in combination to give the fewest potential cross-hybridizations.
 }
 \references{
-Coming Soon!
+ES Wright et al. (2014) "Automated Design of Probes for rRNA-Targeted Fluorescence In Situ Hybridization Reveals the Advantages of Using Dual Probes for Accurate Identification." Applied and Environmental Microbiology, doi:10.1128/AEM.01685-14.
 }
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}
@@ -123,6 +123,6 @@ To install OligoArrayAux from the downloaded source folder on Unix-like platform
 \examples{
 db <- system.file("extdata", "Bacteria_175seqs.sqlite", package="DECIPHER")
 # not run (must have OligoArrayAux installed first):
-#tiles <- TileSeqs(db, identifier=c("Acinetobacter","Pseudomonas"))
-#probes <- DesignProbes(tiles, identifier="Acinetobacter", start=280, end=420)
+\dontrun{tiles <- TileSeqs(db, identifier=c("Acinetobacter","Pseudomonas"))}
+\dontrun{probes <- DesignProbes(tiles, identifier="Acinetobacter", start=280, end=420)}
 }

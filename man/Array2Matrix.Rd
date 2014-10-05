@@ -1,7 +1,7 @@
 \name{Array2Matrix}
 \alias{Array2Matrix}
 \title{
-Creates a Matrix Representation of a Microarray
+Create a Matrix Representation of a Microarray
 }
 \description{
 Converts the output of \code{DesignArray} into the sparse matrix format used by \code{NNLS}.
@@ -36,9 +36,8 @@ Non-zero elements' values representing hybridization efficiencies.
 A list of two components: the names of each probe, and the names of each template.
 }
 }
-\references{
-Coming Soon!
-}
+%\references{
+%}
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}
 }

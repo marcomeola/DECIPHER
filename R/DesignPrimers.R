@@ -116,15 +116,15 @@ DesignPrimers <- function(tiles,
 	P=4e-7,
 	monovalent=70e-3,
 	divalent=3e-3,
-	dNTPs=.8e-3,
-	minEfficiency=.8,
+	dNTPs=8e-04,
+	minEfficiency=0.8,
 	worstScore=-Inf,
 	numPrimerSets=0,
 	minProductSize=75,
 	maxProductSize=1200,
 	maxSearchSize=1500,
 	batchSize=1000,
-	maxDistance=.4,
+	maxDistance=0.4,
 	primerDimer=1e-7,
 	ragged5Prime=TRUE,
 	taqEfficiency=TRUE,
@@ -997,6 +997,10 @@ DesignPrimers <- function(tiles,
 			setTxtProgressBar(pBar, 100)
 		
 		if (numPrimerSets > 0) {
+			if (d==1) {
+				warning("Not enough primers to design a primer set:", id)
+				break
+			}
 			if (verbose) {
 				close(pBar)
 				if (numPrimerSets > 1) {
@@ -1368,7 +1372,7 @@ DesignPrimers <- function(tiles,
 			dims <- dim(m)
 			for (k in 1:numPrimerSets) {
 				if ((j + 1) > length(o)) {
-					warnings("Not enough primer sets meet the specified constaints:", id)
+					warning("Not enough primer sets meet the specified constaints:", id)
 					break
 				}
 				for (j in (j + 1):length(o)) {
@@ -1474,6 +1478,7 @@ DesignPrimers <- function(tiles,
 				time.1,
 				units='secs'),
 				digits=2))
+			cat("\n")
 		}
 		
 		if (numPrimerSets == 0)

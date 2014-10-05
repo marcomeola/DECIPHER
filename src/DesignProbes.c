@@ -222,7 +222,7 @@ SEXP designProbes(SEXP x, SEXP max_pl, SEXP min_pl, SEXP max_c, SEXP numMMs, SEX
 		int count = 0;
 		// determine the non-gap pos and ambiguities
 		for (j = start; j < end; j++) {
-			if (!(x_i.seq[j] & 0x10)) {
+			if (!(x_i.seq[j] & 0x10 || x_i.seq[j] & 0x40)) {
 				pos[count][0] = j;
 				switch (x_i.seq[j]) {
 					case 3:
@@ -486,9 +486,9 @@ SEXP designProbes(SEXP x, SEXP max_pl, SEXP min_pl, SEXP max_c, SEXP numMMs, SEX
 					int III[2] = {0};
 					int IV[2] = {0};
 					for (p = pos[j + lengths[n]][0]; p >= start; p--) {
-						if (!(x_i.seq[p] & 0x10) || !(x_l.seq[p] & 0x10)) {
+						if (!(x_i.seq[p] & 0x10 || x_i.seq[p] & 0x40) || !(x_l.seq[p] & 0x10 || x_l.seq[p] & 0x40)) {
 							if (c < 0) { // tail of probe
-								if (!(x_l.seq[p] & 0x10)) {
+								if (!(x_l.seq[p] & 0x10 || x_l.seq[p] & 0x40)) {
 									c--;
 									if (c < -6) // more than 5 consecutive matches
 										break;
@@ -511,7 +511,7 @@ SEXP designProbes(SEXP x, SEXP max_pl, SEXP min_pl, SEXP max_c, SEXP numMMs, SEX
 									c--;
 									
 									I[1] = -1; // perfect match
-								} else if (!(x_i.seq[p] & 0x10)) { // mismatch
+								} else if (!(x_i.seq[p] & 0x10 || x_i.seq[p] & 0x40)) { // mismatch
 									I[0] = pers[n][c];
 									c--;
 									

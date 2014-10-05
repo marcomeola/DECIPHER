@@ -1,7 +1,7 @@
 \name{DesignPrimers}
 \alias{DesignPrimers}
 \title{
-Designs PCR Primers Targeting a Specific Group of Sequences
+Design PCR Primers Targeting a Specific Group of Sequences
 }
 \description{
 Assists in the design of primer sets targeting a specific group of sequences while minimizing the potential to cross-amplify other groups of sequences.
@@ -159,7 +159,7 @@ To install OligoArrayAux from the downloaded source folder on Unix-like platform
 \examples{
 db <- system.file("extdata", "Bacteria_175seqs.sqlite", package="DECIPHER")
 # not run (must have OligoArrayAux installed first):
-#tiles <- TileSeqs(db, identifier=c("Acinetobacter","Pseudomonas"))
-#primers <- DesignPrimers(tiles, identifier="Acinetobacter", start=280, end=420,
-#	minProductSize=50, numPrimerSets=1)
+\dontrun{tiles <- TileSeqs(db, identifier=c("Acinetobacter","Pseudomonas"))}
+\dontrun{primers <- DesignPrimers(tiles, identifier="Acinetobacter", start=280, end=420,
+	minProductSize=50, numPrimerSets=1)}
 }

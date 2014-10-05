@@ -79,7 +79,7 @@ Logical indicating whether to display progress.
 }
 }
 \details{
-The algorithm works by finding suspect fragments that are uncommon in the group where the sequence belongs, but very common in another group where the sequence does not belong.  Each sequence in the \code{dbFile} is tiled into short sequence segments called fragments.  If the fragments are infrequent in their respective group in the \code{dbFileReference} then they are considered suspect.  If enough suspect fragments from a sequence meet the specified constraints then the sequence is flagged as a chimera.
+\code{FindChimeras} works by finding suspect fragments that are uncommon in the group where the sequence belongs, but very common in another group where the sequence does not belong.  Each sequence in the \code{dbFile} is tiled into short sequence segments called fragments.  If the fragments are infrequent in their respective group in the \code{dbFileReference} then they are considered suspect.  If enough suspect fragments from a sequence meet the specified constraints then the sequence is flagged as a chimera.
 
 The default parameters are optimized for full-length 16S sequences (> 1,000 nucleotides).  Shorter 16S sequences require two parameters that are different than the defaults:  \code{minLength = 40}, and \code{minSuspectFragments = 2}.
 
@@ -90,7 +90,7 @@ If a reference database is not present then it is feasible to create a reference
 For non-16S sequences it may be necessary to optimize the parameters for the particular sequences.  The simplest way to perform an optimization is to experiment with different input parameters on artificial chimeras such as those created using \code{\link{CreateChimeras}}.  Adjusting input parameters until the maximum number of artificial chimeras are identified is the easiest way to determine new defaults.
 }
 \value{
-A \code{data.frame} containing only the sequences that meet the specifications for being chimeric.  The chimera column contains information on the chimeric region and to which group it belongs.  The \code{row.names} of the \code{data.frame} correspond to those of the sequences in \code{dbFile}.
+A \code{data.frame} containing only the sequences that meet the specifications for being chimeric.  The chimera column contains information on the chimeric region and to which group it belongs.  The \code{row.names} of the \code{data.frame} correspond to those of the sequences in the \code{dbFile}.
 }
 \references{
 ES Wright et al. (2012) "DECIPHER: A Search-Based Approach to Chimera Identification for 16S rRNA Sequences." Applied and Environmental Microbiology, doi:10.1128/AEM.06516-11.

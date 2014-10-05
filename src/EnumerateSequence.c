@@ -295,13 +295,13 @@ SEXP enumerateGappedSequence(SEXP x, SEXP wordSize)
 			int count = 0;
 			for (j = 0; j < x_i.length; j++) {
 				if (count < wS - 1) {
-					if (x_i.seq[j] != 16) { // not gap
+					if (x_i.seq[j] != 16 && x_i.seq[j] != 64) { // not gap
 						alphabetFrequency(&x_i, &bases[count], j); // fill initial numbers
 						count++;
 					}
 					continue;
 				}
-				if (x_i.seq[j] == 16) // gap
+				if (x_i.seq[j] == 16 || x_i.seq[j] == 64) // gap
 					continue;
 				alphabetFrequency(&x_i, &bases[wS - 1], j);
 				count++;
@@ -340,6 +340,8 @@ SEXP enumerateGappedSequence(SEXP x, SEXP wordSize)
 					*(p + j) = *(POS + j);
 				}
 			}
+			Free(POS);
+			Free(ANS);
 		}
 		
 		SET_VECTOR_ELT(ret_list, 2*i, ans);
@@ -388,13 +390,13 @@ SEXP enumerateGappedSequenceAA(SEXP x, SEXP wordSize)
 			int count = 0;
 			for (j = 0; j < x_i.length; j++) {
 				if (count < wS - 1) {
-					if (x_i.seq[j] != 45) { // not gap
+					if (x_i.seq[j] != 45 && x_i.seq[j] != 46) { // not gap
 						alphabetFrequencyAA(&x_i, &bases[count], j); // fill initial numbers
 						count++;
 					}
 					continue;
 				}
-				if (x_i.seq[j] == 45) // gap
+				if (x_i.seq[j] == 45 || x_i.seq[j] == 46) // gap
 					continue;
 				alphabetFrequencyAA(&x_i, &bases[wS - 1], j);
 				count++;
@@ -433,6 +435,8 @@ SEXP enumerateGappedSequenceAA(SEXP x, SEXP wordSize)
 					*(p + j) = *(POS + j);
 				}
 			}
+			Free(POS);
+			Free(ANS);
 		}
 		
 		SET_VECTOR_ELT(ret_list, 2*i, ans);

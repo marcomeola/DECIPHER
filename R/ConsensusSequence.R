@@ -1,8 +1,8 @@
 ConsensusSequence <- function(myXStringSet,
-	threshold=.05,
+	threshold=0.05,
 	ambiguity=TRUE,
 	noConsensusChar="+",
-	minInformation=.75,
+	minInformation=0.75,
 	ignoreNonBases=FALSE,
 	includeTerminalGaps=FALSE,
 	verbose=TRUE) {

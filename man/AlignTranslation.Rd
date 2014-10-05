@@ -1,7 +1,7 @@
 \name{AlignTranslation}
 \alias{AlignTranslation}
 \title{
-Aligns Sequences By Their Amino Acid Translation
+Align Sequences By Their Amino Acid Translation
 }
 \description{
 Performs alignment of a set of DNA or RNA sequences by aligning their corresponding amino acid sequences.
@@ -31,13 +31,13 @@ Numeric vector giving a single reading frame for all of the sequences, or an ind
 Logical specifying whether to return the aligned translation as an \code{AAStringSet} rather than an \code{XStringSet} of the input type.
 }
   \item{\dots}{
-Further arguments to be passed directly to \code{\link{AlignSeqs}}, including \code{perfectMatch}, \code{misMatch}, \code{gapOpening}, \code{gapExtension}, \code{terminalGap}, \code{restrict}, \code{anchor}, \code{doNotAlign}, \code{guideTree}, \code{processors}, and \code{verbose}.
+Further arguments to be passed directly to \code{\link{AlignSeqs}}, including \code{perfectMatch}, \code{misMatch}, \code{gapOpening}, \code{gapExtension}, \code{terminalGap}, \code{restrict}, \code{anchor}, \code{substitutionMatrix}, \code{doNotAlign}, \code{guideTree}, \code{processors}, and \code{verbose}.
 }
 }
 \details{
-Alignment of proteins is often more accurate than alignment of their coding nucleic acid sequences.  This function aligns the input nucleic acid sequences via aligning their translated amino acid sequence.  First, the input sequences are translated according to the specified \code{sense}, \code{direction}, and \code{readingFrame}.  The resulting amino acid sequences are aligned with the function \code{AlignSeqs}, and this alignment is reverse translated into the original sequence type, \code{sense}, and \code{direction}.
+Alignment of proteins is often more accurate than alignment of their coding nucleic acid sequences.  This function aligns the input nucleic acid sequences via aligning their translated amino acid sequences.  First, the input sequences are translated according to the specified \code{sense}, \code{direction}, and \code{readingFrame}.  The resulting amino acid sequences are aligned using \code{AlignSeqs}, and this alignment is reverse translated into the original sequence type, \code{sense}, and \code{direction}.
 
-If the \code{readingFrame} is \code{NA} (the default) then an attempt is made to guess the reading frame of each sequence based on the number of stop codons in the translated amino acids.  For each sequence, the first reading frame will be chosen (either \code{1}, \code{2}, or \code{3}) that has one or zero stop codons in the last position.  If the number of stop codons is inconclusive for a sequence then the reading frame will default to \code{1}.  The entire length of each sequence is translated in spite of any stop codons identified.  Note that this method is only constructive in circumstances where there is a substantially long coding sequence with at most a single stop codon expected at the final position, and therefore it is preferable to specify the reading frame of each sequence if it is known.
+If the \code{readingFrame} is \code{NA} (the default) then an attempt is made to guess the reading frame of each sequence based on the number of stop codons in the translated amino acids.  For each sequence, the first reading frame will be chosen (either \code{1}, \code{2}, or \code{3}) without stop codons, except in the last position.  If the number of stop codons is inconclusive for a sequence then the reading frame will default to \code{1}.  The entire length of each sequence is translated in spite of any stop codons identified.  Note that this method is only constructive in circumstances where there is a substantially long coding sequence with at most a single stop codon expected in the final position, and therefore it is preferable to specify the reading frame of each sequence if it is known.
 }
 \value{
 An \code{XStringSet} matching the input type.
@@ -49,7 +49,7 @@ Erik Wright \email{DECIPHER@cae.wisc.edu}
 \code{\link{AlignDB}}, \code{\link{AlignProfiles}}, \code{\link{AlignSeqs}}
 }
 \examples{
-# First three sequences translate to MFITP*, last sequence is MF-TP*
+# First three sequences translate to MFITP*; the last sequence is MF-TP*
 rna <- RNAStringSet(c("AUGUUCAUCACCCCCUAA", "AUGUUCAUAACUCCUUGA",
 	"AUGUUCAUUACACCGUAG", "AUGUUUACCCCAUAA"))
 RNA <- AlignSeqs(rna)

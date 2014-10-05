@@ -52,7 +52,7 @@ Character string giving the column name(s) for identifying each sequence record.
 Character string giving the column name for sorting the results.  Defaults to the order of entries in the database.  Optionally can be followed by \code{" ASC"} or \code{" DESC"} to specify ascending (the default) or descending order.
 }
   \item{removeGaps}{
-Determines how gaps are removed in the sequences.  This should be (an unambiguous abbreviation of) one of \code{"none"}, \code{"all"} or \code{"common"}.
+Determines how gaps ("-" or "." characters) are removed in the sequences.  This should be (an unambiguous abbreviation of) one of \code{"none"}, \code{"all"} or \code{"common"}.
 }
   \item{append}{
 Logical indicating whether to append the output to the existing \code{file}.

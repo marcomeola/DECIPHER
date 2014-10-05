@@ -1,7 +1,7 @@
 \name{DesignArray}
 \alias{DesignArray}
 \title{
-Designs a set of DNA Microarray Probes for Detecting Sequences
+Design a set of DNA Microarray Probes for Detecting Sequences
 }
 \description{
 Chooses the set of microarray probes maximizing sensitivity and specificity to each target consensus sequence.
@@ -71,7 +71,7 @@ Logical indicating whether to display progress.
 }
 }
 \details{
-The algorithm begins by determining the optimal length of probes required to meet the input constraints while maximizing sensitivity to the target consensus sequence at the specified hybridization formamide concentration.  This set of potential target sites is then scored based on the possibility of cross-hybridizing to the other non-target sequences.  The set of probes is returned with the minimum possibility of cross-hybridizing is chosen to represent each consensus sequence.
+The algorithm begins by determining the optimal length of probes required to meet the input constraints while maximizing sensitivity to the target consensus sequence at the specified hybridization formamide concentration.  This set of potential target sites is then scored based on the possibility of cross-hybridizing to the other non-target sequences.  The set of probes is returned with the minimum possibility of cross-hybridizing.
 }
 \value{
 A \code{data.frame} with the optimal set of probes matching the specified constraints.  Each row lists the probe's target sequence (\code{name}), \code{start} position, \code{length} in nucleotides, start and end position in the sequence alignment, number of \code{permutations}, \code{score}, melt point in percent \code{formamide} at 42 degrees Celsius, hybridization efficiency (\code{hyb_eff}), target site, and probe(s).  Probes are designed such that the stringency is determined by the equilibrium hybridization conditions and not subsequent washing steps.
