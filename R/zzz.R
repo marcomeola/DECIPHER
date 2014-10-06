@@ -3,16 +3,16 @@
 
 dbIsValid <- function(...) {
 	if (packageVersion("RSQLite") >= package_version("1.0.0")) {
-		DBI::dbIsValid(...)
+		do.call("dbIsValid", as.list(...), envir=getNamespace("RSQLite"))
 	} else {
-		RSQLite::isIdCurrent(...)
+		do.call("isIdCurrent", as.list(...), envir=getNamespace("RSQLite"))
 	}
 }
 
 dbBegin <- function(...) {
 	if (packageVersion("RSQLite") >= package_version("1.0.0")) {
-		RSQLite::dbBegin(...)
+		do.call("dbBegin", as.list(...), envir=getNamespace("RSQLite"))
 	} else {
-		RSQLite::dbBeginTransaction(...)
+		do.call("dbBeginTransaction", as.list(...), envir=getNamespace("RSQLite"))
 	}
 }
