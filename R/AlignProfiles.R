@@ -12,11 +12,11 @@
 	s.ats <- integer()
 	
 	if (start.s < start.p) {
-		s.inserts <- start.p - 1
-		s.ats <- 1
+		s.inserts <- start.p - 1L
+		s.ats <- 1L
 	} else if (start.p < start.s) {
-		p.inserts <- start.s - 1
-		p.ats <- 1
+		p.inserts <- start.s - 1L
+		p.ats <- 1L
 	}
 	
 	i <- start.p
@@ -44,33 +44,12 @@
 	
 	if (ls - end.s > 0) {
 		p.inserts <- c(p.inserts, ls - end.s)
-		p.ats <- c(p.ats, lp + 1)
+		p.ats <- c(p.ats, lp + 1L)
 	}
 	
 	if (lp - end.p > 0) {
 		s.inserts <- c(s.inserts, lp - end.p)
-		s.ats <- c(s.ats, ls + 1)
-	}
-	
-	if (length(p.inserts) > 0) {
-		u <- unique(p.inserts)
-		r <- sapply(u,
-			function(x) {
-				paste(rep("-", x), collapse="")
-			})
-		p.inserts <- r[match(p.inserts, u)]
-	} else {
-		p.inserts <- character()
-	}
-	if (length(s.inserts) > 0) {
-		u <- unique(s.inserts)
-		r <- sapply(u,
-			function(x) {
-				paste(rep("-", x), collapse="")
-			})
-		s.inserts <- r[match(s.inserts, u)]
-	} else {
-		s.inserts <- character()
+		s.ats <- c(s.ats, ls + 1L)
 	}
 	
 	return(list(p.ats, p.inserts, s.ats, s.inserts))
@@ -91,14 +70,13 @@ AlignProfiles <- function(pattern,
 	processors=NULL) {
 	
 	# error checking
-	if (!is(pattern, "DNAStringSet") && !is(pattern, "RNAStringSet") && !is(pattern, "AAStringSet"))
-		stop("pattern must be an AAStringSet, DNAStringSet, or RNAStringSet.")
-	if (length(pattern) < 1)
-		stop("At least one sequence is required in the pattern.")
-	if (!is(subject, "DNAStringSet") && !is(subject, "RNAStringSet") && !is(subject, "AAStringSet"))
-		stop("subject must be an AAStringSet, DNAStringSet, or RNAStringSet.")
-	if (typeof(pattern) != typeof(subject))
-		stop("pattern and subject must be of the same type.")
+	type <- switch(class(pattern),
+		`DNAStringSet` = 1L,
+		`RNAStringSet` = 2L,
+		`AAStringSet` = 3L,
+		stop("pattern must be an AAStringSet, DNAStringSet, or RNAStringSet."))
+	if (class(pattern) != class(subject))
+		stop("pattern and subject must be of the same class.")
 	if (length(subject) < 1)
 		stop("At least one sequence is required in the subject.")
 	if (length(unique(width(pattern)))!=1)
@@ -125,7 +103,7 @@ AlignProfiles <- function(pattern,
 		if (!isTRUE(all.equal(1, mean(s.weight))))
 			stop("The mean of s.weight must be 1.")
 	}
-	if (is(pattern, "DNAStringSet")) {
+	if (type==1) { # DNAStringSet
 		if (is.null(perfectMatch))
 			perfectMatch <- 6
 		if (is.null(misMatch))
@@ -134,7 +112,7 @@ AlignProfiles <- function(pattern,
 			gapOpening <- -11
 		if (is.null(gapExtension))
 			gapExtension <- -3
-	} else if (is(pattern, "RNAStringSet")) {
+	} else if (type==2) { # RNAStringSet
 		if (is.null(perfectMatch))
 			perfectMatch <- 4
 		if (is.null(misMatch))
@@ -201,7 +179,7 @@ AlignProfiles <- function(pattern,
 			") longer than the maximum allowable length (2,147,483,647).",
 			sep=""))
 	
-	if (is(pattern, "AAStringSet")) {
+	if (type==3) { # AAStringSet
 		if (is.null(substitutionMatrix)) {
 			substitutionMatrix <- "BLOSUM62"
 		} else if (is.character(substitutionMatrix)) {
@@ -240,7 +218,7 @@ AlignProfiles <- function(pattern,
 				width(pattern)[1]*width(subject)[1],
 				") than the maximum allowable size (2,147,483,647).",
 				sep=""))
-		if (is(pattern, "AAStringSet")) {
+		if (type==3) { # AAStringSet
 			p.profile <- .Call("consensusProfileAA",
 				pattern,
 				p.weight,
@@ -299,7 +277,7 @@ AlignProfiles <- function(pattern,
 		w.p <- width(pattern[1])
 		w.s <- width(subject[1])
 		
-		if (is(pattern, "AAStringSet")) {
+		if (type==3) { # AAStringSet
 			wordSize <- 7
 		} else {
 			wordSize <- 15
@@ -307,7 +285,7 @@ AlignProfiles <- function(pattern,
 		l <- min(length(pattern), length(subject))
 		o.p <- order(p.weight, decreasing=TRUE)
 		o.s <- order(s.weight, decreasing=TRUE)
-		if (is(pattern, "AAStringSet")) {
+		if (type==3) { # AAStringSet
 			num.p <- .Call("enumerateGappedSequenceAA",
 				pattern[o.p[1:l]],
 				wordSize,
@@ -349,8 +327,8 @@ AlignProfiles <- function(pattern,
 					subseq(subject, 1L, anchors[3, 1]),
 					tGaps=c(terminalGap[1], -100))
 			} else {
-				inserts <- list(integer(), character(),
-					integer(), character())
+				inserts <- list(integer(), integer(),
+					integer(), integer())
 			}
 			
 			n <- 2L
@@ -396,11 +374,11 @@ AlignProfiles <- function(pattern,
 			if (end.p && !end.s) { # need to add gaps after pattern
 				inserts[[1]] <- c(inserts[[1]], w.p + 1L)
 				inserts[[2]] <- c(inserts[[2]],
-					paste(rep("-", w.s - anchors[4, numAnchors]), collapse=""))
+					w.s - anchors[4, numAnchors])
 			} else if (end.s && !end.p) { # need to add gaps after subject
 				inserts[[3]] <- c(inserts[[3]], w.s + 1L)
 				inserts[[4]] <- c(inserts[[4]],
-					paste(rep("-", w.p - anchors[2, numAnchors]), collapse=""))
+					w.p - anchors[2, numAnchors])
 			} else if (!.Call("firstSeqsEqual",
 				pattern,
 				subject,
@@ -418,10 +396,28 @@ AlignProfiles <- function(pattern,
 		}
 	}
 	
-	if (length(inserts[[1]]) > 0)
-		pattern <- replaceAt(pattern, at=inserts[1], value=inserts[[2]])
-	if (length(inserts[[3]]) > 0)
-		subject <- replaceAt(subject, at=inserts[3], value=inserts[[4]])
+	if (length(inserts[[1]]) > 0) {
+		ns <- names(pattern)
+		pattern <- .Call("insertGaps",
+			pattern,
+			as.integer(inserts[[1]]),
+			as.integer(inserts[[2]]),
+			type,
+			processors,
+			PACKAGE="DECIPHER")
+		names(pattern) <- ns
+	}
+	if (length(inserts[[3]]) > 0) {
+		ns <- names(subject)
+		subject <- .Call("insertGaps",
+			subject,
+			as.integer(inserts[[3]]),
+			as.integer(inserts[[4]]),
+			type,
+			processors,
+			PACKAGE="DECIPHER")
+		names(subject) <- ns
+	}
 	
 	return(append(pattern, subject))
 }

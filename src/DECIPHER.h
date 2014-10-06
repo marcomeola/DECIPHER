@@ -123,3 +123,7 @@ SEXP intDist(SEXP x, SEXP levels, SEXP bins, SEXP maxBins, SEXP numRows, SEXP to
 // MeltPolymer.c
 
 SEXP meltPolymer(SEXP x, SEXP temps, SEXP ions, SEXP output);
+
+// InsertGaps.c
+
+SEXP insertGaps(SEXP x, SEXP positions, SEXP lengths, SEXP type, SEXP nThreads);

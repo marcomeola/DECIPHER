@@ -106,7 +106,7 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP subMatrix, SEXP pm, SEXP mm, SEXP go, SE
 		max += bound; // threshold for constraint boundary
 		
 		START = start;
-		for (i = top; i <= end; i++) {
+		for (i = top + 1; i <= end; i++) {
 			// determine column index
 			if (k >= lp) {
 				if (k >= ls) {
@@ -118,16 +118,12 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP subMatrix, SEXP pm, SEXP mm, SEXP go, SE
 				j = end - i;
 			}
 			//Rprintf("\ni%d j%d top%d START%d start%d value%d", i, j, top, START, start, (int)*(m + i*(ls + 1) + j));
-			if (*(m + i*(ls + 1) + j) < max) {
-				if (i > 1) {
-					if (i > top && j != (ls - 1)) {
-						//Rprintf("\n!\ntop %d i %d j %d ls %d lp %d", top, i, j, ls, lp);
-						*(o + i*ls + j) = 1;
-						*(m + i*(ls + 1) + ls) = -1e53; // block restricted area from traceback
-					}
-					top = i;
-					START = i;
-				}
+			if (*(m + i*(ls + 1) + j) < max && j < ls && i > 1) {
+				//Rprintf("\n!\ntop %d i %d j %d ls %d lp %d\n!\n", top, i, j, ls, lp);
+				*(o + i*ls + j) = 1;
+				*(m + i*(ls + 1) + ls) = -1e53; // block restricted area from traceback
+				top = i;
+				START = i;
 			} else {
 				START = top;
 				break;
@@ -446,7 +442,7 @@ SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP pm, SEXP mm, SEXP go, 
 		max += bound; // threshold for constraint boundary
 		
 		START = start;
-		for (i = top; i <= end; i++) {
+		for (i = top + 1; i <= end; i++) {
 			// determine column index
 			if (k >= lp) {
 				if (k >= ls) {
@@ -457,15 +453,11 @@ SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP pm, SEXP mm, SEXP go, 
 			} else {
 				j = end - i;
 			}
-			if (*(m + i*(ls + 1) + j) < max) {
-				if (i > 1) {
-					if (i > top && j != (ls - 1)) {
-						*(o + i*ls + j) = 1;
-						*(m + i*(ls + 1) + ls) = -1e53; // block restricted area from traceback
-					}
-					top = i;
-					START = i;
-				}
+			if (*(m + i*(ls + 1) + j) < max && j < ls && i > 1) {
+				*(o + i*ls + j) = 1;
+				*(m + i*(ls + 1) + ls) = -1e53; // block restricted area from traceback
+				top = i;
+				START = i;
 			} else {
 				START = top;
 				break;

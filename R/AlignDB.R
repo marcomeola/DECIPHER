@@ -1,4 +1,4 @@
-.align <- function(t, lp, ls) {
+.align2 <- function(t, lp, ls) {
 	end.p <- t[1]
 	end.s <- t[2]
 	start.p <- t[3]
@@ -359,7 +359,7 @@ AlignDB <- function(dbFile,
 			PACKAGE="DECIPHER")
 	}
 	
-	inserts <- .align(t, uw1, uw2)
+	inserts <- .align2(t, uw1, uw2)
 	if (length(identifier)==2) {
 		id <- paste(identifier[1],
 			identifier[2],

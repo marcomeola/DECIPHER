@@ -71,6 +71,7 @@ static const R_CallMethodDef callMethods[] = { // method call, pointer, num args
 	{"gcContent", (DL_FUNC) &gcContent, 3},
 	{"intDist", (DL_FUNC) &intDist, 6},
 	{"meltPolymer", (DL_FUNC) &meltPolymer, 4},
+	{"insertGaps", (DL_FUNC) &insertGaps, 5},
 	{NULL, NULL, 0}
 };
 

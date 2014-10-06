@@ -101,7 +101,6 @@ SEXP meltPolymer(SEXP x, SEXP temps, SEXP ions, SEXP output)
 	int rescale_i, seq_length, exp1;
 	
 	// variables for interpolating plateaus when o!=1
-	int *stack = Calloc(seq_length, int); // initialized to zero
 	double slope;
 	
 	for (s = 0; s < x_length; s++) {
@@ -161,6 +160,8 @@ SEXP meltPolymer(SEXP x, SEXP temps, SEXP ions, SEXP output)
 			}
 			seq_length++;
 		}
+		
+		int *stack = Calloc(seq_length, int); // initialized to zero
 		
 		if (o==1) {
 			PROTECT(ans = allocMatrix(REALSXP, l, seq_length)); // [temp][pos]
@@ -399,6 +400,8 @@ SEXP meltPolymer(SEXP x, SEXP temps, SEXP ions, SEXP output)
 		}
 		
 		Free(seq);
+		Free(stack);
+		
 		if (o==1) {
 			SET_VECTOR_ELT(ret, s, ans);
 			UNPROTECT(1); // ans
@@ -433,8 +436,6 @@ SEXP meltPolymer(SEXP x, SEXP temps, SEXP ions, SEXP output)
 			}
 		}
 	}
-	
-	Free(stack);
 	
 	UNPROTECT(1); // ret
 	
