@@ -38,7 +38,7 @@ CalculateEfficiencyArray <- function(probe,
 		stop("temp must be greater than or equal to absolute zero.")
 	
 	if (is.null(deltaGrules)) {
-		data(deltaGrules, envir=environment())
+		data("deltaGrules", envir=environment())
 	} else {
 		if (!is.numeric(deltaGrules))
 			stop("deltaGrules must be numeric.")

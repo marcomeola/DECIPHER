@@ -6,6 +6,7 @@ import(IRanges)
 import(XVector)
 import(Biostrings)
 import(RSQLite)
+import(parallel)
 
 export(
 # interacting with a database:

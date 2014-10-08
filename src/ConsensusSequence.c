@@ -1002,7 +1002,7 @@ SEXP consensusSequence(SEXP x, SEXP threshold, SEXP ambiguity, SEXP minInformati
 {
 	XStringSet_holder x_set;
 	Chars_holder x_i;
-	int x_length, i, j, seqLength, degeneracy, ignore, tGaps;
+	int x_length, i, seqLength, degeneracy, ignore, tGaps;
 	double *thresh, *minInfo;
 	SEXP consensusSeq;
 	
@@ -1028,7 +1028,7 @@ SEXP consensusSequence(SEXP x, SEXP threshold, SEXP ambiguity, SEXP minInformati
 	double bases[7][seqLength];
 	// 2D arrays cannot be set to zero at initialization so loops are needed
 	for (i = 0; i < 7; i++) {
-		for (j = 0; j < seqLength; j++) {
+		for (int j = 0; j < seqLength; j++) {
 			bases[i][j] = 0;
 		}
 	}
@@ -1077,7 +1077,7 @@ SEXP consensusSequenceAA(SEXP x, SEXP threshold, SEXP ambiguity, SEXP minInforma
 {
 	XStringSet_holder x_set;
 	Chars_holder x_i;
-	int x_length, i, j, seqLength, degeneracy, ignore, tGaps;
+	int x_length, i, seqLength, degeneracy, ignore, tGaps;
 	double thresh, minInfo;
 	SEXP consensusSeq;
 	
@@ -1103,7 +1103,7 @@ SEXP consensusSequenceAA(SEXP x, SEXP threshold, SEXP ambiguity, SEXP minInforma
 	double bases[26][seqLength];
 	// 2D arrays cannot be set to zero at initialization so loops are needed
 	for (i = 0; i < 26; i++) {
-		for (j = 0; j < seqLength; j++) {
+		for (int j = 0; j < seqLength; j++) {
 			bases[i][j] = 0;
 		}
 	}

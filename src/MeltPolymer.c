@@ -48,7 +48,7 @@ SEXP meltPolymer(SEXP x, SEXP temps, SEXP ions, SEXP output)
 	x_set = hold_XStringSet(x);
 	int x_length = get_length_from_XStringSet_holder(&x_set);
 	Chars_holder x_s;
-	int s, k, i, j;
+	int s, i, j;
 	
 	SEXP ret, ans;
 	double *rans;

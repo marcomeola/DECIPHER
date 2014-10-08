@@ -1,81 +1,3 @@
-.align2 <- function(t, lp, ls) {
-	end.p <- t[1]
-	end.s <- t[2]
-	start.p <- t[3]
-	start.s <- t[4]
-	count <- t[5] - 4
-	t <- t[-1:-5]
-	
-	p.inserts <- integer()
-	s.inserts <- integer()
-	p.ats <- integer()
-	s.ats <- integer()
-	
-	if (start.s < start.p) {
-		s.inserts <- start.p - 1
-		s.ats <- 1
-	} else if (start.p < start.s) {
-		p.inserts <- start.s - 1
-		p.ats <- 1
-	}
-	
-	i <- start.p
-	j <- start.s
-	
-	if (count < length(t)) {
-		k <- count + 1
-		while (k <= length(t)) {
-			l <- length(.Call("multiMatch", t, t[k], as.integer(k), PACKAGE="DECIPHER"))
-			if (t[k] == 0) {
-				i <- i + l
-				j <- j + l
-			} else if (t[k] > 0) {
-				p.inserts <- c(p.inserts, l)
-				p.ats <- c(p.ats, i)
-				j <- j + l
-			} else {
-				s.inserts <- c(s.inserts, l)
-				s.ats <- c(s.ats, j)
-				i <- i + l
-			}
-			k <- k + l
-		}
-	}
-	
-	if (ls - end.s > 0) {
-		p.inserts <- c(p.inserts, ls - end.s)
-		p.ats <- c(p.ats, lp + 1)
-	}
-	
-	if (lp - end.p > 0) {
-		s.inserts <- c(s.inserts, lp - end.p)
-		s.ats <- c(s.ats, ls + 1)
-	}
-	
-	if (length(p.inserts) > 0) {
-		u <- unique(p.inserts)
-		r <- sapply(u,
-			function(x) {
-				paste(rep("-", x), collapse="")
-			})
-		p.inserts <- r[match(p.inserts, u)]
-	} else {
-		p.inserts <- character()
-	}
-	if (length(s.inserts) > 0) {
-		u <- unique(s.inserts)
-		r <- sapply(u,
-			function(x) {
-				paste(rep("-", x), collapse="")
-			})
-		s.inserts <- r[match(s.inserts, u)]
-	} else {
-		s.inserts <- character()
-	}
-	
-	return(list(p.ats, p.inserts, s.ats, s.inserts))
-}
-
 AlignDB <- function(dbFile,
 	tblName="DNA",
 	identifier="",
@@ -359,7 +281,7 @@ AlignDB <- function(dbFile,
 			PACKAGE="DECIPHER")
 	}
 	
-	inserts <- .align2(t, uw1, uw2)
+	inserts <- .align(t, uw1, uw2)
 	if (length(identifier)==2) {
 		id <- paste(identifier[1],
 			identifier[2],
@@ -381,9 +303,13 @@ AlignDB <- function(dbFile,
 				sep=""),
 			verbose=FALSE)
 		
-		myXStringSet <- replaceAt(myXStringSet,
-			at=inserts[1],
-			value=inserts[[2]])
+		myXStringSet <- .Call("insertGaps",
+			myXStringSet,
+			as.integer(inserts[[1]]),
+			as.integer(inserts[[2]]),
+			type,
+			processors,
+			PACKAGE="DECIPHER")
 		names(myXStringSet) <- paste(names(myXStringSet),
 			ifelse(length(identifier)==2, identifier[1], tblName[1]),
 			sep="_")
@@ -412,9 +338,13 @@ AlignDB <- function(dbFile,
 				sep=""),
 			verbose=FALSE)
 		
-		myXStringSet <- replaceAt(myXStringSet,
-			at=inserts[3],
-			value=inserts[[4]])
+		myXStringSet <- .Call("insertGaps",
+			myXStringSet,
+			as.integer(inserts[[3]]),
+			as.integer(inserts[[4]]),
+			type,
+			processors,
+			PACKAGE="DECIPHER")
 		names(myXStringSet) <- paste(names(myXStringSet),
 			ifelse(length(identifier)==2, identifier[2], tblName[2]),
 			sep="_")

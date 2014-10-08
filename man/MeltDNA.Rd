@@ -37,10 +37,15 @@ Denaturation is a highly cooperative process whereby regions of double-stranded 
 If \code{type} is \code{"melt"}, then a matrix with the average Theta across the entire sequence is returned.  This matrix has a row for each input temperature (\code{temps}), and a column for each sequence in \code{myDNAStringSet}.  For example, the value in element \code{[3, 4]} is the average helicity of the fourth input sequence at the third input temperature.  If \code{type} is \code{"derivative"} then the values in the matrix are the derivative of the melt curve at each temperature.
 }
 \references{
-E Tostesen, et al. (2003). Speed-up of DNA melting algorithm with complete nearest neighbor properties. Biopolymers, 70(3), 364-376. doi:10.1002/bip.10495.
+SantaLucia, J. (1998). A unified view of polymer, dumbbell, and oligonucleotide DNA nearest-neighbor thermodynamics. Proceedings of the National Academy of Sciences, 95(4), 1460-1465.
+
+Tostesen, E., et al. (2003). Speed-up of DNA melting algorithm with complete nearest neighbor properties. Biopolymers, 70(3), 364-376. doi:10.1002/bip.10495.
 }
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}
+}
+\note{
+\code{MeltDNA} uses nearest neighbor parameters from SantaLucia (1998).
 }
 \seealso{
 \code{\link{Amplify}}, \code{\link{CalculateEfficiencyPCR}}

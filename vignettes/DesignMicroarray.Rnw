@@ -308,6 +308,8 @@ abline(a=0, b=1) # identity line
 \caption{The combined results of multiple simulations.}
 \end{centerfig}
 
+\clearpage
+
 \section{Session Information}
 All of the output in this vignette was produced under the following conditions:
 

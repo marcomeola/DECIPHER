@@ -60,9 +60,9 @@ options(width=80)
 \section{Introduction}
 %------------------------------------------------------------
 
-\begin{wrapfigure}{r}{0.5\textwidth}
+\begin{wrapfigure}{r}{0.42\textwidth}
 \begin{center}
-\includegraphics[width=0.4\textwidth]{AlignmentSpace1}
+\includegraphics[width=0.37\textwidth]{AlignmentSpace1}
 \end{center}
 \caption{\label{f1} The art of multiple sequence alignment.}
 \end{wrapfigure}
@@ -84,7 +84,7 @@ The workhorse for sequence alignment in \Rpackage{DECIPHER} is \Rfunction{AlignP
 
 \begin{wrapfigure}{r}{0.4\textwidth}
 \begin{center}
-\includegraphics[width=0.39\textwidth]{AlignmentSpace2}
+\includegraphics[width=0.38\textwidth]{AlignmentSpace2}
 \end{center}
 \caption{\label{f2} The possible alignment space.}
 \end{wrapfigure}
@@ -160,11 +160,12 @@ points(N, predict(c3,
 		data.frame(N3 = N)),
 	type="l", lty=3, col="green")
 legend("bottomright",
-	c("pairwiseAlignment",
+	c("Biostrings::pairwiseAlignment",
 		"AlignProfiles (unrestricted, unanchored)",
 		"AlignProfiles (restricted, unanchored)",
 		"AlignProfiles (restricted, anchored)"),
-	pch=c(1, 0, 5, 2), col=c("black", "blue", "red", "green"), lty=3)
+	pch=c(1, 0, 5, 2), lty=3,
+	col=c("black", "blue", "red", "green"), bg="white")
 @
 \caption{Global Pairwise Sequence Alignment Timings.}
 \end{centerfig}

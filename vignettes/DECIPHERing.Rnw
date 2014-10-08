@@ -282,6 +282,8 @@ BrowseDB(dbConn, maxChars=20)
 \end{center}
 \end{figure}
 
+\clearpage
+
 We can now look at only those sequences that belong to the phylum \term{Bacteroidetes} (Fig. 2):
 <<expr5>>=
 dna <- SearchDB(dbConn, id="Bacteroidetes")
@@ -295,6 +297,8 @@ BrowseSequences(subseq(dna, 140, 240))
 \end{center}
 \end{figure}
 
+\clearpage
+
 Let's construct a phylogenetic tree from the \term{Bacteroidetes} sequences (Fig. 3):
 \begin{centerfig}
 <<expr6,fig=TRUE,height=3.5,width=6>>=
@@ -303,6 +307,8 @@ c <- IdClusters(d, method="ML", cutoff=.05, showPlot=TRUE, myXStringSet=dna, ver
 @
 \caption{Maximum likelihood tree showing the relationships between sequences.}
 \end{centerfig}
+
+\clearpage
 
 We could then use the command below to save the in-memory database to a file for long term storage.  Be sure to change the path names to those on your system by replacing all of the text inside quotes labeled ``$<<$path to ...$>>$'' with the actual path on your system.
 \begin{Schunk}

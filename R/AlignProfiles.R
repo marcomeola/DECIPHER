@@ -79,9 +79,11 @@ AlignProfiles <- function(pattern,
 		stop("pattern and subject must be of the same class.")
 	if (length(subject) < 1)
 		stop("At least one sequence is required in the subject.")
-	if (length(unique(width(pattern)))!=1)
+	w.p <- unique(width(pattern))
+	if (length(w.p)!=1)
 		stop("Sequences in pattern must be the same width (aligned).")
-	if (length(unique(width(subject)))!=1)
+	w.s <- unique(width(subject))
+	if (length(w.s)!=1)
 		stop("Sequences in subject must be the same width (aligned).")
 	if (!is.numeric(p.weight))
 		stop("p.weight must be a numeric.")
@@ -213,11 +215,6 @@ AlignProfiles <- function(pattern,
 	}
 	
 	f <- function(pattern, subject, tGaps=terminalGap) {
-		if (width(pattern)[1]*width(subject)[1] > 2147483647) # maximum when indexing by signed integer
-			stop(paste("Alignment larger (",
-				width(pattern)[1]*width(subject)[1],
-				") than the maximum allowable size (2,147,483,647).",
-				sep=""))
 		if (type==3) { # AAStringSet
 			p.profile <- .Call("consensusProfileAA",
 				pattern,
@@ -272,11 +269,14 @@ AlignProfiles <- function(pattern,
 	}
 	
 	if (is.na(anchor)) { # don't use anchors
+		size <- w.p*w.s
+		if (size > 2147483647) # maximum when indexing by signed integer
+			stop(paste("Alignment larger (",
+				size,
+				") than the maximum allowable size (2,147,483,647).",
+				sep=""))
 		inserts <- f(pattern, subject)
 	} else { # use anchors
-		w.p <- width(pattern[1])
-		w.s <- width(subject[1])
-		
 		if (type==3) { # AAStringSet
 			wordSize <- 7
 		} else {
@@ -315,6 +315,12 @@ AlignProfiles <- function(pattern,
 		
 		numAnchors <- dim(anchors)[2]
 		if (numAnchors==0) {
+			size <- w.p*w.s
+			if (size > 2147483647) # maximum when indexing by signed integer
+				stop(paste("Alignment larger (",
+					size,
+					") than the maximum allowable size (2,147,483,647).",
+					sep=""))
 			inserts <- f(pattern, subject)
 		} else {
 			if (!.Call("firstSeqsEqual",
@@ -323,6 +329,12 @@ AlignProfiles <- function(pattern,
 				1L, anchors[1, 1],
 				1L, anchors[3, 1],
 				PACKAGE="DECIPHER")) {
+				size <- anchors[1, 1]*anchors[3, 1]
+				if (size > 2147483647) # maximum when indexing by signed integer
+					stop(paste("Alignment larger (",
+						size,
+						") than the maximum allowable size (2,147,483,647).",
+						sep=""))
 				inserts <- f(subseq(pattern, 1L, anchors[1, 1]),
 					subseq(subject, 1L, anchors[3, 1]),
 					tGaps=c(terminalGap[1], -100))
@@ -339,6 +351,12 @@ AlignProfiles <- function(pattern,
 					anchors[2, n - 1], anchors[1, n],
 					anchors[4, n - 1], anchors[3, n],
 					PACKAGE="DECIPHER")) {
+					size <- (anchors[1, n] - anchors[2, n - 1] + 1)*(anchors[3, n] - anchors[4, n - 1] + 1)
+					if (size > 2147483647) # maximum when indexing by signed integer
+						stop(paste("Alignment larger (",
+							size,
+							") than the maximum allowable size (2,147,483,647).",
+							sep=""))
 					temp <- f(subseq(pattern, anchors[2, n - 1], anchors[1, n]),
 						subseq(subject, anchors[4, n - 1], anchors[3, n]),
 						tGaps=c(-100, -100))
@@ -358,6 +376,12 @@ AlignProfiles <- function(pattern,
 					anchors[1, n], anchors[2, n],
 					anchors[3, n], anchors[4, n],
 					PACKAGE="DECIPHER")) {
+					size <- (anchors[2, n] - anchors[1, n] + 1)*(anchors[4, n] - anchors[3, n] + 1)
+					if (size > 2147483647) # maximum when indexing by signed integer
+						stop(paste("Alignment larger (",
+							size,
+							") than the maximum allowable size (2,147,483,647).",
+							sep=""))
 					temp <- f(subseq(pattern, anchors[1, n], anchors[2, n]),
 						subseq(subject, anchors[3, n], anchors[4, n]),
 						tGaps=c(-100, -100))
@@ -385,6 +409,12 @@ AlignProfiles <- function(pattern,
 				anchors[2, numAnchors], w.p,
 				anchors[4, numAnchors], w.s,
 				PACKAGE="DECIPHER")) { # need to align
+				size <- (w.p - anchors[2, numAnchors] + 1)*(w.s - anchors[4, numAnchors] + 1)
+				if (size > 2147483647) # maximum when indexing by signed integer
+					stop(paste("Alignment larger (",
+						size,
+						") than the maximum allowable size (2,147,483,647).",
+						sep=""))
 				temp <- f(subseq(pattern, anchors[2, numAnchors], w.p),
 					subseq(subject, anchors[4, numAnchors], w.s),
 					tGaps=c(-100, terminalGap[2]))

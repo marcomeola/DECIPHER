@@ -211,7 +211,8 @@ AlignSeqs <- function(myXStringSet,
 		time.1 <- Sys.time()
 		cat("Aligning Sequences:\n")
 		flush.console()
-		pBar <- txtProgressBar(style=3)
+		pBar <- txtProgressBar(style=3, max=100)
+		percentComplete <- before <- 0L
 	}
 	
 	# determine the number of steps
@@ -239,13 +240,27 @@ AlignSeqs <- function(myXStringSet,
 	steps <- 0
 	mergers <- character(l)
 	
+	if (subM) {
+		data("BLOSUM80", envir=environment())
+		data("BLOSUM62", envir=environment())
+		data("BLOSUM45", envir=environment())
+	}
+	
 	for (i in 1:dim(guideTree)[2]) {
-		if (subM)
+		if (subM) {
+			if (cutoffs[i] < 0.3) {
+				sM <- BLOSUM80
+			} else if (cutoffs[i] < 0.8) {
+				sM <- BLOSUM62
+			} else {
+				sM <- BLOSUM45
+			}
 			subMatrix <- ifelse(cutoffs[i] < 0.3,
 				"BLOSUM80",
 				ifelse(cutoffs[i] < 0.8,
 					"BLOSUM62",
 					"BLOSUM45"))
+		}
 		for (u in unique(guideTree[, i])) {
 			w <- which(guideTree[, i]==u) # groups
 			if (length(w)==1)
@@ -302,8 +317,13 @@ AlignSeqs <- function(myXStringSet,
 							sep="|")
 					}
 					
-					if (verbose)
-						setTxtProgressBar(pBar, steps/l)
+					if (verbose) {
+						percentComplete <- as.integer(100*steps/l)
+						if (percentComplete > before) {
+							setTxtProgressBar(pBar, percentComplete)
+							before <- percentComplete
+						}
+					}
 				}
 			} else {
 				g <- unique(guideTree[w, i - 1]) # sub-groups
@@ -324,7 +344,7 @@ AlignSeqs <- function(myXStringSet,
 								subject=seqs[w[g2]],
 								p.weight=p.weight,
 								s.weight=s.weight,
-								substitutionMatrix=subMatrix,
+								substitutionMatrix=sM,
 								gapExtension=gapM["gapExtension", subMatrix],
 								gapOpening=gapM["gapOpening", subMatrix],
 								terminalGap=gapM["terminalGap", subMatrix],
@@ -335,7 +355,7 @@ AlignSeqs <- function(myXStringSet,
 								subject=seqs[w[g2]],
 								p.weight=p.weight,
 								s.weight=s.weight,
-								substitutionMatrix=subMatrix,
+								substitutionMatrix=sM,
 								processors=processors,
 								...)
 						}
@@ -372,8 +392,13 @@ AlignSeqs <- function(myXStringSet,
 						}
 					}
 					
-					if (verbose)
-						setTxtProgressBar(pBar, steps/l)
+					if (verbose) {
+						percentComplete <- as.integer(100*steps/l)
+						if (percentComplete > before) {
+							setTxtProgressBar(pBar, percentComplete)
+							before <- percentComplete
+						}
+					}
 					g1 <- c(g1, g2)
 				}
 			}
@@ -383,7 +408,7 @@ AlignSeqs <- function(myXStringSet,
 	
 	if (cluster) {
 		if (verbose) {
-			setTxtProgressBar(pBar, 1)
+			setTxtProgressBar(pBar, 100)
 			close(pBar)
 			cat("\n")
 			time.2 <- Sys.time()
@@ -439,7 +464,8 @@ AlignSeqs <- function(myXStringSet,
 			time.1 <- Sys.time()
 			cat("Realigning Sequences:\n")
 			flush.console()
-			pBar <- txtProgressBar(style=3)
+			pBar <- txtProgressBar(style=3, max=100)
+			percentComplete <- before <- 0L
 		}
 		
 		# determine the number of steps
@@ -467,12 +493,20 @@ AlignSeqs <- function(myXStringSet,
 		
 		ns <- names(myXStringSet)
 		for (i in 1:dim(guideTree)[2]) {
-			if (subM)
+			if (subM) {
+				if (cutoffs[i] < 0.1) {
+					sM <- BLOSUM80
+				} else if (cutoffs[i] < 0.6) {
+					sM <- BLOSUM62
+				} else {
+					sM <- BLOSUM45
+				}
 				subMatrix <- ifelse(cutoffs[i] < 0.1,
 					"BLOSUM80",
 					ifelse(cutoffs[i] < 0.6,
 						"BLOSUM62",
 						"BLOSUM45"))
+			}
 			for (u in unique(guideTree[, i])) {
 				w <- which(guideTree[, i]==u) # groups
 				if (length(w)==1)
@@ -546,8 +580,13 @@ AlignSeqs <- function(myXStringSet,
 								...)
 						}
 						
-						if (verbose)
-							setTxtProgressBar(pBar, steps/l)
+						if (verbose) {
+							percentComplete <- as.integer(100*steps/l)
+							if (percentComplete > before) {
+								setTxtProgressBar(pBar, percentComplete)
+								before <- percentComplete
+							}
+						}
 					}
 				} else {
 					g <- unique(guideTree[w, i - 1]) # sub-groups
@@ -594,8 +633,13 @@ AlignSeqs <- function(myXStringSet,
 										PACKAGE="DECIPHER"))
 								}
 								
-								if (verbose)
-									setTxtProgressBar(pBar, steps/l)
+								if (verbose) {
+									percentComplete <- as.integer(100*steps/l)
+									if (percentComplete > before) {
+										setTxtProgressBar(pBar, percentComplete)
+										before <- percentComplete
+									}
+								}
 								g1 <- c(g1, g2)
 								next
 							}
@@ -612,7 +656,7 @@ AlignSeqs <- function(myXStringSet,
 									subject=myXStringSet[w[g2]],
 									p.weight=p.weight,
 									s.weight=s.weight,
-									substitutionMatrix=subMatrix,
+									substitutionMatrix=sM,
 									gapExtension=gapM["gapExtension", subMatrix],
 									gapOpening=gapM["gapOpening", subMatrix],
 									terminalGap=gapM["terminalGap", subMatrix],
@@ -623,7 +667,7 @@ AlignSeqs <- function(myXStringSet,
 									subject=myXStringSet[w[g2]],
 									p.weight=p.weight,
 									s.weight=s.weight,
-									substitutionMatrix=subMatrix,
+									substitutionMatrix=sM,
 									processors=processors,
 									...)
 							}
@@ -636,8 +680,13 @@ AlignSeqs <- function(myXStringSet,
 								...)
 						}
 						
-						if (verbose)
-							setTxtProgressBar(pBar, steps/l)
+						if (verbose) {
+							percentComplete <- as.integer(100*steps/l)
+							if (percentComplete > before) {
+								setTxtProgressBar(pBar, percentComplete)
+								before <- percentComplete
+							}
+						}
 						g1 <- c(g1, g2)
 					}
 				}
@@ -649,7 +698,7 @@ AlignSeqs <- function(myXStringSet,
 	}
 	
 	if (verbose) {
-		setTxtProgressBar(pBar, 1)
+		setTxtProgressBar(pBar, 100)
 		close(pBar)
 		cat("\n")
 		time.2 <- Sys.time()
