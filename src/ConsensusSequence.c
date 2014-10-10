@@ -331,6 +331,14 @@ static void alphabetFrequencyAA(const Chars_holder *P, double *bits, int seqLeng
 					*(bits + 25*seqLength + j) -= weight;
 				}
 				break;
+			case 74: // J = I or L
+				if (degeneracy==1) { // include degeneracy codes
+					*(bits + 9*seqLength + j) += 0.5*weight;
+					*(bits + 10*seqLength + j) += 0.5*weight;
+				} else { // don't include degeneracy codes
+					*(bits + 25*seqLength + j) -= weight;
+				}
+				break;
 			case 88: // X = any letter
 				if (degeneracy==1) { // include degeneracy codes
 					for (i = 0; i < 20; i++) {

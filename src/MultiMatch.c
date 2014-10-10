@@ -460,12 +460,18 @@ SEXP matchOrder(SEXP x, SEXP verbose, SEXP pBar, SEXP nThreads)
 			}
 			*/
 			
+			// the following for loops begin to jump after a few iterations
+			// under the assumption that mismatches are more frequent than gaps
+			// jumping increases as the likelihood of matching decreases
+			// also stops looking for back-matches at the end of either sequence
+			// these heuristics offer a big speed boost with some loss of accuracy
+			
 			int link_x = -1, link_y = -1; // last established link between X and Y
 			int matches = 0; // running number of matches
 			int pos_x, pos_y, off; // current position
 			int offset = 1; // distance offset from link
 			while (offset <= (lx - link_x + ly - link_y - 2)) { // within sequence
-				for (off = 1; off <= offset; off++) {
+				for (off = 1; off <= offset; off += (off < 10) ? 1 : (off/5)) { // exact is off++
 					pos_y = link_y + off;
 					pos_x = link_x + offset - off + 1;
 					if (pos_y < ly &&
@@ -477,6 +483,8 @@ SEXP matchOrder(SEXP x, SEXP verbose, SEXP pBar, SEXP nThreads)
 						matches++;
 					}
 				}
+				if (pos_y >= ly || pos_x >= lx)
+					break; // skip ends
 				offset++;
 			}
 			
@@ -490,7 +498,7 @@ SEXP matchOrder(SEXP x, SEXP verbose, SEXP pBar, SEXP nThreads)
 			matches = 0; // running number of matches
 			offset = 1; // distance offset from link
 			while (offset <= (lx - link_x + ly - link_y - 2)) { // within sequence
-				for (off = 1; off <= offset; off++) {
+				for (off = 1; off <= offset; off += (off < 10) ? 1 : (off/5)) { // exact is off++
 					pos_y = link_y + off;
 					pos_x = link_x + offset - off + 1;
 					if (pos_y < ly &&
@@ -502,6 +510,8 @@ SEXP matchOrder(SEXP x, SEXP verbose, SEXP pBar, SEXP nThreads)
 						matches++;
 					}
 				}
+				if (pos_y >= ly || pos_x >= lx)
+					break; // skip ends
 				offset++;
 			}
 			

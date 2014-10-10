@@ -116,22 +116,22 @@ AlignProfiles <- function(pattern,
 			gapExtension <- -3
 	} else if (type==2) { # RNAStringSet
 		if (is.null(perfectMatch))
-			perfectMatch <- 4
+			perfectMatch <- 8
 		if (is.null(misMatch))
-			misMatch <- 0
+			misMatch <- -3
 		if (is.null(gapOpening))
-			gapOpening <- -4
+			gapOpening <- -9
 		if (is.null(gapExtension))
-			gapExtension <- -1
+			gapExtension <- -2
 	} else { # AAStringSet
 		if (is.null(perfectMatch))
 			perfectMatch <- 4
 		if (is.null(misMatch))
 			misMatch <- 0
 		if (is.null(gapOpening))
-			gapOpening <- -3
+			gapOpening <- -5
 		if (is.null(gapExtension))
-			gapExtension <- -5
+			gapExtension <- -3
 	}
 	if (!is.numeric(perfectMatch))
 		stop("perfectMatch must be a numeric.")

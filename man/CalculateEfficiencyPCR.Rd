@@ -53,7 +53,7 @@ The number of processors to use, or \code{NULL} (the default) for all available 
 \details{
 Amplification of pairwise \code{primer}/\code{target} pairs is simulated \emph{in silico}.  A complex model of hybridization is employed that takes into account the side reactions resulting from probe-folding, target-folding, and primer-dimer formation.  The resulting hybridization efficiency is multiplied by the elongation efficiency to predict the overall efficiency of amplification.
 
-Free energy is obtained from system calls to OligoArrayAux, which must be properly installed (see the Notes section below).  Primer/target pairs are sent to OligoArrayAux in batches of \code{batchSize}, which prevents systems calls from being too many characters.
+Free energy is obtained from system calls to OligoArrayAux, which must be properly installed (see the Notes section below).  Primer/target pairs are sent to OligoArrayAux in batches of \code{batchSize}, which prevents systems calls from being too many characters.  Note that OligoArrayAux does not support degeneracy codes (non-base letters).
 }
 \value{
 A vector of predicted efficiencies for amplifying each \code{primer}/\code{target} pair of sequences.

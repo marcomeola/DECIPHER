@@ -53,7 +53,7 @@ AlignDB <- function(dbFile,
 		if (!dbIsValid(dbConn))
 			stop("The connection has expired.")
 	}
-	if (type==1) {
+	if (type==1) { # DNAStringSet
 		if (is.null(perfectMatch))
 			perfectMatch <- 6
 		if (is.null(misMatch))
@@ -62,16 +62,16 @@ AlignDB <- function(dbFile,
 			gapOpening <- -11
 		if (is.null(gapExtension))
 			gapExtension <- -3
-	} else if (type==2) {
+	} else if (type==2) { # RNAStringSet
 		if (is.null(perfectMatch))
-			perfectMatch <- 4
+			perfectMatch <- 8
 		if (is.null(misMatch))
-			misMatch <- 0
+			misMatch <- 3
 		if (is.null(gapOpening))
-			gapOpening <- -4
+			gapOpening <- -9
 		if (is.null(gapExtension))
-			gapExtension <- -1
-	} else { # type==3
+			gapExtension <- -2
+	} else { # AAStringSet
 		if (is.null(perfectMatch))
 			perfectMatch <- 4
 		if (is.null(misMatch))

@@ -10,6 +10,8 @@ BrowseSequences <- function(myXStringSet,
 	# error checking
 	if (!is(myXStringSet, "XStringSet"))
 		stop("myXStringSet must be an XStringSet.")
+	if (length(myXStringSet)==0)
+		stop("No sequence information to display.")
 	if (!is.null(patterns) && !is.character(patterns))
 		stop("patterns must be a character vector.")
 	if (any(grepl("=|\"|<|>|[1-9]|[a-z]", patterns)))

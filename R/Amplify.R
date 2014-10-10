@@ -36,13 +36,13 @@ Amplify <- function(primers,
 	if (!is.logical(includePrimers))
 		stop("includePrimers must be a logical.")
 	a <- vcountPattern("-", myDNAStringSet)
-	if (any(a) > 0)
+	if (any(a > 0))
 		stop("Gap characters ('-') must be removed before amplification.")
 	a <- vcountPattern("+", myDNAStringSet)
-	if (any(a) > 0)
+	if (any(a > 0))
 		stop("Mask characters ('+') must be removed before amplification.")
 	a <- vcountPattern(".", myDNAStringSet)
-	if (any(a) > 0)
+	if (any(a > 0))
 		stop("Unknown characters ('.') must be removed before amplification.")
 	
 	w <- width(myDNAStringSet)
@@ -68,7 +68,7 @@ Amplify <- function(primers,
 	}
 	f <- Views(myDNAStringSet, start(f), end(f))
 	if (length(f)==0)
-		return(myDNAStringSet())
+		return(DNAStringSet())
 	
 	r <- IRanges()
 	rp <- integer()
@@ -83,7 +83,7 @@ Amplify <- function(primers,
 	}
 	r <- Views(myDNAStringSet, start(r), end(r))
 	if (length(r)==0)
-		return(myDNAStringSet())
+		return(DNAStringSet())
 	
 	ends <- end(r)
 	o <- order(ends)
@@ -98,7 +98,7 @@ Amplify <- function(primers,
 		annealingTemp, P, ions, ...)
 	fw <- which(fe >= minEfficiency)
 	if (length(fw)==0)
-		return(myDNAStringSet())
+		return(DNAStringSet())
 	
 	targets <- extractAt(myDNAStringSet,
 		at=IRanges(start=start(r),
@@ -108,7 +108,7 @@ Amplify <- function(primers,
 		annealingTemp, P, ions, ...)
 	rw <- which(re >= minEfficiency)
 	if (length(rw)==0)
-		return(myDNAStringSet())
+		return(DNAStringSet())
 	
 	sf <- start(f)[fw]
 	sr <- start(r)[rw]

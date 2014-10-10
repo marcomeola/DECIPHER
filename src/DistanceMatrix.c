@@ -111,6 +111,7 @@ static double distanceAA(const Chars_holder *P, const Chars_holder *S, int start
 		if ((*p) ^ (*s) && // sequences are not equal
 			!(!((*p) ^ 0x58) && !(!((*s) ^ 0x2D) || !((*s) ^ 0x2B) || !((*s) ^ 0x2A))) && !(!((*s) ^ 0x58) && !(!((*p) ^ 0x2D) || !((*p) ^ 0x2B) || !((*p) ^ 0x2A))) && // not (X && !(non-letter))
 			!(!((*p) ^ 0x42) && (!((*s) ^ 0x4E) || !((*s) ^ 0x44))) && !(!((*s) ^ 0x42) && (!((*p) ^ 0x4E) || !((*p) ^ 0x44))) && // not (B && (N or D))
+			!(!((*p) ^ 0x4A) && (!((*s) ^ 0x49) || !((*s) ^ 0x4C))) && !(!((*s) ^ 0x4A) && (!((*p) ^ 0x49) || !((*p) ^ 0x4C))) && // not (J && (I or L))
 			!(!((*p) ^ 0x5A) && (!((*s) ^ 0x51) || !((*s) ^ 0x45))) && !(!((*s) ^ 0x5A) && (!((*p) ^ 0x51) || !((*p) ^ 0x45)))) { // not (Z && (Q or E))
 			if ((!((*p) ^ 0x2D) && !((*s) ^ 0x2E)) || (!((*p) ^ 0x2E) && !((*s) ^ 0x2D))) { // gap-gap match
 				if (!pGapsGaps) { // don't penalize gap-gap matches
