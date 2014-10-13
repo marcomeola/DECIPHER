@@ -1,0 +1,34 @@
+useDynLib(DECIPHER)
+
+import(methods)
+import(S4Vectors)
+import(IRanges)
+import(XVector)
+import(Biostrings)
+import(RSQLite)
+import(parallel)
+
+export(
+# interacting with a database:
+Add2DB, Seqs2DB, SearchDB, DB2Seqs,
+# assigning an identifier:
+FormGroups, IdentifyByRank,
+# lengths:
+IdLengths, TerminalChar,
+# grouping sequences:
+DistanceMatrix, IdClusters, MODELS,
+# forming consensus:
+ConsensusSequence, IdConsensus, TileSeqs,
+# chimeras:
+FindChimeras, CreateChimeras,
+# microarrays:
+DesignArray, Array2Matrix, NNLS, CalculateEfficiencyArray,
+# primers:
+Amplify, CalculateEfficiencyPCR, DesignPrimers, MeltDNA,
+# probes:
+CalculateEfficiencyFISH, DesignProbes,
+# viewing information:
+BrowseSequences, BrowseDB,
+# multiple alignment
+AlignSeqs, AlignProfiles, AlignTranslation, MaskAlignment, AlignDB
+)
