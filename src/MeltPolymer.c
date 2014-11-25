@@ -108,7 +108,7 @@ SEXP meltPolymer(SEXP x, SEXP temps, SEXP ions, SEXP output)
 		int *seq = Calloc(x_s.length, int); // initialized to zero
 		seq_length = 0; // x_s.length without non-DNA characters
 		for (i = 0; i < x_s.length; i++) {
-			switch (x_s.seq[i]) {
+			switch (x_s.ptr[i]) {
 				case 1: // A
 					seq[seq_length] = 0;
 					break;

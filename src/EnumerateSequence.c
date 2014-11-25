@@ -38,7 +38,7 @@
 static void alphabetFrequency(const Chars_holder *P, int *bits, int position)
 {
 	const char *p;
-	p = (P->seq + position);
+	p = (P->ptr + position);
 	
 	switch (*p) {
 		case 1: // A
@@ -126,7 +126,7 @@ SEXP enumerateSequence(SEXP x, SEXP wordSize)
 static void alphabetFrequencyAA(const Chars_holder *P, int *bits, int position)
 {
 	const char *p;
-	p = (P->seq + position);
+	p = (P->ptr + position);
 	
 	switch (*p) {
 		case 65: // A
@@ -295,13 +295,13 @@ SEXP enumerateGappedSequence(SEXP x, SEXP wordSize)
 			int count = 0;
 			for (j = 0; j < x_i.length; j++) {
 				if (count < wS - 1) {
-					if (x_i.seq[j] != 16 && x_i.seq[j] != 64) { // not gap
+					if (x_i.ptr[j] != 16 && x_i.ptr[j] != 64) { // not gap
 						alphabetFrequency(&x_i, &bases[count], j); // fill initial numbers
 						count++;
 					}
 					continue;
 				}
-				if (x_i.seq[j] == 16 || x_i.seq[j] == 64) // gap
+				if (x_i.ptr[j] == 16 || x_i.ptr[j] == 64) // gap
 					continue;
 				alphabetFrequency(&x_i, &bases[wS - 1], j);
 				count++;
@@ -390,13 +390,13 @@ SEXP enumerateGappedSequenceAA(SEXP x, SEXP wordSize)
 			int count = 0;
 			for (j = 0; j < x_i.length; j++) {
 				if (count < wS - 1) {
-					if (x_i.seq[j] != 45 && x_i.seq[j] != 46) { // not gap
+					if (x_i.ptr[j] != 45 && x_i.ptr[j] != 46) { // not gap
 						alphabetFrequencyAA(&x_i, &bases[count], j); // fill initial numbers
 						count++;
 					}
 					continue;
 				}
-				if (x_i.seq[j] == 45 || x_i.seq[j] == 46) // gap
+				if (x_i.ptr[j] == 45 || x_i.ptr[j] == 46) // gap
 					continue;
 				alphabetFrequencyAA(&x_i, &bases[wS - 1], j);
 				count++;
@@ -452,7 +452,7 @@ SEXP enumerateGappedSequenceAA(SEXP x, SEXP wordSize)
 static void alphabetFrequencyReducedAA(const Chars_holder *P, int *bits, int position, int *alpha)
 {
 	const char *p;
-	p = (P->seq + position);
+	p = (P->ptr + position);
 	
 	switch (*p) {
 		case 65: // A

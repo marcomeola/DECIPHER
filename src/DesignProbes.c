@@ -222,9 +222,9 @@ SEXP designProbes(SEXP x, SEXP max_pl, SEXP min_pl, SEXP max_c, SEXP numMMs, SEX
 		int count = 0;
 		// determine the non-gap pos and ambiguities
 		for (j = start; j < end; j++) {
-			if (!(x_i.seq[j] & 0x10 || x_i.seq[j] & 0x40)) {
+			if (!(x_i.ptr[j] & 0x10 || x_i.ptr[j] & 0x40)) {
 				pos[count][0] = j;
-				switch (x_i.seq[j]) {
+				switch (x_i.ptr[j]) {
 					case 3:
 					case 5:
 					case 6:
@@ -246,7 +246,7 @@ SEXP designProbes(SEXP x, SEXP max_pl, SEXP min_pl, SEXP max_c, SEXP numMMs, SEX
 						pos[count][1] = 1;
 						break;
 				}
-				//pos[count][1] = __builtin_popcount(x_i.seq[j]);
+				//pos[count][1] = __builtin_popcount(x_i.ptr[j]);
 				
 				//Rprintf("%d (%d)",pos[count][0],pos[count][1]);
 				count++;
@@ -277,7 +277,7 @@ SEXP designProbes(SEXP x, SEXP max_pl, SEXP min_pl, SEXP max_c, SEXP numMMs, SEX
 			int MM_seqs[nMMs]; // sequence number of worst mismatches
 			
 			if (j > 0) // not first possible position
-				if (x_i.seq[pos[j - 1][0]] & 0x1) // previous position is A
+				if (x_i.ptr[pos[j - 1][0]] & 0x1) // previous position is A
 					continue; // already checked case with poly-T tail
 			
 			for (p = 0; p < maxCombos; p++)
@@ -297,7 +297,7 @@ SEXP designProbes(SEXP x, SEXP max_pl, SEXP min_pl, SEXP max_c, SEXP numMMs, SEX
 				} else {
 					alt = 0;
 				}
-				switch (x_i.seq[pos[j + k][0]]) {
+				switch (x_i.ptr[pos[j + k][0]]) {
 					case 1: // A
 						for (p = 0; p < maxCombos; p++) {
 							pers[p][k] = 0;
@@ -486,18 +486,18 @@ SEXP designProbes(SEXP x, SEXP max_pl, SEXP min_pl, SEXP max_c, SEXP numMMs, SEX
 					int III[2] = {0};
 					int IV[2] = {0};
 					for (p = pos[j + lengths[n]][0]; p >= start; p--) {
-						if (!(x_i.seq[p] & 0x10 || x_i.seq[p] & 0x40) || !(x_l.seq[p] & 0x10 || x_l.seq[p] & 0x40)) {
+						if (!(x_i.ptr[p] & 0x10 || x_i.ptr[p] & 0x40) || !(x_l.ptr[p] & 0x10 || x_l.ptr[p] & 0x40)) {
 							if (c < 0) { // tail of probe
-								if (!(x_l.seq[p] & 0x10 || x_l.seq[p] & 0x40)) {
+								if (!(x_l.ptr[p] & 0x10 || x_l.ptr[p] & 0x40)) {
 									c--;
 									if (c < -6) // more than 5 consecutive matches
 										break;
 									I[0] = 0; // poly-T base (matches A)
-									if (x_l.seq[p] & 0x1) { // A
+									if (x_l.ptr[p] & 0x1) { // A
 										I[1] = -1;
-									} else if (x_l.seq[p] & 0x4) { // G
+									} else if (x_l.ptr[p] & 0x4) { // G
 										I[1] = 2;
-									} else if (x_l.seq[p] & 0x8) { // T
+									} else if (x_l.ptr[p] & 0x8) { // T
 										I[1] = 3;
 									} else { // C
 										I[1] = 1;
@@ -506,22 +506,22 @@ SEXP designProbes(SEXP x, SEXP max_pl, SEXP min_pl, SEXP max_c, SEXP numMMs, SEX
 									continue;
 								}
 							} else {
-								if (x_i.seq[p] & x_l.seq[p]) {
+								if (x_i.ptr[p] & x_l.ptr[p]) {
 									I[0] = pers[n][c];
 									c--;
 									
 									I[1] = -1; // perfect match
-								} else if (!(x_i.seq[p] & 0x10 || x_i.seq[p] & 0x40)) { // mismatch
+								} else if (!(x_i.ptr[p] & 0x10 || x_i.ptr[p] & 0x40)) { // mismatch
 									I[0] = pers[n][c];
 									c--;
 									
-									if (x_l.seq[p] & 0x4) { // G
+									if (x_l.ptr[p] & 0x4) { // G
 										I[1] = 2;
-									} else if (x_l.seq[p] & 0x1) { // A
+									} else if (x_l.ptr[p] & 0x1) { // A
 										I[1] = 0;
-									} else if (x_l.seq[p] & 0x8) { // T
+									} else if (x_l.ptr[p] & 0x8) { // T
 										I[1] = 3;
-									} else if (x_l.seq[p] & 0x2) { // C
+									} else if (x_l.ptr[p] & 0x2) { // C
 										I[1] = 1;
 									} else { // gap
 										I[1] = 4;
@@ -529,11 +529,11 @@ SEXP designProbes(SEXP x, SEXP max_pl, SEXP min_pl, SEXP max_c, SEXP numMMs, SEX
 								}  else { // gap mismatch
 									I[0] = 4;
 									
-									if (x_l.seq[p] & 0x4) { // G
+									if (x_l.ptr[p] & 0x4) { // G
 										I[1] = 2;
-									} else if (x_l.seq[p] & 0x1) { // A
+									} else if (x_l.ptr[p] & 0x1) { // A
 										I[1] = 0;
-									} else if (x_l.seq[p] & 0x8) { // T
+									} else if (x_l.ptr[p] & 0x8) { // T
 										I[1] = 3;
 									} else { // C
 										I[1] = 1;
@@ -769,7 +769,7 @@ SEXP designProbes(SEXP x, SEXP max_pl, SEXP min_pl, SEXP max_c, SEXP numMMs, SEX
 					
 					char probe[k + 2]; // last position is for null terminating
 					for (p = 0; p <= k; p++)
-						probe[p] = DNAdecode(x_i.seq[pos[j + p][0]]);
+						probe[p] = DNAdecode(x_i.ptr[pos[j + p][0]]);
 					probe[k + 1] = '\0'; // end (null terminate) the string
 					SET_STRING_ELT(probes, (i*numProbes + num), mkChar(probe));
 					

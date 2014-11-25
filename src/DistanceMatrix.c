@@ -50,7 +50,7 @@ static double distance(const Chars_holder *P, const Chars_holder *S, int start, 
 	count = 0;
 	
 	// walk along the sequence from (position start + 1) to (length - end - 1)
-	for (i = start, j = start, p = (P->seq + start), s = (S->seq + start);
+	for (i = start, j = start, p = (P->ptr + start), s = (S->ptr + start);
 	     (i < (P->length - end)) && (i < (S->length - end));
 	     i++, j++, p++, s++)
 	{
@@ -103,7 +103,7 @@ static double distanceAA(const Chars_holder *P, const Chars_holder *S, int start
 	count = 0;
 	
 	// walk along the sequence from (position start + 1) to (length - end - 1)
-	for (i = start, j = start, p = (P->seq + start), s = (S->seq + start);
+	for (i = start, j = start, p = (P->ptr + start), s = (S->ptr + start);
 	     (i < (P->length - end)) && (i < (S->length - end));
 	     i++, j++, p++, s++)
 	{
@@ -154,7 +154,7 @@ static int frontTerminalGaps(const Chars_holder *P)
 	gaps = 0;
 	
 	// start from the beginning of the sequence
-	for (i = 0, p = P->seq;
+	for (i = 0, p = P->ptr;
 	     i < P->length;
 	     i++, p++)
 	{
@@ -174,7 +174,7 @@ static int endTerminalGaps(const Chars_holder *P)
 	gaps = 0;
 	
 	// start from the end of the sequence
-	for (i = (P->length - 1), p = (P->seq + P->length - 1);
+	for (i = (P->length - 1), p = (P->ptr + P->length - 1);
 	     i >= 0;
 	     i--, p--)
 	{
@@ -194,7 +194,7 @@ static int frontTerminalGapsAA(const Chars_holder *P)
 	gaps = 0;
 	
 	// start from the beginning of the sequence
-	for (i = 0, p = P->seq;
+	for (i = 0, p = P->ptr;
 	     i < P->length;
 	     i++, p++)
 	{
@@ -214,7 +214,7 @@ static int endTerminalGapsAA(const Chars_holder *P)
 	gaps = 0;
 	
 	// start from the end of the sequence
-	for (i = (P->length - 1), p = (P->seq + P->length - 1);
+	for (i = (P->length - 1), p = (P->ptr + P->length - 1);
 	     i >= 0;
 	     i--, p--)
 	{
@@ -427,7 +427,7 @@ SEXP firstSeqsEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, SEXP
 		for (i = sx - 1, j = sy - 1;
 			 i < ex; // i <= ex - 1 covers j <= ey - 1 because equal length
 			 i++, j++) {
-			if (x_i.seq[i] != y_i.seq[j]) {
+			if (x_i.ptr[i] != y_i.ptr[j]) {
 				*(rans) = 0; // not equal
 				break;
 			}

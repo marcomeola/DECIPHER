@@ -440,7 +440,7 @@ SEXP clusterML(SEXP x, SEXP y, SEXP model, SEXP branches, SEXP lengths, SEXP nTh
 				if ((int)T[6*(length - 1) + j] < 0) { // first branch is a leaf
 					if (*(widths + (-1*(int)T[6*(length - 1) + j] - 1)) > i) { // position exist in this sequence
 						y_i = get_elt_from_XStringSet_holder(&y_set, (-1*(int)T[6*(length - 1) + j] - 1));
-						L_known(&y_i.seq[i], (Ls + 0*length + j), &length);
+						L_known(&y_i.ptr[i], (Ls + 0*length + j), &length);
 					}
 					for (int o = 0; o < altL; o++) {
 						*(Ls + length*8*(o + 1) + j + 0*length) = *(Ls + j + 0*length);
@@ -453,7 +453,7 @@ SEXP clusterML(SEXP x, SEXP y, SEXP model, SEXP branches, SEXP lengths, SEXP nTh
 				if ((int)T[7*(length - 1) + j] < 0) { // second branch is a leaf
 					if (*(widths + (-1*(int)T[7*(length - 1) + j] - 1)) > i) { // position exist in this sequence
 						y_i = get_elt_from_XStringSet_holder(&y_set, (-1*(int)T[7*(length - 1) + j] - 1));
-						L_known(&y_i.seq[i], (Ls + 4*length + j), &length);
+						L_known(&y_i.ptr[i], (Ls + 4*length + j), &length);
 					}
 					for (int o = 0; o < altL; o++) {
 						*(Ls + length*8*(o + 1) + j + 4*length) = *(Ls + j + 4*length);

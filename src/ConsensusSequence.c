@@ -39,7 +39,7 @@ static int frontTerminalGaps(const Chars_holder *P)
 	gaps = 0;
 	
 	// start from the beginning of the sequence
-	for (i = 0, p = P->seq;
+	for (i = 0, p = P->ptr;
 	     i < P->length;
 	     i++, p++)
 	{
@@ -59,7 +59,7 @@ static int endTerminalGaps(const Chars_holder *P)
 	gaps = 0;
 	
 	// start from the end of the sequence
-	for (i = (P->length - 1), p = (P->seq + P->length - 1);
+	for (i = (P->length - 1), p = (P->ptr + P->length - 1);
 	     i >= 0;
 	     i--, p--)
 	{
@@ -79,7 +79,7 @@ static int frontTerminalGapsAA(const Chars_holder *P)
 	gaps = 0;
 	
 	// start from the beginning of the sequence
-	for (i = 0, p = P->seq;
+	for (i = 0, p = P->ptr;
 	     i < P->length;
 	     i++, p++)
 	{
@@ -99,7 +99,7 @@ static int endTerminalGapsAA(const Chars_holder *P)
 	gaps = 0;
 	
 	// start from the end of the sequence
-	for (i = (P->length - 1), p = (P->seq + P->length - 1);
+	for (i = (P->length - 1), p = (P->ptr + P->length - 1);
 	     i >= 0;
 	     i--, p--)
 	{
@@ -117,7 +117,7 @@ static void alphabetFrequency(const Chars_holder *P, double *bits, int seqLength
 	int j;
 	const char *p;
 	
-	for (j = start, p = (P->seq + start);
+	for (j = start, p = (P->ptr + start);
 		j < (P->length - end);
 		j++, p++)
 	{
@@ -240,7 +240,7 @@ static void alphabetFrequencyAA(const Chars_holder *P, double *bits, int seqLeng
 	int j, i;
 	const char *p;
 	
-	for (j = start, p = (P->seq + start);
+	for (j = start, p = (P->ptr + start);
 		 j < (P->length - end);
 		 j++, p++)
 	{
@@ -1232,10 +1232,10 @@ SEXP consensusProfile(SEXP x, SEXP weight)
 		totW[seqLength - gapLengths[i*2 + 1]] -= w[i];
 		
 		for (j = gapLengths[i*2] + 1; j < seqLength - gapLengths[i*2 + 1] - 1; j++) {
-			if (!(x_i.seq[j - 1] & 0x10 || x_i.seq[j - 1] & 0x40) && (x_i.seq[j] & 0x10 || x_i.seq[j] & 0x40)) {
+			if (!(x_i.ptr[j - 1] & 0x10 || x_i.ptr[j - 1] & 0x40) && (x_i.ptr[j] & 0x10 || x_i.ptr[j] & 0x40)) {
 				gaps[2*j] += w[i]; // gap opening
 			}
-			if ((x_i.seq[j] & 0x10 || x_i.seq[j] & 0x40) && !(x_i.seq[j + 1] & 0x10 || x_i.seq[j + 1] & 0x40)) {
+			if ((x_i.ptr[j] & 0x10 || x_i.ptr[j] & 0x40) && !(x_i.ptr[j + 1] & 0x10 || x_i.ptr[j + 1] & 0x40)) {
 				gaps[2*j + 1] += w[i]; // gap closing
 			}
 		}
@@ -1386,10 +1386,10 @@ SEXP consensusProfileAA(SEXP x, SEXP weight)
 		totW[seqLength - gapLengths[i*2 + 1]] -= w[i];
 		
 		for (j = gapLengths[i*2] + 1; j < seqLength - gapLengths[i*2 + 1] - 1; j++) {
-			if ((x_i.seq[j - 1] ^ 0x2D && x_i.seq[j - 1] ^ 0x2E) && (!(x_i.seq[j] ^ 0x2D) || !(x_i.seq[j] ^ 0x2E))) {
+			if ((x_i.ptr[j - 1] ^ 0x2D && x_i.ptr[j - 1] ^ 0x2E) && (!(x_i.ptr[j] ^ 0x2D) || !(x_i.ptr[j] ^ 0x2E))) {
 				gaps[2*j] += w[i]; // gap opening
 			}
-			if ((x_i.seq[j + 1] ^ 0x2D && x_i.seq[j + 1] ^ 0x2E) && (!(x_i.seq[j] ^ 0x2D) || !(x_i.seq[j] ^ 0x2E))) {
+			if ((x_i.ptr[j + 1] ^ 0x2D && x_i.ptr[j + 1] ^ 0x2E) && (!(x_i.ptr[j] ^ 0x2D) || !(x_i.ptr[j] ^ 0x2E))) {
 				gaps[2*j + 1] += w[i]; // gap closing
 			}
 		}

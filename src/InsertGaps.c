@@ -85,25 +85,25 @@ SEXP insertGaps(SEXP x, SEXP positions, SEXP lengths, SEXP type, SEXP nThreads)
 		ans_elt_holder = get_elt_from_XStringSet_holder(&ans_holder, i);
 		//ans_elt_holder.length = 0;
 		x_s = get_elt_from_XStringSet_holder(&x_set, i);
-		sum = 0; // position in ans_elt_holder.seq
-		start = 0; // position in x_s.seq
+		sum = 0; // position in ans_elt_holder.ptr
+		start = 0; // position in x_s.ptr
 		for (j = 0; j < n; j++) {
 			if ((p[j] - 1) > start) { // copy over sequence
-				memcpy((char *) ans_elt_holder.seq + sum, x_s.seq + start, (p[j] - 1 - start) * sizeof(char));
+				memcpy((char *) ans_elt_holder.ptr + sum, x_s.ptr + start, (p[j] - 1 - start) * sizeof(char));
 				sum += (p[j] - 1 - start);
 				start += (p[j] - 1 - start);
 			}
 			if (l[j] > 0) { // insert gaps
 				if (t==3) { // AAStringSet
-					memset((char *) ans_elt_holder.seq + sum, 45, l[j] * sizeof(char));
+					memset((char *) ans_elt_holder.ptr + sum, 45, l[j] * sizeof(char));
 				} else { // DNAStringSet or RNAStringSet
-					memset((char *) ans_elt_holder.seq + sum, 16, l[j] * sizeof(char));
+					memset((char *) ans_elt_holder.ptr + sum, 16, l[j] * sizeof(char));
 				}
 				sum += l[j];
 			}
 		}
 		if (sum < ans_elt_holder.length) {
-			memcpy((char *) ans_elt_holder.seq + sum, x_s.seq + start, (ans_elt_holder.length - sum) * sizeof(char));
+			memcpy((char *) ans_elt_holder.ptr + sum, x_s.ptr + start, (ans_elt_holder.length - sum) * sizeof(char));
 		}
 	}
 	

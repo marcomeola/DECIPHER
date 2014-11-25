@@ -47,7 +47,7 @@ SEXP gcContent(SEXP x, SEXP begins, SEXP ends)
 		bits = 0;
 		for (j = *(b + i) - 1; j < *(e + i); j++) {
 			tot++;
-			switch (x_i.seq[j]) {
+			switch (x_i.ptr[j]) {
 				case 2: // C
 					bits++;
 					break;
