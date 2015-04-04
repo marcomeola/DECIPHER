@@ -9,6 +9,7 @@ Opens an html file in a web browser to show the contents of a table in a databas
 \usage{
 BrowseDB(dbFile,
          htmlFile = paste(tempdir(), "/db.html", sep = ""),
+         openURL = TRUE,
          tblName = "DNA",
          identifier = "",
          limit = -1,
@@ -22,6 +23,9 @@ A SQLite connection object or a character string specifying the path to the data
 }
   \item{htmlFile}{
 Character string giving the location where the html file should be written.
+}
+  \item{openURL}{
+Logical indicating whether the \code{htmlFile} should be opened in a web browser.
 }
   \item{tblName}{
 Character string specifying the table to view.
@@ -54,7 +58,7 @@ Erik Wright \email{DECIPHER@cae.wisc.edu}
 If viewing a table containing sequences, the sequences are purposefully not shown in the output.
 }
 \seealso{
-\code{\link{BrowseSequences}}
+\code{\link{BrowseSeqs}}
 }
 \examples{
 db <- system.file("extdata", "Bacteria_175seqs.sqlite", package="DECIPHER")

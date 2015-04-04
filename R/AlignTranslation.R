@@ -3,6 +3,7 @@ AlignTranslation <- function(myXStringSet,
 	direction="5' to 3'",
 	readingFrame=NA,
 	asAAStringSet=FALSE,
+	geneticCode=GENETIC_CODE,
 	...) {
 	
 	# error checking
@@ -61,6 +62,7 @@ AlignTranslation <- function(myXStringSet,
 		AA[w] <- translate(subseq(myXStringSet[w],
 				start,
 				end),
+			genetic.code=geneticCode,
 			if.fuzzy.codon="solve")
 		a <- vcountPattern("*", AA[w])
 		lastResidue <- substring(AA[w],

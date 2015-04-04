@@ -36,7 +36,7 @@ Logical specifying whether or not to plot the resulting dendrogram.  Not applica
 Logical.  If \code{TRUE} then the object returned is of class \code{dendrogram}.  Not applicable if \code{method='inexact'}.
 }
   \item{myXStringSet}{
-If \code{method} is \code{"ML"}, the \code{DNAStringSet} used in the creation of \code{myDistMatrix}.  If \code{method} is \code{"inexact"}, the \code{DNAStringSet}, \code{RNAStringSet}, or \code{AAStringSet} to cluster.  Not applicable for other methods.
+If \code{method} is \code{"ML"}, the \code{DNAStringSet} or \code{RNAStringSet} used in the creation of \code{myDistMatrix}.  If \code{method} is \code{"inexact"}, the \code{DNAStringSet}, \code{RNAStringSet}, or \code{AAStringSet} to cluster.  Not applicable for other methods.
 }
   \item{model}{
 One or more of the available \code{MODELS} of DNA evolution.  Only applicable if \code{method} is \code{"ML"}.

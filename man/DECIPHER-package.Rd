@@ -12,9 +12,9 @@ Database Enabled Code for Ideal Probe Hybridization Employing R (DECIPHER) is a 
 \tabular{ll}{
 Package: \tab DECIPHER\cr
 Type: \tab Package\cr
-Depends: \tab R (>= 2.13.0), Biostrings (>= 2.32.1), RSQLite (>= 0.9), stats, parallel\cr
-Imports: \tab methods, IRanges, XVector\cr
-LinkingTo: \tab Biostrings, RSQLite, IRanges, XVector\cr
+Depends: \tab R (>= 2.13.0), Biostrings (>= 2.35.12), RSQLite (>= 1.0), stats, parallel\cr
+Imports: \tab methods, DBI, S4Vectors, IRanges, XVector\cr
+LinkingTo: \tab Biostrings, RSQLite, S4Vectors, IRanges, XVector\cr
 License: \tab GPL-3\cr
 LazyLoad: \tab yes\cr
 }
@@ -22,15 +22,17 @@ LazyLoad: \tab yes\cr
 Index:
 \preformatted{
 Add2DB                   Add Data To A Database
+AdjustAlignment          Improve An Existing Alignment By Adjusting Gap
+                         Placements
 AlignDB                  Align Two Sets of Aligned Sequences In A Sequence
                          Database
 AlignProfiles            Align Two Sets of Aligned Sequences
 AlignSeqs                Align A Set of Unaligned Sequences
 AlignTranslation         Align Sequences By Their Amino Acid Translation
-Amplify                  Simulate Amplification of DNA by PCR
+AmplifyDNA               Simulate Amplification of DNA by PCR
 Array2Matrix             Create a Matrix Representation of a Microarray
 BrowseDB                 View A Database Table In A Web Browser
-BrowseSequences          View Sequences In A Web Browser
+BrowseSeqs               View Sequences In A Web Browser
 CalculateEfficiencyArray Predict the Hybridization Efficiency of
                          Probe/Target Sequence Pairs
 CalculateEfficiencyFISH  Predict Thermodynamic Parameters of Probe/Target
@@ -41,15 +43,26 @@ CreateChimeras           Create Artificial Chimeras
 DB2Seqs                  Export Database Sequences to a FASTA or FASTQ File
 deltaGrules              Free Energy of Hybridization of Probe/Target
                          Quadruplets
+deltaHrules              Change in Enthalpy of Hybridization of Primer/Target
+                         Quadruplets in Solution
+deltaSrules              Change in Entropy of Hybridization of Primer/Target
+                         Quadruplets in Solution
 DesignArray              Design a set of DNA Microarray Probes for Detecting
                          Sequences
 DesignPrimers            Design Primers Targeting a Specific Group of
                          Sequences
 DesignProbes             Design FISH Probes Targeting a Specific Group of
                          Sequences
+DesignSignatures         Design PCR Primers for Amplifying Group-Specific
+                         Signatures
+DigestDNA                Simulate Restriction Digestion of DNA
+Disambiguate             Expand Ambiguities into All Permutations of a
+                         DNAStringSet
 DistanceMatrix           Calculate the Distance Between Sequences
 FindChimeras             Find Chimeras In A Sequence Database
 FormGroups               Forms Groups By Rank
+HEC_MI                   Mutual Information for Protein Secondary Structure
+                         Prediction
 IdClusters               Cluster Sequences By Distance or Sequence
 IdConsensus              Create Consensus Sequences by Groups
 IdentifyByRank           Identify By Taxonomic Rank
@@ -60,9 +73,11 @@ MeltDNA                  Simulate Melting of DNA
 MODELS                   Available Models of DNA Evolution
 NNLS                     Sequential Coordinate-wise Algorithm for the
                          Non-negative Least Squares Problem
-RESTRICTION_ENZYMES      Common Restriction Sites Named By Restriction Enzyme
+PredictHEC               Predict Protein Secondary Structure
+RESTRICTION_ENZYMES      Common Restriction Enzyme's Cut Sites
 SearchDB                 Obtain Specific Sequences from A Database
 Seqs2DB                  Add Sequences from Text File to Database
+StaggerAlignment         Produce a Staggered Alignment
 TerminalChar             Determine the Number of Terminal Characters
 TileSeqs                 Form a Set of Tiles for Each Group of Sequences
 }

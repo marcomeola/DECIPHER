@@ -20,6 +20,8 @@ MeltDNA <- function(myDNAStringSet,
 		stop("Ambiguous type.")
 	if (!is.numeric(temps))
 		stop("temps must be a numeric.")
+	if (length(temps)==0)
+		stop("temps cannot be length 0.")
 	if (!all(temps==cummax(temps)))
 		stop("temps must be monotonically increasing.")
 	if (length(unique(temps))!=length(temps))
@@ -31,12 +33,22 @@ MeltDNA <- function(myDNAStringSet,
 	if (ions < 0.01 || is.nan(ions))
 		stop("Sodium equivilent concentration must be at least 0.01M.")
 	
+	u <- unique(myDNAStringSet)
 	x <- .Call("meltPolymer",
-		myDNAStringSet,
+		u,
 		as.numeric(temps),
 		ions,
 		type,
 		PACKAGE="DECIPHER")
+	
+	if (length(u)!=length(myDNAStringSet)) {
+		m <- match(myDNAStringSet, u)
+		if (type==1L) {
+			x <- x[m]
+		} else {
+			x <- x[, m, drop=FALSE]
+		}
+	}
 	
 	return(x)
 }

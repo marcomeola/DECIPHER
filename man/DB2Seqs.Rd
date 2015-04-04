@@ -19,6 +19,7 @@ DB2Seqs(file,
          removeGaps = "none",
          append = FALSE,
          width = 80,
+         compress = FALSE,
          chunkSize = 1e5,
          clause = "",
          verbose = TRUE)
@@ -59,6 +60,9 @@ Logical indicating whether to append the output to the existing \code{file}.
 }
   \item{width}{
 Integer specifying the maximum number of characters per line of sequence.  Not applicable when exporting to a FASTQ formatted file.
+}
+  \item{compress}{
+Logical specifying whether to compress the output file using gzip compression.
 }
   \item{chunkSize}{
 Number of lines of the \code{file} to write at a time.  Cannot be less than the total number of sequences if \code{removeGaps} is \code{"common"}.

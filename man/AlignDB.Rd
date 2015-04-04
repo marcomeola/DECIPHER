@@ -13,11 +13,13 @@ AlignDB(dbFile,
         type = "DNAStringSet",
         add2tbl = "DNA",
         batchSize = 10000,
-        perfectMatch = NULL,
-        misMatch = NULL,
-        gapOpening = NULL,
-        gapExtension = NULL,
-        terminalGap = -1,
+        perfectMatch = 6,
+        misMatch = 0,
+        gapOpening = -6,
+        gapExtension = -1,
+        gapPower = -1,
+        terminalGap = -5,
+        normPower = 1.5,
         substitutionMatrix = NULL,
         processors = NULL,
         verbose = TRUE)
@@ -42,22 +44,28 @@ Character string specifying the table name in which to add the aligned sequences
 Integer specifying the number of sequences to process at a time.
 }
   \item{perfectMatch}{
-Numeric giving the reward for aligning two matching nucleotides in the alignment, or \code{NULL} to determine the value based on input type (DNA/RNA/AA).
+Numeric giving the reward for aligning two matching nucleotides in the alignment.  Only used when \code{type} is \code{DNAStringSet} or \code{RNAStringSet}.
 }
   \item{misMatch}{
-Numeric giving the cost for aligning two mismatched nucleotides in the alignment, or \code{NULL} to determine the value based on input type (DNA/RNA/AA).
+Numeric giving the cost for aligning two mismatched nucleotides in the alignment.  Only used when \code{type} is \code{DNAStringSet} or \code{RNAStringSet}.
 }
   \item{gapOpening}{
-Numeric giving the cost for opening a gap in the alignment, or \code{NULL} to determine the value based on input type (DNA/RNA/AA).
+Numeric giving the cost for opening or closing a gap in the alignment.
 }
   \item{gapExtension}{
-Numeric giving the cost for extending an open gap in the alignment, or \code{NULL} to determine the value based on input type (DNA/RNA/AA).
+Numeric giving the cost for extending an open gap in the alignment.
+}
+  \item{gapPower}{
+Numeric specifying the exponent to use in the gap cost function.
 }
   \item{terminalGap}{
-Numeric giving the cost for allowing leading and trailing gaps in the alignment.  Either two numbers, the first for leading gaps and the second for trailing gaps, or a single number for both.
+Numeric giving the cost for allowing leading and trailing gaps ("-" or "." characters) in the alignment.  Either two numbers, the first for leading gaps and the second for trailing gaps, or a single number for both.
+}
+  \item{normPower}{
+Numeric giving the exponent that controls the degree of normalization applied to scores by column occupancy.  A \code{normPower} of \code{0} does not normalize the scores, which results in all columns of the profiles being weighted equally, and is the optimal value for aligning fragmentary sequences.  A \code{normPower} of \code{1} normalizes the score for aligning two positions by their column occupancy (1 - fraction of gaps).  A \code{normPower} greater than \code{1} more strongly discourages aligning with ``gappy'' regions of the alignment.
 }
   \item{substitutionMatrix}{
-Either a substitution matrix representing the substitution scores for an alignment or the name of the amino acid substitution matrix to use in alignment.  The latter may be one of the following:  ``BLOSUM45'', ``BLOSUM50'', ``BLOSUM62'', ``BLOSUM80'', ``BLOSUM100'', ``PAM30'', ``PAM40'', ``PAM70'', ``PAM120'', ``PAM250''.  The default (NULL) will use the \code{perfectMatch} and \code{misMatch} penalties for DNA/RNA or ``BLOSUM62'' for AA.  (See examples section below.)
+Either a substitution matrix representing the substitution scores for an alignment or the name of the amino acid substitution matrix to use in alignment.  The latter may be one of the following:  ``BLOSUM45'', ``BLOSUM50'', ``BLOSUM62'', ``BLOSUM80'', ``BLOSUM100'', ``PAM30'', ``PAM40'', ``PAM70'', ``PAM120'', ``PAM250'', or ``MIQS''.  The default (NULL) will use the \code{perfectMatch} and \code{misMatch} penalties for DNA/RNA or ``MIQS'' for AA.  (See examples section below.)
 }
   \item{processors}{
 The number of processors to use, or \code{NULL} (the default) for all available processors.

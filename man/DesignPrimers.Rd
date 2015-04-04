@@ -161,5 +161,5 @@ db <- system.file("extdata", "Bacteria_175seqs.sqlite", package="DECIPHER")
 # not run (must have OligoArrayAux installed first):
 \dontrun{tiles <- TileSeqs(db, identifier=c("Acinetobacter","Pseudomonas"))}
 \dontrun{primers <- DesignPrimers(tiles, identifier="Acinetobacter", start=280, end=420,
-	minProductSize=50, numPrimerSets=1)}
+           minProductSize=50, numPrimerSets=1)}
 }

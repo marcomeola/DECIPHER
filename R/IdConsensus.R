@@ -104,7 +104,6 @@ IdConsensus <- function(dbFile,
 		if (length(consensus)==0) {
 			if (type!=4) {
 				consensus <- ConsensusSequence(myXStringSet=x_subset,
-					verbose=FALSE,
 					...)
 			} else {
 				consensus <- consensusString(x=x_subset,
@@ -114,7 +113,6 @@ IdConsensus <- function(dbFile,
 			if (type!=4) {
 				consensus <- c(consensus,
 					 ConsensusSequence(myXStringSet=x_subset,
-						verbose=FALSE,
 						...))
 			} else {
 				consensus <- c(consensus,

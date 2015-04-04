@@ -12,6 +12,7 @@ AlignTranslation(myXStringSet,
                  direction = "5' to 3'",
                  readingFrame = NA,
                  asAAStringSet = FALSE,
+                 geneticCode = GENETIC_CODE,
                  ...)
 }
 \arguments{
@@ -30,12 +31,15 @@ Numeric vector giving a single reading frame for all of the sequences, or an ind
   \item{asAAStringSet}{
 Logical specifying whether to return the aligned translation as an \code{AAStringSet} rather than an \code{XStringSet} of the input type.
 }
+  \item{geneticCode}{
+Named character vector in the same format as \code{GENETIC_CODE} (the default), which represents the standard genetic code.
+}
   \item{\dots}{
-Further arguments to be passed directly to \code{\link{AlignSeqs}}, including \code{perfectMatch}, \code{misMatch}, \code{gapOpening}, \code{gapExtension}, \code{terminalGap}, \code{restrict}, \code{anchor}, \code{substitutionMatrix}, \code{doNotAlign}, \code{guideTree}, \code{processors}, and \code{verbose}.
+Further arguments to be passed directly to \code{\link{AlignSeqs}}, including \code{gapOpening}, \code{gapExtension}, \code{gapPower}, \code{terminalGap}, \code{restrict}, \code{anchor}, \code{normPower}, \code{substitutionMatrix}, \code{structureMatrix}, \code{guideTree}, \code{iterations}, \code{refinements}, \code{structures}, \code{FUN}, and \code{levels}.
 }
 }
 \details{
-Alignment of proteins is often more accurate than alignment of their coding nucleic acid sequences.  This function aligns the input nucleic acid sequences via aligning their translated amino acid sequences.  First, the input sequences are translated according to the specified \code{sense}, \code{direction}, and \code{readingFrame}.  The resulting amino acid sequences are aligned using \code{AlignSeqs}, and this alignment is reverse translated into the original sequence type, \code{sense}, and \code{direction}.
+Alignment of proteins is often more accurate than alignment of their coding nucleic acid sequences.  This function aligns the input nucleic acid sequences via aligning their translated amino acid sequences.  First, the input sequences are translated according to the specified \code{sense}, \code{direction}, and \code{readingFrame}.  The resulting amino acid sequences are aligned using \code{AlignSeqs}, and this alignment is reverse translated into the original sequence type, \code{sense}, and \code{direction}.  Not only is alignment of protein sequences more accurate, but it will ensure that the reading frame is maintained in the nucleotide sequences.
 
 If the \code{readingFrame} is \code{NA} (the default) then an attempt is made to guess the reading frame of each sequence based on the number of stop codons in the translated amino acids.  For each sequence, the first reading frame will be chosen (either \code{1}, \code{2}, or \code{3}) without stop codons, except in the last position.  If the number of stop codons is inconclusive for a sequence then the reading frame will default to \code{1}.  The entire length of each sequence is translated in spite of any stop codons identified.  Note that this method is only constructive in circumstances where there is a substantially long coding sequence with at most a single stop codon expected in the final position, and therefore it is preferable to specify the reading frame of each sequence if it is known.
 }
@@ -49,12 +53,22 @@ Erik Wright \email{DECIPHER@cae.wisc.edu}
 \code{\link{AlignDB}}, \code{\link{AlignProfiles}}, \code{\link{AlignSeqs}}
 }
 \examples{
-# First three sequences translate to MFITP*; the last sequence is MF-TP*
+# first three sequences translate to  MFITP*
+# and the last sequence translates as MF-TP*
 rna <- RNAStringSet(c("AUGUUCAUCACCCCCUAA", "AUGUUCAUAACUCCUUGA",
 	"AUGUUCAUUACACCGUAG", "AUGUUUACCCCAUAA"))
-RNA <- AlignSeqs(rna)
-BrowseSequences(RNA) # incorrect gap position
+RNA <- AlignSeqs(rna, verbose=FALSE)
+RNA
 
-RNA <- AlignTranslation(rna)
-BrowseSequences(RNA) # correct gap position
+RNA <- AlignTranslation(rna, verbose=FALSE)
+RNA
+
+AA <- AlignTranslation(rna, asAAStringSet=TRUE, verbose=FALSE)
+AA
+
+# example of aligning many protein coding sequences:
+fas <- system.file("extdata", "50S_ribosomal_protein_L2.fas", package="DECIPHER")
+dna <- readDNAStringSet(fas)
+DNA <- AlignTranslation(dna) # align the translation then reverse translate
+DNA
 }

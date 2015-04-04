@@ -158,7 +158,7 @@
 	#ws <- p@subject@range@width # width of templates
 	
 	deltas <- .Call("calculateFISH", seqs1, seqs2, PACKAGE="DECIPHER")
-	dG1_PM_DNARNA <- deltas[,1] - (273.15 + temp)/1000*(deltas[,2] - 0.368*n*log(ions))
+	dG1_PM_DNARNA <- deltas[,1] - (273.15 + temp)/1000*(deltas[,2] + 0.368*n*log(ions))
 	
 	# determine ddG1 for mismatched probes
 	ddG1_MM_DNARNA <- numeric(l)
@@ -170,9 +170,9 @@
 	dG1_MM_UNARNA <- numeric(l)
 	MM <- which(deltas[,3] != 0) # mismatched probes/targets
 	if (length(MM) > 0) {
-		ddG1_MM_DNARNA[MM] <- deltas[MM,3] - (273.15 + temp)/1000*(deltas[MM,4] - 0.368*n[MM]*log(ions))
-		ddG1_MM_DNADNA[MM] <- deltas[MM,5] - (273.15 + temp)/1000*(deltas[MM,6] - 0.368*n[MM]*log(ions))
-		ddG1_MM_RNARNA[MM] <- deltas[MM,7] - (273.15 + temp)/1000*(deltas[MM,8] - 0.368*n[MM]*log(ions))
+		ddG1_MM_DNARNA[MM] <- deltas[MM,3] - (273.15 + temp)/1000*(deltas[MM,4] + 0.368*n[MM]*log(ions))
+		ddG1_MM_DNADNA[MM] <- deltas[MM,5] - (273.15 + temp)/1000*(deltas[MM,6] + 0.368*n[MM]*log(ions))
+		ddG1_MM_RNARNA[MM] <- deltas[MM,7] - (273.15 + temp)/1000*(deltas[MM,8] + 0.368*n[MM]*log(ions))
 		
 		target <- .Call("replaceChar", seqs2[MM], "-", "", PACKAGE="DECIPHER")
 		target <- reverseComplement(DNAStringSet(target))
@@ -1016,8 +1016,7 @@ DesignProbes <- function(tiles,
 			full <- which(probes$probe[i,]!="")
 			if (length(full) != 0) {
 				c <- suppressWarnings(ConsensusSequence(DNAStringSet(probes$probe[i, full]),
-					threshold=0.01,
-					verbose=FALSE))
+					threshold=0.01))
 				a <- alphabetFrequency(c)
 				numPerms <- sum(2*a[1, 5:10], 3*a[1, 11:14], 4*a[1, 15])
 			}

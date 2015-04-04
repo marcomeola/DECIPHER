@@ -15,7 +15,6 @@ DesignArray <- function(myDNAStringSet,
 	verbose=TRUE) {
 	
 	# error checking
-	
 	if (!is.logical(verbose))
 		stop("verbose must be a logical.")
 	if (!is.numeric(hybridizationFormamide))

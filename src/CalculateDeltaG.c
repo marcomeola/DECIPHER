@@ -65,8 +65,119 @@ SEXP calculateDeltaG(SEXP p, SEXP t, SEXP deltaGrules)
 					case 't':
 						s1 = 3;
 						break;
+					case 'M':
+					case 'm':
+						// M = A or C
+						if (seq2[j]=='A' || seq2[j]=='a') {
+							s1 = 0;
+						} else { // default to C
+							s1 = 1;
+						}
+						break;
+					case 'R':
+					case 'r':
+						// R = A or G
+						if (seq2[j]=='A' || seq2[j]=='a') {
+							s1 = 0;
+						} else { // default to G
+							s1 = 2;
+						}
+						break;
+					case 'S':
+					case 's':
+						// S = C or G
+						if (seq2[j]=='C' || seq2[j]=='c') {
+							s1 = 1;
+						} else { // default to G
+							s1 = 2;
+						}
+						break;
+					case 'W':
+					case 'w':
+						// W = A or T
+						if (seq2[j]=='A' || seq2[j]=='a') {
+							s1 = 0;
+						} else { // default to T
+							s1 = 3;
+						}
+						break;
+					case 'Y':
+					case 'y':
+						// Y = C or T
+						if (seq2[j]=='C' || seq2[j]=='c') {
+							s1 = 1;
+						} else { // default to T
+							s1 = 3;
+						}
+						break;
+					case 'K':
+					case 'k':
+						// K = G or T
+						if (seq2[j]=='G' || seq2[j]=='g') {
+							s1 = 2;
+						} else { // default to T
+							s1 = 3;
+						}
+						break;
+					case 'V':
+					case 'v':
+						// V = A or C or G
+						if (seq2[j]=='A' || seq2[j]=='a') {
+							s1 = 0;
+						} else if (seq2[j]=='C' || seq2[j]=='c') {
+							s1 = 1;
+						} else { // default to G
+							s1 = 2;
+						}
+						break;
+					case 'H':
+					case 'h':
+						// H = A or C or T
+						if (seq2[j]=='A' || seq2[j]=='a') {
+							s1 = 0;
+						} else if (seq2[j]=='C' || seq2[j]=='c') {
+							s1 = 1;
+						} else { // default to T
+							s1 = 3;
+						}
+						break;
+					case 'D':
+					case 'd':
+						// D = A or G or T
+						if (seq2[j]=='A' || seq2[j]=='a') {
+							s1 = 0;
+						} else if (seq2[j]=='G' || seq2[j]=='g') {
+							s1 = 2;
+						} else { // default to T
+							s1 = 3;
+						}
+						break;
+					case 'B':
+					case 'b':
+						// B = C or G or T
+						if (seq2[j]=='C' || seq2[j]=='c') {
+							s1 = 1;
+						} else if (seq2[j]=='G' || seq2[j]=='g') {
+							s1 = 2;
+						} else { // default to T
+							s1 = 3;
+						}
+						break;
+					case 'N':
+					case 'n':
+						// N = A or C or G or T
+						if (seq2[j]=='A' || seq2[j]=='a') {
+							s1 = 0;
+						} else if (seq2[j]=='C' || seq2[j]=='c') {
+							s1 = 1;
+						} else if (seq2[j]=='G' || seq2[j]=='g') {
+							s1 = 2;
+						} else { // default to T
+							s1 = 3;
+						}
+						break;
 					default:
-						error("Only A, C, G, T, and - characters are permitted.");
+						error("Unrecognized character.");
 						break;
 				}
 				switch (seq2[j]) {

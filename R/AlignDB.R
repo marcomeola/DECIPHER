@@ -4,11 +4,13 @@ AlignDB <- function(dbFile,
 	type="DNAStringSet",
 	add2tbl="DNA",
 	batchSize=10000,
-	perfectMatch=NULL,
-	misMatch=NULL,
-	gapOpening=NULL,
-	gapExtension=NULL,
-	terminalGap=-1,
+	perfectMatch=6,
+	misMatch=0,
+	gapOpening=-6,
+	gapExtension=-1,
+	gapPower=-1,
+	terminalGap=-5,
+	normPower=1.5,
 	substitutionMatrix=NULL,
 	processors=NULL,
 	verbose=TRUE) {
@@ -18,7 +20,6 @@ AlignDB <- function(dbFile,
 		stop("identifier must be a character string.")
 	if (!is.character(tblName))
 		stop("tblName must be a character string.")
-	print(length(identifier)==2)
 	if (!xor(length(identifier)==2, length(tblName)==2))
 		stop("tblName or identifier must be length two.")
 	if (length(identifier)==2 && identifier[1]==identifier[2])
@@ -39,6 +40,10 @@ AlignDB <- function(dbFile,
 		stop("batchSize must be a whole number.")
 	if (batchSize <= 0)
 		stop("batchSize must be greater than zero.")
+	if (!all(is.numeric(normPower)))
+		stop("normPower must be a numeric.")
+	if (normPower < 0)
+		stop("normPower must be at least zero.")
 	if (!is.logical(verbose))
 		stop("verbose must be a logical.")
 	# initialize database
@@ -53,34 +58,6 @@ AlignDB <- function(dbFile,
 		if (!dbIsValid(dbConn))
 			stop("The connection has expired.")
 	}
-	if (type==1) { # DNAStringSet
-		if (is.null(perfectMatch))
-			perfectMatch <- 6
-		if (is.null(misMatch))
-			misMatch <- -3
-		if (is.null(gapOpening))
-			gapOpening <- -11
-		if (is.null(gapExtension))
-			gapExtension <- -3
-	} else if (type==2) { # RNAStringSet
-		if (is.null(perfectMatch))
-			perfectMatch <- 8
-		if (is.null(misMatch))
-			misMatch <- 3
-		if (is.null(gapOpening))
-			gapOpening <- -9
-		if (is.null(gapExtension))
-			gapExtension <- -2
-	} else { # AAStringSet
-		if (is.null(perfectMatch))
-			perfectMatch <- 4
-		if (is.null(misMatch))
-			misMatch <- 0
-		if (is.null(gapOpening))
-			gapOpening <- -5
-		if (is.null(gapExtension))
-			gapExtension <- -3
-	}
 	if (!is.numeric(perfectMatch))
 		stop("perfectMatch must be a numeric.")
 	if (!is.numeric(misMatch))
@@ -89,6 +66,8 @@ AlignDB <- function(dbFile,
 		stop("gapOpening must be a numeric.")
 	if (!is.numeric(gapExtension))
 		stop("gapExtension must be a numeric.")
+	if (!is.numeric(gapPower))
+		stop("gapPower must be a numeric.")
 	if (!all(is.numeric(terminalGap)))
 		stop("terminalGap must be a numeric.")
 	if (length(terminalGap) > 2 || length(terminalGap) < 1)
@@ -109,25 +88,30 @@ AlignDB <- function(dbFile,
 		processors <- as.integer(processors)
 	}
 	
-	if (type==3) {
-		if (is.null(substitutionMatrix)) {
-			substitutionMatrix <- "BLOSUM62"
-		} else if (is.character(substitutionMatrix)) {
-			if (!(substitutionMatrix %in% c("BLOSUM45", "BLOSUM50", "BLOSUM62", "BLOSUM80", "BLOSUM100",
-		"PAM30", "PAM40", "PAM70", "PAM120", "PAM250")))
-				stop("Invalid substitutionMatrix.")
-		}
+	if (type==3) { # AAStringSet
 		AAs <- c("A", "R", "N", "D", "C", "Q", "E", "G", "H", "I",
 			"L", "K", "M", "F", "P", "S", "T", "W", "Y", "V", "*")
+		if (is.null(substitutionMatrix)) {
+			# use MIQS
+			substitutionMatrix <- matrix(c(3, -1, 0, 0, 2, 0, 0, 0, -1, -1, -1, -1, -1, -2, 0, 1, 1, -4, -2, 0, -6, -1, 6, 0, -1, -3, 2, -1, -2, 1, -2, -3, 3, -1, -3, -1, 0, -1, -4, -2, -2, -6, 0, 0, 5, 3, -2, 1, 1, 0, 1, -4, -4, 1, -2, -3, -1, 1, 0, -5, -1, -3, -6, 0, -1, 3, 6, -4, 1, 3, -1, 0, -5, -5, 0, -3, -6, 0, 0, 0, -5, -4, -3, -6, 2, -3, -2, -4, 12, -3, -3, -2, -1, 0, -2, -3, 0, -3, -3, 1, 0, -6, -1, 2, -6, 0, 2, 1, 1, -3, 4, 2, -2, 1, -2, -2, 2, 0, -2, 0, 0, 0, -5, -3, -2, -6, 0, -1, 1, 3, -3, 2, 4, -1, 0, -3, -3, 1, -2, -4, 0, 0, 0, -6, -2, -2, -6, 0, -2, 0, -1, -2, -2, -1, 8, -2, -5, -5, -2, -4, -5, -2, 0, -2, -5, -4, -4, -6, -1, 1, 1, 0, -1, 1, 0, -2, 7, -2, -2, 0, -2, 0, -2, 0, 0, 0, 2, -2, -6, -1, -2, -4, -5, 0, -2, -3, -5, -2, 5, 3, -2, 2, 1, -4, -3, -1, -1, -1, 3, -6, -1, -3, -4, -5, -2, -2, -3, -5, -2, 3, 5, -2, 3, 2, -3, -3, -2, 0, 0, 2, -6, -1, 3, 1, 0, -3, 2, 1, -2, 0, -2, -2, 4, -1, -4, 0, 0, 0, -4, -2, -2, -6, -1, -1, -2, -3, 0, 0, -2, -4, -2, 2, 3, -1, 5, 1, -3, -2, -1, -2, -1, 1, -6, -2, -3, -3, -6, -3, -2, -4, -5, 0, 1, 2, -4, 1, 7, -4, -3, -2, 4, 5, 0, -6, 0, -1, -1, 0, -3, 0, 0, -2, -2, -4, -3, 0, -3, -4, 8, 0, 0, -4, -5, -3, -6, 1, 0, 1, 0, 1, 0, 0, 0, 0, -3, -3, 0, -2, -3, 0, 3, 2, -4, -2, -1, -6, 1, -1, 0, 0, 0, 0, 0, -2, 0, -1, -2, 0, -1, -2, 0, 2, 4, -5, -2, 0, -6, -4, -4, -5, -5, -6, -5, -6, -5, 0, -1, 0, -4, -2, 4, -4, -4, -5, 15, 5, -3, -6, -2, -2, -1, -4, -1, -3, -2, -4, 2, -1, 0, -2, -1, 5, -5, -2, -2, 5, 8, -1, -6, 0, -2, -3, -3, 2, -2, -2, -4, -2, 3, 2, -2, 1, 0, -3, -1, 0, -3, -1, 4, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, 1),
+				nrow=21,
+				ncol=21,
+				dimnames=list(AAs, AAs))
+		} else if (is.character(substitutionMatrix)) {
+			if (!(substitutionMatrix %in% c("BLOSUM45", "BLOSUM50", "BLOSUM62", "BLOSUM80", "BLOSUM100",
+		"PAM30", "PAM40", "PAM70", "PAM120", "PAM250", "MIQS")))
+				stop("Invalid substitutionMatrix.")
+		}
 		if (is.matrix(substitutionMatrix)) {
 			if (any(!(AAs %in% dimnames(substitutionMatrix)[[1]])) ||
 				any(!(AAs %in% dimnames(substitutionMatrix)[[2]])))
 				stop("substitutionMatrix is incomplete.")
 			subMatrix <- substitutionMatrix
 		} else {
-			subMatrix <- eval(parse(text=data(list=substitutionMatrix)))
+			subMatrix <- eval(parse(text=data(list=substitutionMatrix, envir=environment())))
 		}
 		subMatrix <- subMatrix[AAs, AAs]
+		subMatrix <- as.numeric(subMatrix)
 	} else {
 		if (!is.null(substitutionMatrix)) {
 			if (is.matrix(substitutionMatrix)) {
@@ -136,6 +120,7 @@ AlignDB <- function(dbFile,
 					any(!(bases %in% dimnames(substitutionMatrix)[[2]])))
 					stop("substitutionMatrix is incomplete.")
 				substitutionMatrix <- substitutionMatrix[bases, bases]
+				substitutionMatrix <- as.numeric(substitutionMatrix)
 			} else {
 				stop("substitutionMatrix must be NULL or a matrix.")
 			}
@@ -183,12 +168,19 @@ AlignDB <- function(dbFile,
 				stop("Multiple width sequences found.")
 		}
 		
-		temp <- .Call(ifelse(is(myXStringSet, "AAStringSet"),
-					"consensusProfileAA",
-					"consensusProfile"),
+		if (type==3L) {
+			temp <- .Call("consensusProfileAA",
+				myXStringSet,
+				rep(1, length(myXStringSet)),
+				NULL,
+				PACKAGE="DECIPHER")
+		} else {
+			temp <- .Call("consensusProfile",
 				myXStringSet,
 				rep(1, length(myXStringSet)),
 				PACKAGE="DECIPHER")
+		}
+		
 		if (i==1) {
 			p.profile <- temp*length(myXStringSet)/count1
 		} else {
@@ -228,12 +220,19 @@ AlignDB <- function(dbFile,
 				stop("Multiple width sequences found.")
 		}
 		
-		temp <- .Call(ifelse(is(myXStringSet, "AAStringSet"),
-					"consensusProfileAA",
-					"consensusProfile"),
+		if (type==3L) {
+			temp <- .Call("consensusProfileAA",
+				myXStringSet,
+				rep(1, length(myXStringSet)),
+				NULL,
+				PACKAGE="DECIPHER")
+		} else {
+			temp <- .Call("consensusProfile",
 				myXStringSet,
 				rep(1, length(myXStringSet)),
 				PACKAGE="DECIPHER")
+		}
+		
 		if (i==1) {
 			s.profile <- temp*length(myXStringSet)/count2
 		} else {
@@ -256,10 +255,11 @@ AlignDB <- function(dbFile,
 			p.profile,
 			s.profile,
 			subMatrix,
-			perfectMatch,
-			misMatch,
+			numeric(),
 			gapOpening,
 			gapExtension,
+			gapPower,
+			normPower,
 			terminalGap[1],
 			terminalGap[2],
 			restrict,
@@ -274,6 +274,8 @@ AlignDB <- function(dbFile,
 			misMatch,
 			gapOpening,
 			gapExtension,
+			gapPower,
+			normPower,
 			terminalGap[1],
 			terminalGap[2],
 			restrict,
@@ -302,6 +304,7 @@ AlignDB <- function(dbFile,
 				batchSize,
 				sep=""),
 			verbose=FALSE)
+		ns <- names(myXStringSet)
 		
 		myXStringSet <- .Call("insertGaps",
 			myXStringSet,
@@ -310,9 +313,10 @@ AlignDB <- function(dbFile,
 			type,
 			processors,
 			PACKAGE="DECIPHER")
-		names(myXStringSet) <- paste(names(myXStringSet),
+		names(myXStringSet) <- paste(ns,
 			ifelse(length(identifier)==2, identifier[1], tblName[1]),
 			sep="_")
+		
 		Seqs2DB(myXStringSet,
 			TYPES[type],
 			dbConn,
@@ -337,6 +341,7 @@ AlignDB <- function(dbFile,
 				batchSize,
 				sep=""),
 			verbose=FALSE)
+		ns <- names(myXStringSet)
 		
 		myXStringSet <- .Call("insertGaps",
 			myXStringSet,
@@ -345,7 +350,7 @@ AlignDB <- function(dbFile,
 			type,
 			processors,
 			PACKAGE="DECIPHER")
-		names(myXStringSet) <- paste(names(myXStringSet),
+		names(myXStringSet) <- paste(ns,
 			ifelse(length(identifier)==2, identifier[2], tblName[2]),
 			sep="_")
 		Seqs2DB(myXStringSet,

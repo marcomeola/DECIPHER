@@ -79,5 +79,6 @@ dna <- SearchDB(db, orderBy="random()", limit=1)
 # remove gaps from "Mycobacterium" sequences:
 dna <- SearchDB(db, identifier="Mycobacterium", removeGaps="all")
 # provide a more complex query:
-dna <- SearchDB(db, nameBy="description", orderBy="bases", removeGaps="common", clause="where nonbases is 0")
+dna <- SearchDB(db, nameBy="description", orderBy="bases", removeGaps="common",
+                clause="where nonbases is 0")
 }

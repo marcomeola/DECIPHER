@@ -66,7 +66,7 @@ CalculateEfficiencyFISH <- function(probe,
 	seqs2 <- unlist(strsplit(toString(subject(p)), ", ", fixed=TRUE))
 	
 	deltas <- .Call("calculateFISH", seqs1, seqs2, PACKAGE="DECIPHER")
-	dG1_PM_DNARNA <- deltas[,1] - (273.15 + temp)/1000*(deltas[,2] - 0.368*n*log(ions))
+	dG1_PM_DNARNA <- deltas[,1] - (273.15 + temp)/1000*(deltas[,2] + 0.368*n*log(ions))
 	
 	# determine ddG1 for mismatched probes
 	ddG1_MM_DNARNA <- numeric(l)
@@ -78,9 +78,9 @@ CalculateEfficiencyFISH <- function(probe,
 	dG1_MM_UNARNA <- numeric(l)
 	MM <- which(deltas[,3] != 0) # mismatched probes/targets
 	if (length(MM) > 0) {
-		ddG1_MM_DNARNA[MM] <- deltas[MM,3] - (273.15 + temp)/1000*(deltas[MM,4] - 0.368*n[MM]*log(ions))
-		ddG1_MM_DNADNA[MM] <- deltas[MM,5] - (273.15 + temp)/1000*(deltas[MM,6] - 0.368*n[MM]*log(ions))
-		ddG1_MM_RNARNA[MM] <- deltas[MM,7] - (273.15 + temp)/1000*(deltas[MM,8] - 0.368*n[MM]*log(ions))
+		ddG1_MM_DNARNA[MM] <- deltas[MM,3] - (273.15 + temp)/1000*(deltas[MM,4] + 0.368*n[MM]*log(ions))
+		ddG1_MM_DNADNA[MM] <- deltas[MM,5] - (273.15 + temp)/1000*(deltas[MM,6] + 0.368*n[MM]*log(ions))
+		ddG1_MM_RNARNA[MM] <- deltas[MM,7] - (273.15 + temp)/1000*(deltas[MM,8] + 0.368*n[MM]*log(ions))
 		
 		target <- .Call("replaceChar", seqs2[MM], "-", "", PACKAGE="DECIPHER")
 		target <- reverseComplement(DNAStringSet(target))

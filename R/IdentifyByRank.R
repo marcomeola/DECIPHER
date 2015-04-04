@@ -3,6 +3,8 @@ IdentifyByRank <- function(dbFile,
 	level=Inf,
 	add2tbl=FALSE,
 	verbose=TRUE) {
+	
+	# error checking:
 	if (!is.character(tblName))
 		stop("tblName must be a character string.")
 	if (!is.logical(verbose))

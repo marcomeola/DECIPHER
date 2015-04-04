@@ -18,7 +18,7 @@ MaskAlignment(myXStringSet,
 An \code{AAStringSet}, \code{DNAStringSet}, or \code{RNAStringSet} object of aligned sequences.
 }
   \item{windowSize}{
-Integer value specifying the size of the center-point moving average to use in determining variable regions.
+Integer value specifying the size of the region to the left and right of the center-point to use in calculating the moving average.
 }
   \item{threshold}{
 Numeric giving the average entropy in bits from 0 to 2 below which a region is masked.
@@ -51,17 +51,17 @@ masked_dna <- MaskAlignment(dna, showPlot=TRUE)
 
 # display only unmasked nucleotides for use in downstream analyses
 not_masked <- as(masked_dna, "DNAStringSet")
-BrowseSequences(not_masked)
+BrowseSeqs(not_masked)
 
 # display only masked nucleotides that are covered by the mask
 masked <- masked_dna
 colmask(masked, append="replace", invert=TRUE) <- colmask(masked)
 masked <- as(masked, "DNAStringSet")
-BrowseSequences(masked)
+BrowseSeqs(masked)
 
 # display the complete DNA sequence set including the mask
 masks <- lapply(width(colmask(masked_dna)), rep, x="+")
 masks <- unlist(lapply(masks, paste, collapse=""))
 masked_dna <- replaceAt(dna, at=IRanges(colmask(masked_dna)), value=masks)
-BrowseSequences(masked_dna)
+BrowseSeqs(masked_dna)
 }

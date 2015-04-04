@@ -1,29 +1,29 @@
 # below function from stats package
 .memberDend <- function(x) {
 	
-    r <- attr(x,"x.member")
-    if(is.null(r)) {
+	r <- attr(x,"x.member")
+	if(is.null(r)) {
 		r <- attr(x,"members")
 		if(is.null(r))
 			r <- 1L
-    }
-    return(r)
+	}
+	return(r)
 }
 
 # below function modified from stats package
 to.dendrogram <- function (object) {
 	
-    z <- list()
-    oHgts <- object$lengths
-    nMerge <- length(oHgt <- object$height)
-    if (nMerge != nrow(object$merge))
+	z <- list()
+	oHgts <- object$lengths
+	nMerge <- length(oHgt <- object$height)
+	if (nMerge != nrow(object$merge))
 		stop("'merge' and 'height' do not fit!")
-    hMax <- oHgt[nMerge]
-    cMax <- max(object$clusters)
-    
-    one <- 1L
-    two <- 2L
-    for (k in 1L:nMerge) {
+	hMax <- oHgt[nMerge]
+	cMax <- max(object$clusters)
+	
+	one <- 1L
+	two <- 2L
+	for (k in 1L:nMerge) {
 		x <- as.integer(object$merge[k, ])
 		neg <- x < 0
 		if (all(neg)) { # two leaves
@@ -64,10 +64,10 @@ to.dendrogram <- function (object) {
 		}
 		attr(zk, "height") <- oHgt[k]
 		z[[k <- as.character(k)]] <- zk
-    }
-    z <- z[[k]]
-    class(z) <- "dendrogram"
-    z
+	}
+	z <- z[[k]]
+	class(z) <- "dendrogram"
+	z
 }
 
 .organizeClusters <- function(myClusters,
@@ -843,6 +843,255 @@ MODELS <- c("JC69",
 	return(X)
 }
 
+.midpointRoot <- function(dendrogram) {
+	
+	# mid-point root the tree based on which
+	# leaf is furthest from the leaf at zero
+	
+	# find the tip that is at zero height
+	.zeroFound <- FALSE
+	.containsZero <- function(x) {
+		if (is.leaf(x)) {
+			if (!.zeroFound && isTRUE(all.equal(attr(x, "height"), 0))) {
+				.zeroFound <<- TRUE
+				attr(x, "containsZero") <- TRUE
+			} else {
+				attr(x, "containsZero") <- FALSE
+			}
+		} else {
+			x[[1]] <- .containsZero(x[[1]])
+			x[[2]] <- .containsZero(x[[2]])
+			if (attr(x[[1]], "containsZero") || attr(x[[2]], "containsZero")) {
+				attr(x, "containsZero") <- TRUE
+			} else {
+				attr(x, "containsZero") <- FALSE
+			}
+		}
+		
+		return(x)
+	}
+	
+	dendrogram <- .containsZero(dendrogram)
+	
+	# find the maximum distance to the zeroth tip
+	.maxDist <- 0
+	.maxLeaf <- NA
+	.findMax <- function(x, height=NA) {
+		if (is.leaf(x)) {
+			dist <- 2*height - attr(x, "height")
+			if (!is.na(dist) && dist >= .maxDist) {
+				.maxDist <<- dist
+				.maxLeaf <<- as.integer(x)
+			}
+		} else {
+			if (is.na(height)) {
+				if (attr(x[[1]], "containsZero")) {
+					x[[1]] <- .findMax(x[[1]])
+				} else {
+					x[[1]] <- .findMax(x[[1]], attr(x, "height"))
+				}
+				if (attr(x[[2]], "containsZero")) {
+					x[[2]] <- .findMax(x[[2]])
+				} else {
+					x[[2]] <- .findMax(x[[2]], attr(x, "height"))
+				}
+			} else {
+				x[[1]] <- .findMax(x[[1]], height)
+				x[[2]] <- .findMax(x[[2]], height)
+			}
+		}
+		
+		return(x)
+	}
+	
+	dendrogram <- .findMax(dendrogram)
+	
+	# find paths that contain the most distant tips
+	.containsMax <- function(x) {
+		if (is.leaf(x)) {
+			if (x==.maxLeaf) {
+				attr(x, "containsMax") <- TRUE
+			} else {
+				attr(x, "containsMax") <- FALSE
+			}
+		} else {
+			x[[1]] <- .containsMax(x[[1]])
+			x[[2]] <- .containsMax(x[[2]])
+			if (attr(x[[1]], "containsMax") || attr(x[[2]], "containsMax")) {
+				attr(x, "containsMax") <- TRUE
+			} else {
+				attr(x, "containsMax") <- FALSE
+			}
+		}
+		
+		return(x)
+	}
+	
+	dendrogram <- .containsMax(dendrogram)
+	
+	
+	# midpoint root the tree
+	.findMidpoint <- function(x) {
+		if (is.leaf(x)) {
+			if (attr(x, "containsZero") &&
+				attr(x, "height") >= .maxDist/2) {
+				attr(x, "containsRoot") <- TRUE
+				attr(x, "isRoot") <- TRUE
+			} else {
+				attr(x, "containsRoot") <- FALSE
+			}
+		} else if (attr(x, "height") >= .maxDist/2 &&
+			attr(x, "containsZero")) {
+			x[[1]] <- .findMidpoint(x[[1]])
+			x[[2]] <- .findMidpoint(x[[2]])
+			if (attr(x[[1]], "height") < .maxDist/2 &&
+				attr(x[[1]], "containsZero") &&
+				!attr(x[[1]], "containsMax")) {
+				attr(x, "containsRoot") <- TRUE
+				attr(x, "isRoot") <- TRUE
+			} else if (attr(x[[2]], "height") < .maxDist/2 &&
+				attr(x[[2]], "containsZero") &&
+				!attr(x[[2]], "containsMax")) {
+				attr(x, "containsRoot") <- TRUE
+				attr(x, "isRoot") <- TRUE
+			} else {
+				attr(x, "containsRoot") <- attr(x[[1]], "containsRoot") ||
+				attr(x[[2]], "containsRoot")
+			}
+		} else {
+			attr(x, "containsRoot") <- FALSE
+		}
+		
+		return(x)
+	}
+	
+	dendrogram <- .findMidpoint(dendrogram)
+	
+	lower <- list()
+	.adjustHeight <- function(x, diff=NA) {
+		if (!is.null(attr(x, "containsRoot")) &&
+			attr(x, "containsRoot"))
+			diff <- 2*attr(x, "height") - .maxDist
+		if (!is.na(diff)) {
+			attr(x, "height") <- attr(x, "height") - diff
+			if (!is.leaf(x)) {
+				if (is.null(attr(x, "isRoot"))) {
+					x[[1]] <- .adjustHeight(x[[1]], diff)
+					if (length(x) > 1) {
+						x[[2]] <- .adjustHeight(x[[2]], diff)
+					} else { # first child was removed
+						x[[1]] <- .adjustHeight(x[[1]], diff)
+					}
+				} else if (attr(x[[1]], "containsZero")) {
+					x[[2]] <- .adjustHeight(x[[2]], diff)
+				} else {
+					x[[1]] <- .adjustHeight(x[[1]], diff)
+				}
+			}
+		}
+		if (!is.null(attr(x, "isRoot"))) {
+			if (is.leaf(x)) {
+				lower <<- x
+				x <- NULL
+			} else if (attr(x[[1]], "containsZero")) {
+				lower <<- x[[1]]
+				x[[1]] <- NULL
+			} else {
+				lower <<- x[[2]]
+				x[[2]] <- NULL
+			}
+		}
+		return(x)
+	}
+	
+	upper <- .adjustHeight(dendrogram)
+	
+	# initalize a tree from the lower half
+	branch <- 0L
+	tree <- list(lower, list())
+	attr(tree, "height") <- .maxDist/2
+	attr(tree, "class") <- "dendrogram"
+	total <- attr(dendrogram, "members")
+	attr(tree, "members") <- total
+	total <- total - attr(lower, "members")
+	# reverse edges between original and new root
+	.revertList <- function(x) {
+		temp <- NULL
+		if (!is.null(attr(x[[1]], "containsRoot")) &&
+			attr(x[[1]], "containsRoot")) {
+			.revertList(x[[1]]) # continue descending
+			temp <- x[[2]]
+		} else if (length(x) > 1 &&
+			!is.null(attr(x[[2]], "containsRoot")) &&
+			attr(x[[2]], "containsRoot")) {
+			.revertList(x[[2]]) # continue descending
+			temp <- x[[1]]
+		} else if (!is.null(attr(x, "isRoot")) &&
+			attr(x, "isRoot")) {
+			temp <- x # last node
+			attr(temp, "members") <- attr(temp, "members") - attr(lower, "members")
+		}
+		if (!is.null(temp)) {
+			if (!is.leaf(temp) && length(temp)==1)
+				temp <- temp[[1L]] # remove node
+			branch <<- branch + 1L # go to next branch
+			index <- rep(2L, branch)
+			# initialize the subtree
+			tree[[index]] <<- list()
+			class(tree[[index]]) <<- "dendrogram"
+			attr(tree[[index]], "height") <<- attr(x, "height")
+			attr(tree[[index]], "members") <<- total
+			if (is.leaf(temp)) {
+				total <<- total - 1L
+			} else {
+				total <<- total - attr(temp, "members")
+			}
+			if (total > 0) {
+				tree[[c(index, 1L)]] <<- temp
+			} else { # last branch
+				tree[[index]] <<- temp
+			}
+		}
+		invisible(NULL)
+	}
+	
+	.revertList(upper)
+	if (length(tree[[2]])==0)
+		tree[[2]] <- upper[[1]]
+	
+	# correct midpoints on new tree
+	.adjustMidpoints <- function(x) {
+		if (is.leaf(x[[1]]) && is.leaf(x[[2]])) {
+			attr(x, "midpoint") <- 0.5
+		} else if (is.leaf(x[[1]])) {
+			x[[2]] <- .adjustMidpoints(x[[2]])
+			attr(x, "midpoint") <- (1L + attr(x[[2]], "midpoint"))/2
+		} else if (is.leaf(x[[2]])) {
+			x[[1]] <- .adjustMidpoints(x[[1]])
+			attr(x, "midpoint") <- (attr(x[[1]], "midpoint") + attr(x[[1]], "members"))/2
+		} else {
+			x[[1]] <- .adjustMidpoints(x[[1]])
+			x[[2]] <- .adjustMidpoints(x[[2]])
+			attr(x, "midpoint") <- (attr(x[[1]], "members") + attr(x[[1]], "midpoint") + attr(x[[2]], "midpoint"))/2
+		}
+		
+		if (!is.null(attr(x, "isRoot")))
+			attr(x, "isRoot") <- NULL
+		if (!is.null(attr(x, "containsRoot")))
+			attr(x, "containsRoot") <- NULL
+		if (!is.null(attr(x, "containsZero")))
+			attr(x, "containsZero") <- NULL
+		if (!is.null(attr(x, "containsMax")))
+			attr(x, "containsMax") <- NULL
+		
+		return(x)
+	}
+	
+	rooted <- .adjustMidpoints(tree)
+	
+	return(rooted)
+}
+
 IdClusters <- function(myDistMatrix=NULL,
 	method="UPGMA",
 	cutoff=-Inf,
@@ -951,15 +1200,15 @@ IdClusters <- function(myDistMatrix=NULL,
 			myDistMatrix[] <- as.numeric(myDistMatrix)
 	}
 	if (method == 3) {
-		if (!is(myXStringSet, "DNAStringSet"))
-			stop("myXStringSet must be a DNAStringSet.")
+		if (!is(myXStringSet, "DNAStringSet") && !is(myXStringSet, "RNAStringSet"))
+			stop("myXStringSet must be a DNAStringSet or RNAStringSet.")
 		if (length(myXStringSet)!=dim(myDistMatrix)[1])
 			stop("myDistMatrix must have as many rows as the number of sequences.")
 		if (length(unique(width(myXStringSet))) != 1)
 			stop("All sequences in myXStringSet must be the same width (aligned).")
 		if (!is.null(attr(myDistMatrix, "correction")) &&
 			attr(myDistMatrix, "correction") == "none")
-			stop('myDistMatrix must have a correction with method="ML"')
+			stop('myDistMatrix must have a correction with method="ML".')
 	}
 	
 	if (method == 7) {
@@ -1206,24 +1455,6 @@ IdClusters <- function(myDistMatrix=NULL,
 				processors,
 				PACKAGE="DECIPHER")
 			myClusters <- .reorderClusters(myClusters)
-			
-#			# rescale total height of tree to
-#			# normalize myDistMatrix scaling
-#			adjustTreeHeight <- function(scalar) {
-#				myClusters[, 4:5] <- myClusters[, 4:5]*scalar
-#				LnL <- .Call("clusterML",
-#					myClusters,
-#					myXStringSet,
-#					c(0.25, 0.25, 0.25, 0.25, 1, 1, 1, 1),
-#					integer(),
-#					numeric(),
-#					processors,
-#					PACKAGE="DECIPHER")
-#			}
-#			o <- optimize(adjustTreeHeight,
-#				c(0.001, 1000),
-#				tol=1e-2)
-#			myClusters[, 4:5] <- myClusters[, 4:5]*o$minimum
 			
 			m <- matrix(NA,
 				nrow=length(model),
@@ -1518,6 +1749,11 @@ IdClusters <- function(myDistMatrix=NULL,
 				leaves <- "perpendicular"
 			}
 			d <- to.dendrogram(myClustersList)
+			
+			if (method==1 || method==3) {
+				# midpoint root the dendrogram
+				d <- .midpointRoot(d)
+			}
 			
 			# specify the order of clusters that
 			# will match the plotted dendrogram

@@ -10,7 +10,15 @@ SEXP consensusSequenceAA(SEXP x, SEXP threshold, SEXP ambiguity, SEXP minInforma
 
 SEXP consensusProfile(SEXP x, SEXP weight);
 
-SEXP consensusProfileAA(SEXP x, SEXP weight);
+SEXP consensusProfileAA(SEXP x, SEXP weight, SEXP structs);
+
+SEXP colScores(SEXP x, SEXP subMatrix, SEXP go, SEXP ge, SEXP weights);
+
+SEXP colScoresAA(SEXP x, SEXP subMatrix, SEXP go, SEXP ge, SEXP weights, SEXP structs, SEXP hecMatrix);
+
+SEXP shiftGaps(SEXP x, SEXP subMatrix, SEXP go, SEXP ge, SEXP gl, SEXP sc, SEXP thresh, SEXP weights);
+
+SEXP shiftGapsAA(SEXP x, SEXP subMatrix, SEXP go, SEXP ge, SEXP gl, SEXP sc, SEXP thresh, SEXP weights);
 
 // DistanceMatrix.c
 
@@ -68,6 +76,8 @@ SEXP matchRanges(SEXP x, SEXP y, SEXP wordSize, SEXP maxLength, SEXP threshold);
 
 SEXP boundedMatches(SEXP x, SEXP bl, SEXP bu);
 
+SEXP intMatchOnce(SEXP x, SEXP y);
+
 // ReplaceChars.c
 
 SEXP replaceChars(SEXP x, SEXP r, SEXP t);
@@ -96,9 +106,9 @@ SEXP calculateFISH(SEXP probes, SEXP targets);
 
 // AlignProfiles.c
 
-SEXP alignProfiles(SEXP p, SEXP s, SEXP subMatrix, SEXP pm, SEXP mm, SEXP go, SEXP ge, SEXP endGapPenaltyLeft, SEXP endGapPenaltyRight, SEXP boundary, SEXP nThreads);
+SEXP alignProfiles(SEXP p, SEXP s, SEXP subMatrix, SEXP pm, SEXP mm, SEXP go, SEXP ge, SEXP exp, SEXP power, SEXP endGapPenaltyLeft, SEXP endGapPenaltyRight, SEXP boundary, SEXP nThreads);
 
-SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP pm, SEXP mm, SEXP go, SEXP ge, SEXP endGapPenaltyLeft, SEXP endGapPenaltyRight, SEXP boundary, SEXP nThreads);
+SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP hecMatrix, SEXP go, SEXP ge, SEXP exp, SEXP power, SEXP endGapPenaltyLeft, SEXP endGapPenaltyRight, SEXP boundary, SEXP nThreads);
 
 // EnumerateSequence.c
 
@@ -106,9 +116,9 @@ SEXP enumerateSequence(SEXP x, SEXP wordSize);
 
 SEXP enumerateSequenceAA(SEXP x, SEXP wordSize);
 
-SEXP enumerateGappedSequence(SEXP x, SEXP wordSize);
+SEXP enumerateGappedSequence(SEXP x, SEXP wordSize, SEXP ordering);
 
-SEXP enumerateGappedSequenceAA(SEXP x, SEXP wordSize);
+SEXP enumerateGappedSequenceAA(SEXP x, SEXP wordSize, SEXP ordering);
 
 SEXP enumerateSequenceReducedAA(SEXP x, SEXP wordSize, SEXP alphabet);
 
@@ -127,3 +137,23 @@ SEXP meltPolymer(SEXP x, SEXP temps, SEXP ions, SEXP output);
 // InsertGaps.c
 
 SEXP insertGaps(SEXP x, SEXP positions, SEXP lengths, SEXP type, SEXP nThreads);
+
+// ExpandAmbiguities.c
+
+SEXP expandAmbiguities(SEXP x, SEXP c);
+
+// RemoveGaps.c
+
+SEXP removeCommonGaps(SEXP x, SEXP type, SEXP nThreads);
+
+// SubsetXStringSet.c
+
+SEXP subsetXStringSet(SEXP x, SEXP subset, SEXP type, SEXP nThreads);
+
+// AppendXStringSets.c
+
+SEXP appendXStringSets(SEXP x, SEXP y, SEXP type, SEXP nThreads);
+
+// PredictHEC.c
+
+SEXP predictHEC(SEXP x, SEXP windowSize, SEXP background, SEXP HEC_MI1, SEXP HEC_MI2, SEXP output);

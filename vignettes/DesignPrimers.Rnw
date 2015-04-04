@@ -424,10 +424,10 @@ w <- which(names(amplicon)=="avermitilis")
 amplicon <- c(amplicon[w], amplicon[-w])
 @
 
-Then we can use the function \Rfunction{BrowseSequences} to visualize the target site for each primer in the amplicon.  This command will open a new window in the default web browser.  The top sequence shows the target (\textit{S. avermitilis}), and each primer's target site is colored.  We can highlight the target sequence so that only mismatches are colored in the non-target sequences.  It is clear why this target site was chosen, because all other \textit{Streptomyces} species have multiple mismatches to both the forward and reverse primers.  The non-target mismatches, especially those located nearest the 3' end (towards the center of the amplicon), will act to lower both hybridization and elongation efficiency of non-target amplification.
+Then we can use the function \Rfunction{BrowseSeqs} to visualize the target site for each primer in the amplicon.  This command will open a new window in the default web browser.  The top sequence shows the target (\textit{S. avermitilis}), and each primer's target site is colored.  We can highlight the target sequence so that only mismatches are colored in the non-target sequences.  It is clear why this target site was chosen, because all other \textit{Streptomyces} species have multiple mismatches to both the forward and reverse primers.  The non-target mismatches, especially those located nearest the 3' end (towards the center of the amplicon), will act to lower both hybridization and elongation efficiency of non-target amplification.
 
 <<expr14,eval=FALSE>>=
-BrowseSequences(amplicon, colorPatterns=c(4, 27, 76, 94), highlight=1)
+BrowseSeqs(amplicon, colorPatterns=c(4, 27, 76, 94), highlight=1)
 @
 
 \begin{figure}

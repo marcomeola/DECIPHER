@@ -46,7 +46,7 @@ MaskAlignment <- function(myXStringSet,
 		w <- which(x != 0)
 		if (length(w) > 0) {
 			x <- x[w]/sum(x[w])
-			bits <- 2 + sum(x*log(x, 2))
+			bits <- MAX + sum(x*log(x, 2))
 		} else {
 			bits <- 0
 		}
@@ -54,12 +54,14 @@ MaskAlignment <- function(myXStringSet,
 	}
 	
 	if (is(myXStringSet, "AAStringSet")) {
+		MAX <- 4.321928 # log(20, 2)
 		pwm <- .Call("consensusProfileAA",
 			myXStringSet,
 			rep(1, length(myXStringSet)),
 			PACKAGE="DECIPHER")
-		a <- apply(pwm[1:25,], 2, f)
+		a <- apply(pwm[1:20,], 2, f)
 	} else {
+		MAX <- 2 # log(4, 2)
 		pwm <- .Call("consensusProfile",
 			myXStringSet,
 			rep(1, length(myXStringSet)),
@@ -185,7 +187,7 @@ MaskAlignment <- function(myXStringSet,
 		plot(x,
 			c,
 			type="l",
-			ylim=c(0,2),
+			ylim=c(0, MAX),
 			ylab="Information Content (bits)",
 			xlab="Column Position in Alignment")
 		w <- which(!(W %in% gaps))
@@ -208,15 +210,15 @@ MaskAlignment <- function(myXStringSet,
 				col="green")
 		}
 		if (length(gaps) > 0) {
-			abline(h=maxFractionGaps,
+			abline(h=MAX*maxFractionGaps,
 				lty=2,
 				col="orange")
 			points(gaps,
-				2*cm[gaps],
+				MAX*cm[gaps],
 				pch=20,
 				col="orange")
 			axis(4,
-				seq(0, 2, 0.5),
+				seq(0, MAX, length.out=5),
 				labels=c("0", "25", "50", "75", "100"),
 				col.axis="orange")
 			mtext("Percent Gaps (%)", 4, line=3, col="orange")

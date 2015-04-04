@@ -46,7 +46,7 @@ Free energy rules for all possible base pairings in quadruplets.  If NULL, defau
 This function calculates the free energy and hybridization efficiency (HE) for a given formamide concentration ([FA]) using the linear free energy model given by:
 \deqn{HE = Po*exp[-(dG_0 + m*FA)/RT]/(1+Po*exp[-(dG_0 + m*FA)/RT])}
 
-The \code{probe} and \code{target} input sequences must be aligned in pairs, such that the first probe is aligned to the first target, second-to-second, and so on.  Only "A", "C", "G", "T", and "-" characters are permitted in the probe sequence.
+The \code{probe} and \code{target} input sequences must be aligned in pairs, such that the first probe is aligned to the first target, second-to-second, and so on.  Ambiguity codes in the \code{IUPAC_CODE_MAP} are accepted in probe and target sequences.  Any ambiguities will default to perfect match pairings by inheriting the nucleotide in the same position on the opposite sequence whenever possible.  If the ambiguity results in a mismatch then ``T'', ``G'', ``C'', and ``A'' are substituted, in that order.  For example, if a probe nucleotide is ``S'' (``C'' or ``G'') then it will be considered a ``C'' if the target nucleotide in the same position is a ``C'', otherwise the ambiguity will be interpreted as a ``G''.
 
 If \code{deltaGrules} is NULL then the rules defined in \code{data(deltaGrules)} will be used.  Note that \code{deltaGrules} of the same format may be customized for any application and specified as an input.
 }

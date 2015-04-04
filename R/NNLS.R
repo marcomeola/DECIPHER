@@ -3,6 +3,8 @@ NNLS <- function(A,
 	precision=sqrt(.Machine$double.eps),
 	processors=NULL,
 	verbose=TRUE) {
+	
+	# error checking:
 	if (length(A) != 4)
 		stop("A must have four components: A$i, A$j, A$x, and A$dimnames.")
 	if (!is.integer(A$i))

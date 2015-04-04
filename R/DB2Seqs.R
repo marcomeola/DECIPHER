@@ -10,6 +10,7 @@ DB2Seqs <- function(file,
 	removeGaps="none",
 	append=FALSE,
 	width=80,
+	compress=FALSE,
 	chunkSize=1e5,
 	clause="",
 	verbose=TRUE) {
@@ -38,6 +39,8 @@ DB2Seqs <- function(file,
 		stop("orderBy must be a character string.")
 	if (!is.logical(append))
 		stop("append must be a logical.")
+	if (!is.logical(compress))
+		stop("compress must be a logical.")
 	if (!is.character(clause))
 		stop("clause must be a character string.")
 	if (!is.logical(verbose))
@@ -242,12 +245,14 @@ DB2Seqs <- function(file,
 				file,
 				append=ifelse(i==1, append, TRUE),
 				format="FASTQ",
+				compress=compress,
 				qualities=PhredQuality(searchResult2$quality))
 		} else {
 			writeXStringSet(myXStringSet,
 				file,
 				append=ifelse(i==1, append, TRUE),
 				format="FASTA",
+				compress=compress,
 				width=width)
 		}
 		

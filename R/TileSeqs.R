@@ -116,8 +116,7 @@ TileSeqs <- function(dbFile,
 			next
 		}
 		
-		consensus <- ConsensusSequence(target,
-			verbose=FALSE)
+		consensus <- ConsensusSequence(target)
 		
 		pos <- which(strsplit(toString(consensus), "", fixed=TRUE)[[1]] != "-")
 		l <- length(pos) - maxLength + 1

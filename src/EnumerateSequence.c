@@ -259,12 +259,14 @@ SEXP enumerateSequenceAA(SEXP x, SEXP wordSize)
 	return ret_list;
 }
 
-//ans_start <- .Call("enumerateGappedSequence", myDNAStringSet, wordSize, PACKAGE="DECIPHER")
-SEXP enumerateGappedSequence(SEXP x, SEXP wordSize)
+//ans_start <- .Call("enumerateGappedSequence", myDNAStringSet, wordSize, ordering, PACKAGE="DECIPHER")
+SEXP enumerateGappedSequence(SEXP x, SEXP wordSize, SEXP ordering)
 {
 	XStringSet_holder x_set;
 	Chars_holder x_i;
 	int x_length, i, j, k, wS, sum, ambiguous, *rans, *p;
+	int *o = INTEGER(ordering);
+	int l = length(ordering);
 	
 	// initialize the XStringSet
 	x_set = hold_XStringSet(x);
@@ -272,7 +274,7 @@ SEXP enumerateGappedSequence(SEXP x, SEXP wordSize)
 	wS = asInteger(wordSize); // [1 to 15]
 	
 	SEXP ret_list;
-	PROTECT(ret_list = allocVector(VECSXP, x_length*2));
+	PROTECT(ret_list = allocVector(VECSXP, l*2));
 	
 	// fill the position weight vector
 	int pwv[wS]; // wS[0] is ignored
@@ -282,8 +284,8 @@ SEXP enumerateGappedSequence(SEXP x, SEXP wordSize)
 		pwv[i] = pwv[i - 1]*4;
 	}
 	
-	for (i = 0; i < x_length; i++) {
-		x_i = get_elt_from_XStringSet_holder(&x_set, i);
+	for (i = 0; i < l; i++) {
+		x_i = get_elt_from_XStringSet_holder(&x_set, *(o + i) - 1);
 		SEXP ans, pos;
 		if ((x_i.length - wS + 1) < 1) {
 			PROTECT(ans = allocVector(INTSXP, 0));
@@ -349,17 +351,19 @@ SEXP enumerateGappedSequence(SEXP x, SEXP wordSize)
 		R_CheckUserInterrupt();
 	}
 	
-	UNPROTECT(1 + 2*x_length);
+	UNPROTECT(1 + 2*l);
 	
 	return ret_list;
 }
 
-//ans_start <- .Call("enumerateGappedSequenceAA", myDNAStringSet, wordSize, PACKAGE="DECIPHER")
-SEXP enumerateGappedSequenceAA(SEXP x, SEXP wordSize)
+//ans_start <- .Call("enumerateGappedSequenceAA", myDNAStringSet, wordSize, ordering, PACKAGE="DECIPHER")
+SEXP enumerateGappedSequenceAA(SEXP x, SEXP wordSize, SEXP ordering)
 {
 	XStringSet_holder x_set;
 	Chars_holder x_i;
 	int x_length, i, j, k, wS, sum, ambiguous, *rans, *p;
+	int *o = INTEGER(ordering);
+	int l = length(ordering);
 	
 	// initialize the XStringSet
 	x_set = hold_XStringSet(x);
@@ -367,7 +371,7 @@ SEXP enumerateGappedSequenceAA(SEXP x, SEXP wordSize)
 	wS = asInteger(wordSize); // [1 to 7]
 	
 	SEXP ret_list;
-	PROTECT(ret_list = allocVector(VECSXP, x_length*2));
+	PROTECT(ret_list = allocVector(VECSXP, l*2));
 	
 	// fill the position weight vector
 	int pwv[wS]; // wS[0] is ignored
@@ -377,8 +381,8 @@ SEXP enumerateGappedSequenceAA(SEXP x, SEXP wordSize)
 		pwv[i] = pwv[i - 1]*20;
 	}
 	
-	for (i = 0; i < x_length; i++) {
-		x_i = get_elt_from_XStringSet_holder(&x_set, i);
+	for (i = 0; i < l; i++) {
+		x_i = get_elt_from_XStringSet_holder(&x_set, *(o + i) - 1);
 		SEXP ans, pos;
 		if ((x_i.length - wS + 1) < 1) {
 			PROTECT(ans = allocVector(INTSXP, 0));
@@ -444,7 +448,7 @@ SEXP enumerateGappedSequenceAA(SEXP x, SEXP wordSize)
 		R_CheckUserInterrupt();
 	}
 	
-	UNPROTECT(1 + 2*x_length);
+	UNPROTECT(1 + 2*l);
 	
 	return ret_list;
 }

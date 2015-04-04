@@ -1,5 +1,6 @@
 BrowseDB <- function(dbFile,
 	htmlFile=paste(tempdir(),"/db.html",sep=""),
+	openURL=TRUE,
 	tblName="DNA",
 	identifier="",
 	limit=-1,
@@ -11,6 +12,8 @@ BrowseDB <- function(dbFile,
 	if (!is.character(htmlFile))
 		if (!inherits(htmlFile, "connection"))
 			stop("htmlFile must be a character string or connection.")
+	if (!is.logical(openURL) || is.na(openURL))
+		stop("openURL must be TRUE or FALSE.")
 	if (!is.character(tblName))
 		stop("tblName must be a character string.")
 	if (substr(tblName, 1, 1) == "_")
@@ -223,6 +226,9 @@ BrowseDB <- function(dbFile,
 		html,
 		"\n</table></div></div></html>")
 	writeLines(html, htmlFile)
-	browseURL(htmlFile)
+	
+	if (openURL)
+		browseURL(path.expand(htmlFile))
+	
 	invisible(htmlFile)
 }

@@ -57,5 +57,5 @@ Erik Wright \email{DECIPHER@cae.wisc.edu}
 \examples{
 db <- system.file("extdata", "Bacteria_175seqs.sqlite", package="DECIPHER")
 con <- IdConsensus(db, colName="id", noConsensusChar="N")
-BrowseSequences(con)
+BrowseSeqs(con)
 }

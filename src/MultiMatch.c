@@ -289,8 +289,6 @@ SEXP matchLists(SEXP x, SEXP verbose, SEXP pBar, SEXP nThreads)
 					continue;
 				}
 				
-				int lz = last - first + 1;
-				
 				count = 0;
 				start = 0;
 				for (o = first; o <= last; o++) {
@@ -305,7 +303,11 @@ SEXP matchLists(SEXP x, SEXP verbose, SEXP pBar, SEXP nThreads)
 					}
 				}
 				
-				*(rans + i*size_x + j) = 1 - (double)count/(double)lz;
+				if (lx < ly) {
+					*(rans + i*size_x + j) = 1 - (double)count/(double)lx;
+				} else {
+					*(rans + i*size_x + j) = 1 - (double)count/(double)ly;
+				}
 			} else {
 				*(rans + i*size_x + j) = NA_REAL;
 			}
@@ -335,7 +337,7 @@ SEXP matchLists(SEXP x, SEXP verbose, SEXP pBar, SEXP nThreads)
 	return ans;
 }
 
-// matrix of d[i, j] = ordered matches (x[i], x[j]) / min(length bound by consecutive matches)
+// matrix of d[i, j] = ordered matches (x[i], x[j]) / min(length)
 // requires a list of unsorted integers retaining the order of x
 SEXP matchOrder(SEXP x, SEXP verbose, SEXP pBar, SEXP nThreads)
 {	
@@ -367,124 +369,56 @@ SEXP matchOrder(SEXP x, SEXP verbose, SEXP pBar, SEXP nThreads)
 			lx = length(VECTOR_ELT(x, i));
 			ly = length(VECTOR_ELT(x, j));
 			
-			/*
-			int link_x = -1, link_y = -1; // last established link between X and Y
-			int matches = 0, matches_temp = 0; // running number of matches
-			int start_x = -1, start_y = -1; // first consecutive matches
-			int end_x = lx - 1, end_y = ly - 1; // last consecutive matches
-			int pos_x, pos_y, off; // current position
-			
-			int offset = 1; // distance offset from link
-			while (offset <= (lx - link_x + ly - link_y - 2)) { // within sequence
-				for (off = 1; off <= offset; off++) {
-					pos_y = link_y + off;
-					pos_x = link_x + offset - off + 1;
-					//Rprintf("\n%d %d %d %d %d", pos_x, pos_y, link_x, link_y, offset);
-					if (pos_y < ly &&
-						pos_x < lx &&
-						X[pos_x]==Y[pos_y]) {
-						if (pos_x==(link_x + 1) &&
-							pos_y==(link_y + 1)) {
-							if (start_x==-1) { // no consecutive match found yet
-								start_x = link_x - 1;
-								start_y = link_y - 1;
-								matches_temp = 1;
-							} else { // another consecutive match found
-								end_x = link_x;
-								end_y = link_y;
-								matches += matches_temp + 1;
-								matches_temp = -1;
-							}
-						}
-						link_x = pos_x;
-						link_y = pos_y;
-						offset = 0;
-						matches_temp++;
-					}
-				}
-				offset++;
-			}
-			
-			if (start_x==-1) { // no overlap
-				*(rans + i*size_x + j) = NA_REAL;
-			} else if (end_y - start_y < end_x - start_x) {
-				*(rans + i*size_x + j) = 1 - (double)matches/(double)(end_y - start_y + 1);
-			} else {
-				*(rans + i*size_x + j) = 1 - (double)matches/(double)(end_x - start_x + 1);
-			}
-			
-			// repeat for the opposite direction to account for offset in overlap
-			link_x = -1, link_y = -1; // last established link between X and Y
-			matches = 0, matches_temp = 0; // running number of matches
-			start_x = -1, start_y = -1; // first consecutive matches
-			end_x = lx - 1, end_y = ly - 1; // last consecutive matches
-			
-			offset = 1; // distance offset from link
-			while (offset <= (lx - link_x + ly - link_y - 2)) { // within sequence
-				for (off = 1; off <= offset; off++) {
-					pos_y = link_y + off;
-					pos_x = link_x + offset - off + 1;
-					//Rprintf("\n%d %d %d %d %d", pos_x, pos_y, link_x, link_y, offset);
-					if (pos_y < ly &&
-						pos_x < lx &&
-						X[lx - pos_x - 1]==Y[ly - pos_y - 1]) { // reverse order
-						if (pos_x==(link_x + 1) &&
-							pos_y==(link_y + 1)) {
-							if (start_x==-1) { // no consecutive match found yet
-								start_x = link_x - 1;
-								start_y = link_y - 1;
-								matches_temp = 1;
-							} else { // another consecutive match found
-								end_x = link_x;
-								end_y = link_y;
-								matches += matches_temp + 1;
-								matches_temp = -1;
-							}
-						}
-						link_x = pos_x;
-						link_y = pos_y;
-						offset = 0;
-						matches_temp++;
-					}
-				}
-				offset++;
-			}
-			
-			if (start_x!=-1 &&
-				end_y - start_y < end_x - start_x &&
-				1 - (double)matches/(double)(end_y - start_y + 1) < *(rans + i*size_x + j)) {
-				*(rans + i*size_x + j) = 1 - (double)matches/(double)(end_y - start_y + 1);
-			} else if (start_x != -1 &&
-					   1 - (double)matches/(double)(end_x - start_x + 1) < *(rans + i*size_x + j)) {
-				*(rans + i*size_x + j) = 1 - (double)matches/(double)(end_x - start_x + 1);
-			}
-			*/
-			
-			// the following for loops begin to jump after a few iterations
-			// under the assumption that mismatches are more frequent than gaps
-			// jumping increases as the likelihood of matching decreases
-			// also stops looking for back-matches at the end of either sequence
-			// these heuristics offer a big speed boost with some loss of accuracy
-			
 			int link_x = -1, link_y = -1; // last established link between X and Y
 			int matches = 0; // running number of matches
 			int pos_x, pos_y, off; // current position
 			int offset = 1; // distance offset from link
-			while (offset <= (lx - link_x + ly - link_y - 2)) { // within sequence
-				for (off = 1; off <= offset; off += (off < 10) ? 1 : (off/5)) { // exact is off++
-					pos_y = link_y + off;
-					pos_x = link_x + offset - off + 1;
-					if (pos_y < ly &&
-						pos_x < lx &&
-						X[pos_x]==Y[pos_y]) {
-						link_x = pos_x;
-						link_y = pos_y;
-						offset = 0;
-						matches++;
+			int delta, forward;
+			while (offset + link_x < lx && offset + link_y < ly) { // within sequence
+				pos_y = link_y + 1;
+				pos_x = link_x + offset;
+				
+				if (matches) {
+					if (forward) {
+						for (off = 1; off <= offset; off++, pos_x--, pos_y++) {
+							if (X[pos_x]==Y[pos_y]) {
+								link_x = pos_x;
+								link_y = pos_y;
+								offset = 0;
+								matches++;
+							}
+						}
+					} else { // backward
+						for (off = 1; off <= offset; off++, pos_x--, pos_y++) {
+							if (X[lx - pos_x - 1]==Y[ly - pos_y - 1]) {
+								link_x = pos_x;
+								link_y = pos_y;
+								offset = 0;
+								matches++;
+							}
+						}
+					}
+				} else {
+					for (off = 1; off <= offset; off += delta, pos_x -= delta, pos_y += delta) {
+						if (X[pos_x]==Y[pos_y]) {
+							link_x = pos_x;
+							link_y = pos_y;
+							offset = 0;
+							matches++;
+							forward = 1;
+							break;
+						} else if (X[lx - pos_x - 1]==Y[ly - pos_y - 1]) {
+							link_x = pos_x;
+							link_y = pos_y;
+							offset = 0;
+							matches++;
+							forward = 0; // backward
+							break;
+						}
+						delta = (off < 10) ? 1 : (off/5);
 					}
 				}
-				if (pos_y >= ly || pos_x >= lx)
-					break; // skip ends
+				
 				offset++;
 			}
 			
@@ -493,36 +427,6 @@ SEXP matchOrder(SEXP x, SEXP verbose, SEXP pBar, SEXP nThreads)
 			} else {
 				*(rans + i*size_x + j) = 1 - (double)matches/(double)(ly);
 			}
-			
-			link_x = -1, link_y = -1; // last established link between X and Y
-			matches = 0; // running number of matches
-			offset = 1; // distance offset from link
-			while (offset <= (lx - link_x + ly - link_y - 2)) { // within sequence
-				for (off = 1; off <= offset; off += (off < 10) ? 1 : (off/5)) { // exact is off++
-					pos_y = link_y + off;
-					pos_x = link_x + offset - off + 1;
-					if (pos_y < ly &&
-						pos_x < lx &&
-						X[lx - pos_x - 1]==Y[ly - pos_y - 1]) {
-						link_x = pos_x;
-						link_y = pos_y;
-						offset = 0;
-						matches++;
-					}
-				}
-				if (pos_y >= ly || pos_x >= lx)
-					break; // skip ends
-				offset++;
-			}
-			
-			double temp;
-			if (lx < ly) {
-				temp = 1 - (double)matches/(double)(lx);
-			} else {
-				temp = 1 - (double)matches/(double)(ly);
-			}
-			if (temp < *(rans + i*size_x + j))
-				*(rans + i*size_x + j) = temp;
 			
 			*(rans + i + j*size_x) = *(rans + i*size_x + j);
 		}
@@ -782,6 +686,41 @@ SEXP boundedMatches(SEXP x, SEXP bl, SEXP bu)
 	SEXP ans;
 	PROTECT(ans = allocVector(INTSXP, count));
 	memcpy(INTEGER(ans), buffer, sizeof(int) * count);
+	
+	UNPROTECT(1);
+	
+	return ans;
+}
+
+// first unmatched occurrence of x in y for ascending order integer vectors
+// same as match(x, y, incomparables=NA) without repetition in the result
+SEXP intMatchOnce(SEXP x, SEXP y)
+{	
+	int *v = INTEGER(x);
+	int *w = INTEGER(y);
+	int i, j, start = 0;
+	int size_x = length(x);
+	int size_y = length(y);
+	
+	SEXP ans;
+	PROTECT(ans = allocVector(INTSXP, size_x));
+	int *rans = INTEGER(ans);
+	
+	for (i = 0; i < size_x; i++) {
+		rans[i] = NA_INTEGER;
+		if (v[i] == NA_INTEGER)
+			continue;
+		for (j = start; j < size_y; j++) {
+			if (v[i] < w[j]) {
+				start = j;
+				break;
+			} else if (v[i] == w[j]) {
+				start = j + 1; // prevents repeated matching
+				rans[i] = start; // index starting from 1
+				break;
+			}
+		}
+	}
 	
 	UNPROTECT(1);
 	

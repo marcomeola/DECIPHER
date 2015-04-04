@@ -85,7 +85,7 @@ Other time consuming tasks are handled efficiently.  The function \Rfunction{Fin
 
 It is no longer necessary to store related data in several different files.  \Rpackage{DECIPHER} is enabled by \Rpackage{RSQLite}, which is an \R{} interface to \term{SQLite} databases \url{http://www.sqlite.org/}.  \Rpackage{DECIPHER} creates an organized collection of sequences and their associated information known as a sequence database.  \term{SQLite} databases are flat files, meaning they can be handled just like any other file.  There is no setup required since \term{SQLite} does not require a server, unlike other client database engines.  These attributes of \term{SQLite} databases make storing, backing-up, and sharing sequence databases relatively straightforward.
 
-Separate projects can be stored in distinct tables in the same sequence database.  Each new table is structured to include every sequence's description, identifier, and a unique key called the \term{row_name} all in one place.  The sequences are referenced by their \term{row_names} or \term{identifier} throughout most functions in the package.  Using \term{row_names}, new information created using \Rpackage{DECIPHER} functions is added as additional database columns to their respective sequences' rows in the database table.  To prevent the database from seeming like a black box there is a function named \Rfunction{BrowseDB} that facilitates viewing of the database contents in a web browser.  A similar function is available to view sequences called \Rfunction{BrowseSequences}.
+Separate projects can be stored in distinct tables in the same sequence database.  Each new table is structured to include every sequence's description, identifier, and a unique key called the \term{row_name} all in one place.  The sequences are referenced by their \term{row_names} or \term{identifier} throughout most functions in the package.  Using \term{row_names}, new information created using \Rpackage{DECIPHER} functions is added as additional database columns to their respective sequences' rows in the database table.  To prevent the database from seeming like a black box there is a function named \Rfunction{BrowseDB} that facilitates viewing of the database contents in a web browser.  A similar function is available to view sequences called \Rfunction{BrowseSeqs}.
 
 The amount of DNA sequence information available is currently increasing at a phenomenal rate.  \Rpackage{DECIPHER} stores individual sequences using \term{gzip} compression so that the database file takes up much less drive space than a standard text file of sequences.  The compressed sequences are stored in a hidden table that is linked to the information table.  For example, by default sequence information is stored in the table ``DNA'', and the associated sequences are stored in the table ``_DNA''.  Storing the sequences in a separate table greatly improves access speed when there is a large amount of sequence information.  Separating projects into distinct tables further increases query speed over that of storing every project in a single table.
 
@@ -98,13 +98,15 @@ The functions of DECIPHER can be grouped into several categories based on intend
 \item Primary functions for interacting with a sequence database:
 \begin{enumerate} \item \Rfunction{Add2DB} \item \Rfunction{DB2Seqs} \item \Rfunction{SearchDB} \item \Rfunction{Seqs2DB} \end{enumerate}
 \item Secondary functions for typical database tasks:
-\begin{enumerate} \item \Rfunction{IdConsensus} \item \Rfunction{IdentifyByRank} \item \Rfunction{IdLengths} \end{enumerate}
+\begin{enumerate} \item \Rfunction{IdentifyByRank} \item \Rfunction{IdLengths} \end{enumerate}
+\item Functions related to forming consensus:
+\begin{enumerate} \item \Rfunction{ConsensusSequence} \item \Rfunction{Disambiguate} \item \Rfunction{IdConsensus} \end{enumerate}
 \item Functions for phylogenetics with a set of sequences:
-\begin{enumerate} \item \Rfunction{ConsensusSequence} \item \Rfunction{DistanceMatrix} \item \Rfunction{IdClusters} \item \Rfunction{MaskAlignment} \end{enumerate}
+\begin{enumerate} \item \Rfunction{DistanceMatrix} \item \Rfunction{IdClusters} \item \Rfunction{MaskAlignment} \end{enumerate}
 \item Functions for visualization with a web browser:
-\begin{enumerate} \item \Rfunction{BrowseDB} \item \Rfunction{BrowseSequences} \end{enumerate}
+\begin{enumerate} \item \Rfunction{BrowseDB} \item \Rfunction{BrowseSeqs} \end{enumerate}
 \item Functions for multiple sequence alignment:
-\begin{enumerate} \item \Rfunction{AlignDB} \item \Rfunction{AlignProfiles} \item \Rfunction{AlignSeqs} \item \Rfunction{AlignTranslation} \end{enumerate}
+\begin{enumerate} \item \Rfunction{AdjustAlignment} \item \Rfunction{AlignDB} \item \Rfunction{AlignProfiles} \item \Rfunction{AlignSeqs} \item \Rfunction{AlignTranslation} \item \Rfunction{PredictHEC} \item \Rfunction{StaggerAlignment} \end{enumerate}
 \item Functions related to chimeras:
 \begin{enumerate} \item \Rfunction{CreateChimeras} \item \Rfunction{FindChimeras} \item \Rfunction{FormGroups} \end{enumerate}
 \item Functions related to DNA microarrays:
@@ -112,7 +114,7 @@ The functions of DECIPHER can be grouped into several categories based on intend
 \item Functions related to probes for fluorescence \textit{in situ} hybridization (FISH):
 \begin{enumerate} \item \Rfunction{CalculateEfficiencyFISH} \item \Rfunction{DesignProbes} \item \Rfunction{TileSeqs} \end{enumerate}
 \item Functions related to primers for polymerase chain reaction (PCR):
-\begin{enumerate} \item \Rfunction{Amplify} \item \Rfunction{CalculateEfficiencyPCR} \item \Rfunction{DesignPrimers} \item \Rfunction{MeltDNA} \item \Rfunction{TileSeqs} \end{enumerate}
+\begin{enumerate} \item \Rfunction{AmplifyDNA} \item \Rfunction{CalculateEfficiencyPCR} \item \Rfunction{DesignPrimers} \item \Rfunction{DesignSignatures} \item \Rfunction{DigestDNA} \item \Rfunction{Disambiguate} \item \Rfunction{MeltDNA} \item \Rfunction{TileSeqs} \end{enumerate}
 \end{enumerate}
 
 %------------------------------------------------------------
@@ -229,7 +231,9 @@ R CMD INSTALL "<<path to newly built DECIPHER.zip>>"
 \end{enumerate}
 \end{enumerate}
 
+%------------------------------------------------------------
 \section{Example Workflow}
+%------------------------------------------------------------
 
 To get started we need to load the \Rpackage{DECIPHER} package, which automatically loads several other required packages:
 %
@@ -287,12 +291,12 @@ BrowseDB(dbConn, maxChars=20)
 We can now look at only those sequences that belong to the phylum \term{Bacteroidetes} (Fig. 2):
 <<expr5>>=
 dna <- SearchDB(dbConn, id="Bacteroidetes")
-BrowseSequences(subseq(dna, 140, 240))
+BrowseSeqs(subseq(dna, 140, 240))
 @
 
 \begin{figure}
 \begin{center}
-\includegraphics[width=1\textwidth]{BrowseSequencesOutput}
+\includegraphics[width=1\textwidth]{BrowseSeqsOutput}
 \caption{\label{f2} Sequences shown in web browser}
 \end{center}
 \end{figure}

@@ -68,5 +68,5 @@ Erik Wright \email{DECIPHER@cae.wisc.edu}
 db <- system.file("extdata", "Bacteria_175seqs.sqlite", package="DECIPHER")
 dna <- SearchDB(db)
 chims <- CreateChimeras(dna)
-BrowseSequences(chims)
+BrowseSeqs(chims)
 }

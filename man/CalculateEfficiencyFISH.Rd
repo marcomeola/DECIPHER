@@ -39,7 +39,7 @@ Integer specifying the number of probes to simulate hybridization per batch.  Se
 }
 }
 \details{
-Hybridization of pairwise \code{probe}/\code{target} (DNA/RNA) pairs is simulated \emph{in silico}.  Gibbs free energies are obtained from system calls to OligoArrayAux, which must be properly installed (see the Notes section below).  Probe/target pairs are sent to OligoArrayAux in batches of \code{batchSize}, which prevents systems calls from being too many characters.  Note that OligoArrayAux does not support degeneracy codes (non-base letters).
+Hybridization of pairwise \code{probe}/\code{target} (DNA/RNA) pairs is simulated \emph{in silico}.  Gibbs free energies are obtained from system calls to OligoArrayAux, which must be properly installed (see the Notes section below).  Probe/target pairs are sent to OligoArrayAux in batches of \code{batchSize}, which prevents systems calls from being too many characters.  Note that OligoArrayAux does not support degeneracy codes (non-base letters), although they are accepted without error.  Any sequences with ambiguity should be expanded into multiple permutations with \code{\link{Disambiguate}} before input.
 }
 \value{
 A matrix of predicted hybridization efficiency (\code{HybEff}), formamide melt point (\code{FAm}), and free energy (\code{ddG1} and \code{dG1}) for each \code{probe}/\code{target} pair of sequences.

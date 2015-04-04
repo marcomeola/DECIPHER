@@ -6,6 +6,7 @@ import(IRanges)
 import(XVector)
 import(Biostrings)
 import(RSQLite)
+import(DBI)
 import(parallel)
 
 export(
@@ -18,17 +19,17 @@ IdLengths, TerminalChar,
 # grouping sequences:
 DistanceMatrix, IdClusters, MODELS,
 # forming consensus:
-ConsensusSequence, IdConsensus, TileSeqs,
+ConsensusSequence, Disambiguate, IdConsensus, TileSeqs,
 # chimeras:
 FindChimeras, CreateChimeras,
 # microarrays:
 DesignArray, Array2Matrix, NNLS, CalculateEfficiencyArray,
 # primers:
-Amplify, CalculateEfficiencyPCR, DesignPrimers, MeltDNA,
+AmplifyDNA, CalculateEfficiencyPCR, DesignPrimers, DesignSignatures, DigestDNA, MeltDNA,
 # probes:
 CalculateEfficiencyFISH, DesignProbes,
 # viewing information:
-BrowseSequences, BrowseDB,
+BrowseSequences, BrowseSeqs, BrowseDB,
 # multiple alignment
-AlignSeqs, AlignProfiles, AlignTranslation, MaskAlignment, AlignDB
+AdjustAlignment, AlignDB, AlignProfiles, AlignSeqs, AlignTranslation, MaskAlignment, PredictHEC, StaggerAlignment
 )

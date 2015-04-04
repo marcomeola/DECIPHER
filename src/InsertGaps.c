@@ -35,7 +35,7 @@
 // strcpy
 #include <string.h>
 
-//ans_start <- .Call("insertGaps", sequences, positions, lengths, processors, PACKAGE="DECIPHER")
+//ans_start <- .Call("insertGaps", sequences, positions, lengths, type, processors, PACKAGE="DECIPHER")
 SEXP insertGaps(SEXP x, SEXP positions, SEXP lengths, SEXP type, SEXP nThreads)
 {
 	int i, j, x_length, *width, sum, start;

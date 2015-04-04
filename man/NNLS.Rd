@@ -4,7 +4,7 @@
 Sequential Coordinate-wise Algorithm for the Non-negative Least Squares Problem
 }
 \description{
-Consider the linear system \eqn{\textbf{A} x = b} where \eqn{\textbf{A} \in  R\textsuperscript{m x n}}, \eqn{x \in R\textsuperscript{n}}, and \eqn{b \in R\textsuperscript{m}}.  The technique of least squares proposes to compute \eqn{x} so that the sum of squared residuals is minimized.  \code{NNLS} solves the least squares problem \eqn{\min{||\textbf{A} x = b||\textsuperscript{2}}} subject to the constraint \eqn{x \ge 0}.  This implementation of the Sequential Coordinate-wise Algorithm uses a sparse input matrix \eqn{\textbf{A}}, which makes it efficient for large sparse problems.
+Consider the linear system \eqn{\bold{A} x = b} where \eqn{\bold{A} \in  R\textsuperscript{m x n}}, \eqn{x \in R\textsuperscript{n}}, and \eqn{b \in R\textsuperscript{m}}.  The technique of least squares proposes to compute \eqn{x} so that the sum of squared residuals is minimized.  \code{NNLS} solves the least squares problem \eqn{\min{||\bold{A} x = b||\textsuperscript{2}}} subject to the constraint \eqn{x \ge 0}.  This implementation of the Sequential Coordinate-wise Algorithm uses a sparse input matrix \eqn{\bold{A}}, which makes it efficient for large sparse problems.
 }
 \usage{
 NNLS(A,
@@ -31,7 +31,7 @@ Logical indicating whether to display progress.
 }
 }
 \details{
-The input \eqn{b} can be either a matrix or a vector of numerics.  If it is a matrix then it is assumed that each column contains a set of observations, and the output \eqn{x} will have the same number of columns.  This allows multiple NNLS problems using the same \eqn{\textbf{A}} matrix to be solved simultaneously, and greatly accelerates computation relative to solving each sequentially.
+The input \eqn{b} can be either a matrix or a vector of numerics.  If it is a matrix then it is assumed that each column contains a set of observations, and the output \eqn{x} will have the same number of columns.  This allows multiple NNLS problems using the same \eqn{\bold{A}} matrix to be solved simultaneously, and greatly accelerates computation relative to solving each sequentially.
 }
 \value{
 A list of two components:
@@ -39,7 +39,7 @@ A list of two components:
 The matrix of non-negative values that best explains the observed values given by \eqn{b}.
 }
   \item{res}{
-A matrix of residuals given by \eqn{\textbf{A} x - b}.
+A matrix of residuals given by \eqn{\bold{A} x - b}.
 }
 }
 \references{

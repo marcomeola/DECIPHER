@@ -665,7 +665,7 @@ There are now multiple candidate dual probe sets for consideration, all of which
 
 \subsection{Visualizing the Target Sites}
 
-Often it is useful to visualize the target sites where the probes will hybridize on both the target and non-targets side-by-side.  We can accomplish this by highlighting the region of both probes in the sequence set with \Rfunction{BrowseSequences}.  After querying the database for the sequences of interest, we can selectively color the target site regions given by \code{start_aligned_one} and \code{start_aligned_two} outputs of \Rfunction{DesignProbes}.  Next we name and order the sequences in the set such that the target (\textit{Sphingopyxis}) appears at the top.
+Often it is useful to visualize the target sites where the probes will hybridize on both the target and non-targets side-by-side.  We can accomplish this by highlighting the region of both probes in the sequence set with \Rfunction{BrowseSeqs}.  After querying the database for the sequences of interest, we can selectively color the target site regions given by \code{start_aligned_one} and \code{start_aligned_two} outputs of \Rfunction{DesignProbes}.  Next we name and order the sequences in the set such that the target (\textit{Sphingopyxis}) appears at the top.
 
 <<expr19,eval=FALSE>>=
 dna <- SearchDB(dbConn, nameBy="id", verbose=FALSE)
@@ -675,7 +675,7 @@ dbDisconnect(dbConn)
 w <- which(names(dna)=="Sphingopyxis")
 dna <- c(dna[w], dna[-w])
 
-BrowseSequences(dna, colorPatterns=c(pSets$start_aligned_one[1],
+BrowseSeqs(dna, colorPatterns=c(pSets$start_aligned_one[1],
 	pSets$start_aligned_one[1] + nchar(pSets$probe_one[1]) - 1,
 	pSets$start_aligned_two[1],
 	pSets$start_aligned_two[1] + nchar(pSets$probe_two[1]) - 1),

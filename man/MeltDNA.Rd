@@ -48,7 +48,7 @@ Erik Wright \email{DECIPHER@cae.wisc.edu}
 \code{MeltDNA} uses nearest neighbor parameters from SantaLucia (1998).
 }
 \seealso{
-\code{\link{Amplify}}, \code{\link{CalculateEfficiencyPCR}}
+\code{\link{AmplifyDNA}}, \code{\link{CalculateEfficiencyPCR}}, \code{\link{DesignSignatures}}
 }
 \examples{
 fas <- system.file("extdata", "IDH2.fas", package="DECIPHER")
@@ -59,7 +59,7 @@ temps <- seq(85, 100, 0.2)
 m <- MeltDNA(dna,
              type="melt", temps=temps, ions=0.1)
 matplot(temps, m,
-        type="l", xlab="Temperature (\u00B0C)", ylab="-d(Theta)/dTemp")
+        type="l", xlab="Temperature (\u00B0C)", ylab="Average Theta")
 legend("topright", c("SNP", "IDH2"),
         col=c("black", "red"), lty=1:2)
 
@@ -68,7 +68,7 @@ temps <- seq(80, 95, 0.25)
 m <- MeltDNA(subseq(dna, 492, 542),
              type="derivative", temps=temps)
 matplot(temps, m,
-        type="l", xlab="Temperature (\u00B0C)", ylab="Average Theta")
+        type="l", xlab="Temperature (\u00B0C)", ylab="-d(Theta)/dTemp")
 legend("topright", c("SNP", "IDH2"),
         col=c("black", "red"), lty=1:2)
 

@@ -4,20 +4,17 @@ ConsensusSequence <- function(myXStringSet,
 	noConsensusChar="+",
 	minInformation=0.75,
 	ignoreNonBases=FALSE,
-	includeTerminalGaps=FALSE,
-	verbose=TRUE) {
+	includeTerminalGaps=FALSE) {
 	
 	# error checking
-	if (!is.logical(verbose))
-		stop("verbose must be a logical.")
 	if (!is(myXStringSet, "DNAStringSet") && !is(myXStringSet, "RNAStringSet") && !is(myXStringSet, "AAStringSet"))
 		stop("myXStringSet must be an AAStringSet, DNAStringSet, or RNAStringSet.")
 	if (!is.logical(ambiguity))
 		stop("ambiguity must be a logical.")
 	if (!is.numeric(threshold))
 		stop("threshold must be a numeric.")
-	if (threshold > 1)
-		stop("threshold cannot be greater than 1.")
+	if (threshold >= 1)
+		stop("threshold must be less than 1.")
 	if (threshold < 0)
 		stop("threshold cannot be negative.")
 	if (!is.numeric(minInformation))
@@ -34,16 +31,6 @@ ConsensusSequence <- function(myXStringSet,
 		stop("noConsensusChar must be a character in the AA_ALPHABET.")
 	if (!is.logical(ignoreNonBases))
 		stop("ignoreNonBases must be a logical.")
-	
-	# initialize variables
-	time.1 <- Sys.time()
-	maxW <- unique(width(myXStringSet))
-	if (length(maxW)!=1 & verbose) {
-		warning("\n",
-			length(maxW),
-			" different sequence lengths.\n",
-			"End represents consensus of fewer sequences.\n")
-	}
 	
 	if (is(myXStringSet, "AAStringSet")) {
 		seq <- .Call("consensusSequenceAA",
@@ -80,16 +67,6 @@ ConsensusSequence <- function(myXStringSet,
 		consensusSeq <- RNAStringSet(seq[1])
 	} else { # AAStringSet
 		consensusSeq <- AAStringSet(seq[1])
-	}
-	
-	if (verbose) {
-		cat("\n")
-		time.2 <- Sys.time()
-		print(round(difftime(time.2,
-			time.1,
-			units='secs'),
-			digits=2))
-		cat("\n")
 	}
 	
 	return(consensusSeq)
