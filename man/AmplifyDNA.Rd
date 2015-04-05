@@ -54,7 +54,7 @@ If \code{taqEfficiency} is \code{TRUE} (the default), the amplification efficien
 Potential PCR products are returned, either with or without including the primer sequences in the amplicon.  The default (\code{includePrimers=TRUE}) is to incorporate the primer sequences as would normal occur during amplification.  The alternative is to return the complete template sequence including the target sites, which may not exactly match the primer sequences.  Note that amplicons may be duplicated when different input \code{primers} can amplify the same region of DNA.
 }
 \value{
-A \code{DNAStringSet} object containing potential PCR products, sorted by highest-to-lowest amplification efficiency.  The sequences are named by their predicted amplification efficiency followed by the index of each primer in \code{myDNAStringSet}.  (See examples section below.)
+A \code{DNAStringSet} object containing potential PCR products, sorted from highest-to-lowest amplification efficiency.  The sequences are named by their predicted amplification efficiency followed by the index of each primer in \code{myDNAStringSet}.  (See examples section below.)
 }
 \references{
 ES Wright et al. (2013) "Exploiting Extension Bias in PCR to Improve Primer Specificity in Ensembles of Nearly Identical DNA Templates." Environmental Microbiology, doi:10.1111/1462-2920.12259.

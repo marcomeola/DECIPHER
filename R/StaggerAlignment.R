@@ -100,101 +100,71 @@ StaggerAlignment <- function(myXStringSet,
 			stop("tree is incompatible with myXStringSet.")
 	}
 	
-	.clearIns <- function(x) {
-		if (!is.leaf(x)) {
-			x[[1]] <- .clearIns(x[[1]])
-			x[[2]] <- .clearIns(x[[2]])
-		}
-		attr(x, "ins") <- NULL
-		#if (!is.null(attr(x, "edgePar")) &&
-		#	attr(x, "edgePar")$col!="green")
-		#	attr(x, "edgePar") <- NULL
-		
-		return(x)
-	}
-	
-	.any <- function(x) {
-		w <- which(!is.na(x))
-		if (length(w)==0) {
-			# return NA when all are NA
-			return(NA)
-		} else {
-			return(any(x[w]))
-		}
-	}
-	
-	.all <- function(x) {
-		w <- which(!is.na(x))
-		if (length(w)==0) {
-			# return NA when all are NA
-			return(NA)
-		} else {
-			return(all(x[w]))
-		}
-	}
-	
 	.assignIndels <- function(x) {
 		if (is.leaf(x)) {
 			attr(x, "state") <- s[x, pos]
 			return(x)
-		} else {
-			x[[1]] <- .assignIndels(x[[1]])
-			x[[2]] <- .assignIndels(x[[2]])
-			a1 <- attr(x[[1]], "state")
-			a2 <- attr(x[[2]], "state")
-			attr(x, "state") <- c(a1, a2)
-			
-			indels <- c(0L, 0L, 0L) # insertions, deletions, mixed
-			# record insertions
-			gap1 <- .any(a1)
-			gap2 <- .any(a2)
-			if (!is.na(gap1) &&
-				!is.na(gap2) &&
-				xor(gap1, gap2)) {
-				if (gap2) {
-					#attr(x[[1]], "edgePar") <- list(col = "plum")
-					attr(x[[1]], "ins") <- TRUE
-					indels[1] <- indels[1] + 1L
-				} else {
-					#attr(x[[2]], "edgePar") <- list(col = "plum")
-					attr(x[[2]], "ins") <- TRUE
-					indels[1] <- indels[1] + 1L
-				}
-			}
-			
-			# record deletions
-			gap1 <- .all(a1)
-			gap2 <- .all(a2)
-			if (!is.na(gap1) &&
-				!is.na(gap2) &&
-				xor(gap1, gap2)) {
-				if (gap1) {
-					#attr(x[[1]], "edgePar") <- list(col = "green")
-					indels[2] <- indels[2] + 1L
-				} else {
-					#attr(x[[2]], "edgePar") <- list(col = "green")
-					indels[2] <- indels[2] + 1L
-				}
+		}
+		
+		x[[1]] <- .assignIndels(x[[1]])
+		x[[2]] <- .assignIndels(x[[2]])
+		a1 <- attributes(x[[1]])
+		a2 <- attributes(x[[2]])
+		
+		a <- attributes(x)
+		a[["state"]] <- unique(c(a1$state, a2$state))
+		
+		indels <- c(0L, 0L, 0L) # insertions, deletions, mixed
+		# record insertions
+		gap1 <- .Call("any", a1$state, PACKAGE="DECIPHER")
+		gap2 <- .Call("any", a2$state, PACKAGE="DECIPHER")
+		if (!is.na(gap1) &&
+			!is.na(gap2) &&
+			xor(gap1, gap2)) {
+			if (gap2) {
+				#attr(x[[1]], "edgePar") <- list(col = "plum")
+				attr(x[[1]], "ins") <- TRUE
+				indels[1] <- indels[1] + 1L
+			} else {
+				#attr(x[[2]], "edgePar") <- list(col = "plum")
+				attr(x[[2]], "ins") <- TRUE
+				indels[1] <- indels[1] + 1L
 			}
 		}
 		
-		if (!is.null(attr(x[[1]], "indels")))
-			indels <- indels + attr(x[[1]], "indels")
-		if (!is.null(attr(x[[2]], "indels")))
-			indels <- indels + attr(x[[2]], "indels")
+		# record deletions
+		gap1 <- .Call("all", a1$state, PACKAGE="DECIPHER")
+		gap2 <- .Call("all", a2$state, PACKAGE="DECIPHER")
+		if (!is.na(gap1) &&
+			!is.na(gap2) &&
+			xor(gap1, gap2)) {
+			if (gap1) {
+				#attr(x[[1]], "edgePar") <- list(col = "green")
+				indels[2] <- indels[2] + 1L
+			} else {
+				#attr(x[[2]], "edgePar") <- list(col = "green")
+				indels[2] <- indels[2] + 1L
+			}
+		}
+		
+		if (!is.null(a1$indels))
+			indels <- indels + a1$indels
+		if (!is.null(a2$indels))
+			indels <- indels + a2$indels
 		
 		if (indels[1] != 0L) { # insertions in subtree
 			if ((indels[1] + indels[3]) >= (1 + indels[2])) {
 				# subtree can be better explained by one insertion
 				indels <- c(1L, indels[2], indels[2])
-				x <- .clearIns(x)
+				.Call("clearIns", x, PACKAGE="DECIPHER")
 				# mark branch as an insertion
 				#attr(x, "edgePar") <- list(col = "plum")
-				attr(x, "ins") <- TRUE
+				a[["ins"]] <- TRUE
 			}
 		}
 		
-		attr(x, "indels") <- indels
+		a[["indels"]] <- indels
+		attributes(x) <- a
 		
 		return(x)
 	}
@@ -211,7 +181,6 @@ StaggerAlignment <- function(myXStringSet,
 		
 		return(NULL)
 	}
-	
 	
 	if (verbose) {
 		time.1 <- Sys.time()

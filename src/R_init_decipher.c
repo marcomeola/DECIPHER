@@ -82,6 +82,9 @@ static const R_CallMethodDef callMethods[] = { // method call, pointer, num args
 	{"subsetXStringSet", (DL_FUNC) &subsetXStringSet, 4},
 	{"appendXStringSets", (DL_FUNC) &appendXStringSets, 4},
 	{"predictHEC", (DL_FUNC) &predictHEC, 6},
+	{"clearIns", (DL_FUNC) &clearIns, 1},
+	{"all", (DL_FUNC) &all, 1},
+	{"any", (DL_FUNC) &any, 1},
 	{NULL, NULL, 0}
 };
 

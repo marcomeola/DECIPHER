@@ -157,3 +157,11 @@ SEXP appendXStringSets(SEXP x, SEXP y, SEXP type, SEXP nThreads);
 // PredictHEC.c
 
 SEXP predictHEC(SEXP x, SEXP windowSize, SEXP background, SEXP HEC_MI1, SEXP HEC_MI2, SEXP output);
+
+// AssignIndels.c
+
+SEXP clearIns(SEXP x);
+
+SEXP all(SEXP x);
+
+SEXP any(SEXP x);

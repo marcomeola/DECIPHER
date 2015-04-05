@@ -47,7 +47,7 @@ An optional character string to append to the query as a clause.
 }
 }
 \value{
-Creates an html table containing all the fields of the database table and opens it in the web browser for easy viewing.
+Creates an html table containing all the fields of the database table and (if \code{openURL} is \code{TRUE}) opens it in the web browser for viewing.
 
 Returns \code{htmlFile} if the html file was written successfully.
 }
