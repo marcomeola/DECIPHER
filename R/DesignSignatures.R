@@ -722,7 +722,7 @@ DesignSignatures <- function(dbFile,
 		m.f <- matchPDict(f.pdict,
 			dna,
 			min.mismatch=1,
-			max.mismatch=ceiling(sqrt(maxPermutations)))
+			max.mismatch=1 + ceiling(log(maxPermutations, 2)))
 		starts <- startIndex(m.f)
 		starts <- lapply(starts,
 			checkBounds,
@@ -749,7 +749,7 @@ DesignSignatures <- function(dbFile,
 		m.r <- matchPDict(r.pdict,
 			dna,
 			min.mismatch=1,
-			max.mismatch=ceiling(sqrt(maxPermutations)))
+			max.mismatch=1 + ceiling(log(maxPermutations, 2)))
 		starts <- startIndex(m.r)
 		starts <- lapply(starts,
 			checkBounds,
@@ -1079,11 +1079,11 @@ DesignSignatures <- function(dbFile,
 		
 		m.f <- matchPDict(f.pdict,
 			dna,
-			max.mismatch=3,
+			max.mismatch=3 + ceiling(log(maxPermutations, 2)),
 			fixed="subject")
 		m.f2 <- matchPDict(f.pdict2,
 			dna,
-			max.mismatch=3,
+			max.mismatch=3 + ceiling(log(maxPermutations, 2)),
 			fixed="subject")
 		starts <- startIndex(m.f)
 		starts2 <- startIndex(m.f2)
@@ -1157,11 +1157,11 @@ DesignSignatures <- function(dbFile,
 		
 		m.r <- matchPDict(r.pdict,
 			dna,
-			max.mismatch=3,
+			max.mismatch=3 + ceiling(log(maxPermutations, 2)),
 			fixed="subject")
 		m.r2 <- matchPDict(r.pdict2,
 			dna,
-			max.mismatch=3,
+			max.mismatch=3 + ceiling(log(maxPermutations, 2)),
 			fixed="subject")
 		ends <- endIndex(m.r)
 		ends2 <- endIndex(m.r2)
@@ -1587,11 +1587,11 @@ DesignSignatures <- function(dbFile,
 			
 			m.f <- matchPDict(f.pdict,
 				dna,
-				max.mismatch=3,
+				max.mismatch=3 + ceiling(log(maxPermutations, 2)),
 				fixed="subject")
 			m.f2 <- matchPDict(f.pdict2,
 				dna,
-				max.mismatch=3,
+				max.mismatch=3 + ceiling(log(maxPermutations, 2)),
 				fixed="subject")
 			starts <- startIndex(m.f)
 			starts2 <- startIndex(m.f2)
@@ -1665,11 +1665,11 @@ DesignSignatures <- function(dbFile,
 			
 			m.r <- matchPDict(r.pdict,
 				dna,
-				max.mismatch=3,
+				max.mismatch=3 + ceiling(log(maxPermutations, 2)),
 				fixed="subject")
 			m.r2 <- matchPDict(r.pdict2,
 				dna,
-				max.mismatch=3,
+				max.mismatch=3 + ceiling(log(maxPermutations, 2)),
 				fixed="subject")
 			ends <- endIndex(m.r)
 			ends2 <- endIndex(m.r2)

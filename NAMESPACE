@@ -25,7 +25,7 @@ FindChimeras, CreateChimeras,
 # microarrays:
 DesignArray, Array2Matrix, NNLS, CalculateEfficiencyArray,
 # primers:
-AmplifyDNA, CalculateEfficiencyPCR, DesignPrimers, DesignSignatures, DigestDNA, MeltDNA,
+Amplify, AmplifyDNA, CalculateEfficiencyPCR, DesignPrimers, DesignSignatures, DigestDNA, MeltDNA,
 # probes:
 CalculateEfficiencyFISH, DesignProbes,
 # viewing information:

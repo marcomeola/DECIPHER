@@ -1,3 +1,9 @@
+Amplify <- function(...) {
+	.Deprecated("AmplifyDNA",
+		msg="'Amplify' is deprecated.\nUse 'AmplifyDNA' instead.\nSee help(\"DECIPHER-deprecated\").")
+	AmplifyDNA(...)
+}
+
 AmplifyDNA <- function(primers,
 	myDNAStringSet,
 	maxProductSize,

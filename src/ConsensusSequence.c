@@ -1976,7 +1976,7 @@ SEXP shiftGaps(SEXP x, SEXP subMatrix, SEXP go, SEXP ge, SEXP gl, SEXP sc, SEXP 
 {
 	XStringSet_holder x_set;
 	Chars_holder x_i;
-	int x_length, i, j, k, seqLength, weight, tot, pos, bound, end;
+	int x_length, i, j, k, seqLength, weight, pos, bound, end;
 	char p;
 	unsigned long long int temp;
 	int maxSize = sizeof(unsigned long long int)*8; // number of bits in an int
@@ -2748,7 +2748,7 @@ SEXP shiftGapsAA(SEXP x, SEXP subMatrix, SEXP go, SEXP ge, SEXP gl, SEXP sc, SEX
 {
 	XStringSet_holder x_set;
 	Chars_holder x_i;
-	int x_length, i, j, k, seqLength, weight, tot, pos, bound, end;
+	int x_length, i, j, k, seqLength, weight, pos, bound, end;
 	char p;
 	unsigned long long int temp;
 	int maxSize = sizeof(unsigned long long int)*8; // number of bits in an int

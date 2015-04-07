@@ -1,6 +1,7 @@
 \name{DECIPHER-deprecated}
 \alias{DECIPHER-deprecated}
 \alias{BrowseSequences}
+\alias{Amplify}
 \title{Deprecated functions in package \sQuote{DECIPHER}}
 
 \description{
@@ -11,5 +12,6 @@ These functions are provided for compatibility with older versions of \sQuote{DE
 The following functions are deprecated and will be made defunct; use the replacement indicated below:
 \itemize{
   \item{BrowseSequences: \code{\link{BrowseSeqs}}}
+  \item{Amplify: \code{\link{AmplifyDNA}}}
 }
 }

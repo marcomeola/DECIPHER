@@ -29,7 +29,7 @@ Logical specifying whether or not to consider gap-to-letter matches as mismatche
 Logical specifying whether or not to consider gap-to-gap matches as mismatches.  If \code{FALSE} (the default), then gap-to-gap matches are not included in the total length used to calculate distance.
 }
   \item{correction}{
-The substitution model used for distance correction.  This should be (an unambiguous abbreviation of) one of \code{"none"} or \code{"Jukes-Cantor"}.
+The substitution model used for distance correction.  This should be (an unambiguous abbreviation of) either \code{"none"} or \code{"Jukes-Cantor"}.
 }
   \item{processors}{
 The number of processors to use, or \code{NULL} (the default) for all available processors.
@@ -39,7 +39,7 @@ Logical indicating whether to display progress.
 }
 }
 \details{
-The uncorrected distance matrix represents the hamming distance between each of the sequences in \code{myXStringSet}.  Ambiguity can be represented using the characters of the \code{IUPAC_CODE_MAP} for \code{DNAStringSet} and \code{RNAStringSet} inputs, or using the \code{AMINO_ACID_CODE} for an \code{AAStringSet} input.  For example, the distance between an 'N' and any other nucleotide base is zero.  The letters B (N or D), Z (Q or E), and X (any letter) are degenerate in the \code{AMINO_ACID_CODE}.
+The uncorrected distance matrix represents the hamming distance between each of the sequences in \code{myXStringSet}.  Ambiguity can be represented using the characters of the \code{IUPAC_CODE_MAP} for \code{DNAStringSet} and \code{RNAStringSet} inputs, or using the \code{AMINO_ACID_CODE} for an \code{AAStringSet} input.  For example, the distance between an 'N' and any other nucleotide base is zero.  The letters B (N or D), J (I or L), Z (Q or E), and X (any letter) are degenerate in the \code{AMINO_ACID_CODE}.
 
 If \code{includeTerminalGaps = FALSE} then terminal gaps ("-" or "." characters) are not included in sequence length.  This can be faster since only the positions common to each pair of sequences are compared.    Sequences with no overlapping region in the alignment are given a value of \code{NA}, unless \code{includeTerminalGaps = TRUE}, in which case distance is 100\%.
 

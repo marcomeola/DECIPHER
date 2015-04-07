@@ -15,7 +15,7 @@ A \code{DNAStringSet} or \code{RNAStringSet} object of sequences.
 }
 }
 \details{
-Ambiguity codes in the \code{IUPAC_CODE_MAP} can be used to represented multiple nucleotides at a single position.  Using these letters, multiple oligonucleotide permutations can be represented with a single ambiguous sequence.  This function expands each sequence in the \code{DNAStringSet} input into all of its permutations.  Note that sequences with many ambiguities can result in a very large number of potential permutations.
+Ambiguity codes in the \code{IUPAC_CODE_MAP} can be used to represent multiple nucleotides at a single position.  Using these letters, multiple oligonucleotide permutations can be represented with a single ambiguous sequence.  This function expands each sequence in the \code{DNAStringSet} input into all of its permutations.  Note that sequences with many ambiguities can result in a very large number of potential permutations.
 }
 \value{
 A \code{DNAStringSetList} or \code{RNAStringSetList} with one element for each sequence in \code{myXStringSet}.
