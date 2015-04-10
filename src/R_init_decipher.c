@@ -85,6 +85,7 @@ static const R_CallMethodDef callMethods[] = { // method call, pointer, num args
 	{"clearIns", (DL_FUNC) &clearIns, 1},
 	{"all", (DL_FUNC) &all, 1},
 	{"any", (DL_FUNC) &any, 1},
+	{"consolidateGaps", (DL_FUNC) &consolidateGaps, 2},
 	{NULL, NULL, 0}
 };
 

@@ -212,6 +212,7 @@ StaggerAlignment <- function(myXStringSet,
 	v <- seq_along(myXStringSet)
 	ns <- names(myXStringSet)
 	pos <- u # start at end
+	changeMade <- FALSE
 	while (pos > 0L) {
 		y <- .assignIndels(tree)
 		
@@ -248,6 +249,7 @@ StaggerAlignment <- function(myXStringSet,
 			if (indels[1] > 1L &&
 				(indels[1] + indels[3])/indels[2] < threshold) {
 				# stagger insertions
+				changeMade <- TRUE
 				groups <- list()
 				.groupIns(y)
 				
@@ -291,6 +293,12 @@ StaggerAlignment <- function(myXStringSet,
 		
 		pos <- pos - runLength
 	}
+	
+	if (changeMade)
+		zzz <- .Call("consolidateGaps",
+			myXStringSet,
+			type,
+			PACKAGE="DECIPHER")
 	
 	if (verbose) {
 		setTxtProgressBar(pBar, 100)

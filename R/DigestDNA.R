@@ -57,14 +57,14 @@ DigestDNA <- function(sites,
 					stop("Unexpected characters found in site:  ", s[[i]])
 				sites[i] <- paste(site[1:(top - 1)],
 					collapse="")
+				rc_sites[i] <- paste(DNA_LOOKUP[site[(top - 1):1]],
+					collapse="")
 				top <- as.integer(paste(site[(top + 1):(w - 1)],
 					collapse=""))
 				if (is.na(top))
 					stop("Improperly formatted site:  ", s[[i]])
 				cut1[i] <- top + nchar(sites[i]) + 1
 				cut2[i] <- -bot + 1
-				rc_sites[i] <- paste(DNA_LOOKUP[site[1:(top - 1)]],
-					collapse="")
 			} else {
 				if (all(site[-w] %in% DNA_LOOKUP)) {
 					cut1[i] <- cut2[i] <- w
@@ -72,7 +72,7 @@ DigestDNA <- function(sites,
 				} else {
 					stop("Unexpected characters found in site:  ", s[[i]])
 				}
-				rc_sites[i] <- paste(DNA_LOOKUP[site[-w]],
+				rc_sites[i] <- paste(rev(DNA_LOOKUP[site[-w]]),
 					collapse="")
 			}
 		} else if (length(w) > 1) { # multiple cut sites

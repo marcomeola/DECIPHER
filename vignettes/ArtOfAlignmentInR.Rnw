@@ -281,7 +281,6 @@ dbConn <- dbConnect(SQLite(), ":memory:")
 Seqs2DB(AA1, "DNAStringSet", dbConn, "AA1", tblName="AA1")
 Seqs2DB(AA2, "DNAStringSet", dbConn, "AA2", tblName="AA2")
 AlignDB(dbConn, tblName=c("AA1", "AA2"), add2tbl="AA",
-        gapExtension=-5, gapOpening=-7, terminalGap=-5,
         type="AAStringSet")
 AA <- SearchDB(dbConn, tblName="AA", type="AAStringSet")
 BrowseDB(dbConn, tblName="AA")

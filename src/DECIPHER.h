@@ -165,3 +165,7 @@ SEXP clearIns(SEXP x);
 SEXP all(SEXP x);
 
 SEXP any(SEXP x);
+
+// ConsolidateGaps.c
+
+SEXP consolidateGaps(SEXP x, SEXP type);
