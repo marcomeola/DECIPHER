@@ -1283,17 +1283,16 @@ DesignSignatures <- function(dbFile,
 						type="melt",
 						temps=midpoints,
 						ions=ions)
+					
 					for (p in seq_along(u)) {
 						w <- which(ind==u[p])
-						for (k in 1:length(w)) {
-							mP <- out[, w[k]]
-							if (k==1) {
-								mPs <- mP*effs[w[k]]
-							} else {
-								mPs <- mPs + mP*effs[w[k]]
-							}
-						}
-						mPs <- mPs/sum(effs[w]) # weighted average melt profile
+						
+						# weighted average melt profile
+						mPs <- t(out[, w])*effs[w]
+						mPs <- mPs*width(products)[w]
+						mPs <- colSums(mPs)
+						mPs <- mPs/sum(effs[w])
+						mPs <- mPs/mean(width(products)[w])
 						
 						t[p,] <- .bin(rep(midpoints,
 								round((levels - 1)*mPs)))
@@ -1798,9 +1797,9 @@ DesignSignatures <- function(dbFile,
 						
 						prods <- list()
 						for (k in seq_along(digested)) {
-							prods[[k]] <- extractAt(products[[k]],
-								IRanges(start=c(1, cuts[[k]][[1]]),
-									end=c(cuts[[k]][[1]] - 1, ws[k])))
+							prods[[k]] <- extractAt(products[[digested[k]]],
+								IRanges(start=c(1, cuts[[digested[k]]][[1]]),
+									end=c(cuts[[digested[k]]][[1]] - 1, ws[digested[k]])))
 						}
 						
 						pieces <- pieces[digested] + 1L
@@ -1824,15 +1823,13 @@ DesignSignatures <- function(dbFile,
 								type="melt",
 								temps=midpoints,
 								ions=ions)
-							for (p in seq_len(dim(out)[2])) {
-								mP <- out[, p]
-								if (p==1) {
-									mPs <- mP*EFFS[p]
-								} else {
-									mPs <- mPs + mP*EFFS[p]
-								}
-							}
-							mPs <- mPs/sum(EFFS) # weighted average melt profile
+							
+							# weighted average melt profile
+							out <- t(out)*EFFS
+							out <- out*width(prods)
+							mPs <- colSums(out)
+							mPs <- mPs/sum(EFFS)
+							mPs <- mPs/mean(width(prods))
 							
 							t[1,] <- .bin(rep(midpoints,
 									round((levels - 1)*mPs)))
