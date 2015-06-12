@@ -35,7 +35,7 @@ Logical specifying whether to color matched \code{patterns}, or an integer vecto
 Numeric specifying which sequence in the set to use for comparison or \code{NA} to color all sequences (default).  If \code{highlight} is \code{0} then positions differing from the consensus sequence are highlighted.
 }
   \item{patterns}{
-Character vector containing regular expressions to be colored in the XStringSet.  Regular expressions are searched sequentially with multiple matches allowed, even within other previously matched \code{patterns}.  (See details section below.)
+Either an \code{AAStringSet}, \code{DNAStringSet}, or \code{RNAStringSet} object, or a character vector containing regular expressions to be colored in the XStringSet.  Regular expressions are searched sequentially with multiple matches allowed, even within other previously matched \code{patterns}.  (See details section below.)
 }
   \item{colors}{
 Character vector providing the color for each of the matched \code{patterns}.  Typically a character vector with elements of 7 characters:  ``#'' followed by the red, blue, green values in hexadecimal (after rescaling to 0 ... 255).  Positions given background color are also given white font.

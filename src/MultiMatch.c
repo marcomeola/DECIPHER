@@ -316,7 +316,8 @@ SEXP matchLists(SEXP x, SEXP verbose, SEXP pBar, SEXP nThreads)
 		
 		if (v) {
 			// print the percent completed so far
-			*rPercentComplete = floor(100*(double)((i + 1)*size_x+(i + 1))/((size_x - 1)*size_x+(size_x - 1)));
+			//*rPercentComplete = floor(100*(double)((i + 1)*size_x+(i + 1))/((size_x - 1)*size_x+(size_x - 1)));
+			*rPercentComplete = floor(100*(double)(2*size_x - 2 - i)*(i + 1)/((size_x - 1)*size_x));
 			
 			if (*rPercentComplete > before) { // when the percent has changed
 				// tell the progress bar to update in the R console
@@ -434,7 +435,8 @@ SEXP matchOrder(SEXP x, SEXP verbose, SEXP pBar, SEXP nThreads)
 		if (v) {
 			// print the percent completed so far
 			//*rPercentComplete = floor(100*((double)i/((double)size_x - 1)));
-			*rPercentComplete = floor(100*(double)((i + 1)*size_x+(i + 1))/((size_x - 1)*size_x+(size_x - 1)));
+			//*rPercentComplete = floor(100*(double)((i + 1)*size_x+(i + 1))/((size_x - 1)*size_x+(size_x - 1)));
+			*rPercentComplete = floor(100*(double)(2*size_x - 2 - i)*(i + 1)/((size_x - 1)*size_x));
 			
 			if (*rPercentComplete > before) { // when the percent has changed
 				// tell the progress bar to update in the R console

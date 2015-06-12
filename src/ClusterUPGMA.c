@@ -146,7 +146,7 @@ SEXP clusterUPGMA(SEXP x, SEXP cutoff, SEXP method, SEXP verbose, SEXP pBar, SEX
 	if (v) { // initialize progress variables
 		soFar = 0;
 		before = 0;
-		total = (2*pow(length - 1,3) + 3*pow(length - 1,2) + length - 1)/6;
+		total = length*(length - 1);
 		PROTECT(percentComplete = NEW_INTEGER(1));
 		rPercentComplete = INTEGER(percentComplete);
 		// make it possible to access R functions from the utils package for the progress bar
@@ -421,7 +421,7 @@ SEXP clusterUPGMA(SEXP x, SEXP cutoff, SEXP method, SEXP verbose, SEXP pBar, SEX
 		
 		if (v) {
 			// print the percent completed so far
-			soFar += pow(length - 1 - k, 2);
+			soFar = (2*length - 2 - k)*(k + 1);
 			*rPercentComplete = floor(100*soFar/total);
 			
 			if (*rPercentComplete > before) { // when the percent has changed

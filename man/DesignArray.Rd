@@ -78,6 +78,8 @@ A \code{data.frame} with the optimal set of probes matching the specified constr
 }
 \references{
 ES Wright et al. (2013) Identification of Bacterial and Archaeal Communities From Source to Tap. Water Research Foundation, Denver, CO.
+
+DR Noguera, et al. (2014). Mathematical tools to optimize the design of oligonucleotide probes and primers. Applied Microbiology and Biotechnology. doi:10.1007/s00253-014-6165-x.
 }
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}

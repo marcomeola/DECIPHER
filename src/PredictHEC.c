@@ -250,13 +250,13 @@ SEXP predictHEC(SEXP x, SEXP windowSize, SEXP background, SEXP HEC_MI1, SEXP HEC
 		if (o == 1) {
 			states[l] = '\0'; // end (null terminate) the string
 			SET_STRING_ELT(ret, i, mkChar(states));
+			Free(states);
 		} else {
 			SET_VECTOR_ELT(ret, i, ans);
 			UNPROTECT(1); // ans
 		}
 		
 		Free(residues);
-		Free(states);
 	}
 	
 	UNPROTECT(1);

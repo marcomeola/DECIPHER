@@ -234,8 +234,8 @@ SEXP distMatrix(SEXP x, SEXP t, SEXP terminalGaps, SEXP penalizeGapGaps, SEXP pe
 	Chars_holder x_i, x_j;
 	int x_length, start, end, i, j, seqLength_i, seqLength_j, last;
 	int pGapLetters, pGapsGaps, tGaps, fM = asLogical(fullMatrix);
-	int soFar, before, v, *rPercentComplete;
-	double *rans;
+	int before, v, *rPercentComplete;
+	double *rans, soFar;
 	int nthreads = asInteger(nThreads);
 	SEXP ans, percentComplete, utilsPackage;
 	v = asLogical(verbose);
@@ -339,8 +339,8 @@ SEXP distMatrix(SEXP x, SEXP t, SEXP terminalGaps, SEXP penalizeGapGaps, SEXP pe
 			rans[i*x_length+i] = 0;
 			
 			if (v) { // print the percent completed so far
-				soFar = (i + 1)*x_length+(i + 1);
-				*rPercentComplete = floor(100*(double)soFar/((x_length - 1)*x_length+(x_length - 1)));
+				soFar = (2*last - i)*(i + 1);
+				*rPercentComplete = floor(100*soFar/(last*(last + 1)));
 				if (*rPercentComplete > before) { // when the percent has changed
 					// tell the progress bar to update in the R console
 					eval(lang4(install("setTxtProgressBar"), pBar, percentComplete, R_NilValue), utilsPackage);

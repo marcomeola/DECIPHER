@@ -15,13 +15,13 @@ AlignProfiles(pattern,
               s.struct = NULL,
               perfectMatch = 6,
               misMatch = 0,
-              gapOpening = -6,
-              gapExtension = -1,
+              gapOpening = -13,
+              gapExtension = -0.7,
               gapPower = -1,
               terminalGap = -5,
               restrict = -1000,
               anchor = 0.7,
-              normPower = 1.5,
+              normPower = 1,
               substitutionMatrix = NULL,
               structureMatrix = NULL,
               processors = NULL)
@@ -52,7 +52,7 @@ Numeric giving the reward for aligning two matching nucleotides in the alignment
 Numeric giving the cost for aligning two mismatched nucleotides in the alignment.  Only used for \code{DNAStringSet} or \code{RNAStringSet} inputs.
 }
   \item{gapOpening}{
-Numeric giving the cost for opening or closing a gap in the alignment.
+Numeric giving the cost for opening a gap in the alignment.
 }
   \item{gapExtension}{
 Numeric giving the cost for extending an open gap in the alignment.
@@ -76,7 +76,7 @@ Numeric giving the exponent that controls the degree of normalization applied to
 Either a substitution matrix representing the substitution scores for an alignment or the name of the amino acid substitution matrix to use in alignment.  The latter may be one of the following:  ``BLOSUM45'', ``BLOSUM50'', ``BLOSUM62'', ``BLOSUM80'', ``BLOSUM100'', ``PAM30'', ``PAM40'', ``PAM70'', ``PAM120'', ``PAM250'', or ``MIQS''.  The default (NULL) will use the \code{perfectMatch} and \code{misMatch} penalties for DNA/RNA or ``MIQS'' for AA.  (See examples section below.)
 }
   \item{structureMatrix}{
-Either a structure matrix, or \code{NULL} for the default structure matrix.  Only applicable if \code{p.struct} and \code{s.struct} are supplied with an \code{AAStringSet} input.  (See examples section below.)
+A structure matrix if \code{p.struct} and \code{s.struct} are supplied, or \code{NULL} otherwise.  (See examples section below.)
 }
   \item{processors}{
 The number of processors to use, or \code{NULL} (the default) for all available processors.
@@ -89,11 +89,11 @@ Heuristics can be useful to improve performance on long input sequences.  The \c
 
 The argument \code{anchor} can be used to split the global alignment into multiple sub-alignments.  This can greatly decrease the memory requirement for long sequences when appropriate anchor points can be found.  Anchors are 15-mer (for DNA/RNA) or 7-mer (for AA) subsequences that are shared between at least \code{anchor} fraction of \code{pattern}(s) and \code{subject}(s).  Anchored ranges are extended along the length of each sequence in a manner designed to split the alignment into sub-alignments that can be separately solved.  For most input sequences \code{anchor} has no effect on accuracy, but anchoring can be disabled by setting \code{anchor=NA}.
 
-The arguments \code{p.struct} and \code{s.struct} may be used to provide secondary structure probabilities for \code{AAStringSet} inputs.  Each list element must contain a matrix with dimensions \code{q*w}, where \code{q} is the number of possible secondary structure states, and \code{w} is the width of the unaligned pattern sequence.  Values in each matrix represent the probability of the given state at that position in the sequence.  A \code{structureMatrix} may be supplied along with the structures, or the default \code{structureMatrix} will be used if a typical 3-state (helix, sheet, coil) secondary structure prediction is supplied.  The function \code{PredictHEC} can be used to predict secondary structure probabilities in the format required by \code{AlignProfiles}.
+The arguments \code{p.struct} and \code{s.struct} may be used to provide secondary structure probabilities.  Each list element must contain a matrix with dimensions \code{q*w}, where \code{q} is the number of possible secondary structure states, and \code{w} is the width of the unaligned pattern sequence.  Values in each matrix represent the probability of the given state at that position in the sequence.  A \code{structureMatrix} must be supplied along with the structures.  The function \code{PredictHEC} can be used to predict secondary structure probabilities in the format required by \code{AlignProfiles}.
 
 The gap cost function is based on the observation that gap lengths are best approximated by a Zipfian distribution (Chang & Benner, 2004).  The cost of inserting a gap of length \code{L} is equal to:
-\code{2*gapOpening + gapExtension*sum(seq_len(L - 1)^gapPower)}
-when \code{L > 1}, and \code{2*gapOpen} when \code{L = 1}.  This function effectively penalizes shorter gaps significantly more than longer gaps when \code{gapPower < 0}, and is equivalent to the affine gap penalty when \code{gapPower} is \code{0}.
+\code{gapOpening + gapExtension*sum(seq_len(L - 1)^gapPower)}
+when \code{L > 1}, and \code{gapOpen} when \code{L = 1}.  This function effectively penalizes shorter gaps significantly more than longer gaps when \code{gapPower < 0}, and is equivalent to the affine gap penalty when \code{gapPower} is \code{0}.
 }
 \value{
 An \code{XStringSet} of aligned sequences.
@@ -119,7 +119,7 @@ BrowseSeqs(alignedDNA, highlight=1)
 
 # specify a DNA substitution matrix
 bases <- c("A", "C", "G", "T")
-subMatrix <- matrix(-3, nrow=4, ncol=4, dimnames=list(bases, bases))
+subMatrix <- matrix(0, nrow=4, ncol=4, dimnames=list(bases, bases))
 diag(subMatrix) <- 6 # perfectMatch
 alignedDNA.defaultSubM <- AlignProfiles(dna1, dna2, substitutionMatrix=subMatrix)
 all(alignedDNA.defaultSubM==alignedDNA)

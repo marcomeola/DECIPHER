@@ -8,11 +8,11 @@ SEXP consensusSequence(SEXP x, SEXP threshold, SEXP ambiguity, SEXP minInformati
 
 SEXP consensusSequenceAA(SEXP x, SEXP threshold, SEXP ambiguity, SEXP minInformation, SEXP ignoreNonLetters, SEXP terminalGaps);
 
-SEXP consensusProfile(SEXP x, SEXP weight);
+SEXP consensusProfile(SEXP x, SEXP weight, SEXP structs);
 
 SEXP consensusProfileAA(SEXP x, SEXP weight, SEXP structs);
 
-SEXP colScores(SEXP x, SEXP subMatrix, SEXP go, SEXP ge, SEXP weights);
+SEXP colScores(SEXP x, SEXP subMatrix, SEXP go, SEXP ge, SEXP weights, SEXP structs, SEXP dbnMatrix);
 
 SEXP colScoresAA(SEXP x, SEXP subMatrix, SEXP go, SEXP ge, SEXP weights, SEXP structs, SEXP hecMatrix);
 
@@ -106,7 +106,7 @@ SEXP calculateFISH(SEXP probes, SEXP targets);
 
 // AlignProfiles.c
 
-SEXP alignProfiles(SEXP p, SEXP s, SEXP subMatrix, SEXP pm, SEXP mm, SEXP go, SEXP ge, SEXP exp, SEXP power, SEXP endGapPenaltyLeft, SEXP endGapPenaltyRight, SEXP boundary, SEXP nThreads);
+SEXP alignProfiles(SEXP p, SEXP s, SEXP subMatrix, SEXP dbnMatrix, SEXP pm, SEXP mm, SEXP go, SEXP ge, SEXP exp, SEXP power, SEXP endGapPenaltyLeft, SEXP endGapPenaltyRight, SEXP boundary, SEXP nThreads);
 
 SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP hecMatrix, SEXP go, SEXP ge, SEXP exp, SEXP power, SEXP endGapPenaltyLeft, SEXP endGapPenaltyRight, SEXP boundary, SEXP nThreads);
 

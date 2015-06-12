@@ -65,6 +65,7 @@ MaskAlignment <- function(myXStringSet,
 		pwm <- .Call("consensusProfile",
 			myXStringSet,
 			rep(1, length(myXStringSet)),
+			NULL,
 			PACKAGE="DECIPHER")
 		a <- apply(pwm[1:4,], 2, f)
 	}

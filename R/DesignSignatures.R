@@ -275,8 +275,7 @@ DesignSignatures <- function(dbFile,
 			stop("resolution must be monotonically increasing.")
 		if (type==1L) { # type is "melt"
 			maxTemp <- resolution[length(resolution)]
-			if (resolution[1] > annealingTemp ||
-				maxTemp < annealingTemp)
+			if (maxTemp < annealingTemp)
 				stop("The maximum resolution must surpass annealingTemp.")
 		} else { # type is "length"
 			if (resolution[1] > minProductSize ||

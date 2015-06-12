@@ -208,7 +208,7 @@ Figure 4 compares the performance of \Rpackage{DECIPHER} and other sequence alig
 \section{Example:  Single Gene Alignment}
 %------------------------------------------------------------
 
-For this example we are going to align the \textit{rplB} coding sequence from many different Bacteria.  The \textit{rplB} gene encodes one of the primary ribosomal RNA binding proteins:  the 50S ribosomal protein L2.  We begin by loading the library and importing the sequences from a FASTA file:
+For this example we are going to align the \textit{rplB} coding sequence from many different Bacteria.  The \textit{rplB} gene encodes one of the primary ribosomal RNA binding proteins:  the 50S ribosomal protein L2.  We begin by loading the library and importing the sequences from a FASTA file.  Be sure to change the path names to those on your system by replacing all of the text inside quotes labeled ``$<<$path to ...$>>$'' with the actual path on your system.
 
 <<expr1,eval=TRUE,echo=TRUE>>=
 library(DECIPHER)
@@ -230,6 +230,9 @@ BrowseSeqs(AA, highlight=1) # view the alignment
 
 DNA <- AlignTranslation(dna) # align the translation then reverse translate
 DNA <- AlignSeqs(dna) # align the sequences directly without translation
+
+# write the aligned sequences to a FASTA file
+writeXStringSet(DNA, file="<<path to output file>>")
 @
 
 %------------------------------------------------------------

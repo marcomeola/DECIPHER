@@ -222,12 +222,12 @@ SearchDB <- function(dbFile,
 	if (verbose) {
 		time.2 <- Sys.time()
 		if (countOnly) {
-			cat("\n\nCount = ",
+			cat("\nCount = ",
 				count,
 				" matches.\n",
 				sep="")	
 		} else {
-			cat("\n\n",
+			cat("\n",
 				TYPES[type],
 				" of length: ",
 				length(myXStringSet),
