@@ -78,20 +78,12 @@ BrowseSeqs(dna[1:5],
 data(RESTRICTION_ENZYMES)
 sites <- RESTRICTION_ENZYMES
 sites <- gsub("[^A-Z]", "", sites) # remove non-letters
-rc_sites <- as.character(reverseComplement(DNAStringSet(sites)))
+sites <- DNAStringSet(sites)
+rc_sites <- DNAStringSet(sites)
 w <- which(sites != rc_sites)
 sites <- c(sites, rc_sites[w])
 sites <- sites[order(nchar(sites))] # match shorter sites first
-# convert all restriction sites into regular expressions
-for (degeneracy in names(IUPAC_CODE_MAP)[5:15]) {
-    sites <- gsub(degeneracy,
-        paste("[", degeneracy, "|",
-            paste(strsplit(IUPAC_CODE_MAP[degeneracy], "")[[1]],
-                collapse="|"),
-            "]",
-            sep=""),
-        sites)
-}
+
 dna <- SearchDB(db, remove="all") # unaligned sequences
 BrowseSeqs(dna, patterns=sites)
 }
