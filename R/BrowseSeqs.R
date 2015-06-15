@@ -19,7 +19,7 @@ BrowseSeqs <- function(myXStringSet,
 		stop("myXStringSet must be an XStringSet.")
 	if (length(myXStringSet)==0)
 		stop("No sequence information to display.")
-	type <- switch(class(myXStringSet),
+	type <- switch(class(patterns),
 		`DNAStringSet` = 1L,
 		`RNAStringSet` = 2L,
 		`AAStringSet` = 3L,
