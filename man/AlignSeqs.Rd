@@ -12,6 +12,8 @@ AlignSeqs(myXStringSet,
          orient = FALSE,
          iterations = 1,
          refinements = 1,
+         gapOpening=c(-16, -12),
+         gapExtension=c(-2, -1),
          structures = NULL,
          FUN = AdjustAlignment,
          levels = c(0.95, 0.7, 10, 5),
@@ -35,6 +37,12 @@ Number of iteration steps to perform.  During each iteration step the guide tree
   \item{refinements}{
 Number of refinement steps to perform.  During each refinement step groups of sequences are realigned to rest of the sequences, and the best of these two alignments (before and after realignment) is kept.
 }
+  \item{gapOpening}{
+Single numeric giving the cost for opening a gap in the alignment, or two numbers giving the minimum and maximum costs.  In the latter case the cost will be varied depending upon whether the groups of sequences being aligned are nearly identical or maximally distant.
+}
+  \item{gapExtension}{
+Single numeric giving the cost for extending an open gap in the alignment, or two numbers giving the minimum and maximum costs.  In the latter case the cost will be varied depending upon whether the groups of sequences being aligned are nearly identical or maximally distant.
+}
   \item{structures}{
 Either a list of secondary structure probabilities matching the \code{structureMatrix}, such as that output by \code{PredictHEC}, or \code{NULL} to generate the structures automatically.  Only applicable if \code{myXStringSet} is an \code{AAStringSet}.
 }
@@ -51,7 +59,7 @@ The number of processors to use, or \code{NULL} (the default) for all available 
 Logical indicating whether to display progress.
 }
   \item{\dots}{
-Further arguments to be passed directly to \code{\link{AlignProfiles}}, including \code{perfectMatch}, \code{misMatch}, \code{gapOpening}, \code{gapExtension}, \code{gapPower}, \code{terminalGap}, \code{restrict}, \code{anchor}, \code{normPower}, \code{substitutionMatrix}, and \code{structureMatrix}.
+Further arguments to be passed directly to \code{\link{AlignProfiles}}, including \code{perfectMatch}, \code{misMatch}, \code{gapPower}, \code{terminalGap}, \code{restrict}, \code{anchor}, \code{normPower}, \code{substitutionMatrix}, and \code{structureMatrix}.
 }
 }
 \details{

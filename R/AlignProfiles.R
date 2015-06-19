@@ -74,7 +74,7 @@ AlignProfiles <- function(pattern,
 	perfectMatch=6,
 	misMatch=0,
 	gapOpening=-13,
-	gapExtension=-0.7,
+	gapExtension=-1,
 	gapPower=-1,
 	terminalGap=-5,
 	restrict=-1000,
@@ -236,7 +236,7 @@ AlignProfiles <- function(pattern,
 		} else {
 			if (is.null(structureMatrix)) {
 				# assume structures from PredictHEC
-				structureMatrix <- matrix(c(6, 3, -2, 3, 12, 0, -2, 0, 1),
+				structureMatrix <- matrix(c(5, 0, -2, 0, 9, -1, -2, -1, 2),
 					nrow=3) # order is H, E, C
 			} else {
 				# assume structures and matrix are ordered the same

@@ -158,7 +158,7 @@ StaggerAlignment <- function(myXStringSet,
 				indels <- c(1L, indels[2], indels[2])
 				.Call("clearIns", x, PACKAGE="DECIPHER")
 				# mark branch as an insertion
-				#attr(x, "edgePar") <- list(col = "plum")
+				#a[["edgePar"]] <- list(col = "plum")
 				a[["ins"]] <- TRUE
 			}
 		}
