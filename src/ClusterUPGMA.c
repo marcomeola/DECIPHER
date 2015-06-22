@@ -135,10 +135,11 @@ SEXP clusterUPGMA(SEXP x, SEXP cutoff, SEXP method, SEXP verbose, SEXP pBar, SEX
 	rans = REAL(ans);
 	distanceMatrix = REAL(x);
 	double *dMatrix = (double *) R_alloc(size*size, sizeof(double)); // final row & col contain cluster numbers
-	double dTemp[size - 2], dist1, dist2;
-	double cumHeight[size - 2];
+	double dist1, dist2;
+	double *dTemp = (double *) R_alloc(size - 1, sizeof(double));
+	double *cumHeight = (double *) R_alloc(size - 1, sizeof(double));
+	int *clusterNums = (int *) R_alloc(size - 1, sizeof(int));
 	int weight1, weight2;
-	int clusterNums[size - 2];
 	cut = REAL(cutoff);
 	met = asInteger(method);
 	v = asLogical(verbose);

@@ -206,9 +206,9 @@ SEXP clusterNJ(SEXP x, SEXP cutoff, SEXP verbose, SEXP pBar, SEXP nThreads)
 	distanceMatrix = REAL(x);
 	double *dMatrix = (double *) R_alloc(size*size, sizeof(double)); // final row & col contain cluster numbers
 	double nDiv[size];
-	double dTemp[size - 2];
-	double cumHeight[size - 2];
-	int clusterNums[size - 2];
+	double *dTemp = (double *) R_alloc(size - 1, sizeof(double));
+	double *cumHeight = (double *) R_alloc(size - 1, sizeof(double));
+	int *clusterNums = (int *) R_alloc(size - 1, sizeof(int));
 	cut = REAL(cutoff);
 	v = asLogical(verbose);
 	int nthreads = asInteger(nThreads);
