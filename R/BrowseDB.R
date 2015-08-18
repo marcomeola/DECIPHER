@@ -228,7 +228,7 @@ BrowseDB <- function(dbFile,
 	writeLines(html, htmlFile)
 	
 	if (openURL)
-		browseURL(path.expand(htmlFile))
+		if (interactive()) browseURL(path.expand(htmlFile))
 	
 	invisible(htmlFile)
 }

@@ -231,7 +231,7 @@ BrowseSeqs <- function(myXStringSet,
 	writeLines(html, htmlfile)
 	
 	if (openURL)
-		browseURL(path.expand(htmlFile))
+		if (interactive()) browseURL(path.expand(htmlFile))
 	
 	invisible(htmlFile)
 }
