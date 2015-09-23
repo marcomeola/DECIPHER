@@ -14,8 +14,6 @@ IdClusters(myDistMatrix = NULL,
            asDendrogram = FALSE,
            myXStringSet = NULL,
            model = MODELS,
-           add2tbl = FALSE,
-           dbFile = NULL,
            processors = NULL,
            verbose = TRUE)
 }
@@ -41,12 +39,6 @@ If \code{method} is \code{"ML"}, the \code{DNAStringSet} or \code{RNAStringSet} 
   \item{model}{
 One or more of the available \code{MODELS} of DNA evolution.  Only applicable if \code{method} is \code{"ML"}.
 }
-  \item{add2tbl}{
-Logical or a character string specifying the table name in which to add the result.
-}
-  \item{dbFile}{
-A connection to a SQLite database or character string giving the path to the database file.  Only necessary if \code{add2tbl} is not \code{FALSE}.
-}
   \item{processors}{
 The number of processors to use, or \code{NULL} (the default) for all available processors.
 }
@@ -64,8 +56,6 @@ Additive methods:  \code{NJ} uses the Neighbor-Joining method proposed by Saitou
 Sequence-only method:  \code{inexact} uses a greedy incremental algorithm to directly assign sequences to clusters without a distance matrix.  First the sequences are ordered by length and the longest sequence becomes the first cluster seed.  If the second sequence is less than \code{cutoff} percent distance then it is added to the cluster, otherwise it becomes a new cluster representative.  The remaining sequences are matched to cluster representatives using an ordered k-mer strategy, and then compared to the top hits with pairwise alignment.  This approach, finding the closest cluster representatives followed by pairwise alignment to obtain the percent identity, is repeated until all sequences belong to a cluster.  This process results in clusters with members generally separated by less than \code{cutoff} distance.
 
 Cutoffs may be provided in ascending or descending order, except for \code{inexact} clustering, which requires descending cutoffs.  If multiple cutoffs are provided in \emph{descending} order then clustering at each new value of \code{cutoff} is continued within the prior \code{cutoff}'s clusters.  In this way clusters at lower values of \code{cutoff} are completely contained within their umbrella clusters at higher values of \code{cutoff}.  This is useful for defining taxonomy, where lower level groups (e.g., genera) are expected not to straddle multiple higher level groups (e.g., families).  If multiple cutoffs are provided in \emph{ascending} order then clustering at each level of \code{cutoff} is independent of the prior level.  This may result in fewer clusters for \code{NJ} and \code{ML} methods, but will have no impact on ultrametric methods.
-
-If a \code{add2tbl=TRUE} then the resulting data.frame is added/updated into column(s) of the default table "DNA" in \code{dbFile}.  If \code{add2tbl} is a character string then the result is added to the specified table name in \code{dbFile}.  The added/updated column names are printed if \code{verbose=TRUE}.
 }
 \value{
 If \code{asDendrogram=FALSE} (the default), then a data.frame is returned with a column for each cutoff specified.  This data.frame has dimensions \eqn{N*M}, where each one of \eqn{N} sequences is assigned to a cluster at the \eqn{M}-level of cutoff.  The row.names of the data.frame correspond to the dimnames of \code{myDistMatrix}.

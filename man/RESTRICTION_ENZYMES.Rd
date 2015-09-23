@@ -14,7 +14,7 @@ A character vector of common restriction sites named by the restriction enzyme t
  - attr(*, "names")= chr [1:224] "AatII" "Acc65I" "AccI" "AciI" ...
 }
 \source{
-Restriction enzymes sold by \href{www.neb.com}{New England BioLabs}.
+Restriction enzymes sold by \href{http://www.neb.com}{New England BioLabs}.
 }
 \examples{
 data(RESTRICTION_ENZYMES)

@@ -42,7 +42,7 @@ If \code{type} is \code{"fragments"} (the default), then the result is a \code{D
 Erik Wright \email{DECIPHER@cae.wisc.edu}
 }
 \seealso{
-\code{\link{DesignSignatures}}
+\code{\link{DesignSignatures}}, \code{\link{RESTRICTION_ENZYMES}}
 }
 \examples{
 # digest hypothetical DNA sequences with BamHI

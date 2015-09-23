@@ -15,11 +15,11 @@ AlignDB(dbFile,
         batchSize = 10000,
         perfectMatch = 6,
         misMatch = 0,
-        gapOpening = -6,
+        gapOpening = -13,
         gapExtension = -1,
         gapPower = -1,
         terminalGap = -5,
-        normPower = 1.5,
+        normPower = 1,
         substitutionMatrix = NULL,
         processors = NULL,
         verbose = TRUE)
@@ -50,7 +50,7 @@ Numeric giving the reward for aligning two matching nucleotides in the alignment
 Numeric giving the cost for aligning two mismatched nucleotides in the alignment.  Only used when \code{type} is \code{DNAStringSet} or \code{RNAStringSet}.
 }
   \item{gapOpening}{
-Numeric giving the cost for opening or closing a gap in the alignment.
+Numeric giving the cost for opening a gap in the alignment.
 }
   \item{gapExtension}{
 Numeric giving the cost for extending an open gap in the alignment.

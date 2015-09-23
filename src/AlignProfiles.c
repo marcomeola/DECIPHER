@@ -33,12 +33,12 @@
 // DECIPHER header file
 #include "DECIPHER.h"
 
-SEXP alignProfiles(SEXP p, SEXP s, SEXP subMatrix, SEXP pm, SEXP mm, SEXP go, SEXP ge, SEXP exp, SEXP power, SEXP endGapPenaltyLeft, SEXP endGapPenaltyRight, SEXP boundary, SEXP nThreads)
+SEXP alignProfiles(SEXP p, SEXP s, SEXP subMatrix, SEXP dbnMatrix, SEXP pm, SEXP mm, SEXP go, SEXP ge, SEXP exp, SEXP power, SEXP endGapPenaltyLeft, SEXP endGapPenaltyRight, SEXP boundary, SEXP nThreads)
 {
 	int i, j, k, start, end, *rans, count, z;
 	double *pprofile, *sprofile, gp, gs, S, M, GP, GS;
 	double max, tot;
-	SEXP ans;
+	SEXP ans1, ans2, ans3, ans4, dims;
 	
 	pprofile = REAL(p);
 	sprofile = REAL(s);
@@ -62,11 +62,22 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP subMatrix, SEXP pm, SEXP mm, SEXP go, SE
 	}
 	int NTHREADS, nthreads = asInteger(nThreads);
 	
-	R_len_t lp = length(p)/8;
-	R_len_t ls = length(s)/8;
+	double *dbnM = REAL(dbnMatrix);
+	int do_DBN, d, size = 8;
+	if (length(dbnMatrix) > 0) {
+		do_DBN = 1;
+		PROTECT(dims = GET_DIM(dbnMatrix));
+		d = INTEGER(dims)[0];
+		UNPROTECT(1);
+		size += d;
+	} else {
+		do_DBN = 0;
+		d = 0;
+	}
 	
-	PROTECT(ans = allocVector(INTSXP, lp + ls + 4));
-	rans = INTEGER(ans);
+	R_len_t lp = length(p)/size;
+	R_len_t ls = length(s)/size;
+	int l = lp + ls;
 	
 	float *m = Calloc((lp+1)*(ls+1), float); // initialized to zero
 	int *o = Calloc(lp*ls, int); // initialized to zero
@@ -89,7 +100,7 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP subMatrix, SEXP pm, SEXP mm, SEXP go, SE
 	double past, current;
 	past = 0;
 	for (i = 0; i < lp; i++) {
-		current = pprofile[7 + 8*i];
+		current = pprofile[7 + size*i];
 		if (current > past) {
 			pstarts[i] = current - past;
 			past = current;
@@ -101,7 +112,7 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP subMatrix, SEXP pm, SEXP mm, SEXP go, SE
 	}
 	past = 0;
 	for (i = lp - 1; i >= 0; i--) {
-		current = pprofile[7 + 8*i];
+		current = pprofile[7 + size*i];
 		if (current > past) {
 			pstops[i] = current - past;
 			past = current;
@@ -113,7 +124,7 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP subMatrix, SEXP pm, SEXP mm, SEXP go, SE
 	}
 	past = 0;
 	for (i = 0; i < ls; i++) {
-		current = sprofile[7 + 8*i];
+		current = sprofile[7 + size*i];
 		if (current > past) {
 			sstarts[i] = current - past;
 			past = current;
@@ -125,7 +136,7 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP subMatrix, SEXP pm, SEXP mm, SEXP go, SE
 	}
 	past = 0;
 	for (i = ls - 1; i >= 0; i--) {
-		current = sprofile[7 + 8*i];
+		current = sprofile[7 + size*i];
 		if (current > past) {
 			sstops[i] = current - past;
 			past = current;
@@ -138,11 +149,11 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP subMatrix, SEXP pm, SEXP mm, SEXP go, SE
 	
 	// normalize profile positions to coverge^POW
 	for (i = 0; i < lp; i++)
-		if (pprofile[7 + 8*i] > 0)
-			pprofile[7 + 8*i] = pow(pprofile[7 + 8*i], POW);
+		if (pprofile[7 + size*i] > 0)
+			pprofile[7 + size*i] = pow(pprofile[7 + size*i], POW);
 	for (i = 0; i < ls; i++)
-		if (sprofile[7 + 8*i] > 0)
-			sprofile[7 + 8*i] = pow(sprofile[7 + 8*i], POW);
+		if (sprofile[7 + size*i] > 0)
+			sprofile[7 + size*i] = pow(sprofile[7 + size*i], POW);
 	
 	if (egpL != 0) {
 		*(m + 1) = egpL*sstarts[0];
@@ -156,7 +167,7 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP subMatrix, SEXP pm, SEXP mm, SEXP go, SE
 	int left = 0, top = 0; // boundaries of DP
 	int START, END; // constrained start and end points
 	max = -1e53;
-	for (k = 1; k < lp + ls; k++) {
+	for (k = 1; k < l; k++) {
 		if (k > ls) {
 			start = k - ls;
 		} else {
@@ -264,6 +275,9 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP subMatrix, SEXP pm, SEXP mm, SEXP go, SE
 				j = end - i;
 			}
 			
+			int SIZEI = size*i;
+			int SIZEJ = size*j;
+			
 			// apply end-gap penalties at corners of matrix
 			if (i==0 && j==0) {
 				gp = egpL*sstarts[0];
@@ -274,23 +288,23 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP subMatrix, SEXP pm, SEXP mm, SEXP go, SE
 			} else {
 				// determine insertion penalty (gap extension or gap opening)
 				if (j > 0 && *(o + i*ls + j - 1) > 0) {
-					gp = GE*(1 - 0.3*sprofile[4 + 8*j])*zip[*(o + i*ls + j - 1)] + 0.5*GO*(sprofile[6 + 8*(j - 1)] - sprofile[6 + 8*j]);
+					gp = GE*(1 - 0.3*sprofile[4 + SIZEJ])*zip[*(o + i*ls + j - 1)] + 0.5*GO*(sprofile[6 + size*(j - 1)] - sprofile[6 + SIZEJ]);
 				} else {
-					gp = GO*(2 - 0.5*sprofile[5 + 8*j] - 0.5*sprofile[6 + 8*j]);
+					gp = GO*(2 - 0.5*sprofile[5 + SIZEJ] - 0.5*sprofile[6 + SIZEJ]);
 				}
 				if (i > 0 && *(o + (i - 1)*ls + j) < 0) {
-					gs = GE*(1 - 0.3*pprofile[4 + 8*i])*zip[*(o + (i - 1)*ls + j)*-1] + 0.5*GO*(pprofile[6 + 8*(i - 1)] - pprofile[6 + 8*i]);
+					gs = GE*(1 - 0.3*pprofile[4 + SIZEI])*zip[*(o + (i - 1)*ls + j)*-1] + 0.5*GO*(pprofile[6 + size*(i - 1)] - pprofile[6 + SIZEI]);
 				} else {
-					gs = GO*(2 - 0.5*pprofile[5 + 8*i] - 0.5*pprofile[6 + 8*i]);
+					gs = GO*(2 - 0.5*pprofile[5 + SIZEI] - 0.5*pprofile[6 + SIZEI]);
 				}
 			}
 			
-			tot = (1 - pprofile[4 + 8*i])*(1 - sprofile[4 + 8*j]); // max of dot-product
+			tot = (1 - pprofile[4 + SIZEI])*(1 - sprofile[4 + SIZEJ]); // max of dot-product
 			GS = gs*tot;
 			GP = gp*tot;
 			
-			if (sprofile[7 + 8*j] > 0 && pprofile[7 + 8*i] > 0) {
-				tot = sqrt(sprofile[7 + 8*j]*pprofile[7 + 8*i]); // normalization factor
+			if (sprofile[7 + SIZEJ] > 0 && pprofile[7 + SIZEI] > 0) {
+				tot = sqrt(sprofile[7 + SIZEJ]*pprofile[7 + SIZEI]); // normalization factor
 			} else {
 				tot = 0;
 			}
@@ -300,13 +314,13 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP subMatrix, SEXP pm, SEXP mm, SEXP go, SE
 				S = 0;
 				M = 0;
 				for (int n = 0; n < 4; n++) {
-					if (pprofile[n + 8*i]==0)
+					if (pprofile[n + SIZEI]==0)
 						continue;
-					S += pprofile[n + 8*i]*sprofile[n + 8*j] * *(subM + n*4 + n);
+					S += pprofile[n + SIZEI]*sprofile[n + SIZEJ] * *(subM + n*4 + n);
 					for (int p = 0; p < 4; p++) {
-						if (p==n || sprofile[p + 8*j]==0)
+						if (p==n || sprofile[p + SIZEJ]==0)
 							continue;
-						M += pprofile[n + 8*i]*sprofile[p + 8*j] * *(subM + n*4 + p);
+						M += pprofile[n + SIZEI]*sprofile[p + SIZEJ] * *(subM + n*4 + p);
 					}
 				}
 				M = S + M;
@@ -314,14 +328,22 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP subMatrix, SEXP pm, SEXP mm, SEXP go, SE
 				S = 0;
 				M = 0;
 				for (int n = 0; n < 4; n++) {
-					if (pprofile[n + 8*i]==0)
+					if (pprofile[n + SIZEI]==0)
 						continue;
-					S += pprofile[n + 8*i]*sprofile[n + 8*j];
+					S += pprofile[n + SIZEI]*sprofile[n + SIZEJ];
 				}
-				M = S*PM + ((1 - pprofile[4 + 8*i])*(1 - sprofile[4 + 8*j]) - S)*MM; // % mismatched = (% ungapped) - (% matched)
+				M = S*PM + ((1 - pprofile[4 + SIZEI])*(1 - sprofile[4 + SIZEJ]) - S)*MM; // % mismatched = (% ungapped) - (% matched)
 			}
 			
-			if (((GS + *(m + i*(ls + 1) + j + 1)) > (M + *(m + i*(ls + 1) + j))) && ((GS + *(m + i*(ls + 1) + j + 1)) > (GP + *(m + (i + 1)*(ls + 1) + j))) && sprofile[4 + 8*j] != 1) {
+			if (do_DBN) {
+				for (int n = 0; n < d; n++) {
+					for (int p = 0; p < d; p++) {
+						M += pprofile[n + 8 + SIZEI]*sprofile[p + 8 + SIZEJ] * *(dbnM + n*d + p);
+					}
+				}
+			}
+			
+			if (((GS + *(m + i*(ls + 1) + j + 1)) > (M + *(m + i*(ls + 1) + j))) && ((GS + *(m + i*(ls + 1) + j + 1)) > (GP + *(m + (i + 1)*(ls + 1) + j))) && sprofile[4 + SIZEJ] != 1) {
 				if (i > 0) {
 					if (*(o + (i - 1)*ls + j) < 0) {
 						*(o + i*ls + j) = *(o + (i - 1)*ls + j) - 1;
@@ -333,7 +355,7 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP subMatrix, SEXP pm, SEXP mm, SEXP go, SE
 				}
 				
 				*(m + (i + 1)*(ls + 1) + j + 1) = GS*tot + *(m + i*(ls + 1) + j + 1);
-			} else if ((GP + *(m + (i + 1)*(ls + 1) + j)) > (M + *(m + i*(ls + 1) + j)) && pprofile[4 + 8*i] != 1) {
+			} else if ((GP + *(m + (i + 1)*(ls + 1) + j)) > (M + *(m + i*(ls + 1) + j)) && pprofile[4 + SIZEI] != 1) {
 				if (j > 0) {
 					if (*(o + i*ls + j - 1) > 0) {
 						*(o + i*ls + j) = *(o + i*ls + j - 1) + 1;
@@ -382,29 +404,10 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP subMatrix, SEXP pm, SEXP mm, SEXP go, SE
 			maxp = i;
 	
 	if (*(m + lp*(ls + 1) + maxs) > *(m + maxp*(ls + 1) + ls)) {
-		*(rans) = lp;
-		*(rans + 1) = maxs;
+		maxp = lp;
 	} else {
-		*(rans) = maxp;
-		*(rans + 1) = ls;
+		maxs = ls;
 	}
-	
-	i = (int)*(rans) - 1;
-	j = (int)*(rans + 1) - 1;
-	count = lp + ls + 3;
-	while ((i > -1) && (j > -1)) {
-		*(rans + count) = *(o + i*ls + j);
-		z = *(o + i*ls + j);
-		//*(o + i*ls + j) = 0;
-		if (z <= 0)
-			i--;
-		if (z >= 0)
-			j--;
-		count--;
-	}
-	*(rans + 2) = i + 2;
-	*(rans + 3) = j + 2;
-	*(rans + 4) = count;
 	
 	/*
 	for (i = 0; i < (lp+1)*(ls+1); i++) {
@@ -424,24 +427,138 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP subMatrix, SEXP pm, SEXP mm, SEXP go, SE
 	*/
 	
 	Free(m);
-	Free(o);
 	Free(zip);
 	Free(pstarts);
 	Free(pstops);
 	Free(sstarts);
 	Free(sstops);
 	
-	UNPROTECT(1);
+	int *t = Calloc(l, int); // initialized to zero
 	
-	return ans; // vector = [end.p end.s start.p start.s count t]
+	i = maxp - 1;
+	j = maxs - 1;
+	count = l - 1;
+	while ((i > -1) && (j > -1)) {
+		*(t + count) = *(o + i*ls + j);
+		z = *(o + i*ls + j);
+		//*(o + i*ls + j) = 0;
+		//*(m + (i + 1)*(ls + 1) + j + 1) = 0;
+		if (z <= 0)
+			i--;
+		if (z >= 0)
+			j--;
+		count--;
+	}
+	int minp = i + 2;
+	int mins = j + 2;
+	
+	int *p_ins = Calloc(l, int); // initialized to zero
+	int *s_ins = Calloc(l, int); // initialized to zero
+	int *p_ats = Calloc(l, int); // initialized to zero
+	int *s_ats = Calloc(l, int); // initialized to zero
+	
+	int p_count, s_count, value;
+	
+	if (mins < minp) {
+		*(s_ins) = minp - 1;
+		*(s_ats) = 1;
+		p_count = 0;
+		s_count = 1;
+	} else if (minp < mins) {
+		*(p_ins) = mins - 1;
+		*(p_ats) = 1;
+		p_count = 1;
+		s_count = 0;
+	} else {
+		p_count = 0;
+		s_count = 0;
+	}
+	
+	i = minp;
+	j = mins;
+	k = count + 1;
+	while (k < l) {
+		value = *(t + k);
+		for (count = k + 1; count < l; count++) {
+			if (*(t + count)!=value)
+				break;
+		}
+		z = count - k;
+		if (value==0) {
+			i += z;
+			j += z;
+		} else if (value > 0) {
+			p_ins[p_count] = z;
+			p_ats[p_count] = i;
+			j += z;
+			p_count++;
+		} else { // value < 0
+			s_ins[s_count] = z;
+			s_ats[s_count] = j;
+			i += z;
+			s_count++;
+		}
+		k = count;
+	}
+	
+	if (ls > maxs) {
+		p_ins[p_count] = ls - maxs;
+		p_ats[p_count] = lp + 1;
+		p_count++;
+	}
+	
+	if (lp > maxp) {
+		s_ins[s_count] = lp - maxp;
+		s_ats[s_count] = ls + 1;
+		s_count++;
+	}
+	
+	PROTECT(ans1 = allocVector(INTSXP, p_count));
+	rans = INTEGER(ans1);
+	for (i = 0; i < p_count; i++) {
+		*(rans + i) = p_ats[i];
+	}
+	PROTECT(ans2 = allocVector(INTSXP, p_count));
+	rans = INTEGER(ans2);
+	for (i = 0; i < p_count; i++) {
+		*(rans + i) = p_ins[i];
+	}
+	PROTECT(ans3 = allocVector(INTSXP, s_count));
+	rans = INTEGER(ans3);
+	for (i = 0; i < s_count; i++) {
+		*(rans + i) = s_ats[i];
+	}
+	PROTECT(ans4 = allocVector(INTSXP, s_count));
+	rans = INTEGER(ans4);
+	for (i = 0; i < s_count; i++) {
+		*(rans + i) = s_ins[i];
+	}
+	
+	SEXP ret_list;
+	PROTECT(ret_list = allocVector(VECSXP, 4));
+	SET_VECTOR_ELT(ret_list, 0, ans1);
+	SET_VECTOR_ELT(ret_list, 1, ans2);
+	SET_VECTOR_ELT(ret_list, 2, ans3);
+	SET_VECTOR_ELT(ret_list, 3, ans4);
+	
+	Free(o);
+	Free(t);
+	Free(p_ins);
+	Free(s_ins);
+	Free(p_ats);
+	Free(s_ats);
+	
+	UNPROTECT(5);
+	
+	return ret_list;
 }
 
 SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP hecMatrix, SEXP go, SEXP ge, SEXP exp, SEXP power, SEXP endGapPenaltyLeft, SEXP endGapPenaltyRight, SEXP boundary, SEXP nThreads)
 {
 	int i, j, k, pos, start, end, *rans, count, z;
-	double *pprofile, *sprofile, gp, gs, M, GP, GS;
+	double *pprofile, *sprofile, gp, gs, M, GP, GS, R;
 	double max, tot, freq;
-	SEXP ans, dims;
+	SEXP ans1, ans2, ans3, ans4, dims;
 	
 	pprofile = REAL(p);
 	sprofile = REAL(s);
@@ -456,7 +573,7 @@ SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP hecMatrix, SEXP go, SE
 	int NTHREADS, nthreads = asInteger(nThreads);
 	
 	double *hecM = REAL(hecMatrix);
-	int do_HEC, d, size = 27;
+	int do_HEC, d, size = 29;
 	if (length(hecMatrix) > 0) {
 		do_HEC = 1;
 		PROTECT(dims = GET_DIM(hecMatrix));
@@ -470,6 +587,7 @@ SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP hecMatrix, SEXP go, SE
 	
 	R_len_t lp = length(p)/size;
 	R_len_t ls = length(s)/size;
+	int l = lp + ls;
 	
 	int N21[20] = {0, 21, 42, 63, 84, 105, 126, 147, 168, 189, 210, 231, 252, 273, 294, 315, 336, 357, 378, 399};
 	
@@ -514,38 +632,51 @@ SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP hecMatrix, SEXP go, SE
 	// gap modulation factor based on position(s) across from the gap
 	// added once for each gap added (including opening/closing)
 	// A, R, N, D, C, Q, E, G, H, I, L, K, M, F, P, S, T, W, Y, V:
-	double GC[20] = {0.101,-0.453,0.446,0.178,-0.48,0.658,0.245,0.702,0.221,-1.586,-0.979,0.239,-1.574,-1.097,1.188,1.364,0.417,-1.379,-1.486,-0.788};
+	double GC[20] = {-0.05,-0.354,0.486,0.016,-0.014,0.611,0.037,0.642,0.107,-1.229,-0.788,0.178,-1.346,-0.718,1.03,1.265,0.441,-0.916,-1.127,-0.728};
 	
 	// gap modulation factor based on +/- positions of gap
 	// half of log-odds because added twice (gap open and close)
 	// units in third-bits - may not scale with all substitution matrices
 	double GM[320] = { // gap modulate position -8 to +8
-		0.111,0.109,0.088,0.097,0.11,0.117,0.037,-0.67,0.116,0.003,-0.031,-0.05,0.016,-0.017,0.027,-0.002, // A
-		0.067,0.155,0.025,0.001,0.019,0.017,-0.08,0.063,-0.166,-0.235,-0.268,-0.15,-0.207,-0.148,-0.084,-0.073, // R
-		-0.123,-0.126,-0.153,-0.207,-0.032,0.048,0.19,0.082,0.564,0.37,0.187,0.079,-0.096,-0.133,-0.191,-0.201, // N
-		-0.121,-0.181,-0.164,-0.133,-0.092,0.121,0.195,0.526,0.658,0.579,0.371,0.246,0.15,0.127,0.074,0.071, // D
-		0.102,-0.029,-0.085,-0.129,-0.089,-0.363,-0.493,-0.243,-0.728,-0.55,-0.395,-0.193,-0.151,0.049,0.095,0.029, // C
-		0.119,0.114,0.08,0.151,0.131,0.273,0.264,0.098,0.246,0.165,0.106,0.091,0.008,0.002,-0.037,-0.048, // Q
-		0.076,0.144,0.168,0.134,0.23,0.362,0.361,0.447,0.437,0.368,0.311,0.247,0.153,0.138,0.087,0.059, // E
-		-0.219,-0.187,-0.198,-0.231,-0.157,0.031,0.291,0.55,0.605,0.449,0.293,0.086,-0.119,-0.211,-0.194,-0.131, // G
-		-0.032,-0.041,0.027,-0.121,-0.035,-0.112,-0.024,-0.302,-0.243,-0.12,-0.132,-0.254,-0.099,-0.187,-0.08,-0.156, // H
-		0.038,-0.01,-0.163,-0.11,-0.342,-0.481,-0.693,-0.646,-0.993,-0.802,-0.583,-0.341,-0.142,-0.103,-0.059,0.061, // I
-		0.038,-0.013,0.056,0.066,-0.006,-0.228,-0.362,-0.216,-0.895,-0.679,-0.539,-0.416,-0.25,-0.118,-0.155,-0.119, // L
-		0.006,0.089,0.111,0.13,0.251,0.302,0.417,0.373,0.276,0.249,0.218,0.138,0.064,-0.046,-0.05,-0.046, // K
-		-0.184,-0.252,-0.211,-0.301,-0.481,-0.46,-0.673,-0.61,-1.24,-0.907,-0.91,-0.797,-0.567,-0.564,-0.477,-0.478, // M
-		0,-0.094,-0.134,-0.029,-0.159,-0.291,-0.491,-0.229,-1.165,-0.837,-0.533,-0.409,-0.202,-0.137,-0.061,-0.045, // F
-		0.003,0.044,0.103,0.128,0.158,0.267,0.441,0.683,0.361,0.57,0.614,0.54,0.494,0.414,0.32,0.205, // P
-		0.002,0.02,0.069,0.075,0.17,0.176,0.298,-0.1,0.585,0.412,0.368,0.342,0.221,0.215,0.2,0.188, // S
-		-0.046,-0.082,0.005,-0.028,-0.002,0.012,0.006,-0.272,0.203,0.173,0.229,0.212,0.175,0.179,0.122,0.126, // T
-		0.089,0.156,-0.07,0.02,-0.012,-0.451,-0.389,-0.109,-1.388,-0.953,-0.617,-0.288,-0.18,-0.145,-0.035,0.043, // W
-		-0.039,0.037,0.025,-0.071,-0.15,-0.245,-0.458,-0.224,-1.076,-0.8,-0.561,-0.397,-0.227,-0.167,-0.189,-0.144, // Y
-		0.049,0.005,0.04,0.054,-0.131,-0.31,-0.51,-0.505,-0.545,-0.359,-0.2,-0.053,0.101,0.141,0.198,0.168, // V
+		0.1,0.171,0.129,0.094,0.082,0.094,0.085,-0.285,-0.255,-0.102,-0.095,-0.065,-0.013,-0.019,0.014,0.036, // A
+		0.078,0.04,0.095,-0.013,0.108,0.064,-0.052,0.073,-0.023,-0.115,-0.165,-0.129,-0.164,-0.143,-0.087,-0.088, // R
+		-0.15,-0.152,-0.127,-0.103,0.045,0.165,0.208,0.234,0.384,0.249,0.104,-0.018,-0.176,-0.174,-0.158,-0.101, // N
+		-0.211,-0.152,-0.132,-0.123,-0.033,0.224,0.147,0.557,0.663,0.499,0.266,0.143,0.099,0.074,-0.008,-0.023, // D
+		0.059,0.025,-0.033,0.038,-0.086,-0.221,-0.374,-0.437,-0.321,-0.432,-0.178,-0.035,-0.067,0.202,0.214,0.271, // C
+		0.14,0.033,0.066,0.143,0.164,0.166,0.247,0.232,0.078,0.006,0.006,-0.076,-0.021,-0.018,-0.078,-0.06, // Q
+		0.057,0.116,0.157,0.149,0.186,0.345,0.387,0.401,0.386,0.245,0.204,0.214,0.068,0.04,0.027,-0.031, // E
+		-0.151,-0.21,-0.203,-0.193,-0.073,0.163,0.361,0.573,0.519,0.292,0.129,-0.01,-0.121,-0.184,-0.195,-0.077, // G
+		-0.022,-0.064,-0.092,-0.081,-0.162,-0.109,-0.15,-0.207,-0.396,-0.092,-0.146,-0.143,-0.162,-0.225,-0.19,-0.068, // H
+		-0.003,-0.002,-0.16,-0.133,-0.35,-0.589,-0.729,-0.877,-0.635,-0.549,-0.228,-0.166,-0.02,0.037,0.03,0.066, // I
+		0.053,0.04,0.042,0.014,-0.056,-0.284,-0.434,-0.549,-0.583,-0.57,-0.355,-0.268,-0.116,-0.063,-0.039,-0.067, // L
+		0.02,0.108,0.154,0.207,0.286,0.333,0.428,0.499,0.308,0.27,0.199,0.091,0.06,-0.059,-0.006,-0.017, // K
+		-0.228,-0.229,-0.376,-0.343,-0.454,-0.572,-0.735,-0.754,-1.024,-0.929,-0.795,-0.826,-0.522,-0.462,-0.498,-0.484, // M
+		-0.014,-0.053,-0.131,-0.057,-0.227,-0.345,-0.52,-0.594,-0.632,-0.603,-0.359,-0.175,-0.159,-0.004,0.009,-0.076, // F
+		-0.03,-0.014,0.092,0.149,0.277,0.237,0.48,0.562,0.311,0.644,0.574,0.391,0.343,0.298,0.217,0.146, // P
+		0.039,0.019,0.088,0.08,0.216,0.267,0.315,0.24,0.318,0.392,0.23,0.243,0.156,0.14,0.119,0.169, // S
+		0.029,-0.029,-0.022,-0.021,-0.007,0.016,0.13,-0.002,-0.018,0.203,0.19,0.215,0.175,0.101,0.094,0.07, // T
+		0.106,0.115,-0.055,-0.11,-0.257,-0.406,-0.642,-0.494,-0.583,-0.753,-0.314,-0.146,-0.101,-0.02,0.126,0.074, // W
+		-0.01,0.027,-0.028,-0.085,-0.189,-0.368,-0.545,-0.666,-0.548,-0.608,-0.408,-0.228,-0.092,-0.163,-0.103,-0.077, // Y
+		0.024,0,0.008,-0.021,-0.268,-0.435,-0.577,-0.616,-0.231,-0.218,-0.085,0.068,0.151,0.211,0.197,0.124, // V
 	};
 	
+	// gap extension based on residues opposing the gap
 	double *GCp = Calloc(lp, double); // initialized to zero
 	double *GCs = Calloc(ls, double); // initialized to zero
+	// gap opening based on local sequence context
 	double *GOp = Calloc(lp, double); // initialized to zero
 	double *GOs = Calloc(ls, double); // initialized to zero
+	// gap opening in the opposing sequence based on runs
+	double *GRp = Calloc(lp, double); // initialized to zero
+	double *GRs = Calloc(ls, double); // initialized to zero
+	
+	// start of run of length 2 at position zero
+	//          -2          -1            0           +1
+	// -0.06983115  0.25875077  -0.86657803  -3.10770430
+	
+	// start of run of length > 2 at position zero
+	//          -2          -1            0           +1
+	// 2.038597279 2.859584452  1.913399269 -3.896055295
 	
 	for (i = 0; i < lp; i++) {
 		GOp[i] = GO;
@@ -563,7 +694,7 @@ SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP hecMatrix, SEXP go, SE
 				
 				GCp[i] += freq*GC[j];
 				
-				for (k = 4; k <= 14; k++) { // -4 to +7
+				for (k = 4; k <= 11; k++) { // -4 to +4
 					pos = i + k - 7;
 					if (pos < 0 || pos >= lp)
 						continue;
@@ -571,6 +702,28 @@ SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP hecMatrix, SEXP go, SE
 					GOp[pos] += freq*GM[j*16 + 15 - k];
 				}
 			}
+		}
+		
+		// do not need to check bounds
+		R = pprofile[27 + size*i];
+		if (R > 0) { // run of length 2
+//			if (i >= 2)
+//				GRp[i - 2] += R*-0.0349;
+//			if (i >= 1)
+//				GRp[i - 1] += R*0.1294;
+//			GRp[i] += R*-0.4333;
+			if (i < (lp - 1))
+				GRp[i + 1] += R*-1.5539;
+		}
+		R = pprofile[28 + size*i];
+		if (R > 0) { // run of length > 2
+			if (i >= 2)
+				GRp[i - 2] += R*1.0193;
+			if (i >= 1)
+				GRp[i - 1] += R*1.4298;
+			GRp[i] += R*0.9567;
+			if (i < (lp - 1))
+				GRp[i + 1] += R*-1.9480;
 		}
 	}
 	for (i = 0; i < ls; i++) {
@@ -589,7 +742,7 @@ SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP hecMatrix, SEXP go, SE
 				
 				GCs[i] += freq*GC[j];
 				
-				for (k = 4; k <= 14; k++) { // -4 to +7
+				for (k = 4; k <= 11; k++) { // -4 to +4
 					pos = i + k - 7;
 					if (pos < 0 || pos >= ls)
 						continue;
@@ -598,10 +751,29 @@ SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP hecMatrix, SEXP go, SE
 				}
 			}
 		}
+		
+		// do not need to check bounds
+		R = sprofile[27 + size*i];
+		if (R > 0) { // run of length 2
+//			if (i >= 2)
+//				GRs[i - 2] += R*-0.0349;
+//			if (i >= 1)
+//				GRs[i - 1] += R*0.1294;
+//			GRs[i] += R*-0.4333;
+			if (i < (ls - 1))
+				GRs[i + 1] += R*-1.5539;
+		}
+		R = sprofile[28 + size*i];
+		if (R > 0) { // run of length > 2
+			if (i >= 2)
+				GRs[i - 2] += R*1.0193;
+			if (i >= 1)
+				GRs[i - 1] += R*1.4298;
+			GRs[i] += R*0.9567;
+			if (i < (ls - 1))
+				GRs[i + 1] += R*-1.9480;
+		}
 	}
-	
-	PROTECT(ans = allocVector(INTSXP, lp + ls + 4));
-	rans = INTEGER(ans);
 	
 	float *m = Calloc((lp+1)*(ls+1), float); // initialized to zero
 	int *o = Calloc(lp*ls, int); // initialized to zero
@@ -691,7 +863,7 @@ SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP hecMatrix, SEXP go, SE
 	int left = 0, top = 0; // boundaries of DP
 	int START, END; // constrained start and end points
 	max = -1e53;
-	for (k = 1; k < lp + ls; k++) {
+	for (k = 1; k < l; k++) {
 		if (k > ls) {
 			start = k - ls;
 		} else {
@@ -813,12 +985,12 @@ SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP hecMatrix, SEXP go, SE
 				if (j > 0 && *(o + i*ls + j - 1) > 0) {
 					gp = GE*(1 - 0.3*sprofile[23 + SIZEJ])*zip[*(o + i*ls + j - 1)] + 0.5*GOp[i]*(sprofile[25 + size*(j - 1)] - sprofile[25 + SIZEJ]);
 				} else {
-					gp = GOp[i]*(2 - 0.5*(sprofile[24 + SIZEJ] + sprofile[25 + SIZEJ]));
+					gp = (GOp[i] + GRs[j])*(2 - 0.5*(sprofile[24 + SIZEJ] + sprofile[25 + SIZEJ]));
 				}
 				if (i > 0 && *(o + (i - 1)*ls + j) < 0) {
 					gs = GE*(1 - 0.3*pprofile[23 + SIZEI])*zip[*(o + (i - 1)*ls + j)*-1] + 0.5*GOs[j]*(pprofile[25 + size*(i - 1)] - pprofile[25 + SIZEI]);
 				} else {
-					gs = GOs[j]*(2 - 0.5*(pprofile[24 + SIZEI] + pprofile[25 + SIZEI]));
+					gs = (GOs[j] + GRp[i])*(2 - 0.5*(pprofile[24 + SIZEI] + pprofile[25 + SIZEI]));
 				}
 				
 				// add modulation factor for center gap region
@@ -859,7 +1031,7 @@ SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP hecMatrix, SEXP go, SE
 			if (do_HEC) {
 				for (int n = 0; n < d; n++) {
 					for (int p = 0; p < d; p++) {
-						M += pprofile[n + 27 + SIZEI]*sprofile[p + 27 + SIZEJ] * *(hecM + n*d + p);
+						M += pprofile[n + 29 + SIZEI]*sprofile[p + 29 + SIZEJ] * *(hecM + n*d + p);
 					}
 				}
 			}
@@ -941,30 +1113,10 @@ SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP hecMatrix, SEXP go, SE
 			maxp = i;
 	
 	if (*(m + lp*(ls + 1) + maxs) > *(m + maxp*(ls + 1) + ls)) {
-		*(rans) = lp;
-		*(rans + 1) = maxs;
+		maxp = lp;
 	} else {
-		*(rans) = maxp;
-		*(rans + 1) = ls;
+		maxs = ls;
 	}
-	
-	i = (int)*(rans) - 1;
-	j = (int)*(rans + 1) - 1;
-	count = lp + ls + 3;
-	while ((i > -1) && (j > -1)) {
-		*(rans + count) = *(o + i*ls + j);
-		z = *(o + i*ls + j);
-		//*(o + i*ls + j) = 0;
-		//*(m + (i + 1)*(ls + 1) + j + 1) = 0;
-		if (z <= 0)
-			i--;
-		if (z >= 0)
-			j--;
-		count--;
-	}
-	*(rans + 2) = i + 2;
-	*(rans + 3) = j + 2;
-	*(rans + 4) = count;
 	
 	/*
 	for (i = 0; i < (lp+1)*(ls+1); i++) {
@@ -984,7 +1136,6 @@ SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP hecMatrix, SEXP go, SE
 	*/
 	
 	Free(m);
-	Free(o);
 	Free(Op);
 	Free(Os);
 	Free(zip);
@@ -992,12 +1143,129 @@ SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP hecMatrix, SEXP go, SE
 	Free(GCs);
 	Free(GOp);
 	Free(GOs);
+	Free(GRp);
+	Free(GRs);
 	Free(pstarts);
 	Free(pstops);
 	Free(sstarts);
 	Free(sstops);
 	
-	UNPROTECT(1);
+	int *t = Calloc(l, int); // initialized to zero
 	
-	return ans; // vector = [end.p end.s start.p start.s count t]
+	i = maxp - 1;
+	j = maxs - 1;
+	count = l - 1;
+	while ((i > -1) && (j > -1)) {
+		*(t + count) = *(o + i*ls + j);
+		z = *(o + i*ls + j);
+		//*(o + i*ls + j) = 0;
+		//*(m + (i + 1)*(ls + 1) + j + 1) = 0;
+		if (z <= 0)
+			i--;
+		if (z >= 0)
+			j--;
+		count--;
+	}
+	int minp = i + 2;
+	int mins = j + 2;
+	
+	int *p_ins = Calloc(l, int); // initialized to zero
+	int *s_ins = Calloc(l, int); // initialized to zero
+	int *p_ats = Calloc(l, int); // initialized to zero
+	int *s_ats = Calloc(l, int); // initialized to zero
+	
+	int p_count, s_count, value;
+	
+	if (mins < minp) {
+		*(s_ins) = minp - 1;
+		*(s_ats) = 1;
+		p_count = 0;
+		s_count = 1;
+	} else if (minp < mins) {
+		*(p_ins) = mins - 1;
+		*(p_ats) = 1;
+		p_count = 1;
+		s_count = 0;
+	} else {
+		p_count = 0;
+		s_count = 0;
+	}
+	
+	i = minp;
+	j = mins;
+	k = count + 1;
+	while (k < l) {
+		value = *(t + k);
+		for (count = k + 1; count < l; count++) {
+			if (*(t + count)!=value)
+				break;
+		}
+		z = count - k;
+		if (value==0) {
+			i += z;
+			j += z;
+		} else if (value > 0) {
+			p_ins[p_count] = z;
+			p_ats[p_count] = i;
+			j += z;
+			p_count++;
+		} else { // value < 0
+			s_ins[s_count] = z;
+			s_ats[s_count] = j;
+			i += z;
+			s_count++;
+		}
+		k = count;
+	}
+	
+	if (ls > maxs) {
+		p_ins[p_count] = ls - maxs;
+		p_ats[p_count] = lp + 1;
+		p_count++;
+	}
+	
+	if (lp > maxp) {
+		s_ins[s_count] = lp - maxp;
+		s_ats[s_count] = ls + 1;
+		s_count++;
+	}
+	
+	PROTECT(ans1 = allocVector(INTSXP, p_count));
+	rans = INTEGER(ans1);
+	for (i = 0; i < p_count; i++) {
+		*(rans + i) = p_ats[i];
+	}
+	PROTECT(ans2 = allocVector(INTSXP, p_count));
+	rans = INTEGER(ans2);
+	for (i = 0; i < p_count; i++) {
+		*(rans + i) = p_ins[i];
+	}
+	PROTECT(ans3 = allocVector(INTSXP, s_count));
+	rans = INTEGER(ans3);
+	for (i = 0; i < s_count; i++) {
+		*(rans + i) = s_ats[i];
+	}
+	PROTECT(ans4 = allocVector(INTSXP, s_count));
+	rans = INTEGER(ans4);
+	for (i = 0; i < s_count; i++) {
+		*(rans + i) = s_ins[i];
+	}
+	
+	SEXP ret_list;
+	PROTECT(ret_list = allocVector(VECSXP, 4));
+	SET_VECTOR_ELT(ret_list, 0, ans1);
+	SET_VECTOR_ELT(ret_list, 1, ans2);
+	SET_VECTOR_ELT(ret_list, 2, ans3);
+	SET_VECTOR_ELT(ret_list, 3, ans4);
+	
+	Free(o);
+	Free(t);
+	Free(p_ins);
+	Free(s_ins);
+	Free(p_ats);
+	Free(s_ats);
+	
+	UNPROTECT(5);
+	
+	return ret_list;
 }

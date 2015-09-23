@@ -36,8 +36,11 @@ Non-zero elements' values representing hybridization efficiencies.
 A list of two components: the names of each probe, and the names of each template.
 }
 }
-%\references{
-%}
+\references{
+ES Wright et al. (2013) Identification of Bacterial and Archaeal Communities From Source to Tap. Water Research Foundation, Denver, CO.
+
+DR Noguera, et al. (2014). Mathematical tools to optimize the design of oligonucleotide probes and primers. Applied Microbiology and Biotechnology. doi:10.1007/s00253-014-6165-x.
+}
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}
 }

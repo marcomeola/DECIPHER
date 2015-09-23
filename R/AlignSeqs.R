@@ -3,9 +3,11 @@ AlignSeqs <- function(myXStringSet,
 	orient=FALSE,
 	iterations=1,
 	refinements=1,
+	gapOpening=c(-16, -12),
+	gapExtension=c(-2, -1),
 	structures=NULL,
 	FUN=AdjustAlignment,
-	levels=c(0.95, 0.7, 10),
+	levels=c(0.95, 0.7, 10, 5),
 	processors=NULL,
 	verbose=TRUE,
 	...) {
@@ -45,16 +47,13 @@ AlignSeqs <- function(myXStringSet,
 	a <- vcountPattern("-", myXStringSet)
 	if (any(a > 0))
 		stop("Gap characters ('-') must be removed before alignment.")
-	a <- vcountPattern("+", myXStringSet)
-	if (any(a > 0))
-		stop("Mask characters ('+') must be removed before alignment.")
 	a <- vcountPattern(".", myXStringSet)
 	if (any(a > 0))
 		stop("Unknown characters ('.') must be removed before alignment.")
 	FUN <- match.fun(FUN)
 	if (!is.numeric(levels))
 		stop("levels must be a numeric vector.")
-	if (length(levels) != 3)
+	if (length(levels) != 4)
 		stop("levels must be length 3.")
 	if (levels[1] < 0 || levels[1] > 1)
 		stop("levels[1] must be between zero and one (inclusive).")
@@ -64,6 +63,10 @@ AlignSeqs <- function(myXStringSet,
 		stop("levels[3] must be between zero and Inf (exclusive).")
 	if (levels[3] != floor(levels[3]))
 		stop("levels[3] must be a whole number.")
+	if (levels[4] != floor(levels[4]))
+		stop("levels[4] must be a whole number.")
+	if (levels[4] < 0)
+		stop("levels[4] must be at least zero.")
 	if (!is.null(processors) && !is.numeric(processors))
 		stop("processors must be a numeric.")
 	if (!is.null(processors) && floor(processors)!=processors)
@@ -83,7 +86,36 @@ AlignSeqs <- function(myXStringSet,
 		m[i] <- match.arg(n[i],
 			names(formals(AlignProfiles)))
 	}
+	
+	if (length(gapOpening)==2) {
+		gapOpeningMin <- gapOpening[1]
+		gapOpeningMax <- gapOpening[2]
+	} else if (length(gapOpening)==1) {
+		gapOpeningMin <- gapOpeningMax <- gapOpening
+	} else {
+		stop("gapOpening must be a vector of length 1 or 2.")
+	}
+	if (length(gapExtension)==2) {
+		gapExtensionMin <- gapExtension[1]
+		gapExtensionMax <- gapExtension[2]
+	} else if (length(gapExtension)==1) {
+		gapExtensionMin <- gapExtensionMax <- gapExtension
+	} else {
+		stop("gapExtension must be a vector of length 1 or 2.")
+	}
+	if (!is.numeric(gapOpeningMax))
+		stop("gapOpening must be a numeric.")
+	if (gapOpeningMin > gapOpeningMax)
+		stop("gapOpening[1] must be less than or equal to gapOpening[2].")
+	if (!is.numeric(gapExtensionMax))
+		stop("gapExtension must be a numeric.")
+	if (gapExtensionMin > gapExtensionMax)
+		stop("gapExtension[1] must be less than or equal to gapExtension[2].")
+	gapOpeningSlope <- gapOpeningMax - gapOpeningMin
+	gapExtensionSlope <- gapExtensionMax - gapExtensionMin
+	
 	if (type==3L) {
+		# structures are always used with AA sequences
 		if (is.null(structures)) {
 			structures <- PredictHEC(myXStringSet,
 				type="probabilities")
@@ -105,24 +137,11 @@ AlignSeqs <- function(myXStringSet,
 				if (dim(structureMatrix)[1] != dim(structureMatrix)[2])
 					stop("structureMatrix is not square.")
 			} else {
-				structureMatrix <- matrix(c(5, 2, -2, 2, 13, 0, -2, 0, 2),
+				structureMatrix <- matrix(c(5, 0, -2, 0, 9, -1, -2, -1, 2),
 					nrow=3) # order is H, E, C
 			}
 			if (dim(structureMatrix)[1] != dim(structures[[1]])[1])
 				stop("Dimensions of structureMatrix are incompatible with the structures.")
-			
-			w <- which(m=="gapOpening")
-			if (length(w)==1L) {
-				GO <- args[[w]]
-			} else {
-				GO <- -6
-			}
-			w <- which(m=="gapExtension")
-			if (length(w)==1L) {
-				GE <- args[[w]]
-			} else {
-				GE <- -1
-			}
 		}
 		
 		subM <- TRUE
@@ -150,24 +169,54 @@ AlignSeqs <- function(myXStringSet,
 			sM <- sM + 0 # convert to numeric matrix
 		} else {
 			# use MIQS
-			sM <- matrix(c(3, -1, 0, 0, 2, 0, 0, 0, -1, -1, -1, -1, -1, -2, 0, 1, 1, -4, -2, 0, -6, -1, 6, 0, -1, -3, 2, -1, -2, 1, -2, -3, 3, -1, -3, -1, 0, -1, -4, -2, -2, -6, 0, 0, 5, 3, -2, 1, 1, 0, 1, -4, -4, 1, -2, -3, -1, 1, 0, -5, -1, -3, -6, 0, -1, 3, 6, -4, 1, 3, -1, 0, -5, -5, 0, -3, -6, 0, 0, 0, -5, -4, -3, -6, 2, -3, -2, -4, 12, -3, -3, -2, -1, 0, -2, -3, 0, -3, -3, 1, 0, -6, -1, 2, -6, 0, 2, 1, 1, -3, 4, 2, -2, 1, -2, -2, 2, 0, -2, 0, 0, 0, -5, -3, -2, -6, 0, -1, 1, 3, -3, 2, 4, -1, 0, -3, -3, 1, -2, -4, 0, 0, 0, -6, -2, -2, -6, 0, -2, 0, -1, -2, -2, -1, 8, -2, -5, -5, -2, -4, -5, -2, 0, -2, -5, -4, -4, -6, -1, 1, 1, 0, -1, 1, 0, -2, 7, -2, -2, 0, -2, 0, -2, 0, 0, 0, 2, -2, -6, -1, -2, -4, -5, 0, -2, -3, -5, -2, 5, 3, -2, 2, 1, -4, -3, -1, -1, -1, 3, -6, -1, -3, -4, -5, -2, -2, -3, -5, -2, 3, 5, -2, 3, 2, -3, -3, -2, 0, 0, 2, -6, -1, 3, 1, 0, -3, 2, 1, -2, 0, -2, -2, 4, -1, -4, 0, 0, 0, -4, -2, -2, -6, -1, -1, -2, -3, 0, 0, -2, -4, -2, 2, 3, -1, 5, 1, -3, -2, -1, -2, -1, 1, -6, -2, -3, -3, -6, -3, -2, -4, -5, 0, 1, 2, -4, 1, 7, -4, -3, -2, 4, 5, 0, -6, 0, -1, -1, 0, -3, 0, 0, -2, -2, -4, -3, 0, -3, -4, 8, 0, 0, -4, -5, -3, -6, 1, 0, 1, 0, 1, 0, 0, 0, 0, -3, -3, 0, -2, -3, 0, 3, 2, -4, -2, -1, -6, 1, -1, 0, 0, 0, 0, 0, -2, 0, -1, -2, 0, -1, -2, 0, 2, 4, -5, -2, 0, -6, -4, -4, -5, -5, -6, -5, -6, -5, 0, -1, 0, -4, -2, 4, -4, -4, -5, 15, 5, -3, -6, -2, -2, -1, -4, -1, -3, -2, -4, 2, -1, 0, -2, -1, 5, -5, -2, -2, 5, 8, -1, -6, 0, -2, -3, -3, 2, -2, -2, -4, -2, 3, 2, -2, 1, 0, -3, -1, 0, -3, -1, 4, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, 1),
+			sM <- matrix(c(3.2,-1.3,-0.4,-0.4,1.5,-0.2,-0.4,0.4,-1.2,-1.3,-1.4,-0.7,-1,-2.3,-0.1,0.8,0.8,-3.6,-2.4,0,-6.1,-1.3,6.2,-0.1,-1.5,-2.7,1.8,-0.7,-1.9,0.9,-2.4,-2.5,3.3,-1.1,-3.3,-1.1,-0.3,-0.9,-3.8,-1.9,-2.3,-6.1,-0.4,-0.1,5.1,2.6,-1.6,0.9,0.8,0.2,1,-3.6,-3.5,0.7,-2.3,-3.5,-1.4,0.9,0,-4.5,-1.5,-2.6,-6.1,-0.4,-1.5,2.6,5.7,-3.7,0.9,2.7,-0.5,0.3,-4.5,-4.6,0.4,-3.3,-5.8,-0.3,0.3,-0.2,-5.3,-3.9,-3.5,-6.1,1.5,-2.7,-1.6,-3.7,11.7,-2.8,-3.2,-1.7,-1.2,0.2,-2.3,-3.2,0.1,-2.8,-2.8,1,0,-6.1,-0.7,1.8,-6.1,-0.2,1.8,0.9,0.9,-2.8,3.6,2.1,-1.6,1.2,-2.2,-1.9,1.7,-0.4,-2.4,-0.4,0.4,0.1,-5.4,-2.8,-1.8,-6.1,-0.4,-0.7,0.8,2.7,-3.2,2.1,4.3,-1.3,-0.2,-3.3,-2.8,1.1,-2.3,-4.1,0,0.4,-0.2,-5.8,-2.4,-2.3,-6.1,0.4,-1.9,0.2,-0.5,-1.7,-1.6,-1.3,7.6,-1.6,-5.4,-4.8,-1.7,-3.6,-4.6,-1.6,0,-1.9,-4.8,-4.5,-3.8,-6.1,-1.2,0.9,1,0.3,-1.2,1.2,-0.2,-1.6,7.5,-2.2,-1.9,0,-2.1,0,-1.5,0,-0.2,-0.3,2.1,-2.3,-6.1,-1.3,-2.4,-3.6,-4.5,0.2,-2.2,-3.3,-5.4,-2.2,4.6,3.1,-2.3,1.7,0.7,-3.7,-2.8,-0.7,-0.7,-0.8,3.3,-6.1,-1.4,-2.5,-3.5,-4.6,-2.3,-1.9,-2.8,-4.8,-1.9,3.1,4.6,-2.4,3.2,2.1,-2.8,-2.9,-1.6,-0.2,0,2,-6.1,-0.7,3.3,0.7,0.4,-3.2,1.7,1.1,-1.7,0,-2.3,-2.4,3.6,-1.1,-3.7,-0.1,0,0,-4,-2.3,-2,-6.1,-1,-1.1,-2.3,-3.3,0.1,-0.4,-2.3,-3.6,-2.1,1.7,3.2,-1.1,5.4,1.4,-2.8,-1.8,-0.8,-2.1,-0.9,1.4,-6.1,-2.3,-3.3,-3.5,-5.8,-2.8,-2.4,-4.1,-4.6,0,0.7,2.1,-3.7,1.4,7.4,-3.7,-2.6,-2.3,4.2,5.2,-0.3,-6.1,-0.1,-1.1,-1.4,-0.3,-2.8,-0.4,0,-1.6,-1.5,-3.7,-2.8,-0.1,-2.8,-3.7,8.4,-0.1,-0.5,-3.6,-4.5,-2.5,-6.1,0.8,-0.3,0.9,0.3,1,0.4,0.4,0,0,-2.8,-2.9,0,-1.8,-2.6,-0.1,3.1,1.6,-3.5,-1.5,-1.4,-6.1,0.8,-0.9,0,-0.2,0,0.1,-0.2,-1.9,-0.2,-0.7,-1.6,0,-0.8,-2.3,-0.5,1.6,3.8,-5.3,-2.1,-0.1,-6.1,-3.6,-3.8,-4.5,-5.3,-6.1,-5.4,-5.8,-4.8,-0.3,-0.7,-0.2,-4,-2.1,4.2,-3.6,-3.5,-5.3,14.8,4.9,-3.3,-6.1,-2.4,-1.9,-1.5,-3.9,-0.7,-2.8,-2.4,-4.5,2.1,-0.8,0,-2.3,-0.9,5.2,-4.5,-1.5,-2.1,4.9,8.3,-1.2,-6.1,0,-2.3,-2.6,-3.5,1.8,-1.8,-2.3,-3.8,-2.3,3.3,2,-2,1.4,-0.3,-2.5,-1.4,-0.1,-3.3,-1.2,3.5,-6.1,-6.1,-6.1,-6.1,-6.1,-6.1,-6.1,-6.1,-6.1,-6.1,-6.1,-6.1,-6.1,-6.1,-6.1,-6.1,-6.1,-6.1,-6.1,-6.1,-6.1,1),
 				nrow=21,
 				ncol=21,
 				dimnames=list(AAs, AAs))
 		}
 	} else {
-		subM <- FALSE
+		if (is.null(structures)) {
+			subM <- FALSE
+			w <- which(m=="structureMatrix")
+			if (length(w) > 0)
+				stop("structureMatrix provided without structures.")
+			structureMatrix <- numeric() # needed for colScores
+		} else {
+			subM <- TRUE
+			if (length(structures) != length(myXStringSet))
+				stop("structures is not the same length as myXStringSet.")
+			if (typeof(structures) != "list")
+				stop("structures must be a list.")
+			
+			w <- which(m=="structureMatrix")
+			if (length(w) > 0) {
+				structureMatrix <- args[[w]]
+				# assume structures and matrix are ordered the same
+				if (!is.double(structureMatrix))
+					stop("structureMatrix must be contain numerics.")
+				if (!is.matrix(structureMatrix))
+					stop("structureMatrix must be a matrix.")
+				if (dim(structureMatrix)[1] != dim(structureMatrix)[2])
+					stop("structureMatrix is not square.")
+			} else {
+				stop("structureMatrix must be specified when structures are provided.")
+			}
+			if (dim(structureMatrix)[1] != dim(structures[[1]])[1])
+				stop("Dimensions of structureMatrix are incompatible with the structures.")
+		}
 		
-		bases <- c("A", "C", "G", "T")
+		bases <- c("A", "C", "G",
+			ifelse(type==2L, "U", "T"))
 		w <- which(m=="substitutionMatrix")
 		if (length(w) > 0) {
 			sM <- args[[w]]
+			args[w] <- NULL
 			if (is.matrix(sM)) {
 				if (any(!(bases %in% dimnames(sM)[[1]])) ||
 					any(!(bases %in% dimnames(sM)[[2]])))
 					stop("substitutionMatrix is incomplete.")
 				sM <- sM[bases, bases]
-				sM <- as.numeric(sM)
+				sM <- sM + 0 # convert to numeric matrix
 			} else {
 				stop("substitutionMatrix must be NULL or a matrix.")
 			}
@@ -188,26 +237,11 @@ AlignSeqs <- function(myXStringSet,
 			} else {
 				MM <- 0
 			}
-			sM <- matrix(MM,
+			sM <- matrix(as.numeric(MM),
 				nrow=4,
 				ncol=4,
 				dimnames=list(bases, bases))
 			diag(sM) <- PM
-		}
-		
-		if (refinements > 0) {
-			w <- which(m=="gapOpening")
-			if (length(w)==1L) {
-				GO <- args[[w]]
-			} else {
-				GO <- -6
-			}
-			w <- which(m=="gapExtension")
-			if (length(w)==1L) {
-				GE <- args[[w]]
-			} else {
-				GE <- -1
-			}
 		}
 	}
 	if (length(args)==0)
@@ -390,6 +424,9 @@ AlignSeqs <- function(myXStringSet,
 	steps <- 0
 	mergers <- character(l)
 	
+	GO <- gapOpeningMin + gapOpeningSlope*cutoffs
+	GE <- gapExtensionMin + gapExtensionSlope*cutoffs
+	
 	for (i in 1:dim(guideTree)[2]) {
 		for (u in unique(guideTree[, i])) {
 			w <- which(guideTree[, i]==u) # groups
@@ -424,7 +461,9 @@ AlignSeqs <- function(myXStringSet,
 									p.struct=structures[w[1:(j - 1)]],
 									s.struct=structures[w[j]],
 									substitutionMatrix=sM,
-									processors=processors),
+									processors=processors,
+									gapOpening=GO[i],
+									gapExtension=GE[i]),
 								args))
 					} else { # do not need to specify substitutionMatrix
 						pattern <- .Call("subsetXStringSet",
@@ -442,6 +481,8 @@ AlignSeqs <- function(myXStringSet,
 							p.weight=p.weight,
 							s.weight=s.weight,
 							processors=processors,
+							gapOpening=GO[i],
+							gapExtension=GE[i],
 							...)
 					}
 					
@@ -499,7 +540,9 @@ AlignSeqs <- function(myXStringSet,
 									p.struct=structures[w[g1]],
 									s.struct=structures[w[g2]],
 									substitutionMatrix=sM,
-									processors=processors),
+									processors=processors,
+									gapOpening=GO[i],
+									gapExtension=GE[i]),
 								args))
 					} else { # do not need to specify substitutionMatrix
 						pattern <- .Call("subsetXStringSet",
@@ -517,9 +560,12 @@ AlignSeqs <- function(myXStringSet,
 							p.weight=p.weight,
 							s.weight=s.weight,
 							processors=processors,
+							gapOpening=GO[i],
+							gapExtension=GE[i],
 							...)
 					}
-					if (cutoffs[i] <= levels[1]) {
+					if (cutoffs[i] <= levels[1] ||
+						(length(g1) + length(g2)) < levels[4]) {
 						seqs[w[c(g1, g2)]] <- temp
 					} else {
 						if (type==3L) { # AAStringSet
@@ -709,6 +755,9 @@ AlignSeqs <- function(myXStringSet,
 		steps <- 0
 		mergers2 <- character(l)
 		
+		GO <- gapOpeningMin + gapOpeningSlope*cutoffs
+		GE <- gapExtensionMin + gapExtensionSlope*cutoffs
+		
 		for (i in 1:dim(guideTree)[2]) {
 			for (u in unique(guideTree[, i])) {
 				w <- which(guideTree[, i]==u) # groups
@@ -764,7 +813,9 @@ AlignSeqs <- function(myXStringSet,
 										p.struct=structures[w[1:(j - 1)]],
 										s.struct=structures[w[j]],
 										substitutionMatrix=sM,
-										processors=processors),
+										processors=processors,
+										gapOpening=GO[i],
+										gapExtension=GE[i]),
 									args))
 						} else { # do not need to specify substitutionMatrix
 							pattern <- .Call("subsetXStringSet",
@@ -782,6 +833,8 @@ AlignSeqs <- function(myXStringSet,
 								p.weight=p.weight,
 								s.weight=s.weight,
 								processors=processors,
+								gapOpening=GO[i],
+								gapExtension=GE[i],
 								...)
 						}
 						
@@ -868,7 +921,9 @@ AlignSeqs <- function(myXStringSet,
 										p.struct=structures[w[g1]],
 										s.struct=structures[w[g2]],
 										substitutionMatrix=sM,
-										processors=processors),
+										processors=processors,
+										gapOpening=GO[i],
+										gapExtension=GE[i]),
 									args))
 						} else { # do not need to specify substitutionMatrix
 							pattern <- .Call("subsetXStringSet",
@@ -886,9 +941,12 @@ AlignSeqs <- function(myXStringSet,
 								p.weight=p.weight,
 								s.weight=s.weight,
 								processors=processors,
+								gapOpening=GO[i],
+								gapExtension=GE[i],
 								...)
 						}
-						if (cutoffs[i] <= levels[2]) {
+						if (cutoffs[i] <= levels[2] ||
+							(length(g1) + length(g2)) < levels[4]) {
 							myXStringSet[w[c(g1, g2)]] <- temp
 						} else {
 							if (type==3L) { # AAStringSet
@@ -935,36 +993,33 @@ AlignSeqs <- function(myXStringSet,
 			units='secs'),
 			digits=2))
 		
-		if (iterations > 0 && it < iterations)
+		if (iterations > 0 && it < iterations) {
 			cat("\nAlignment converged - skipping remaining",
 				ifelse(iterations - it > 1,
 					"iterations.\n",
 					"iteration.\n"))
+			if (refinements==0)
+				cat("\n")
+		}
 	}
 	
 	if (refinements > 0) {
 		if (type==3L) {
-			colScores <- function(seqs, structs, weights) {
-				scores <- .Call("colScoresAA",
-					seqs,
-					sM,
-					GO,
-					GE,
-					weights/mean(weights),
-					structs,
-					structureMatrix)
-				return(sum(scores))
-			}
+			functionCall <- "colScoresAA"
 		} else {
-			colScores <- function(seqs, weights) {
-				scores <- .Call("colScores",
-					seqs,
-					sM,
-					GO,
-					GE,
-					weights/mean(weights))
-				return(sum(scores))
-			}
+			functionCall <- "colScores"
+		}
+		GO <- gapOpeningMax/2
+		colScores <- function(seqs, structs, weights) {
+			scores <- .Call(functionCall,
+				seqs,
+				sM,
+				GO,
+				gapExtensionMax,
+				weights/mean(weights),
+				structs,
+				structureMatrix)
+			return(sum(scores))
 		}
 		
 		# define trustworthy groups
@@ -992,11 +1047,7 @@ AlignSeqs <- function(myXStringSet,
 			pBar <- txtProgressBar(style=3)
 		}
 		if (length(u) > 2) { # more than 2 groups
-			if (type==3L) {
-				score <- colScores(myXStringSet, structures, weights)
-			} else {
-				score <- colScores(myXStringSet, weights)
-			}
+			score <- colScores(myXStringSet, structures, weights)
 			for (ref in seq_len(refinements)) {
 				org_score <- score
 				count <- 0L
@@ -1037,7 +1088,9 @@ AlignSeqs <- function(myXStringSet,
 									p.struct=structures[seq_len(length(myXStringSet))[-w]],
 									s.struct=structures[w],
 									substitutionMatrix=sM,
-									processors=processors),
+									processors=processors,
+									gapOpening=gapOpeningMax,
+									gapExtension=gapExtensionMax),
 								args))
 					} else {
 						temp <- AlignProfiles(pattern=seqs1,
@@ -1045,13 +1098,15 @@ AlignSeqs <- function(myXStringSet,
 							p.weight=p.weight,
 							s.weight=s.weight,
 							processors=processors,
+							gapOpening=gapOpeningMax,
+							gapExtension=gapExtensionMax,
 							...)
 					}
 					
-					if (type==3L) {
-						temp_score <- colScores(temp, structures[c((1:length(myXStringSet))[-w], w)], c(weights[-w], weights[w]))
+					if (is.null(structures)) {
+						temp_score <- colScores(temp, structures, c(weights[-w], weights[w]))
 					} else {
-						temp_score <- colScores(temp, c(weights[-w], weights[w]))
+						temp_score <- colScores(temp, structures[c((1:length(myXStringSet))[-w], w)], c(weights[-w], weights[w]))
 					}
 					if (temp_score > score) {
 						score <- temp_score
@@ -1062,7 +1117,8 @@ AlignSeqs <- function(myXStringSet,
 							processors)
 						
 						count <- count + 1L
-						if (count %% levels[3])
+						if (count %% levels[3] ||
+							length(myXStringSet) < levels[4])
 							next # refine every nth change
 						
 						if (type==3L) { # AAStringSet
@@ -1075,7 +1131,7 @@ AlignSeqs <- function(myXStringSet,
 							temp <- FUN(myXStringSet,
 								weight=weights,
 								processors=processors)
-							temp_score <- colScores(temp, weights)
+							temp_score <- colScores(temp, structures, weights)
 						}
 						
 						if (temp_score > score) {
@@ -1110,21 +1166,23 @@ AlignSeqs <- function(myXStringSet,
 			if (refinements > 0 && ref < refinements)
 				cat("Alignment converged - skipping remaining",
 					ifelse(refinements - ref > 1,
-						"refinements.\n",
-						"refinement.\n"))
+						"refinements.\n\n",
+						"refinement.\n\n"))
 		}
 	}
 	
-	# apply a final adjustment
-	if (type==3L) { # AAStringSet
-		myXStringSet <- FUN(myXStringSet,
-			substitutionMatrix=sM,
-			weight=weights,
-			processors=processors)
-	} else { # DNAStringSet or RNAStringSet
-		myXStringSet <- FUN(myXStringSet,
-			weight=weights,
-			processors=processors)
+	if (length(myXStringSet) >= levels[4]) {
+		# apply a final adjustment
+		if (type==3L) { # AAStringSet
+			myXStringSet <- FUN(myXStringSet,
+				substitutionMatrix=sM,
+				weight=weights,
+				processors=processors)
+		} else { # DNAStringSet or RNAStringSet
+			myXStringSet <- FUN(myXStringSet,
+				weight=weights,
+				processors=processors)
+		}
 	}
 	
 	names(myXStringSet) <- ns

@@ -52,6 +52,7 @@ AlignTranslation <- function(myXStringSet,
 			is.na(readingFrame)) # reading frame is unspecified
 		if (length(w)==0)
 			next
+		
 		start <- index[i] + 1
 		end <- width(myXStringSet)[w]
 		offset <- end - start + 1
@@ -59,11 +60,18 @@ AlignTranslation <- function(myXStringSet,
 		end <- ifelse(end < start - 1,
 			start - 1,
 			end)
+		
 		AA[w] <- translate(subseq(myXStringSet[w],
 				start,
 				end),
 			genetic.code=geneticCode,
 			if.fuzzy.codon="solve")
+		
+		# mask missing positions
+		AA[w] <- xscat(ifelse(start > 1, "+", ""),
+			AA[w],
+			ifelse(end < width(myXStringSet)[w], "+", ""))
+		
 		a <- vcountPattern("*", AA[w])
 		lastResidue <- substring(AA[w],
 			width(AA)[w],
@@ -80,6 +88,13 @@ AlignTranslation <- function(myXStringSet,
 		names(AA) <- names(myXStringSet)
 		return(AA)
 	}
+	
+	# correct for shifts introduced by "+"
+	readingFrame <- ifelse(readingFrame==1,
+		1,
+		ifelse(readingFrame==2,
+			-1,
+			0))
 	
 	gaps <- vmatchPattern("-", AA)
 	starts <- list()

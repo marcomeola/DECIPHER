@@ -1,7 +1,6 @@
 Amplify <- function(...) {
-	.Deprecated("AmplifyDNA",
-		msg="'Amplify' is deprecated.\nUse 'AmplifyDNA' instead.\nSee help(\"DECIPHER-deprecated\").")
-	AmplifyDNA(...)
+	.Defunct("AmplifyDNA",
+		msg="'Amplify' is defunct.\nUse 'AmplifyDNA' instead.\nSee help(\"DECIPHER-defunct\").")
 }
 
 AmplifyDNA <- function(primers,
@@ -190,7 +189,7 @@ AmplifyDNA <- function(primers,
 			v <- as(v, "DNAStringSet")
 		}
 		
-		w <- which(length(v) > maxProductSize)
+		w <- which(width(v) > maxProductSize)
 		if (length(w) > 0)
 			v <- v[-w]
 	} else {

@@ -8,11 +8,11 @@ SEXP consensusSequence(SEXP x, SEXP threshold, SEXP ambiguity, SEXP minInformati
 
 SEXP consensusSequenceAA(SEXP x, SEXP threshold, SEXP ambiguity, SEXP minInformation, SEXP ignoreNonLetters, SEXP terminalGaps);
 
-SEXP consensusProfile(SEXP x, SEXP weight);
+SEXP consensusProfile(SEXP x, SEXP weight, SEXP structs);
 
 SEXP consensusProfileAA(SEXP x, SEXP weight, SEXP structs);
 
-SEXP colScores(SEXP x, SEXP subMatrix, SEXP go, SEXP ge, SEXP weights);
+SEXP colScores(SEXP x, SEXP subMatrix, SEXP go, SEXP ge, SEXP weights, SEXP structs, SEXP dbnMatrix);
 
 SEXP colScoresAA(SEXP x, SEXP subMatrix, SEXP go, SEXP ge, SEXP weights, SEXP structs, SEXP hecMatrix);
 
@@ -27,6 +27,8 @@ SEXP distMatrix(SEXP x, SEXP t, SEXP terminalGaps, SEXP penalizeGapGaps, SEXP pe
 SEXP gaps(SEXP x, SEXP t);
 
 SEXP firstSeqsEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, SEXP end_y);
+
+SEXP firstSeqsGapsEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, SEXP end_y, SEXP t);
 
 // ClusterNJ.c
 
@@ -78,6 +80,8 @@ SEXP boundedMatches(SEXP x, SEXP bl, SEXP bu);
 
 SEXP intMatchOnce(SEXP x, SEXP y);
 
+SEXP matchListsDual(SEXP x, SEXP y, SEXP verbose, SEXP pBar, SEXP nThreads);
+
 // ReplaceChars.c
 
 SEXP replaceChars(SEXP x, SEXP r, SEXP t);
@@ -106,7 +110,7 @@ SEXP calculateFISH(SEXP probes, SEXP targets);
 
 // AlignProfiles.c
 
-SEXP alignProfiles(SEXP p, SEXP s, SEXP subMatrix, SEXP pm, SEXP mm, SEXP go, SEXP ge, SEXP exp, SEXP power, SEXP endGapPenaltyLeft, SEXP endGapPenaltyRight, SEXP boundary, SEXP nThreads);
+SEXP alignProfiles(SEXP p, SEXP s, SEXP subMatrix, SEXP dbnMatrix, SEXP pm, SEXP mm, SEXP go, SEXP ge, SEXP exp, SEXP power, SEXP endGapPenaltyLeft, SEXP endGapPenaltyRight, SEXP boundary, SEXP nThreads);
 
 SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP hecMatrix, SEXP go, SEXP ge, SEXP exp, SEXP power, SEXP endGapPenaltyLeft, SEXP endGapPenaltyRight, SEXP boundary, SEXP nThreads);
 
@@ -122,9 +126,13 @@ SEXP enumerateGappedSequenceAA(SEXP x, SEXP wordSize, SEXP ordering);
 
 SEXP enumerateSequenceReducedAA(SEXP x, SEXP wordSize, SEXP alphabet);
 
-// GC_Content.c
+// Compositions.c
 
 SEXP gcContent(SEXP x, SEXP begins, SEXP ends);
+
+SEXP composition(SEXP x);
+
+SEXP positionWeightMatrix(SEXP x, SEXP begins, SEXP ends, SEXP width);
 
 // IntDist.c
 
@@ -169,3 +177,27 @@ SEXP any(SEXP x);
 // ConsolidateGaps.c
 
 SEXP consolidateGaps(SEXP x, SEXP type);
+
+// FindFrameshifts.c
+
+SEXP findFrameshifts(SEXP t, SEXP l, SEXP f, SEXP index, SEXP maxComp, SEXP go, SEXP ge, SEXP fs, SEXP minD, SEXP maxD, SEXP subMatrix, SEXP verbose, SEXP pBar);
+
+// Order.c
+
+SEXP radixOrder(SEXP x);
+
+// ChainSegments.c
+
+SEXP fillOverlaps(SEXP m, SEXP n);
+
+SEXP indexByContig(SEXP starts, SEXP ends, SEXP order, SEXP index, SEXP widths);
+
+SEXP chainSegments(SEXP x_s, SEXP x_e, SEXP x_i, SEXP x_f, SEXP y_s, SEXP y_e, SEXP y_i, SEXP y_f, SEXP weights, SEXP sepCost, SEXP gapCost, SEXP shiftCost, SEXP codingCost, SEXP maxSep, SEXP maxGap, SEXP ordering, SEXP minScore);
+
+SEXP extendSegments(SEXP X, SEXP W1, SEXP W2, SEXP S1, SEXP S2, SEXP O1P, SEXP O1N, SEXP O2P, SEXP O2N, SEXP S, SEXP maxDrop, SEXP INDEX1, SEXP INDEX2);
+
+SEXP maskRepeats(SEXP e, SEXP size, SEXP minL, SEXP maxL, SEXP totL);
+
+// Translate.c
+
+SEXP basicTranslate(SEXP x, SEXP code, SEXP starts);

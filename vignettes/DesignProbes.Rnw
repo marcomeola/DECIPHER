@@ -96,7 +96,7 @@ Troy, NY 12810-3590 USA
 \subsection{Startup}
 
 To get started we need to load the \Rpackage{DECIPHER} package, which automatically loads several other required packages.
-%
+
 <<startup,results=hide>>=
 library(DECIPHER)
 @

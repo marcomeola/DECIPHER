@@ -234,8 +234,8 @@ SEXP distMatrix(SEXP x, SEXP t, SEXP terminalGaps, SEXP penalizeGapGaps, SEXP pe
 	Chars_holder x_i, x_j;
 	int x_length, start, end, i, j, seqLength_i, seqLength_j, last;
 	int pGapLetters, pGapsGaps, tGaps, fM = asLogical(fullMatrix);
-	int soFar, before, v, *rPercentComplete;
-	double *rans;
+	int before, v, *rPercentComplete;
+	double *rans, soFar;
 	int nthreads = asInteger(nThreads);
 	SEXP ans, percentComplete, utilsPackage;
 	v = asLogical(verbose);
@@ -339,8 +339,8 @@ SEXP distMatrix(SEXP x, SEXP t, SEXP terminalGaps, SEXP penalizeGapGaps, SEXP pe
 			rans[i*x_length+i] = 0;
 			
 			if (v) { // print the percent completed so far
-				soFar = (i + 1)*x_length+(i + 1);
-				*rPercentComplete = floor(100*(double)soFar/((x_length - 1)*x_length+(x_length - 1)));
+				soFar = (2*last - i)*(i + 1);
+				*rPercentComplete = floor(100*soFar/(last*(last + 1)));
 				if (*rPercentComplete > before) { // when the percent has changed
 					// tell the progress bar to update in the R console
 					eval(lang4(install("setTxtProgressBar"), pBar, percentComplete, R_NilValue), utilsPackage);
@@ -430,6 +430,58 @@ SEXP firstSeqsEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, SEXP
 			if (x_i.ptr[i] != y_i.ptr[j]) {
 				*(rans) = 0; // not equal
 				break;
+			}
+		}
+	}
+	
+	UNPROTECT(1);
+	
+	return(ans);
+}
+
+SEXP firstSeqsGapsEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, SEXP end_y, SEXP t)
+{	
+	int i, j;
+	XStringSet_holder x_set;
+	XStringSet_holder y_set;
+	Chars_holder x_i, y_i;
+	int sx = asInteger(start_x);
+	int ex = asInteger(end_x);
+	int sy = asInteger(start_y);
+	int ey = asInteger(end_y);
+	
+	
+	SEXP ans;
+	PROTECT(ans = NEW_INTEGER(1));
+	int *rans;
+	rans = INTEGER(ans);
+	*(rans) = 1; // equal
+	if ((sx - ex) != (sy - ey)) { // different sequence lengths
+		*(rans) = 0; // not equal
+	} else {
+		x_set = hold_XStringSet(x);
+		y_set = hold_XStringSet(y);
+		x_i = get_elt_from_XStringSet_holder(&x_set, 0);
+		y_i = get_elt_from_XStringSet_holder(&y_set, 0);
+		if (asInteger(t)==3) { // AAStringSet
+			for (i = sx - 1, j = sy - 1;
+				 i < ex; // i <= ex - 1 covers j <= ey - 1 because equal length
+				 i++, j++) {
+				if ((!((*((char *)x_i.ptr + i)) ^ 0x2D) || !((*((char *)x_i.ptr + i)) ^ 0x2E)) ^
+					(!((*((char *)y_i.ptr + j)) ^ 0x2D) || !((*((char *)y_i.ptr + j)) ^ 0x2E))) {
+						*(rans) = 0; // not equal
+						break;
+					}
+			}
+		} else { // DNAStringSet or RNAStringSet
+			for (i = sx - 1, j = sy - 1;
+				 i < ex; // i <= ex - 1 covers j <= ey - 1 because equal length
+				 i++, j++) {
+				if (((*((char *)x_i.ptr + i)) & 0x10 || (*((char *)x_i.ptr + i)) & 0x40) ^
+					((*((char *)y_i.ptr + j)) & 0x10 || (*((char *)y_i.ptr + j)) & 0x40)) {
+					*(rans) = 0; // not equal
+					break;
+				}
 			}
 		}
 	}

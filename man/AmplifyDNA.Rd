@@ -15,7 +15,7 @@ AmplifyDNA(primers,
         ions = 0.2,
         includePrimers=TRUE,
         minEfficiency = 0.001,
-        ...)
+        \dots)
 }
 \arguments{
   \item{primers}{
@@ -51,7 +51,7 @@ Exponential amplification in PCR requires the annealing and elongation of two pr
 
 If \code{taqEfficiency} is \code{TRUE} (the default), the amplification efficiency of each primer is defined as the product of hybridization efficiency and elongation efficiency.  Amplification efficiency must be at least \code{minEfficiency} for a primer to be amplified in silico.  Overall amplification efficiency of the PCR product is then calculated as the geometric mean of the two (i.e., forward and reverse) primers' efficiencies.  Finally, amplicons are generated if the two primers are within \code{maxProductSize} nucleotides downstream of each other.
 
-Potential PCR products are returned, either with or without including the primer sequences in the amplicon.  The default (\code{includePrimers=TRUE}) is to incorporate the primer sequences as would normal occur during amplification.  The alternative is to return the complete template sequence including the target sites, which may not exactly match the primer sequences.  Note that amplicons may be duplicated when different input \code{primers} can amplify the same region of DNA.
+Potential PCR products are returned, either with or without including the primer sequences in the amplicon.  The default (\code{includePrimers=TRUE}) is to incorporate the primer sequences as would normally occur during amplification.  The alternative is to return the complete template sequence including the target sites, which may not exactly match the primer sequences.  Note that amplicons may be duplicated when different input \code{primers} can amplify the same region of DNA.
 }
 \value{
 A \code{DNAStringSet} object containing potential PCR products, sorted from highest-to-lowest amplification efficiency.  The sequences are named by their predicted amplification efficiency followed by the index of each primer in \code{myDNAStringSet}.  (See examples section below.)
@@ -68,7 +68,7 @@ The program OligoArrayAux (\url{http://mfold.rna.albany.edu/?q=DINAMelt/OligoArr
 \code{system("hybrid-min -V")}
 }
 \seealso{
-\code{\link{CalculateEfficiencyPCR}}, \code{\link{DesignPrimers}}
+\code{\link{CalculateEfficiencyPCR}}, \code{\link{DesignPrimers}}, \code{\link{DesignSignatures}}, \code{\link{MeltDNA}}
 }
 \examples{
 data(yeastSEQCHR1)

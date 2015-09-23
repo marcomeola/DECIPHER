@@ -13,7 +13,7 @@ AlignTranslation(myXStringSet,
                  readingFrame = NA,
                  asAAStringSet = FALSE,
                  geneticCode = GENETIC_CODE,
-                 ...)
+                 \dots)
 }
 \arguments{
   \item{myXStringSet}{
@@ -29,7 +29,7 @@ Direction of the input sequences, either \code{"5' to 3'"} or \code{"3' to 5'"}.
 Numeric vector giving a single reading frame for all of the sequences, or an individual reading frame for each sequence in \code{myXStringSet}.  The \code{readingFrame} can be either \code{1}, \code{2}, \code{3} to begin translating on the first, second, and third nucleotide position, or \code{NA} (the default) to guess the reading frame.  (See details section below.)
 }
   \item{asAAStringSet}{
-Logical specifying whether to return the aligned translation as an \code{AAStringSet} rather than the input type.
+Logical determining whether to return the aligned translation as an \code{AAStringSet} rather than the input type.  Incomplete starting and ending codons will be translated into the mask character ("+").
 }
   \item{geneticCode}{
 Named character vector in the same format as \code{GENETIC_CODE} (the default), which represents the standard genetic code.
@@ -50,7 +50,7 @@ An \code{XStringSet} matching the input type.
 Erik Wright \email{DECIPHER@cae.wisc.edu}
 }
 \seealso{
-\code{\link{AlignDB}}, \code{\link{AlignProfiles}}, \code{\link{AlignSeqs}}
+\code{\link{AlignDB}}, \code{\link{AlignProfiles}}, \code{\link{AlignSeqs}}, \code{\link{AlignSynteny}}, \code{\link{CorrectFrameshifts}}
 }
 \examples{
 # first three sequences translate to  MFITP*

@@ -63,13 +63,18 @@ Add2DB <- function(myData,
 		dbWriteTable(dbConn, tblName, myData, row.names=TRUE,
 			overwrite=TRUE, append=FALSE)
 		if (verbose)
-			cat("Created table", tblName, "\n")
+			cat("Created table '", tblName, "'.\n", sep="")
 	} else {
 		result <- dbListFields(dbConn, tblName)
 		colIDs <- names(myData)
 		
 		if (is.na(match("row_names", colIDs)))
 			myData$row_names=row.names(myData)
+		
+		x <- sqliteQuickColumn(dbConn, tblName, "row_names")
+		m <- match(myData$row_names, x)
+		if (any(is.na(m)))
+			stop("row.names of myData are missing from '", tblName, "'.")
 		
 		# loop through each of the columns to add
 		for (i in 1:length(colIDs)) {
@@ -120,18 +125,19 @@ Add2DB <- function(myData,
 				invisible(FALSE)
 			}
 		}
+		if (verbose) {
+			cat("Added to table ",
+				tblName,
+				":  \"",
+				paste(names(myData)[-match("row_names",
+					names(myData))],
+				collapse="\" and \""),
+				"\".\n",
+				sep="")
+		}
 	}
 	
 	if (verbose) { # print the elapsed time to update table
-		cat("Added to table ",
-			tblName,
-			":  \"",
-			paste(names(myData)[-match("row_names",
-				names(myData))],
-			collapse="\" and \""),
-			"\".",
-			sep="")
-		cat("\n")
 		time.2 <- Sys.time()
 		print(round(difftime(time.2,
 			time.1,

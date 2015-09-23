@@ -316,7 +316,109 @@ SEXP matchLists(SEXP x, SEXP verbose, SEXP pBar, SEXP nThreads)
 		
 		if (v) {
 			// print the percent completed so far
-			*rPercentComplete = floor(100*(double)((i + 1)*size_x+(i + 1))/((size_x - 1)*size_x+(size_x - 1)));
+			//*rPercentComplete = floor(100*(double)((i + 1)*size_x+(i + 1))/((size_x - 1)*size_x+(size_x - 1)));
+			*rPercentComplete = floor(100*(double)(2*size_x - 2 - i)*(i + 1)/((size_x - 1)*size_x));
+			
+			if (*rPercentComplete > before) { // when the percent has changed
+				// tell the progress bar to update in the R console
+				eval(lang4(install("setTxtProgressBar"), pBar, percentComplete, R_NilValue), utilsPackage);
+				before = *rPercentComplete;
+			}
+		} else {
+			R_CheckUserInterrupt();
+		}
+	}
+	
+	if (v) {
+		UNPROTECT(3);
+	} else {
+		UNPROTECT(1);
+	}
+	
+	return ans;
+}
+
+// matrix of d[i, j] = length x[i] %in% x[j] / max(length)
+// requires a list of ordered integers
+SEXP matchListsDual(SEXP x, SEXP y, SEXP verbose, SEXP pBar, SEXP nThreads)
+{	
+	int i, j, size_x = length(x), size_y = length(y), before, v, *rPercentComplete;
+	int o, p, start, lx, ly, *X, *Y, count;
+	SEXP ans;
+	PROTECT(ans = allocMatrix(REALSXP, size_x, size_y));
+	double *rans = REAL(ans);
+	SEXP percentComplete, utilsPackage;
+	v = asLogical(verbose);
+	int nthreads = asInteger(nThreads);
+	
+	if (v) { // initialize progress variables
+		before = 0;
+		PROTECT(percentComplete = NEW_INTEGER(1));
+		rPercentComplete = INTEGER(percentComplete);
+		// make it possible to access R functions from the utils package for the progress bar
+		PROTECT(utilsPackage = eval(lang2(install("getNamespace"), ScalarString(mkChar("utils"))), R_GlobalEnv));
+	}
+	
+	for (i = 0; i < size_x; i++) {
+		#pragma omp parallel for private(j, o, p, start, count, X, Y, lx, ly) schedule(guided) num_threads(nthreads)
+		for (j = 0; j < size_y; j++) {
+			X = INTEGER(VECTOR_ELT(x, i));
+			Y = INTEGER(VECTOR_ELT(y, j));
+			lx = length(VECTOR_ELT(x, i));
+			ly = length(VECTOR_ELT(y, j));
+			
+			if (lx > 0 && ly > 0) {
+				int first = -1;
+				int last = -1;
+				for (o = 0; o < lx; o++) {
+					if (X[o] >= Y[0]) {
+						first = o;
+						break;
+					}
+				}
+				if (first == -1) { // no overlap
+					*(rans + j*size_x + i) = NA_REAL;
+					continue;
+				}
+				
+				for (o = lx - 1; o >= 0; o--) {
+					if (X[o] <= Y[ly - 1]) {
+						last = o;
+						break;
+					}
+				}
+				if (last == -1) { // no overlap
+					*(rans + j*size_x + i) = NA_REAL;
+					continue;
+				}
+				
+				count = 0;
+				start = 0;
+				for (o = first; o <= last; o++) {
+					for (p = start; p < ly; p++) {
+						if (X[o] == Y[p]) {
+							count++;
+							start = p + 1;
+							break;
+						} else if (Y[p] > X[o]) {
+							break;
+						}
+					}
+				}
+				
+				if (lx < ly) {
+					*(rans + j*size_x + i) = (double)count/(double)ly;
+				} else {
+					*(rans + j*size_x + i) = (double)count/(double)lx;
+				}
+			} else {
+				*(rans + j*size_x + i) = NA_REAL;
+			}
+		}
+		
+		if (v) {
+			// print the percent completed so far
+			*rPercentComplete = floor(100*(double)(i + 1)/size_x);
 			
 			if (*rPercentComplete > before) { // when the percent has changed
 				// tell the progress bar to update in the R console
@@ -434,7 +536,8 @@ SEXP matchOrder(SEXP x, SEXP verbose, SEXP pBar, SEXP nThreads)
 		if (v) {
 			// print the percent completed so far
 			//*rPercentComplete = floor(100*((double)i/((double)size_x - 1)));
-			*rPercentComplete = floor(100*(double)((i + 1)*size_x+(i + 1))/((size_x - 1)*size_x+(size_x - 1)));
+			//*rPercentComplete = floor(100*(double)((i + 1)*size_x+(i + 1))/((size_x - 1)*size_x+(size_x - 1)));
+			*rPercentComplete = floor(100*(double)(2*size_x - 2 - i)*(i + 1)/((size_x - 1)*size_x));
 			
 			if (*rPercentComplete > before) { // when the percent has changed
 				// tell the progress bar to update in the R console
@@ -693,12 +796,13 @@ SEXP boundedMatches(SEXP x, SEXP bl, SEXP bu)
 }
 
 // first unmatched occurrence of x in y for ascending order integer vectors
-// same as match(x, y, incomparables=NA) without repetition in the result
+// requires NAs to be first in the ordering (treated as the most negative)
+// similar to match(x, y, incomparables=NA) without repetition in the result
 SEXP intMatchOnce(SEXP x, SEXP y)
 {	
 	int *v = INTEGER(x);
 	int *w = INTEGER(y);
-	int i, j, start = 0;
+	int i, j, k, start = 0;
 	int size_x = length(x);
 	int size_y = length(y);
 	
@@ -708,15 +812,26 @@ SEXP intMatchOnce(SEXP x, SEXP y)
 	
 	for (i = 0; i < size_x; i++) {
 		rans[i] = NA_INTEGER;
-		if (v[i] == NA_INTEGER)
-			continue;
+		if (v[i] != NA_INTEGER)
+			break;
+	}
+	
+	for (i = i; i < size_x; i++) {
+		rans[i] = NA_INTEGER;
 		for (j = start; j < size_y; j++) {
 			if (v[i] < w[j]) {
 				start = j;
 				break;
 			} else if (v[i] == w[j]) {
-				start = j + 1; // prevents repeated matching
-				rans[i] = start; // index starting from 1
+				k = j + 1;
+				if (k < size_y &&
+					w[j] == w[k]) {
+					start = k; // prevent repeated matching
+					rans[i] = start; // index starting from 1
+				} else {
+					start = j; // allow repeated matching
+					rans[i] = k; // index starting from 1
+				}
 				break;
 			}
 		}

@@ -91,6 +91,7 @@ TileSeqs <- function(dbFile,
 	for (k in 1:length(identifier)) {
 		target <- SearchDB(dbConn,
 			tblName=tblName,
+			type="DNAStringSet",
 			identifier=identifier[k],
 			verbose=FALSE,
 			...)

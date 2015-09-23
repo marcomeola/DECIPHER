@@ -206,9 +206,9 @@ SEXP clusterNJ(SEXP x, SEXP cutoff, SEXP verbose, SEXP pBar, SEXP nThreads)
 	distanceMatrix = REAL(x);
 	double *dMatrix = (double *) R_alloc(size*size, sizeof(double)); // final row & col contain cluster numbers
 	double nDiv[size];
-	double dTemp[size - 2];
-	double cumHeight[size - 2];
-	int clusterNums[size - 2];
+	double *dTemp = (double *) R_alloc(size - 1, sizeof(double));
+	double *cumHeight = (double *) R_alloc(size - 1, sizeof(double));
+	int *clusterNums = (int *) R_alloc(size - 1, sizeof(int));
 	cut = REAL(cutoff);
 	v = asLogical(verbose);
 	int nthreads = asInteger(nThreads);
@@ -216,7 +216,7 @@ SEXP clusterNJ(SEXP x, SEXP cutoff, SEXP verbose, SEXP pBar, SEXP nThreads)
 	if (v) { // initialize progress variables
 		soFar = 0;
 		before = 0;
-		total = (2*pow(length - 1,3) + 3*pow(length - 1,2) + length - 1)/6;
+		total = length*(length - 1);
 		PROTECT(percentComplete = NEW_INTEGER(1));
 		rPercentComplete = INTEGER(percentComplete);
 		// make it possible to access R functions from the utils package for the progress bar
@@ -483,7 +483,7 @@ SEXP clusterNJ(SEXP x, SEXP cutoff, SEXP verbose, SEXP pBar, SEXP nThreads)
 		
 		if (v) {
 			// print the percent completed so far
-			soFar += pow(length - 1 - k, 2);
+			soFar = (2*length - 2 - k)*(k + 1);
 			*rPercentComplete = floor(100*soFar/total);
 			
 			if (*rPercentComplete > before) { // when the percent has changed

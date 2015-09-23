@@ -1,7 +1,7 @@
 SearchDB <- function(dbFile,
 	tblName="DNA",
 	identifier="",
-	type="DNAStringSet",
+	type="XStringSet",
 	limit=-1,
 	replaceChar="-",
 	nameBy="row_names",
@@ -19,7 +19,7 @@ SearchDB <- function(dbFile,
 	if (removeGaps == -1)
 		stop("Ambiguous removeGaps method.")
 	TYPES <- c("DNAStringSet", "RNAStringSet", "AAStringSet", "BStringSet",
-		"QualityScaledDNAStringSet", "QualityScaledRNAStringSet", "QualityScaledAAStringSet", "QualityScaledBStringSet")
+		"QualityScaledDNAStringSet", "QualityScaledRNAStringSet", "QualityScaledAAStringSet", "QualityScaledBStringSet", "XStringSet", "QualityScaledXStringSet")
 	type <- pmatch(type[1], TYPES)
 	if (is.na(type))
 		stop("Invalid type.")
@@ -39,17 +39,7 @@ SearchDB <- function(dbFile,
 		stop("clause must be a character string.")
 	if (!is.logical(verbose))
 		stop("verbose must be a logical.")
-	if (type==1 || type==5) {
-		if (is.na(pmatch(replaceChar, DNA_ALPHABET)) && (replaceChar!=""))
-			stop("replaceChar must be a character in the DNA_ALPHABET or empty character.")
-	} else if (type==2 || type==6) {
-		if (is.na(pmatch(replaceChar, RNA_ALPHABET)) && (replaceChar!=""))
-			stop("replaceChar must be a character in the RNA_ALPHABET or empty character.")
-	} else if (type==3 || type==7) {
-		if (is.na(pmatch(replaceChar, AA_ALPHABET)) && (replaceChar!=""))
-			stop("replaceChar must be a character in the AA_ALPHABET or empty character.")
-	}
-	if (type > 4 && removeGaps > 1)
+	if (type > 4 && type != 9 && removeGaps > 1)
 		stop(paste('removeGaps must be "none" when type is ', TYPES[type], '.', sep=''))
 	if (is.numeric(limit)) {
 		if (floor(limit)!=limit)
@@ -87,7 +77,7 @@ SearchDB <- function(dbFile,
 			sep="")
 	} else if (nameBy=="row_names" && orderBy=="row_names") {
 		searchExpression <- paste('select row_names, sequence',
-			ifelse(type > 4, ', quality', ''),
+			ifelse(type > 4 && type != 9, ', quality', ''),
 			' from _',
 			tblName,
 			" where row_names in (select row_names from ",
@@ -101,7 +91,7 @@ SearchDB <- function(dbFile,
 			', _',
 			tblName,
 			'.sequence',
-			ifelse(type > 4,
+			ifelse(type > 4 && type != 9,
 				paste(', _',
 					tblName,
 					'.quality',
@@ -160,6 +150,52 @@ SearchDB <- function(dbFile,
 			memDecompress,
 			type="gzip",
 			asChar=TRUE))
+		
+		if (type==9 || type==10) {
+			# guess the input type of XStringSet
+			freqs <- .Call("composition",
+				searchResult$sequence,
+				PACKAGE="DECIPHER")
+			
+			if (all(freqs[1:2] < 0.6)) { # not DNA/RNA
+				if (freqs[3] > 0.9) { # AA
+					if (type==9) {
+						type <- 3
+					} else {
+						type <- 7
+					}
+				} else {
+					if (type==9) {
+						type <- 4
+					} else {
+						type <- 8
+					}
+				}
+			} else if (freqs[1] > freqs[2]) { # DNA
+				if (type==9) {
+					type <- 1
+				} else {
+					type <- 5
+				}
+			} else { # RNA
+				if (type==9) {
+					type <- 2
+				} else {
+					type <- 6
+				}
+			}
+			
+			if (type==1 || type==5) {
+				if (is.na(pmatch(replaceChar, DNA_ALPHABET)) && (replaceChar!=""))
+					stop("replaceChar must be a character in the DNA_ALPHABET or empty character.")
+			} else if (type==2 || type==6) {
+				if (is.na(pmatch(replaceChar, RNA_ALPHABET)) && (replaceChar!=""))
+					stop("replaceChar must be a character in the RNA_ALPHABET or empty character.")
+			} else if (type==3 || type==7) {
+				if (is.na(pmatch(replaceChar, AA_ALPHABET)) && (replaceChar!=""))
+					stop("replaceChar must be a character in the AA_ALPHABET or empty character.")
+			}
+		}
 		
 		if (type!=4 && type!=8) {
 			# replace characters that are not in the DNA_ALPHABET
@@ -222,12 +258,12 @@ SearchDB <- function(dbFile,
 	if (verbose) {
 		time.2 <- Sys.time()
 		if (countOnly) {
-			cat("\n\nCount = ",
+			cat("\nCount = ",
 				count,
 				" matches.\n",
 				sep="")	
 		} else {
-			cat("\n\n",
+			cat("\n",
 				TYPES[type],
 				" of length: ",
 				length(myXStringSet),

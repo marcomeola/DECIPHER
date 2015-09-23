@@ -60,8 +60,7 @@ m <- MeltDNA(dna,
              type="melt", temps=temps, ions=0.1)
 matplot(temps, m,
         type="l", xlab="Temperature (\u00B0C)", ylab="Average Theta")
-legend("topright", c("SNP", "IDH2"),
-        col=c("black", "red"), lty=1:2)
+legend("topright", names(dna), lty=seq_along(dna), col=seq_along(dna))
 
 # plot the negative derivative curve for a subsequence of the two alleles
 temps <- seq(80, 95, 0.25)
@@ -69,12 +68,11 @@ m <- MeltDNA(subseq(dna, 492, 542),
              type="derivative", temps=temps)
 matplot(temps, m,
         type="l", xlab="Temperature (\u00B0C)", ylab="-d(Theta)/dTemp")
-legend("topright", c("SNP", "IDH2"),
-        col=c("black", "red"), lty=1:2)
+legend("topright", names(dna), lty=seq_along(dna), col=seq_along(dna))
 
 # plot the positional helicity profile for the IDH2 allele
 temps <- seq(90.1, 90.5, 0.1)
-m <- MeltDNA(dna[2],
+m <- MeltDNA(dna[1],
              type="position", temps=temps, ions=0.1)
 matplot(seq_len(dim(m[[1]])[2]), t(m[[1]]),
         type="l", xlab="Nucleotide Position", ylab="Theta")

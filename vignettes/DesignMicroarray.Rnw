@@ -71,7 +71,7 @@ This document describes how to design and validate sequence-specific probes for 
 \subsection{Startup}
 
 To get started we need to load the \Rpackage{DECIPHER} package, which automatically loads several other required packages.
-%
+
 <<startup,results=hide>>=
 library(DECIPHER)
 @
@@ -118,8 +118,8 @@ At this point we need to define groups of related sequences in the database we j
 <<expr3,eval=TRUE>>=
 dna <- SearchDB(dbConn)
 dMatrix <- DistanceMatrix(dna, verbose=FALSE)
-clusters <- IdClusters(dMatrix, cutoff=.03, method="complete",
-	dbFile=dbConn, add2tbl=TRUE, verbose=FALSE)
+clusters <- IdClusters(dMatrix, cutoff=0.03, method="complete", verbose=FALSE)
+Add2DB(clusters, dbConn, verbose=FALSE)
 @
 
 Now that we have identified 100 operational taxonomic units (OTUs), we must form a set of consensus sequences that represent each OTU.

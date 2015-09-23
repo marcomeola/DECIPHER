@@ -72,7 +72,7 @@ The \Rfunction{FindChimeras} algorithm works by finding suspect sequence fragmen
 \setlength{\parindent}{0pt}
 
 To get started we need to load the \Rpackage{DECIPHER} package, which automatically loads several other required packages.
-%
+
 <<startup,results=hide>>=
 library(DECIPHER)
 @

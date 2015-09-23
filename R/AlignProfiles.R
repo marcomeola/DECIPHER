@@ -1,70 +1,3 @@
-.align <- function(t, lp, ls) {
-	end.p <- t[1]
-	end.s <- t[2]
-	start.p <- t[3]
-	start.s <- t[4]
-	count <- t[5] - 4
-	t <- t[-1:-5]
-	
-	p.inserts <- s.inserts <- p.ats <- s.ats <- integer(length(t))
-	
-	if (start.s < start.p) {
-		s.inserts[1L] <- start.p - 1L
-		s.ats[1L] <- 1L
-		p <- 0L
-		s <- 1L
-	} else if (start.p < start.s) {
-		p.inserts[1L] <- start.s - 1L
-		p.ats[1L] <- 1L
-		p <- 1L
-		s <- 0L
-	} else {
-		p <- s <- 0L
-	}
-	
-	i <- start.p
-	j <- start.s
-	
-	if (count < length(t)) {
-		k <- count + 1
-		while (k <= length(t)) {
-			l <- length(.Call("multiMatch", t, t[k], as.integer(k), PACKAGE="DECIPHER"))
-			if (t[k] == 0) {
-				i <- i + l
-				j <- j + l
-			} else if (t[k] > 0) {
-				p <- p + 1L
-				p.inserts[p] <- l
-				p.ats[p] <- i
-				j <- j + l
-			} else {
-				s <- s + 1L
-				s.inserts[s] <- l
-				s.ats[s] <- j
-				i <- i + l
-			}
-			k <- k + l
-		}
-	}
-	
-	if (ls - end.s > 0) {
-		p <- p + 1L
-		p.inserts[p] <- ls - end.s
-		p.ats[p] <- lp + 1L
-	}
-	
-	if (lp - end.p > 0) {
-		s <- s + 1L
-		s.inserts[s] <- lp - end.p
-		s.ats[s] <- ls + 1L
-	}
-	
-	length(p.inserts) <- length(p.ats) <- p
-	length(s.inserts) <- length(s.ats) <- s
-	
-	return(list(p.ats, p.inserts, s.ats, s.inserts))
-}
-
 AlignProfiles <- function(pattern,
 	subject,
 	p.weight=1,
@@ -73,13 +6,13 @@ AlignProfiles <- function(pattern,
 	s.struct=NULL,
 	perfectMatch=6,
 	misMatch=0,
-	gapOpening=-6,
+	gapOpening=-13,
 	gapExtension=-1,
 	gapPower=-1,
 	terminalGap=-5,
 	restrict=-1000,
 	anchor=0.7,
-	normPower=1.5,
+	normPower=1,
 	substitutionMatrix=NULL,
 	structureMatrix=NULL,
 	processors=NULL) {
@@ -120,8 +53,6 @@ AlignProfiles <- function(pattern,
 		if (!isTRUE(all.equal(1, mean(s.weight))))
 			stop("The mean of s.weight must be 1.")
 	}
-	if (!is.null(p.struct) && type!=3L)
-		stop("Structures can only be supplied with an AAStringSet input.")
 	if (is.null(p.struct) != is.null(s.struct))
 		stop("Both p.struct and s.struct must be specified.")
 	if (!is.null(p.struct) && length(p.struct) != length(pattern))
@@ -134,6 +65,7 @@ AlignProfiles <- function(pattern,
 		stop("misMatch must be a numeric.")
 	if (!is.numeric(gapOpening))
 		stop("gapOpening must be a numeric.")
+	gapOpening <- gapOpening/2 # split into gap opening and closing
 	if (!is.numeric(gapExtension))
 		stop("gapExtension must be a numeric.")
 	if (!is.numeric(gapPower))
@@ -151,11 +83,32 @@ AlignProfiles <- function(pattern,
 	if (restrict >= 0)
 		stop("restrict must be less than zero.")
 	if (!is.numeric(anchor) && !is.na(anchor))
-		stop("anchor must be a numeric.")
-	if (is.numeric(anchor) && anchor <= 0)
-		stop("anchor must be greater than zero.")
-	if (is.numeric(anchor) && anchor > 1)
-		stop("anchor must be less than or equal to one.")
+		stop("anchor must be numeric.")
+	if (is.matrix(anchor)) {
+		if (any(is.na(anchor)))
+			stop("The matrix anchor must not contain NA values.")
+		if (dim(anchor)[1] != 4)
+			stop("The matrix anchor must have four rows.")
+		if (is.unsorted(anchor[1:2,], strictly=TRUE))
+			stop("Anchors must be ascending order.")
+		if (is.unsorted(anchor[3:4,], strictly=TRUE))
+			stop("Anchors must be ascending order.")
+		if (dim(anchor)[2] > 0) {
+			if (anchor[1, 1] < 1)
+				stop("The first anchor is outside the range of the pattern.")
+			if (anchor[3, 1] < 1)
+				stop("The first anchor is outside the range of the subject.")
+			if (anchor[2, dim(anchor)[2]] > w.p)
+				stop("The last anchor is outside the range of the pattern.")
+			if (anchor[4, dim(anchor)[2]] > w.s)
+				stop("The last anchor is outside the range of the subject.")
+		}
+	} else {
+		if (is.numeric(anchor) && anchor <= 0)
+			stop("anchor must be greater than zero.")
+		if (is.numeric(anchor) && anchor > 1)
+			stop("anchor must be less than or equal to one.")
+	}
 	if (!all(is.numeric(normPower)))
 		stop("normPower must be a numeric.")
 	if (normPower < 0)
@@ -182,12 +135,12 @@ AlignProfiles <- function(pattern,
 			") longer than the maximum allowable length (2,147,483,647).",
 			sep=""))
 	
-	if (type==3) { # AAStringSet
+	if (type==3L) { # AAStringSet
 		AAs <- c("A", "R", "N", "D", "C", "Q", "E", "G", "H", "I",
 			"L", "K", "M", "F", "P", "S", "T", "W", "Y", "V", "*")
 		if (is.null(substitutionMatrix)) {
 			# use MIQS
-			substitutionMatrix <- matrix(c(3, -1, 0, 0, 2, 0, 0, 0, -1, -1, -1, -1, -1, -2, 0, 1, 1, -4, -2, 0, -6, -1, 6, 0, -1, -3, 2, -1, -2, 1, -2, -3, 3, -1, -3, -1, 0, -1, -4, -2, -2, -6, 0, 0, 5, 3, -2, 1, 1, 0, 1, -4, -4, 1, -2, -3, -1, 1, 0, -5, -1, -3, -6, 0, -1, 3, 6, -4, 1, 3, -1, 0, -5, -5, 0, -3, -6, 0, 0, 0, -5, -4, -3, -6, 2, -3, -2, -4, 12, -3, -3, -2, -1, 0, -2, -3, 0, -3, -3, 1, 0, -6, -1, 2, -6, 0, 2, 1, 1, -3, 4, 2, -2, 1, -2, -2, 2, 0, -2, 0, 0, 0, -5, -3, -2, -6, 0, -1, 1, 3, -3, 2, 4, -1, 0, -3, -3, 1, -2, -4, 0, 0, 0, -6, -2, -2, -6, 0, -2, 0, -1, -2, -2, -1, 8, -2, -5, -5, -2, -4, -5, -2, 0, -2, -5, -4, -4, -6, -1, 1, 1, 0, -1, 1, 0, -2, 7, -2, -2, 0, -2, 0, -2, 0, 0, 0, 2, -2, -6, -1, -2, -4, -5, 0, -2, -3, -5, -2, 5, 3, -2, 2, 1, -4, -3, -1, -1, -1, 3, -6, -1, -3, -4, -5, -2, -2, -3, -5, -2, 3, 5, -2, 3, 2, -3, -3, -2, 0, 0, 2, -6, -1, 3, 1, 0, -3, 2, 1, -2, 0, -2, -2, 4, -1, -4, 0, 0, 0, -4, -2, -2, -6, -1, -1, -2, -3, 0, 0, -2, -4, -2, 2, 3, -1, 5, 1, -3, -2, -1, -2, -1, 1, -6, -2, -3, -3, -6, -3, -2, -4, -5, 0, 1, 2, -4, 1, 7, -4, -3, -2, 4, 5, 0, -6, 0, -1, -1, 0, -3, 0, 0, -2, -2, -4, -3, 0, -3, -4, 8, 0, 0, -4, -5, -3, -6, 1, 0, 1, 0, 1, 0, 0, 0, 0, -3, -3, 0, -2, -3, 0, 3, 2, -4, -2, -1, -6, 1, -1, 0, 0, 0, 0, 0, -2, 0, -1, -2, 0, -1, -2, 0, 2, 4, -5, -2, 0, -6, -4, -4, -5, -5, -6, -5, -6, -5, 0, -1, 0, -4, -2, 4, -4, -4, -5, 15, 5, -3, -6, -2, -2, -1, -4, -1, -3, -2, -4, 2, -1, 0, -2, -1, 5, -5, -2, -2, 5, 8, -1, -6, 0, -2, -3, -3, 2, -2, -2, -4, -2, 3, 2, -2, 1, 0, -3, -1, 0, -3, -1, 4, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, 1),
+			substitutionMatrix <- matrix(c(3.2,-1.3,-0.4,-0.4,1.5,-0.2,-0.4,0.4,-1.2,-1.3,-1.4,-0.7,-1,-2.3,-0.1,0.8,0.8,-3.6,-2.4,0,-6.1,-1.3,6.2,-0.1,-1.5,-2.7,1.8,-0.7,-1.9,0.9,-2.4,-2.5,3.3,-1.1,-3.3,-1.1,-0.3,-0.9,-3.8,-1.9,-2.3,-6.1,-0.4,-0.1,5.1,2.6,-1.6,0.9,0.8,0.2,1,-3.6,-3.5,0.7,-2.3,-3.5,-1.4,0.9,0,-4.5,-1.5,-2.6,-6.1,-0.4,-1.5,2.6,5.7,-3.7,0.9,2.7,-0.5,0.3,-4.5,-4.6,0.4,-3.3,-5.8,-0.3,0.3,-0.2,-5.3,-3.9,-3.5,-6.1,1.5,-2.7,-1.6,-3.7,11.7,-2.8,-3.2,-1.7,-1.2,0.2,-2.3,-3.2,0.1,-2.8,-2.8,1,0,-6.1,-0.7,1.8,-6.1,-0.2,1.8,0.9,0.9,-2.8,3.6,2.1,-1.6,1.2,-2.2,-1.9,1.7,-0.4,-2.4,-0.4,0.4,0.1,-5.4,-2.8,-1.8,-6.1,-0.4,-0.7,0.8,2.7,-3.2,2.1,4.3,-1.3,-0.2,-3.3,-2.8,1.1,-2.3,-4.1,0,0.4,-0.2,-5.8,-2.4,-2.3,-6.1,0.4,-1.9,0.2,-0.5,-1.7,-1.6,-1.3,7.6,-1.6,-5.4,-4.8,-1.7,-3.6,-4.6,-1.6,0,-1.9,-4.8,-4.5,-3.8,-6.1,-1.2,0.9,1,0.3,-1.2,1.2,-0.2,-1.6,7.5,-2.2,-1.9,0,-2.1,0,-1.5,0,-0.2,-0.3,2.1,-2.3,-6.1,-1.3,-2.4,-3.6,-4.5,0.2,-2.2,-3.3,-5.4,-2.2,4.6,3.1,-2.3,1.7,0.7,-3.7,-2.8,-0.7,-0.7,-0.8,3.3,-6.1,-1.4,-2.5,-3.5,-4.6,-2.3,-1.9,-2.8,-4.8,-1.9,3.1,4.6,-2.4,3.2,2.1,-2.8,-2.9,-1.6,-0.2,0,2,-6.1,-0.7,3.3,0.7,0.4,-3.2,1.7,1.1,-1.7,0,-2.3,-2.4,3.6,-1.1,-3.7,-0.1,0,0,-4,-2.3,-2,-6.1,-1,-1.1,-2.3,-3.3,0.1,-0.4,-2.3,-3.6,-2.1,1.7,3.2,-1.1,5.4,1.4,-2.8,-1.8,-0.8,-2.1,-0.9,1.4,-6.1,-2.3,-3.3,-3.5,-5.8,-2.8,-2.4,-4.1,-4.6,0,0.7,2.1,-3.7,1.4,7.4,-3.7,-2.6,-2.3,4.2,5.2,-0.3,-6.1,-0.1,-1.1,-1.4,-0.3,-2.8,-0.4,0,-1.6,-1.5,-3.7,-2.8,-0.1,-2.8,-3.7,8.4,-0.1,-0.5,-3.6,-4.5,-2.5,-6.1,0.8,-0.3,0.9,0.3,1,0.4,0.4,0,0,-2.8,-2.9,0,-1.8,-2.6,-0.1,3.1,1.6,-3.5,-1.5,-1.4,-6.1,0.8,-0.9,0,-0.2,0,0.1,-0.2,-1.9,-0.2,-0.7,-1.6,0,-0.8,-2.3,-0.5,1.6,3.8,-5.3,-2.1,-0.1,-6.1,-3.6,-3.8,-4.5,-5.3,-6.1,-5.4,-5.8,-4.8,-0.3,-0.7,-0.2,-4,-2.1,4.2,-3.6,-3.5,-5.3,14.8,4.9,-3.3,-6.1,-2.4,-1.9,-1.5,-3.9,-0.7,-2.8,-2.4,-4.5,2.1,-0.8,0,-2.3,-0.9,5.2,-4.5,-1.5,-2.1,4.9,8.3,-1.2,-6.1,0,-2.3,-2.6,-3.5,1.8,-1.8,-2.3,-3.8,-2.3,3.3,2,-2,1.4,-0.3,-2.5,-1.4,-0.1,-3.3,-1.2,3.5,-6.1,-6.1,-6.1,-6.1,-6.1,-6.1,-6.1,-6.1,-6.1,-6.1,-6.1,-6.1,-6.1,-6.1,-6.1,-6.1,-6.1,-6.1,-6.1,-6.1,-6.1,1),
 				nrow=21,
 				ncol=21,
 				dimnames=list(AAs, AAs))
@@ -209,7 +162,8 @@ AlignProfiles <- function(pattern,
 	} else {
 		if (!is.null(substitutionMatrix)) {
 			if (is.matrix(substitutionMatrix)) {
-				bases <- c("A", "C", "G", "T")
+				bases <- c("A", "C", "G",
+					ifelse(type==2L, "U", "T"))
 				if (any(!(bases %in% dimnames(substitutionMatrix)[[1]])) ||
 					any(!(bases %in% dimnames(substitutionMatrix)[[2]])))
 					stop("substitutionMatrix is incomplete.")
@@ -236,7 +190,7 @@ AlignProfiles <- function(pattern,
 		} else {
 			if (is.null(structureMatrix)) {
 				# assume structures from PredictHEC
-				structureMatrix <- matrix(c(5, 2, -2, 2, 13, 0, -2, 0, 2),
+				structureMatrix <- matrix(c(5, 0, -2, 0, 9, -1, -2, -1, 2),
 					nrow=3) # order is H, E, C
 			} else {
 				# assume structures and matrix are ordered the same
@@ -249,6 +203,8 @@ AlignProfiles <- function(pattern,
 			}
 			if (dim(structureMatrix)[1] != dim(p.struct[[1]])[1])
 				stop("Dimensions of structureMatrix are incompatible with p.struct.")
+			if (dim(structureMatrix)[1] != dim(s.struct[[1]])[1])
+				stop("Dimensions of structureMatrix are incompatible with s.struct.")
 			
 			p.profile <- .Call("consensusProfileAA",
 				pattern,
@@ -262,14 +218,45 @@ AlignProfiles <- function(pattern,
 				PACKAGE="DECIPHER")
 		}
 	} else {
-		p.profile <- .Call("consensusProfile",
-			pattern,
-			p.weight,
-			PACKAGE="DECIPHER")
-		s.profile <- .Call("consensusProfile",
-			subject,
-			s.weight,
-			PACKAGE="DECIPHER")
+		if (is.null(p.struct)) {
+			p.profile <- .Call("consensusProfile",
+				pattern,
+				p.weight,
+				NULL,
+				PACKAGE="DECIPHER")
+			s.profile <- .Call("consensusProfile",
+				subject,
+				s.weight,
+				NULL,
+				PACKAGE="DECIPHER")
+		} else {
+			if (is.null(structureMatrix)) {
+				stop("structureMatrix must be specified if structures are provided.")
+			} else {
+				# assume structures and matrix are ordered the same
+				if (!is.double(structureMatrix))
+					stop("structureMatrix must be contain numerics.")
+				if (!is.matrix(structureMatrix))
+					stop("structureMatrix must be a matrix.")
+				if (dim(structureMatrix)[1] != dim(structureMatrix)[2])
+					stop("structureMatrix is not square.")
+			}
+			if (dim(structureMatrix)[1] != dim(p.struct[[1]])[1])
+				stop("Dimensions of structureMatrix are incompatible with p.struct.")
+			if (dim(structureMatrix)[1] != dim(s.struct[[1]])[1])
+				stop("Dimensions of structureMatrix are incompatible with s.struct.")
+			
+			p.profile <- .Call("consensusProfile",
+				pattern,
+				p.weight,
+				p.struct,
+				PACKAGE="DECIPHER")
+			s.profile <- .Call("consensusProfile",
+				subject,
+				s.weight,
+				s.struct,
+				PACKAGE="DECIPHER")
+		}
 	}
 	
 	f <- function(p.profile, s.profile, tGaps=terminalGap) {
@@ -320,71 +307,90 @@ AlignProfiles <- function(pattern,
 					PACKAGE="DECIPHER")
 			}
 		} else { # DNAStringSet or RNAStringSet
-			t <- .Call("alignProfiles",
-				p.profile,
-				s.profile,
-				substitutionMatrix,
-				perfectMatch,
-				misMatch,
-				gapOpening,
-				gapExtension,
-				gapPower,
-				normPower,
-				tGaps[1],
-				tGaps[2],
-				res,
-				processors,
-				PACKAGE="DECIPHER")
+			if (is.null(p.struct)) {
+				t <- .Call("alignProfiles",
+					p.profile,
+					s.profile,
+					substitutionMatrix,
+					numeric(),
+					perfectMatch,
+					misMatch,
+					gapOpening,
+					gapExtension,
+					gapPower,
+					normPower,
+					tGaps[1],
+					tGaps[2],
+					res,
+					processors,
+					PACKAGE="DECIPHER")
+			} else {
+				t <- .Call("alignProfiles",
+					p.profile,
+					s.profile,
+					substitutionMatrix,
+					structureMatrix,
+					perfectMatch,
+					misMatch,
+					gapOpening,
+					gapExtension,
+					gapPower,
+					normPower,
+					tGaps[1],
+					tGaps[2],
+					res,
+					processors,
+					PACKAGE="DECIPHER")
+			}
 		}
-		
-		lp <- dim(p.profile)[2]
-		ls <- dim(s.profile)[2]
-		
-		.align(t, lp, ls)
 	}
 	
-	if (is.na(anchor)) { # don't use anchors
+	if (is.na(anchor[1])) { # don't use anchors
 		inserts <- f(p.profile, s.profile)
 	} else { # use anchors
-		if (type==3) { # AAStringSet
-			wordSize <- 7
-		} else {
-			wordSize <- 15
+		if (is.matrix(anchor)) {
+			anchors <- anchor
+		} else { # find anchors
+			if (type==3L) { # AAStringSet
+				wordSize <- 7
+			} else {
+				wordSize <- 15
+			}
+			l <- min(length(pattern), length(subject))
+			o.p <- order(p.weight, decreasing=TRUE)
+			o.s <- order(s.weight, decreasing=TRUE)
+			if (type==3L) { # AAStringSet
+				num.p <- .Call("enumerateGappedSequenceAA",
+					pattern,
+					wordSize,
+					o.p[1:l],
+					PACKAGE="DECIPHER")
+				num.s <- .Call("enumerateGappedSequenceAA",
+					subject,
+					wordSize,
+					o.s[1:l],
+					PACKAGE="DECIPHER")
+			} else {
+				num.p <- .Call("enumerateGappedSequence",
+					pattern,
+					wordSize,
+					o.p[1:l],
+					PACKAGE="DECIPHER")
+				num.s <- .Call("enumerateGappedSequence",
+					subject,
+					wordSize,
+					o.s[1:l],
+					PACKAGE="DECIPHER")
+			}
+			
+			anchors <- .Call("matchRanges",
+				num.p,
+				num.s,
+				wordSize,
+				w.p,
+				anchor,
+				PACKAGE="DECIPHER")
 		}
-		l <- min(length(pattern), length(subject))
-		o.p <- order(p.weight, decreasing=TRUE)
-		o.s <- order(s.weight, decreasing=TRUE)
-		if (type==3) { # AAStringSet
-			num.p <- .Call("enumerateGappedSequenceAA",
-				pattern,
-				wordSize,
-				o.p[1:l],
-				PACKAGE="DECIPHER")
-			num.s <- .Call("enumerateGappedSequenceAA",
-				subject,
-				wordSize,
-				o.s[1:l],
-				PACKAGE="DECIPHER")
-		} else {
-			num.p <- .Call("enumerateGappedSequence",
-				pattern,
-				wordSize,
-				o.p[1:l],
-				PACKAGE="DECIPHER")
-			num.s <- .Call("enumerateGappedSequence",
-				subject,
-				wordSize,
-				o.s[1:l],
-				PACKAGE="DECIPHER")
-		}
-		
-		anchors <- .Call("matchRanges",
-			num.p,
-			num.s,
-			wordSize,
-			w.p,
-			anchor,
-			PACKAGE="DECIPHER")
 		
 		numAnchors <- dim(anchors)[2]
 		if (numAnchors==0) {
@@ -425,11 +431,12 @@ AlignProfiles <- function(pattern,
 			
 			n <- 1L
 			while (n <= numAnchors) { # align anchor regions
-				if (!.Call("firstSeqsEqual",
+				if (!.Call("firstSeqsGapsEqual",
 					pattern,
 					subject,
 					anchors[1, n], anchors[2, n],
 					anchors[3, n], anchors[4, n],
+					type,
 					PACKAGE="DECIPHER")) {
 					temp <- f(p.profile[, anchors[1, n]:anchors[2, n], drop=FALSE],
 						s.profile[, anchors[3, n]:anchors[4, n], drop=FALSE],

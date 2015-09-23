@@ -41,7 +41,7 @@ DesignSignatures(dbFile,
 A SQLite connection object or a character string specifying the path to the database file.
 }
   \item{tblName}{
-Character string specifying the table where the sequences are located.
+Character string specifying the table where the DNA sequences are located.
 }
   \item{identifier}{
 Optional character string used to narrow the search results to those matching a specific identifier.  Determines the target group(s) for which primers will be designed.  If "" then all identifiers are selected.
@@ -86,7 +86,7 @@ The molar concentration of divalent ([Mg]) ions in solution that will be used to
 Numeric giving the molar concentration of free nucleotides added to the solution that will be used to determine a sodium equivalent concentration.
 }
   \item{minEfficiency}{
-Numeric giving the minimum efficiency of hybridization desired for the primer set.  Note that an efficiency of 99% (0.99) will greatly lower predicted specificity of the primer set, however an efficiency of 50% (0.5) may be too low in actuality to amplify the target group due to error in melt temperature predictions.
+Numeric giving the minimum efficiency of hybridization desired for the primer set.
 }
   \item{ampEfficiency}{
 Numeric giving the minimum efficiency required for theoretical amplification of the primers.  Note that \code{ampEfficiency} must be less than or equal to \code{minEfficiency}.  Lower values of \code{ampEfficiency} will allow for more PCR products, although very low values are unrealistic experimentally.
@@ -110,7 +110,7 @@ Numeric specifying the number of forward and reverse primers to use in searching
 Numeric giving the maximum number of primers to search for simultaneously in any given step.
 }
   \item{primerDimer}{
-Numeric giving the maximum amplification efficiency of primer-dimer products.
+Numeric giving the maximum amplification efficiency of potential primer-dimer products.
 }
   \item{taqEfficiency}{
 Logical determining whether to make use of elongation efficiency to increase predictive accuracy for \emph{Taq} DNA Polymerase amplifying primers with mismatches near the 3' terminus.  Note that this should be set to FALSE if using a high-fidelity polymerase with 3' to 5' exonuclease activity.
@@ -123,14 +123,14 @@ Logical indicating whether to display progress.
 }
 }
 \details{
-Signatures are group-specific PCR products that can be differentiated by either their melt temperature profile, length, or sequence.  \code{DesignSignatures} assists in finding the optimal pair of forward and reverse primers for obtaining a distinguishable signature from each group of sequences.  Groups are delineated by their unique \code{identifier} in the database.  The algorithm works by progressively narrowing the search for optimal primers:  (1) the most frequent k-mers are found;  (2) these are used to design primers initially matching the \code{focusID} group;  (3) the most common forward and reverse primers are selected based on all of the groups, and ambiguity is added up to \code{maxPermutations};  (4) a final search is performed by find the optimal forward and reverse primer.  Pairs of primers are scored by the distance between the signatures (PCR products) generated for each group.
+Signatures are group-specific PCR products that can be differentiated by either their melt temperature profile, length, or sequence.  \code{DesignSignatures} assists in finding the optimal pair of forward and reverse primers for obtaining a distinguishable signature from each group of sequences.  Groups are delineated by their unique \code{identifier} in the database.  The algorithm works by progressively narrowing the search for optimal primers:  (1) the most frequent k-mers are found;  (2) these are used to design primers initially matching the \code{focusID} group;  (3) the most common forward and reverse primers are selected based on all of the groups, and ambiguity is added up to \code{maxPermutations};  (4) a final search is performed to find the optimal forward and reverse primer.  Pairs of primers are scored by the distance between the signatures generated for each group, which depends on the \code{type} of experiment.
 
-The arguments \code{resolution} and \code{levels} control the theoretical resolving power of the experiment.  The \code{signature} for a group is discretized or grouped into ``bins'' each with a certain magnitude of the signal.  Here \code{resolution} determines the separation between distinguishable ``bins'', and \code{levels} controls the range of values in each bin.  A high-accuracy experiment would have many bins and/or many levels.  While \code{levels} is interpreted similarly for every \code{type} of experiment, \code{resolution} is treated differently depending on \code{type}.  If \code{type} is \code{"melt"}, then \code{resolution} can be either a vector of different melt temperatures, or a single number giving the change in temperatures that can be differentiated.  A high-resolution melt (HRM) assay would typically have a resolution between 0.25 and 1 degree Celsius.  If \code{type} is \code{"length"} then resolution is either the number of bins between the \code{minProductSize} and \code{maxProductSize}, or the bin boundaries.  For example, \code{resolution} can be lower at long lengths, and higher at shorter lengths.  If \code{type} is \code{"sequence"} then \code{resolution} sets the k-mer size used in differentiating amplicons.  Oftentimes, 4 to 6-mers are used for the classification of amplicons.
+The arguments \code{resolution} and \code{levels} control the theoretical resolving power of the experiment.  The \code{signature} for a group is discretized or grouped into ``bins'' each with a certain magnitude of the signal.  Here \code{resolution} determines the separation between distinguishable ``bins'', and \code{levels} controls the range of values in each bin.  A high-accuracy experiment would have many bins and/or many levels.  While \code{levels} is interpreted similarly for every \code{type} of experiment, \code{resolution} is treated differently depending on \code{type}.  If \code{type} is \code{"melt"}, then \code{resolution} can be either a vector of different melt temperatures, or a single number giving the change in temperatures that can be differentiated.  A high-resolution melt (HRM) assay would typically have a resolution between 0.25 and 1 degree Celsius.  If \code{type} is \code{"length"} then resolution is either the number of bins between the \code{minProductSize} and \code{maxProductSize}, or the bin boundaries.  For example, \code{resolution} can be lower (wider bins) at long lengths, and higher (narrower bins) at shorter lengths.  If \code{type} is \code{"sequence"} then \code{resolution} sets the k-mer size used in differentiating amplicons.  Oftentimes, 4 to 6-mers are used for the classification of amplicons.
 
-The signatures can be diversified by using a restriction enzyme to digest the PCR products after amplification.  If \code{enzymes} are supplied then the an additional search is made to find the best enzyme to use with each pair of primers.  In this case, the output includes all of the primer pairs, as well as any \code{enzymes} that will digest the PCR products of that primer pair.  The output is re-scored to rank the top primer pair and enzyme combination.  Note that \code{enzymes} is inapplicable when \code{type} is \code{"sequence"} because restriction enzymes do not alter the sequence of the DNA.  Also, it is recommended that only the available subset of \code{RESTRICTION_ENZYMES} are used as input \code{enzymes} in order to accelerate the search for the best enzyme.
+The signatures can be diversified by using a restriction enzyme to digest the PCR products when \code{type} is \code{"melt"} or \code{"length"}.  If \code{enzymes} are supplied then the an additional search is made to find the best enzyme to use with each pair of primers.  In this case, the output includes all of the primer pairs, as well as any \code{enzymes} that will digest the PCR products of that primer pair.  The output is re-scored to rank the top primer pair and enzyme combination.  Note that \code{enzymes} is inapplicable when \code{type} is \code{"sequence"} because restriction enzymes do not alter the sequence of the DNA.  Also, it is recommended that only a subset of the available \code{RESTRICTION_ENZYMES} are used as input \code{enzymes} in order to accelerate the search for the best enzyme.
 }
 \value{
-A \code{data.frame} with the top-scoring pairs of forward and reverse primers, their score, the total number of PCR products, and the best restriction enzyme (if applicable).
+A \code{data.frame} with the top-scoring pairs of forward and reverse primers, their score, the total number of PCR products, and associated columns for the restriction enzyme (if \code{enzyme} is not \code{NULL}).
 }
 \references{
 Coming soon!
@@ -139,7 +139,7 @@ Coming soon!
 Erik Wright \email{DECIPHER@cae.wisc.edu}
 }
 \seealso{
-\code{\link{AmplifyDNA}}, \code{\link{CalculateEfficiencyPCR}}, \code{\link{DesignPrimers}}, \code{\link{DigestDNA}}, \code{\link{MeltDNA}}, \code{\link{RESTRICTION_ENZYMES}}
+\code{\link{AmplifyDNA}}, \code{\link{CalculateEfficiencyPCR}}, \code{\link{DesignPrimers}}, \code{\link{DigestDNA}}, \code{\link{Disambiguate}}, \code{\link{MeltDNA}}, \code{\link{RESTRICTION_ENZYMES}}
 }
 \examples{
 # below are suggested inputs for different types of experiments
@@ -148,21 +148,22 @@ db <- system.file("extdata", "Bacteria_175seqs.sqlite", package="DECIPHER")
 \dontrun{
 # High Resolution Melt (HRM) assay:
 primers <- DesignSignatures(db,
-           resolution=0.25, # degrees Celsius
-           minProductSize=60, # base pairs
-           maxProductSize=200)
+           resolution=seq(80, 100, 0.25), # degrees Celsius
+           minProductSize=55, # base pairs
+           maxProductSize=400)
 
 # Primers for next-generation sequencing:
 primers <- DesignSignatures(db,
            type="sequence",
            minProductSize=300, # base pairs
-           maxProductSize=600,
-           resolution=5) # 5-mers
+           maxProductSize=700,
+           resolution=5, # 5-mers
+           levels=5)
 
 # Primers for community fingerprinting:
 primers <- DesignSignatures(db,
            type="length",
-           levels=2,
+           levels=2, # presence/absence
            minProductSize=200, # base pairs
            maxProductSize=1400,
            resolution=c(seq(200, 700, 3),
@@ -174,7 +175,7 @@ data(RESTRICTION_ENZYMES)
 myEnzymes <- RESTRICTION_ENZYMES[c("EcoRI", "HinfI", "SalI")]
 primers <- DesignSignatures(db,
            type="length",
-           levels=2,
+           levels=2, # presence/absence
            minProductSize=200, # base pairs
            maxProductSize=600,
            resolution=c(seq(50, 100, 3),

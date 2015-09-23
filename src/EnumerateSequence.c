@@ -536,17 +536,24 @@ SEXP enumerateSequenceReducedAA(SEXP x, SEXP wordSize, SEXP alphabet)
 	// initialize the XStringSet
 	x_set = hold_XStringSet(x);
 	x_length = get_length_from_XStringSet_holder(&x_set);
-	wS = asInteger(wordSize); // [1 to 13]
+	wS = asInteger(wordSize); // [1 to 20]
 	
 	SEXP ret_list;
 	PROTECT(ret_list = allocVector(VECSXP, x_length));
 	
+	int m = 0; // hold max of alphabet
+	for (i = 0; i < 20; i++) {
+		if (*(alpha + i) > m)
+			m = *(alpha + i);
+	}
+	m++; // start at 1
+	
 	// fill the position weight vector
 	int pwv[wS]; // wS[0] is ignored
 	if (wS > 1)
-		pwv[1] = 5;
+		pwv[1] = m;
 	for (i = 2; i < wS; i++) {
-		pwv[i] = pwv[i - 1]*5;
+		pwv[i] = pwv[i - 1]*m;
 	}
 	
 	for (i = 0; i < x_length; i++) {

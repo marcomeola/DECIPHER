@@ -10,8 +10,8 @@ Makes small adjustments by shifting groups of gaps left and right to find their 
 AdjustAlignment(myXStringSet,
                 perfectMatch = 6,
                 misMatch = 0,
-                gapLetter = -5,
-                gapOpening = -0.5,
+                gapLetter = -3,
+                gapOpening = -0.1,
                 gapExtension = 0,
                 substitutionMatrix = NULL,
                 shiftPenalty = -0.2,
@@ -55,7 +55,7 @@ The number of processors to use, or \code{NULL} (the default) for all available 
 }
 }
 \details{
-The process of multiple sequence alignment often results in the integration of small imperfections into the final alignment.  Some of these errors are obvious by-eye, which encourages manual refinement of automatically generated alignments.  However, the manual refinement process is inherently subjective and time consuming.  \code{AdjustAlignment} refines an existing alignment in a process similar to that which might be applied manually, but in a repeatable and must faster fashion.  This function shifts all of the gaps in an alignment to the left and right to find their optimal positioning.  The optimal position is defined as the position that maximizes the alignment ``score'', which is determined by the input parameters.  The resulting alignment will be similar to the input alignment but with many imperfections eliminated.  Note that the affine gap penalties here are different than those in \code{\link{AlignProfiles}}, and have been optimized independently.
+The process of multiple sequence alignment often results in the integration of small imperfections into the final alignment.  Some of these errors are obvious by-eye, which encourages manual refinement of automatically generated alignments.  However, the manual refinement process is inherently subjective and time consuming.  \code{AdjustAlignment} refines an existing alignment in a process similar to that which might be applied manually, but in a repeatable and must faster fashion.  This function shifts all of the gaps in an alignment to the left and right to find their optimal positioning.  The optimal position is defined as the position that maximizes the alignment ``score'', which is determined by the input parameters.  The resulting alignment will be similar to the input alignment but with many imperfections eliminated.  Note that the affine gap penalties here are different from the more flexible penalties used in \code{\link{AlignProfiles}}, and have been optimized independently.
 }
 \value{
 An \code{XStringSet} of aligned sequences.

@@ -80,7 +80,7 @@ The molar concentration of divalent ([Mg]) ions in solution that will be used to
 Numeric giving the molar concentration of free nucleotides added to the solution that will be used to determine a sodium equivalent concentration.
 }
   \item{minEfficiency}{
-Numeric giving the minimum efficiency of hybridization desired for the primer set.  Note that an efficiency of 99% (0.99) will greatly lower predicted specificity of the primer set, however an efficiency of 50% (0.5) may be too low in actuality to amplify the target group due to error in melt temperature predictions.
+Numeric giving the minimum efficiency of hybridization desired for the primer set.  Note that an efficiency of 99\% (0.99) will greatly lower predicted specificity of the primer set, however an efficiency of 50\% (0.5) may be too low in actuality to amplify the target group due to error in melt temperature predictions.
 }
   \item{worstScore}{
 Numeric specifying the score cutoff to remove target sites from consideration.  For example, a \code{worstScore} of -5 will remove all primer sets scoring below -5, although this may eventually result in no primer sets meeting the design criteria.
@@ -104,7 +104,7 @@ Integer specifying the number of primers to simulate hybridization per batch tha
 Numeric specifying the maximal fraction of mismatched base pairings on a rolling basis beginning from the 3' end of the primer.
 }
   \item{primerDimer}{
-Numeric giving the maximum amplification efficiency of primer-dimer products.
+Numeric giving the maximum amplification efficiency of potential primer-dimer products.
 }
   \item{ragged5Prime}{
 Logical specifying whether the 5' end or 3' end of primer permutations targeting the same site should be varying lengths.
@@ -154,7 +154,7 @@ To install OligoArrayAux from the downloaded source folder on Unix-like platform
 \code{sudo make install}
 }
 \seealso{
-\code{\link{CalculateEfficiencyPCR}}, \code{\link{TileSeqs}}
+\code{\link{AmplifyDNA}}, \code{\link{CalculateEfficiencyPCR}}, \code{\link{DesignSignatures}}, \code{\link{TileSeqs}}
 }
 \examples{
 db <- system.file("extdata", "Bacteria_175seqs.sqlite", package="DECIPHER")

@@ -28,6 +28,7 @@ AlignDB                  Align Two Sets of Aligned Sequences In A Sequence
                          Database
 AlignProfiles            Align Two Sets of Aligned Sequences
 AlignSeqs                Align A Set of Unaligned Sequences
+AlignSynteny             Pairwise Aligns Syntenic Blocks
 AlignTranslation         Align Sequences By Their Amino Acid Translation
 AmplifyDNA               Simulate Amplification of DNA by PCR
 Array2Matrix             Create a Matrix Representation of a Microarray
@@ -39,6 +40,8 @@ CalculateEfficiencyFISH  Predict Thermodynamic Parameters of Probe/Target
                          Sequence Pairs
 CalculateEfficiencyPCR   Predict Amplification Efficiency of Primer Sequences
 ConsensusSequence        Create A Consensus Sequence
+CorrectFrameshifts       Corrects Frameshift Errors In Protein Coding
+                         Sequences
 CreateChimeras           Create Artificial Chimeras
 DB2Seqs                  Export Database Sequences to a FASTA or FASTQ File
 deltaGrules              Free Energy of Hybridization of Probe/Target
@@ -60,6 +63,7 @@ Disambiguate             Expand Ambiguities into All Permutations of a
                          DNAStringSet
 DistanceMatrix           Calculate the Distance Between Sequences
 FindChimeras             Find Chimeras In A Sequence Database
+FindSynteny              Finds Synteny In A Sequence Database
 FormGroups               Forms Groups By Rank
 HEC_MI                   Mutual Information for Protein Secondary Structure
                          Prediction
@@ -70,6 +74,7 @@ IdLengths                Determine the Number of Bases, Nonbases, and Width
                          of Each Sequence
 MaskAlignment            Masks Highly Variable Regions of An Alignment
 MeltDNA                  Simulate Melting of DNA
+MIQS                     MIQS Amino Acid Substitution Matrix
 MODELS                   Available Models of DNA Evolution
 NNLS                     Sequential Coordinate-wise Algorithm for the
                          Non-negative Least Squares Problem
@@ -78,6 +83,7 @@ RESTRICTION_ENZYMES      Common Restriction Enzyme's Cut Sites
 SearchDB                 Obtain Specific Sequences from A Database
 Seqs2DB                  Add Sequences from Text File to Database
 StaggerAlignment         Produce a Staggered Alignment
+Synteny-class            Synteny blocks and hits
 TerminalChar             Determine the Number of Terminal Characters
 TileSeqs                 Form a Set of Tiles for Each Group of Sequences
 }

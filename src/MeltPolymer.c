@@ -161,7 +161,7 @@ SEXP meltPolymer(SEXP x, SEXP temps, SEXP ions, SEXP output)
 			seq_length++;
 		}
 		
-		int *stack = Calloc(seq_length, int); // initialized to zero
+		int *stack = Calloc(l, int); // initialized to zero
 		
 		if (o==1) {
 			PROTECT(ans = allocMatrix(REALSXP, l, seq_length)); // [temp][pos]

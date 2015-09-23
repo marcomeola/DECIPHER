@@ -30,6 +30,15 @@ Amplify, AmplifyDNA, CalculateEfficiencyPCR, DesignPrimers, DesignSignatures, Di
 CalculateEfficiencyFISH, DesignProbes,
 # viewing information:
 BrowseSequences, BrowseSeqs, BrowseDB,
-# multiple alignment
-AdjustAlignment, AlignDB, AlignProfiles, AlignSeqs, AlignTranslation, MaskAlignment, PredictHEC, StaggerAlignment
+# sequence analysis:
+CorrectFrameshifts, PredictHEC,
+# multiple alignment:
+AdjustAlignment, AlignDB, AlignProfiles, AlignSeqs, AlignTranslation, MaskAlignment, StaggerAlignment,
+# synteny:
+AlignSynteny, FindSynteny
 )
+
+S3method(`[`, "Synteny")
+S3method(pairs, "Synteny")
+S3method(plot, "Synteny")
+S3method(print, "Synteny")

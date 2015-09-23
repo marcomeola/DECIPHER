@@ -227,8 +227,8 @@ BrowseDB <- function(dbFile,
 		"\n</table></div></div></html>")
 	writeLines(html, htmlFile)
 	
-	if (openURL)
-		if (interactive()) browseURL(path.expand(htmlFile))
+	if (openURL && interactive())
+		browseURL(path.expand(htmlFile))
 	
 	invisible(htmlFile)
 }

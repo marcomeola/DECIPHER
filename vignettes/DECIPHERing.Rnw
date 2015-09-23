@@ -101,12 +101,16 @@ The functions of DECIPHER can be grouped into several categories based on intend
 \begin{enumerate} \item \Rfunction{IdentifyByRank} \item \Rfunction{IdLengths} \end{enumerate}
 \item Functions related to forming consensus:
 \begin{enumerate} \item \Rfunction{ConsensusSequence} \item \Rfunction{Disambiguate} \item \Rfunction{IdConsensus} \end{enumerate}
-\item Functions for phylogenetics with a set of sequences:
-\begin{enumerate} \item \Rfunction{DistanceMatrix} \item \Rfunction{IdClusters} \item \Rfunction{MaskAlignment} \end{enumerate}
-\item Functions for visualization with a web browser:
+\item Phylogenetics and sequence comparison:
+\begin{enumerate} \item \Rfunction{DistanceMatrix} \item \Rfunction{IdClusters} \item \Rfunction{MaskAlignment} \item \Rfunction{StaggerAlignment} \end{enumerate}
+\item Visualization with a web browser:
 \begin{enumerate} \item \Rfunction{BrowseDB} \item \Rfunction{BrowseSeqs} \end{enumerate}
-\item Functions for multiple sequence alignment:
-\begin{enumerate} \item \Rfunction{AdjustAlignment} \item \Rfunction{AlignDB} \item \Rfunction{AlignProfiles} \item \Rfunction{AlignSeqs} \item \Rfunction{AlignTranslation} \item \Rfunction{PredictHEC} \item \Rfunction{StaggerAlignment} \end{enumerate}
+\item Manipulating and analyzing sequences:
+\begin{enumerate} \item \Rfunction{CorrectFrameshifts} \item \Rfunction{DigestDNA} \item \Rfunction{Disambiguate} \item \Rfunction{PredictHEC} \end{enumerate}
+\item Multiple sequence alignment:
+\begin{enumerate} \item \Rfunction{AdjustAlignment} \item \Rfunction{AlignDB} \item \Rfunction{AlignProfiles} \item \Rfunction{AlignSeqs} \item \Rfunction{AlignTranslation} \end{enumerate}
+\item Comparison of sequences that are not collinear (i.e., genomes):
+\begin{enumerate} \item \Rfunction{AlignSynteny} \item \Rfunction{FindSynteny} \item \Rclass{Synteny-class} \end{enumerate}
 \item Functions related to chimeras:
 \begin{enumerate} \item \Rfunction{CreateChimeras} \item \Rfunction{FindChimeras} \item \Rfunction{FormGroups} \end{enumerate}
 \item Functions related to DNA microarrays:
@@ -114,7 +118,7 @@ The functions of DECIPHER can be grouped into several categories based on intend
 \item Functions related to probes for fluorescence \textit{in situ} hybridization (FISH):
 \begin{enumerate} \item \Rfunction{CalculateEfficiencyFISH} \item \Rfunction{DesignProbes} \item \Rfunction{TileSeqs} \end{enumerate}
 \item Functions related to primers for polymerase chain reaction (PCR):
-\begin{enumerate} \item \Rfunction{AmplifyDNA} \item \Rfunction{CalculateEfficiencyPCR} \item \Rfunction{DesignPrimers} \item \Rfunction{DesignSignatures} \item \Rfunction{DigestDNA} \item \Rfunction{Disambiguate} \item \Rfunction{MeltDNA} \item \Rfunction{TileSeqs} \end{enumerate}
+\begin{enumerate} \item \Rfunction{AmplifyDNA} \item \Rfunction{CalculateEfficiencyPCR} \item \Rfunction{DesignPrimers} \item \Rfunction{DesignSignatures} \item \Rfunction{MeltDNA} \end{enumerate}
 \end{enumerate}
 
 %------------------------------------------------------------
@@ -236,7 +240,7 @@ R CMD INSTALL "<<path to newly built DECIPHER.zip>>"
 %------------------------------------------------------------
 
 To get started we need to load the \Rpackage{DECIPHER} package, which automatically loads several other required packages:
-%
+
 <<startup,results=hide>>=
 library(DECIPHER)
 @

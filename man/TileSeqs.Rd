@@ -16,7 +16,7 @@ TileSeqs(dbFile,
          minCoverage = 0.9,
          add2tbl = FALSE,
          verbose = TRUE,
-         ...)
+         \dots)
 }
 \arguments{
   \item{dbFile}{

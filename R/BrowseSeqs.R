@@ -1,7 +1,6 @@
 BrowseSequences <- function(...) {
-	.Deprecated("BrowseSeqs",
-		msg="'BrowseSequences' is deprecated.\nUse 'BrowseSeqs' instead.\nSee help(\"DECIPHER-deprecated\").")
-	BrowseSeqs(...)
+	.Defunct("BrowseSeqs",
+		msg="'BrowseSequences' is defunct.\nUse 'BrowseSeqs' instead.\nSee help(\"DECIPHER-defunct\").")
 }
 
 BrowseSeqs <- function(myXStringSet,
@@ -19,10 +18,131 @@ BrowseSeqs <- function(myXStringSet,
 		stop("myXStringSet must be an XStringSet.")
 	if (length(myXStringSet)==0)
 		stop("No sequence information to display.")
-	if (!is.null(patterns) && !is.character(patterns))
-		stop("patterns must be a character vector.")
-	if (any(grepl("=|\"|<|>|[1-9]|[a-z]", patterns)))
-		stop("patterns cannot contain numbers, lower case characters, or the characters (=, <, >, \").")
+	type <- switch(class(patterns),
+		`DNAStringSet` = 1L,
+		`RNAStringSet` = 2L,
+		`AAStringSet` = 3L,
+		0L)
+	if (type > 0L) {
+		patterns <- as.character(patterns)
+		if (type==1L) { # DNAStringSet
+			patterns <- gsub("M",
+				"[ACM]",
+				patterns,
+				fixed=TRUE)
+			patterns <- gsub("R",
+				"[AGR]",
+				patterns,
+				fixed=TRUE)
+			patterns <- gsub("W",
+				"[ATW]",
+				patterns,
+				fixed=TRUE)
+			patterns <- gsub("S",
+				"[CGS]",
+				patterns,
+				fixed=TRUE)
+			patterns <- gsub("Y",
+				"[CTY]",
+				patterns,
+				fixed=TRUE)
+			patterns <- gsub("K",
+				"[GTK]",
+				patterns,
+				fixed=TRUE)
+			patterns <- gsub("V",
+				"[ACGMRSV]",
+				patterns,
+				fixed=TRUE)
+			patterns <- gsub("H",
+				"[ACTMWYH]",
+				patterns,
+				fixed=TRUE)
+			patterns <- gsub("D",
+				"[AGTRWKD]",
+				patterns,
+				fixed=TRUE)
+			patterns <- gsub("B",
+				"[CGTSYKB]",
+				patterns,
+				fixed=TRUE)
+			patterns <- gsub("N",
+				"[ACGTMRWSYKVHDBN]",
+				patterns,
+				fixed=TRUE)
+		} else if (type==2L) { # RNAStringSet
+			patterns <- gsub("M",
+				"[ACM]",
+				patterns,
+				fixed=TRUE)
+			patterns <- gsub("R",
+				"[AGR]",
+				patterns,
+				fixed=TRUE)
+			patterns <- gsub("W",
+				"[AUW]",
+				patterns,
+				fixed=TRUE)
+			patterns <- gsub("S",
+				"[CGS]",
+				patterns,
+				fixed=TRUE)
+			patterns <- gsub("Y",
+				"[CUY]",
+				patterns,
+				fixed=TRUE)
+			patterns <- gsub("K",
+				"[GUK]",
+				patterns,
+				fixed=TRUE)
+			patterns <- gsub("V",
+				"[ACGMRSV]",
+				patterns,
+				fixed=TRUE)
+			patterns <- gsub("H",
+				"[ACUMWYH]",
+				patterns,
+				fixed=TRUE)
+			patterns <- gsub("D",
+				"[AGURWKD]",
+				patterns,
+				fixed=TRUE)
+			patterns <- gsub("B",
+				"[CGUSYKB]",
+				patterns,
+				fixed=TRUE)
+			patterns <- gsub("N",
+				"[ACGUMRWSYKVHDBN]",
+				patterns,
+				fixed=TRUE)
+		} else { # AAStringSet
+			patterns <- gsub("B",
+				"[NDB]",
+				patterns,
+				fixed=TRUE)
+			patterns <- gsub("Z",
+				"[QEZ]",
+				patterns,
+				fixed=TRUE)
+			patterns <- gsub("J",
+				"[ILJ]",
+				patterns,
+				fixed=TRUE)
+			patterns <- gsub("X",
+				"[ARNDCQEGHILKMFPSTWYVUOBJZX]",
+				patterns,
+				fixed=TRUE)
+			patterns <- gsub("*",
+				"\\*",
+				patterns,
+				fixed=TRUE)
+		}
+	} else {
+		if (!is.null(patterns) && !is.character(patterns))
+			stop("patterns must be a character vector.")
+		if (any(grepl("=|\"|<|>|[1-9]|[a-z]", patterns)))
+			stop("patterns cannot contain numbers, lower case characters, or the characters (=, <, >, \").")
+	}
 	if (any(patterns==""))
 		stop("No patterns can be empty.")
 	w <- which(patterns %in% c("?", "*", "+", "."))
@@ -230,8 +350,8 @@ BrowseSeqs <- function(myXStringSet,
 	
 	writeLines(html, htmlfile)
 	
-	if (openURL)
-		if (interactive()) browseURL(path.expand(htmlFile))
+	if (openURL && interactive())
+		browseURL(path.expand(htmlFile))
 	
 	invisible(htmlFile)
 }

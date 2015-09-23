@@ -1099,8 +1099,6 @@ IdClusters <- function(myDistMatrix=NULL,
 	asDendrogram=FALSE,
 	myXStringSet=NULL,
 	model=MODELS,
-	add2tbl=FALSE,
-	dbFile=NULL,
 	processors=NULL,
 	verbose=TRUE) {
 	
@@ -1168,12 +1166,6 @@ IdClusters <- function(myDistMatrix=NULL,
 			}
 		}
 	}
-	if (!is.logical(add2tbl) && !is.character(add2tbl))
-		stop("add2tbl must be a logical or table name.")
-	if (is.character(add2tbl) || add2tbl)
-		if (!is.character(dbFile) &&
-			!inherits(dbFile,"SQLiteConnection"))
-				stop("dbFile must be a character string or connection if add2tbl.")
 	if (!is.logical(verbose))
 		stop("verbose must be a logical.")
 	if (!is.null(processors) && !is.numeric(processors))
@@ -1836,29 +1828,11 @@ IdClusters <- function(myDistMatrix=NULL,
 				nodePar = list(lab.cex=fontSize, pch = NA))
 	}
 	
-	if (is.character(add2tbl) || add2tbl)
-		Add2DB(myData=myClusters,
-			dbFile=dbFile,
-			tblName=ifelse(is.character(add2tbl),add2tbl,"DNA"),
-			verbose=FALSE)
-	
 	if (verbose) {
 		if (method != 3) { # already closed pBar
 			setTxtProgressBar(pBar, 100)
 			close(pBar)
 		}
-		
-		if (is.character(add2tbl) || add2tbl)
-			cat("\nAdded to ",
-				ifelse(is.character(add2tbl),add2tbl,"DNA"),
-				":  \"",
-				ifelse(asDendrogram,
-					"cluster",
-					paste(names(myClusters),
-						sep="",
-						collapse="\", \"")),
-				"\".",
-				sep="")
 		
 		time.2 <- Sys.time()
 		cat("\n")

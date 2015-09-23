@@ -380,6 +380,82 @@ static void alphabetFrequencyAA(const Chars_holder *P, double *bits, int seqLeng
 	}
 }
 
+static void runsAA(const Chars_holder *P, double *runs, int seqLength, int start, int end, double weight)
+{
+	int j, temp, length, lastPos, s = -1, value = -1, lastGap = start - 1;
+	const char *p;
+	
+	for (j = start, p = (P->ptr + start);
+		 j < (P->length - end);
+		 j++, p++)
+	{
+		// tally the bases into the encoded array
+		switch (*p) {
+			case 65: // A
+			case 82: // R
+			case 78: // N
+			case 68: // D
+			case 67: // C
+			case 81: // Q
+			case 69: // E
+			case 71: // G
+			case 72: // H
+			case 73: // I
+			case 76: // L
+			case 75: // K
+			case 77: // M
+			case 70: // F
+			case 80: // P
+			case 83: // S
+			case 84: // T
+			case 87: // W
+			case 89: // Y
+			case 86: // V
+			case 85: // U
+			case 79: // O
+				temp = (int)(*p);
+				break;
+			case 66: // B = N or D
+			case 90: // Z = Q or E
+			case 74: // J = I or L
+			case 88: // X = any letter
+			case 42: // * (stop)
+				value = -1;
+				s = -1;
+				continue;
+				break;
+			case 45: // -
+			case 43: // +
+			case 46: // . treated as -
+				lastGap = j;
+				continue;
+				break;
+			default:
+				error("not AA!");
+				break;
+		}
+		
+		if (temp==value) { // run
+			if (s==-1) { // run of length 2
+				s = lastPos;
+				length = 2;
+				if (lastGap < (s - 2)) // ensure continuity before the run
+					*(runs + s) += weight;
+			} else if (length==2) { // run of length 3
+				length = 3;
+				if (lastGap < (s - 2)) { // ensure continuity before the run
+					*(runs + s) -= weight;
+					*(runs + seqLength + s) += weight;
+				}
+			} // nothing additional needed for longer runs
+		} else { // not a run
+			value = temp;
+			s = -1;
+			lastPos = j;
+		}
+	}
+}
+
 static void adjustFrequency(const char p, double *bits, int seqLength, int degeneracy, int ignore, int j, double weight)
 {
 	if (degeneracy==1) { // include degeneracy codes
@@ -1452,13 +1528,13 @@ SEXP consensusSequenceAA(SEXP x, SEXP threshold, SEXP ambiguity, SEXP minInforma
 	return consensusSeq;
 }
 
-//ans_start <- .Call("consensusProfile", myDNAStringSet, weight, PACKAGE="DECIPHER")
-SEXP consensusProfile(SEXP x, SEXP weight)
+//ans_start <- .Call("consensusProfile", myDNAStringSet, weight, NULL, PACKAGE="DECIPHER")
+SEXP consensusProfile(SEXP x, SEXP weight, SEXP structs)
 {
 	XStringSet_holder x_set;
 	Chars_holder x_i;
-	int x_length, i, j, seqLength;
-	SEXP ans;//, subM, ret_list
+	int x_length, i, j, k, seqLength;
+	SEXP ans, elmt, dims;//, subM, ret_list
 	double *rans, *w = REAL(weight), sum, tot = 0;//, *m
 	
 	// initialize the XStringSet
@@ -1473,6 +1549,22 @@ SEXP consensusProfile(SEXP x, SEXP weight)
 		if (x_i.length > seqLength) {
 			seqLength = x_i.length;
 		}
+	}
+	
+	// initialize an array of DBN counts
+	double *DBN, *s;
+	int do_DBN, n, l, d, size = 8;
+	if (length(structs)==x_length) {
+		do_DBN = 1;
+		elmt = VECTOR_ELT(structs, 0);
+		PROTECT(dims = GET_DIM(elmt));
+		d = INTEGER(dims)[0];
+		UNPROTECT(1);
+		DBN = Calloc(d*seqLength, double);
+		size += d;
+	} else {
+		do_DBN = 0;
+		d = 0;
 	}
 	
 	/*
@@ -1535,6 +1627,21 @@ SEXP consensusProfile(SEXP x, SEXP weight)
 				gaps[2*j + 1] += w[i]; // gap closing
 			}
 		}
+		
+		if (do_DBN) {
+			elmt = VECTOR_ELT(structs, i);
+			s = REAL(elmt);
+			l = length(elmt);
+			n = 0;
+			for (j = gapLengths[i*2]; j < seqLength - gapLengths[i*2 + 1]; j++) {
+				if (x_i.ptr[j] != 16 && x_i.ptr[j] != 32 && x_i.ptr[j] != 64) {
+					if (n + d > l)
+						error("Structure does not match the sequence.");
+					for (k = 0; k < d; k++)
+						DBN[j + k*seqLength] += s[n++]*w[i];
+				}
+			}
+		}
 	}
 	
 	/*
@@ -1564,31 +1671,37 @@ SEXP consensusProfile(SEXP x, SEXP weight)
 	}
 	*/
 	
-	PROTECT(ans = allocMatrix(REALSXP, 8, seqLength));
+	PROTECT(ans = allocMatrix(REALSXP, size, seqLength));
 	rans = REAL(ans);
 	
 	for (i = 0; i < seqLength; i++) {
 		tot += totW[i];
 		if (tot==0) {
-			for (j = 0; j < 8; j++)
-				*(rans + i*8 + j) = 0;
+			for (j = 0; j < size; j++)
+				*(rans + i*size + j) = 0;
 		} else {
-			*(rans + i*8 + 0) = bases[i]/tot;
-			*(rans + i*8 + 1) = bases[1*seqLength + i]/tot;
-			*(rans + i*8 + 2) = bases[2*seqLength + i]/tot;
-			*(rans + i*8 + 3) = bases[3*seqLength + i]/tot;
-			*(rans + i*8 + 4) = bases[4*seqLength + i]/tot;
-			*(rans + i*8 + 5) = gaps[i*2]/tot;
-			*(rans + i*8 + 6) = gaps[i*2 + 1]/tot;
-			sum = *(rans + i*8) + *(rans + i*8 + 1) + *(rans + i*8 + 2) + *(rans + i*8 + 3) + *(rans + i*8 + 4);
+			*(rans + i*size + 0) = bases[i]/tot;
+			*(rans + i*size + 1) = bases[1*seqLength + i]/tot;
+			*(rans + i*size + 2) = bases[2*seqLength + i]/tot;
+			*(rans + i*size + 3) = bases[3*seqLength + i]/tot;
+			*(rans + i*size + 4) = bases[4*seqLength + i]/tot;
+			*(rans + i*size + 5) = gaps[i*2]/tot;
+			*(rans + i*size + 6) = gaps[i*2 + 1]/tot;
+			sum = *(rans + i*size) + *(rans + i*size + 1) + *(rans + i*size + 2) + *(rans + i*size + 3) + *(rans + i*size + 4);
 			if (sum > 0) { // normalize the profile
-				*(rans + i*8) /= sum;
-				*(rans + i*8 + 1) /= sum;
-				*(rans + i*8 + 2) /= sum;
-				*(rans + i*8 + 3) /= sum;
-				*(rans + i*8 + 4) /= sum;
+				*(rans + i*size) /= sum;
+				*(rans + i*size + 1) /= sum;
+				*(rans + i*size + 2) /= sum;
+				*(rans + i*size + 3) /= sum;
+				*(rans + i*size + 4) /= sum;
 			}
-			*(rans + i*8 + 7) = tot/x_length;
+			*(rans + i*size + 7) = tot/x_length;
+		}
+		
+		if (do_DBN) {
+			for (j = 0; j < d; j++) {
+				*(rans + i*size + j + 8) = DBN[i + j*seqLength]/tot;
+			}
 		}
 	}
 	
@@ -1596,6 +1709,8 @@ SEXP consensusProfile(SEXP x, SEXP weight)
 	Free(gaps);
 	Free(totW);
 	Free(gapLengths);
+	if (do_DBN)
+		Free(DBN);
 	
 	//PROTECT(ret_list = allocVector(VECSXP, 2));
 	//SET_VECTOR_ELT(ret_list, 0, ans);
@@ -1631,7 +1746,7 @@ SEXP consensusProfileAA(SEXP x, SEXP weight, SEXP structs)
 	
 	// initialize an array of HEC counts
 	double *HEC, *s;
-	int do_HEC, n, l, d, size = 27;
+	int do_HEC, n, l, d, size = 29;
 	if (length(structs)==x_length) {
 		do_HEC = 1;
 		elmt = VECTOR_ELT(structs, 0);
@@ -1678,6 +1793,8 @@ SEXP consensusProfileAA(SEXP x, SEXP weight, SEXP structs)
 	double *totW = Calloc(seqLength + 1, double); // initialized to zero
 	// initialize an array of terminal gap lengths
 	int *gapLengths = Calloc(x_length*2, int); // initialized to zero
+	// initialize an array of run starts (length 2, > 2)
+	double *runs = Calloc(2*seqLength, double); // initialized to zero
 	
 	// loop through each sequence in the AAStringSet
 	for (i = 0; i < x_length; i++) {
@@ -1693,6 +1810,7 @@ SEXP consensusProfileAA(SEXP x, SEXP weight, SEXP structs)
 			continue;
 		gapLengths[i*2 + 1] = endTerminalGapsAA(&x_i);
 		alphabetFrequencyAA(&x_i, bases, seqLength, 1, 0, gapLengths[i*2], gapLengths[i*2 + 1], w[i]);
+		runsAA(&x_i, runs, seqLength, gapLengths[i*2], gapLengths[i*2 + 1], w[i]);
 		
 		totW[gapLengths[i*2]] += w[i];
 		totW[seqLength - gapLengths[i*2 + 1]] -= w[i];
@@ -1748,9 +1866,12 @@ SEXP consensusProfileAA(SEXP x, SEXP weight, SEXP structs)
 			*(rans + i*size + 25) = gaps[i*2 + 1]/tot;
 			*(rans + i*size + 26) = tot/x_length;
 			
+			*(rans + i*size + 27) = runs[i]/tot; // run of length 2
+			*(rans + i*size + 28) = runs[seqLength + i]/tot; // run of length > 2
+			
 			if (do_HEC) {
 				for (j = 0; j < d; j++) {
-					*(rans + i*size + j + 27) = HEC[i + j*seqLength]/tot;
+					*(rans + i*size + j + 29) = HEC[i + j*seqLength]/tot;
 				}
 			}
 		}
@@ -1760,6 +1881,7 @@ SEXP consensusProfileAA(SEXP x, SEXP weight, SEXP structs)
 	Free(gaps);
 	Free(totW);
 	Free(gapLengths);
+	Free(runs);
 	if (do_HEC)
 		Free(HEC);
 	
@@ -1770,7 +1892,7 @@ SEXP consensusProfileAA(SEXP x, SEXP weight, SEXP structs)
 
 // returns the sum of substitution scores
 // for each alignment column [start-end]
-SEXP colScores(SEXP x, SEXP subMatrix, SEXP go, SEXP ge, SEXP weights)
+SEXP colScores(SEXP x, SEXP subMatrix, SEXP go, SEXP ge, SEXP weights, SEXP structs, SEXP dbnMatrix)
 {
 	XStringSet_holder x_set;
 	Chars_holder x_i;
@@ -1787,10 +1909,27 @@ SEXP colScores(SEXP x, SEXP subMatrix, SEXP go, SEXP ge, SEXP weights)
 	x_i = get_elt_from_XStringSet_holder(&x_set, 0);
 	seqLength = x_i.length;
 	
+	// initialize an array of DBN counts
+	SEXP elmt, dims;
+	double *DBN, *s;
+	int do_DBN, n, l, d;
+	double *dbnM = REAL(dbnMatrix);
+	if (length(structs)==x_length) {
+		do_DBN = 1;
+		elmt = VECTOR_ELT(structs, 0);
+		PROTECT(dims = GET_DIM(elmt));
+		d = INTEGER(dims)[0];
+		UNPROTECT(1);
+	} else {
+		do_DBN = 0;
+	}
+	
 	// initialize an array of encoded base counts
 	double *bases = Calloc(7*seqLength, double); // initialized to zero
 	// initialize an array of terminal gap lengths
 	int *gapLengths = Calloc(x_length*2, int); // initialized to zero
+	if (do_DBN) // initialize an array of structure counts
+		DBN = Calloc(d*seqLength, double); // initialized to zero
 	
 	for (i = 0; i < x_length; i++) {
 		x_i = get_elt_from_XStringSet_holder(&x_set, i);
@@ -1801,6 +1940,21 @@ SEXP colScores(SEXP x, SEXP subMatrix, SEXP go, SEXP ge, SEXP weights)
 			continue;
 		gapLengths[i*2 + 1] = endTerminalGaps(&x_i);
 		alphabetFrequency(&x_i, bases, seqLength, 1, 0, gapLengths[i*2], gapLengths[i*2 + 1], w[i]);
+		
+		if (do_DBN) {
+			elmt = VECTOR_ELT(structs, i);
+			s = REAL(elmt);
+			l = length(elmt);
+			n = 0;
+			for (j = gapLengths[i*2]; j < seqLength - gapLengths[i*2 + 1]; j++) {
+				if (x_i.ptr[j] != 16 && x_i.ptr[j] != 32 && x_i.ptr[j] != 64) {
+					if (n + d > l)
+						error("Structure does not match the sequence.");
+					for (k = 0; k < d; k++)
+						DBN[j + k*seqLength] += s[n++]*w[i];
+				}
+			}
+		}
 	}
 	
 	SEXP ans;
@@ -1824,6 +1978,18 @@ SEXP colScores(SEXP x, SEXP subMatrix, SEXP go, SEXP ge, SEXP weights)
 			}
 		}
 		
+		if (do_DBN) {
+			for (i = 0; i < d; i++) {
+				for (j = i; j < d; j++) {
+					weight = (i==j) ? 0.5 : 1;
+					weight *= (DBN[j*seqLength + k] - ((i==j) ? 1 : 0));
+					weight *= DBN[i*seqLength + k];
+					if (weight > 0)
+						*(rans + k) += *(dbnM + i*d + j)*weight;
+				}
+			}
+		}
+		
 		curr = bases[4*seqLength + k]; // number gapped
 		if (curr > prev) {
 			*(rans + k) += GO*((curr - prev)*total); // gap opening
@@ -1841,6 +2007,8 @@ SEXP colScores(SEXP x, SEXP subMatrix, SEXP go, SEXP ge, SEXP weights)
 	
 	Free(bases);
 	Free(gapLengths);
+	if (do_DBN)
+		Free(DBN);
 	
 	UNPROTECT(1);
 	

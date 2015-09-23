@@ -70,7 +70,7 @@ The program OligoArrayAux (\url{http://mfold.rna.albany.edu/?q=DINAMelt/OligoArr
 \code{system("hybrid-min -V")}
 }
 \seealso{
-\code{\link{AmplifyDNA}}, \code{\link{DesignPrimers}}
+\code{\link{AmplifyDNA}}, \code{\link{DesignPrimers}}, \code{\link{DesignSignatures}}
 }
 \examples{
 primers <- c("AAAAACGGGGAGCGGGGGG", "AAAAACTCAACCCGAGGAGCGCGT")

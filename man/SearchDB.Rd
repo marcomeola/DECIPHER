@@ -10,7 +10,7 @@ Returns the set of sequences meeting the search criteria.
 SearchDB(dbFile,
          tblName = "DNA",
          identifier = "",
-         type = "DNAStringSet",
+         type = "XStringSet",
          limit = -1,
          replaceChar = "-",
          nameBy = "row_names",
@@ -31,7 +31,7 @@ Character string specifying the table where the sequences are located.
 Optional character string used to narrow the search results to those matching a specific identifier.  If "" (the default) then all identifiers are selected.
 }
   \item{type}{
-The type of \code{XStringSet} (sequences) to return.  This should be (an unambiguous abbreviation of) one of \code{"DNAStringSet"}, \code{"RNAStringSet"}, \code{"AAStringSet"}, \code{"BStringSet"}, \code{"QualityScaledDNAStringSet"}, \code{"QualityScaledRNAStringSet"}, \code{"QualityScaledAAStringSet"}, or \code{"QualityScaledBStringSet"}.
+The type of \code{XStringSet} (sequences) to return.  This should be (an unambiguous abbreviation of) one of \code{"XStringSet"}, \code{"DNAStringSet"}, \code{"RNAStringSet"}, \code{"AAStringSet"}, \code{"BStringSet"}, \code{"QualityScaledXStringSet"}, \code{"QualityScaledDNAStringSet"}, \code{"QualityScaledRNAStringSet"}, \code{"QualityScaledAAStringSet"}, or \code{"QualityScaledBStringSet"}.  If \code{type} is \code{"XStringSet"} or \code{"QualityScaledXStringSet"} then an attempt is made to guess the type of sequences based on their composition.
 }
   \item{limit}{
 Number of results to display.  The default (\code{-1}) does not limit the number of results.

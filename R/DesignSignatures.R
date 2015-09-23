@@ -149,6 +149,7 @@ DesignSignatures <- function(dbFile,
 		stop("maxLength must be a numeric.")
 	if (floor(maxLength)!=maxLength)
 		stop("maxLength must be a whole number.")
+	maxLength <- as.integer(maxLength)
 	if (minLength > maxLength)
 		stop("minLength must be less or equal to maxLength.")
 	if (minLength < 8)
@@ -275,8 +276,7 @@ DesignSignatures <- function(dbFile,
 			stop("resolution must be monotonically increasing.")
 		if (type==1L) { # type is "melt"
 			maxTemp <- resolution[length(resolution)]
-			if (resolution[1] > annealingTemp ||
-				maxTemp < annealingTemp)
+			if (maxTemp < annealingTemp)
 				stop("The maximum resolution must surpass annealingTemp.")
 		} else { # type is "length"
 			if (resolution[1] > minProductSize ||
@@ -370,6 +370,7 @@ DesignSignatures <- function(dbFile,
 	for (i in seq_along(identifier)) {
 		dna <- SearchDB(dbConn,
 			tblName=tblName,
+			type="DNAStringSet",
 			identifier=identifier[i],
 			removeGaps="all",
 			verbose=FALSE)
@@ -467,6 +468,7 @@ DesignSignatures <- function(dbFile,
 		dna <- c(dna,
 			SearchDB(dbConn,
 				tblName=tblName,
+				type="DNAStringSet",
 				identifier=identifier[focusID[i]],
 				removeGaps="all",
 				verbose=FALSE))
@@ -655,6 +657,9 @@ DesignSignatures <- function(dbFile,
 		o <- order(as.integer(names(r.primers)), decreasing=TRUE)
 		r.primers <- r.primers[o[1:maxDictionary]]
 	}
+	# zero-out primer hits
+	names(f.primers) <- rep("0", length(f.primers))
+	names(r.primers) <- rep("0", length(r.primers))
 	
 	# count the number of hits in each group
 	if (verbose) {
@@ -693,19 +698,26 @@ DesignSignatures <- function(dbFile,
 				5,
 				maxLength))
 		for (j in seq_along(f.primers)) {
-			f.cm[j,,] <- consensusMatrix(f.primers[j],
-				width=maxLength,
-				baseOnly=TRUE)
+			f.cm[j,,] <- .Call("positionWeightMatrix",
+				f.primers[[j]],
+				1L,
+				f.w[j],
+				maxLength,
+				PACKAGE="DECIPHER")
 		}
 		for (j in seq_along(r.primers)) {
-			r.cm[j,,] <- consensusMatrix(r.primers[j],
-				width=maxLength,
-				baseOnly=TRUE)
+			r.cm[j,,] <- .Call("positionWeightMatrix",
+				r.primers[[j]],
+				1L,
+				r.w[j],
+				maxLength,
+				PACKAGE="DECIPHER")
 		}
 	}
 	for (i in seq_along(identifier)) {
 		dna <- SearchDB(dbConn,
 			tblName=tblName,
+			type="DNAStringSet",
 			identifier=identifier[i],
 			removeGaps="all",
 			verbose=FALSE)
@@ -736,12 +748,12 @@ DesignSignatures <- function(dbFile,
 			}
 			
 			for (j in which(hits.f > 0)) {
-				f.hits <- extractAt(dna,
-					at=IRanges(start=starts[[j]],
-						width=f.w[j]))
-				f.a[j,,] <- f.a[j,,] + consensusMatrix(f.hits,
-					width=maxLength,
-					baseOnly=TRUE)/(hits.f[j] + p.f[j])
+				f.a[j,,] <- f.a[j,,] + .Call("positionWeightMatrix",
+					dna,
+					starts[[j]],
+					starts[[j]] + f.w[j] - 1L,
+					maxLength,
+					PACKAGE="DECIPHER")/(hits.f[j] + p.f[j])
 			}
 		}
 		
@@ -763,12 +775,12 @@ DesignSignatures <- function(dbFile,
 			}
 			
 			for (j in which(hits.r > 0)) {
-				r.hits <- extractAt(dna,
-					at=IRanges(start=starts[[j]],
-						width=r.w[j]))
-				r.a[j,,] <- r.a[j,,] + consensusMatrix(r.hits,
-					width=maxLength,
-					baseOnly=TRUE)/(hits.r[j] + p.r[j])
+				r.a[j,,] <- r.a[j,,] + .Call("positionWeightMatrix",
+					dna,
+					starts[[j]],
+					starts[[j]] + r.w[j] - 1L,
+					maxLength,
+					PACKAGE="DECIPHER")/(hits.r[j] + p.r[j])
 			}
 		}
 		
@@ -1030,16 +1042,31 @@ DesignSignatures <- function(dbFile,
 	}
 	binMat <- matrix(seq_len(maxBins*ints),
 		nrow=maxBins)
-	.bin <- function(x) {
-		l <- .bincode(x,
-			breaks=s,
-			include.lowest=TRUE)
-		t <- tabulate(l, nbins=maxBins*ints)
-		b <- round(t*(levels - 1)/max(t))
-		l <- levels^(0:(maxBins - 1))
-		binMat[] <- b[binMat]
-		y <- colSums(binMat*l)
-		return(as.integer(y))
+	levs <- levels^(0:(maxBins - 1))
+	if (type==1L) { # melt
+		# use `round` to approximate levels
+		.bin <- function(x) {
+			l <- .bincode(x,
+				breaks=s,
+				include.lowest=TRUE)
+			t <- tabulate(l, nbins=maxBins*ints)
+			b <- round(t*(levels - 1)/max(t))
+			binMat[] <- b[binMat]
+			y <- colSums(binMat*levs)
+			return(as.integer(y))
+		}
+	} else { # type is 'length' or 'sequence'
+		# use `ceiling` to prevent zeroing of counts
+		.bin <- function(x) {
+			l <- .bincode(x,
+				breaks=s,
+				include.lowest=TRUE)
+			t <- tabulate(l, nbins=maxBins*ints)
+			b <- ceiling(t*(levels - 1)/max(t))
+			binMat[] <- b[binMat]
+			y <- colSums(binMat*levs)
+			return(as.integer(y))
+		}
 	}
 	.relist <- function(flesh, skeleton) {
 		ind <- 1L
@@ -1062,6 +1089,7 @@ DesignSignatures <- function(dbFile,
 	for (i in seq_along(identifier)) {
 		dna <- SearchDB(dbConn,
 			tblName=tblName,
+			type="DNAStringSet",
 			identifier=identifier[i],
 			removeGaps="all",
 			verbose=FALSE)
@@ -1079,11 +1107,11 @@ DesignSignatures <- function(dbFile,
 		
 		m.f <- matchPDict(f.pdict,
 			dna,
-			max.mismatch=3 + ceiling(log(maxPermutations, 2)),
+			max.mismatch=3,
 			fixed="subject")
 		m.f2 <- matchPDict(f.pdict2,
 			dna,
-			max.mismatch=3 + ceiling(log(maxPermutations, 2)),
+			max.mismatch=3,
 			fixed="subject")
 		starts <- startIndex(m.f)
 		starts2 <- startIndex(m.f2)
@@ -1157,11 +1185,11 @@ DesignSignatures <- function(dbFile,
 		
 		m.r <- matchPDict(r.pdict,
 			dna,
-			max.mismatch=3 + ceiling(log(maxPermutations, 2)),
+			max.mismatch=3,
 			fixed="subject")
 		m.r2 <- matchPDict(r.pdict2,
 			dna,
-			max.mismatch=3 + ceiling(log(maxPermutations, 2)),
+			max.mismatch=3,
 			fixed="subject")
 		ends <- endIndex(m.r)
 		ends2 <- endIndex(m.r2)
@@ -1359,7 +1387,7 @@ DesignSignatures <- function(dbFile,
 			units='secs'),
 			digits=2))
 		time.1 <- Sys.time()
-		cat("\nScoring signature primer pair combinations:\n")
+		cat("\nScoring primer pair combinations:\n")
 		flush.console()
 		pBar <- txtProgressBar(style=3)
 		i <- 0
@@ -1461,47 +1489,6 @@ DesignSignatures <- function(dbFile,
 		primers[count, "coverage"] <- length(w)/length(identifier)
 		primers[count, "products"] <- prods[o[i]]
 		
-#		signatures <- list()
-#		for (j in 1:length(w)) {
-#			signatures[[j]] <- .revBin(amplicons[w[j], 4 + 1:ints])
-#		}
-#		if (type==3L) { # sequence
-#			leadingZeros <- 1L # display all oligos
-#		} else { # type is melt or length
-#			leadingZeros <- min(unlist(lapply(signatures,
-#				function(x) which(x > 0)[1])))
-#		}
-#		signatures <- unlist(lapply(signatures,
-#			function(x) paste(x[leadingZeros:length(x)],
-#				collapse=ifelse(levels <= 10, "", " "))))
-#		u <- unique(signatures)
-#		temp <- ""
-#		for (j in seq_along(u)) {
-#			W <- which(signatures==u[j])
-#			identifiers <- identifier[amplicons[w[W], "Identifier"]]
-#			temp <- paste(ifelse(j==1,
-#					"",
-#					temp),
-#				paste(signatures[W[1]],
-#					" (",
-#					paste(identifiers, collapse=", "),
-#					")",
-#					sep=""),
-#				sep=ifelse(j==1, "", "; "))
-#		}
-#		w <- which(!(1:length(identifier) %in% amplicons[w, "Identifier"]))
-#		if (length(w) > 0)
-#			temp <- paste(temp,
-#				paste(paste(rep("0",
-#						nchar(signatures[1])),
-#						collapse=ifelse(levels <= 10, "", " ")),
-#					" (",
-#					paste(identifier[w], collapse=", "),
-#					")",
-#					sep=""),
-#				sep=ifelse(length(u) > 0, " ;", ""))
-#		primers[count, "signatures"] <- temp
-		
 		setTxtProgressBar(pBar, count/numPrimerSets)
 		
 		if (count==numPrimerSets)
@@ -1569,6 +1556,7 @@ DesignSignatures <- function(dbFile,
 		for (i in seq_along(identifier)) {
 			dna <- SearchDB(dbConn,
 				tblName=tblName,
+				type="DNAStringSet",
 				identifier=identifier[i],
 				removeGaps="all",
 				verbose=FALSE)
@@ -1586,11 +1574,11 @@ DesignSignatures <- function(dbFile,
 			
 			m.f <- matchPDict(f.pdict,
 				dna,
-				max.mismatch=3 + ceiling(log(maxPermutations, 2)),
+				max.mismatch=3,
 				fixed="subject")
 			m.f2 <- matchPDict(f.pdict2,
 				dna,
-				max.mismatch=3 + ceiling(log(maxPermutations, 2)),
+				max.mismatch=3,
 				fixed="subject")
 			starts <- startIndex(m.f)
 			starts2 <- startIndex(m.f2)
@@ -1664,11 +1652,11 @@ DesignSignatures <- function(dbFile,
 			
 			m.r <- matchPDict(r.pdict,
 				dna,
-				max.mismatch=3 + ceiling(log(maxPermutations, 2)),
+				max.mismatch=3,
 				fixed="subject")
 			m.r2 <- matchPDict(r.pdict2,
 				dna,
-				max.mismatch=3 + ceiling(log(maxPermutations, 2)),
+				max.mismatch=3,
 				fixed="subject")
 			ends <- endIndex(m.r)
 			ends2 <- endIndex(m.r2)

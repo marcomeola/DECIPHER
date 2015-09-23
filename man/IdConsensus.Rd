@@ -14,7 +14,7 @@ IdConsensus(dbFile,
             colName = "id",
             add2tbl = FALSE,
             verbose = TRUE,
-            ...)
+            \dots)
 }
 \arguments{
   \item{dbFile}{
