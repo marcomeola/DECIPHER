@@ -1,6 +1,6 @@
 BrowseDB <- function(dbFile,
 	htmlFile=paste(tempdir(),"/db.html",sep=""),
-	openURL=TRUE,
+	openURL=interactive(),
 	tblName="DNA",
 	identifier="",
 	limit=-1,
@@ -227,7 +227,7 @@ BrowseDB <- function(dbFile,
 		"\n</table></div></div></html>")
 	writeLines(html, htmlFile)
 	
-	if (openURL && interactive())
+	if (openURL)
 		browseURL(path.expand(htmlFile))
 	
 	invisible(htmlFile)

@@ -9,7 +9,6 @@ Performs profile-to-profile alignment of multiple unaligned sequences following 
 \usage{
 AlignSeqs(myXStringSet,
          guideTree = NULL,
-         orient = FALSE,
          iterations = 1,
          refinements = 1,
          gapOpening=c(-16, -12),
@@ -27,9 +26,6 @@ An \code{AAStringSet}, \code{DNAStringSet}, or \code{RNAStringSet} object of una
 }
   \item{guideTree}{
 Either \code{NULL} or a \code{data.frame} giving the ordered tree structure in which to align profiles.  If \code{NULL} then a guide tree will be automatically constructed based on the order of shared k-mers.
-}
-  \item{orient}{
-Logical specifying whether some sequences may need to be reoriented before alignment.  If \code{TRUE}, an attempt to determine the best orientation (reverse and/or complement) will be performed with sequences reoriented as necessary to match the orientation of the longest sequence.  Not applicable for an \code{AAStringSet} input.
 }
   \item{iterations}{
 Number of iteration steps to perform.  During each iteration step the guide tree is regenerated based on the alignment and the sequences are realigned.

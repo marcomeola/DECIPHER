@@ -27,7 +27,7 @@ Character string specifying the table in which to form consensus.
 Optional character string used to narrow the search results to those matching a specific identifier.  If "" then all identifiers are selected.
 }
   \item{type}{
-The type of \code{XStringSet} (sequences) to use in forming consensus.  This should be (an unambiguous abbreviation of) one of \code{"DNAStringSet"}, \code{"RNAStringSet"}, \code{"AAStringSet"}, or \code{"BStringSet"}.
+The type of \code{XStringSet} (sequences) to use in forming consensus.  This should be (an abbreviation of) one of \code{"DNAStringSet"}, \code{"RNAStringSet"}, \code{"AAStringSet"}, or \code{"BStringSet"}.
 }
   \item{colName}{
 Column containing the group name of each sequence.

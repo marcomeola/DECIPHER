@@ -1,8 +1,8 @@
 Package: DECIPHER
 Type: Package
 Title: Database Enabled Code for Ideal Probe Hybridization Employing R
-Version: 1.15.2
-Date: 2015-09-23
+Version: 1.15.3
+Date: 2015-10-05
 Author: Erik Wright
 Maintainer: Erik Wright <DECIPHER@cae.wisc.edu>
 biocViews: Clustering, Genetics, Sequencing, DataImport, Visualization, Microarray, QualityControl, qPCR, Alignment, WholeGenome, Microbiome

@@ -50,7 +50,7 @@ Optional character string used to narrow the search results to those matching a 
 Optional character string specifying which of the \code{identifier}s will be used in the initial step of designing primers.  If \code{NA} (the default), then the \code{identifier} with the most sequence information is used as the \code{focusID}.
 }
   \item{type}{
-Character string indicating the type of signature being used to differentiate the PCR products from each group.  This should be (an unambiguous abbreviation of) one of \code{"melt"}, \code{"length"}, or \code{"sequence"}.
+Character string indicating the type of signature being used to differentiate the PCR products from each group.  This should be (an abbreviation of) one of \code{"melt"}, \code{"length"}, or \code{"sequence"}.
 }
   \item{resolution}{
 Numeric specifying the ``resolution'' of the experiment, or a vector giving the boundaries of bins.  (See details section below.)

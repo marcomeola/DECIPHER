@@ -2,6 +2,7 @@ FindChimeras <- function(dbFile,
 	tblName="DNA",
 	identifier="",
 	dbFileReference,
+	tblNameReference="DNA",
 	batchSize=100,
 	minNumFragments=20000,
 	tb.width=5,
@@ -14,13 +15,18 @@ FindChimeras <- function(dbFile,
 	add2tbl=FALSE,
 	maxGroupSize=-1,
 	minGroupSize=100,
+	excludeIDs=NULL,
 	verbose=TRUE) {
 	
 	# error checking
 	if (!is.character(tblName))
 		stop("tblName must be a character string.")
+	if (!is.character(tblNameReference))
+		stop("tblNameReference must be a character string.")
 	if (!is.character(identifier))
 		stop("identifier must be a character string.")
+	if (!is.null(excludeIDs) && !is.character(excludeIDs))
+		stop("excludeIDs must be a character string.")
 	if (!is.numeric(batchSize))
 		stop("batchSize must be a numeric.")
 	if (!is.numeric(minNumFragments))
@@ -93,7 +99,8 @@ FindChimeras <- function(dbFile,
 			stop("The connection has expired.")
 	}
 	
-	searchExpression <- "select distinct id, origin from DNA"
+	searchExpression <- paste("select distinct id, origin from",
+		tblNameReference)
 	rs <- dbSendQuery(dbConn2, searchExpression)
 	searchResult <- fetch(rs, n=-1)
 	groups <- searchResult$id
@@ -120,14 +127,42 @@ FindChimeras <- function(dbFile,
 		warning("Identifier(s) not found in dbFileReference: ", paste(unique(myGroups[w]), sep=", "))
 		myGroups <- myGroups[-w]
 	}
+	w <- which(myGroups %in% excludeIDs)
+	if (length(w) > 0)
+		myGroups <- myGroups[-w]
 	
 	# determine if the reference db contains a chimera column
-	f <- dbListFields(dbConn2, "DNA")
+	f <- dbListFields(dbConn2, tblNameReference)
 	firstRound2 <- is.na(match("chimera", f))
 	
-	# determine if the reference db contains a chimera column
-	f <- dbListFields(dbConn1, "DNA")
+	# determine if the dbFile contains a chimera column
+	f <- dbListFields(dbConn1, tblName)
 	firstRound1 <- is.na(match("chimera", f))
+	
+	# remove groups with too few sequences
+	remove <- character()
+	for (group in myGroups) {
+		if (firstRound2) {
+			numG <- SearchDB(dbConn2,
+				tblName=tblNameReference,
+				identifier=group,
+				verbose=FALSE,
+				clause="and nonbases < 20",
+				countOnly=TRUE)
+		} else {
+			numG <- SearchDB(dbConn2,
+				identifier=group,
+				tblName=tblNameReference,
+				verbose=FALSE,
+				clause="and chimera is NULL and nonbases < 20",
+				countOnly=TRUE)
+		}
+		if (numG < minGroupSize) # too small
+			remove <- c(remove, group)
+	}
+	w <- which(myGroups %in% remove)
+	if (length(w) > 0)
+		myGroups <- myGroups[-w]
 	
 	# initialize fragment variables
 	offset <- 5
@@ -139,13 +174,9 @@ FindChimeras <- function(dbFile,
 	rns <- integer()
 	
 	for (group in myGroups) {
-		if (group=="unclassified_Bacteria" ||
-			group=="unclassified_Root" ||
-			group=="unclassified_Archaea")
-			next # won't allow a chimera
-		
 		if (firstRound2) {
 			group_dna <- SearchDB(dbConn2,
+				tblName=tblNameReference,
 				identifier=group,
 				verbose=FALSE,
 				type="DNAStringSet",
@@ -154,6 +185,7 @@ FindChimeras <- function(dbFile,
 				clause="and nonbases < 20")
 		} else {
 			group_dna <- SearchDB(dbConn2,
+				tblName=tblNameReference,
 				identifier=group,
 				verbose=FALSE,
 				type="DNAStringSet",
@@ -162,9 +194,6 @@ FindChimeras <- function(dbFile,
 				clause="and chimera is NULL and nonbases < 20")
 		}
 		numG <- length(group_dna)
-		
-		if (numG < minGroupSize) # too small
-			next
 		
 		if (firstRound1) {
 			dna <- SearchDB(dbConn1,
@@ -201,7 +230,7 @@ FindChimeras <- function(dbFile,
 		
 		batches <- seq(1, numF, batchSize)
 		
-		# for every sequence
+		# for all sequences
 		for (j in batches) {
 			if (verbose)
 				setTxtProgressBar(pBar, j/numF)
@@ -209,7 +238,7 @@ FindChimeras <- function(dbFile,
 			# subset of the whole group's sequence set
 			seqs <- j:(j + batchSize - 1)
 			# remove sequences beyond length of sequence set
-			# only applies to final iteration
+			# (only applies to the final iteration)
 			w <- which(seqs > numF)
 			if (length(w) > 0)
 				seqs <- seqs[-w]
@@ -219,7 +248,7 @@ FindChimeras <- function(dbFile,
 			count <- 0
 			widths <- width(dna[seqs])
 			numFragments <- floor((max(widths) - 30)/offset) + 1
-			for (i in 1:numFragments) {
+			for (i in seq_len(numFragments)) {
 				start <- ((i - 1)*offset + 1)
 				end <- ((i - 1)*offset + 30)
 				w <- which(widths >= end)
@@ -276,7 +305,7 @@ FindChimeras <- function(dbFile,
 						w <- which(hits_in < 5)
 					} else { # no hits
 						hits_in <- integer(length(temp_fragments))
-						w <- 1:length(temp_fragments)
+						w <- seq_along(temp_fragments)
 					}
 				} else { # search part of group first for speed
 					# count number of hits in part of group
@@ -297,7 +326,7 @@ FindChimeras <- function(dbFile,
 						w <- which(hits_in < 5)
 					} else { # no hits
 						hits_in <- integer(length(temp_fragments))
-						w <- 1:length(temp_fragments)
+						w <- seq_along(temp_fragments)
 					}
 					
 					hits_in <- hits_in[w]
@@ -328,7 +357,7 @@ FindChimeras <- function(dbFile,
 							# remove fragments with too many hits in group
 							w <- which(hits_in < 5)
 						} else { # no hits
-							w <- 1:length(temp_fragments)
+							w <- seq_along(temp_fragments)
 						}
 					}
 				}
@@ -429,44 +458,48 @@ FindChimeras <- function(dbFile,
 			n <- ns[seq(2, length(ns), 4)]
 			un <- unique(n)
 			result <- data.frame(chimera=I(character(length(un))),
-				#other_groups=I(character(length(un))),
 				row.names=as.character(un))
 			
 			# for each group where the fragment did not originate
 			if (verbose) {
+				if ((j + batchSize - 1) >= numF) {
+					setTxtProgressBar(pBar, 1)
+					close(pBar)
+				} else {
+					cat("\n")
+				}
 				count <- 0
-				cat("\n\nSearching Other Groups:\n")
+				cat("\nSearching Other Groups:\n")
 				flush.console()
 				pBar2 <- txtProgressBar(style=3)
 			}
 			for (other in groups) {
 				if (verbose)
 					count <- count + 1
-				if (other=="unclassified_Bacteria" ||
-					other=="unclassified_Root" ||
-					other=="unclassified_Archaea")
-					next # won't allow chimeras
+				if (other %in% excludeIDs)
+					next # don't allow chimeras
 				
 				# remove groups that are from the other group and
 				# remove groups that share unclassified's line of descent
 				uGroupsOfOrigin <- unique(groupsOfOrigin)
+				# find origin_other (line of descent of other)
+				origin_other <- origins[match(other, groups)]
+				g2 <- grepl("unclassified", other, fixed=TRUE)
 				for (g in uGroupsOfOrigin) {
 					if (other==g) {
 						uGroupsOfOrigin <- uGroupsOfOrigin[-match(g, uGroupsOfOrigin)]
-					} else if (grepl("unclassified", other, fixed=TRUE) ||
+					} else if (g2 ||
 						grepl("unclassified", g, fixed=TRUE)) {
 						# find origin (line of descent of group)
 						origin <- origins[match(g, groups)]
-						# find origin_other (line of descent of other)
-						origin_other <- origins[match(other, groups)]
 						if (grepl(origin, origin_other, fixed=TRUE) ||
 							grepl(origin_other, origin, fixed=TRUE))
 							uGroupsOfOrigin <- uGroupsOfOrigin[-match(g, uGroupsOfOrigin)]
 					}
 				}
 				
-				# do not search group of origin
-				h <- which((groupsOfOrigin %in% uGroupsOfOrigin))
+				# do not search the group of origin
+				h <- which(groupsOfOrigin %in% uGroupsOfOrigin)
 				if (length(h)==0)
 					next
 				
@@ -476,12 +509,10 @@ FindChimeras <- function(dbFile,
 					algorithm="ACtree2",
 					tb.end=tb.width)
 				
-				# free up available memory
-				#gc(verbose=FALSE)
-				
 				# search for the fragments
 				if (firstRound2) {
 					other_dna <- SearchDB(dbConn2,
+						tblName=tblNameReference,
 						identifier=other,
 						verbose=FALSE,
 						type="DNAStringSet",
@@ -490,6 +521,7 @@ FindChimeras <- function(dbFile,
 						clause="and nonbases < 20")
 				} else {
 					other_dna <- SearchDB(dbConn2,
+						tblName=tblNameReference,
 						identifier=other,
 						verbose=FALSE,
 						type="DNAStringSet",
@@ -537,17 +569,6 @@ FindChimeras <- function(dbFile,
 					
 					# get the original sequence widths
 					widths <- as.numeric(name.position.width[seq(4, l, 4)])
-					
-					# find the phylum of the other group of origin
-					#origin_other <- origins[match(other, groups)]
-					#origin_other <- unlist(strsplit(origin_other,
-					#	"; ",
-					#	fixed=TRUE))
-					#if (length(origin_other) > 2) {
-					#	origin_other <- origin_other[3]
-					#} else {
-					#	origin_other <- other
-					#}
 					
 					for (i in unique_name) {
 						w1 <- which(name==i)
@@ -618,18 +639,6 @@ FindChimeras <- function(dbFile,
 								")",
 								sep=""),
 							sep="")
-						
-						# append origin_other to other_groups
-						#if (length(w2) > 0) {
-						#	result$other_groups[index[w2]] <- origin_other
-						#	
-						#	if (length(index[-w2]) > 0)
-						#		result$other_groups[index[-w2]] <- paste(result$other_groups[index[-w2]],
-						#			origin_other, sep=",")
-						#} else {
-						#	result$other_groups[index] <- paste(result$other_groups[index],
-						#		origin_other, sep=",")
-						#}
 					}
 				}
 				if (verbose)
@@ -638,8 +647,8 @@ FindChimeras <- function(dbFile,
 			if (verbose) {
 				setTxtProgressBar(pBar2, 1)
 				close(pBar2)
-				if ((j + batchSize - 1)/numF < 1) {
-					cat("\n",group," (",numF,"):\n",sep="")
+				if ((j + batchSize - 1) < numF) {
+					cat("\n", group, " (", numF, "):\n", sep="")
 					flush.console()
 				}
 			}
@@ -650,15 +659,6 @@ FindChimeras <- function(dbFile,
 			
 			# update the result in the database
 			result <- subset(result, result$chimera!="")
-			#if (dim(result)[1] > 0) { # exclude conserved regions
-			#	w <- (unlist(lapply(lapply(strsplit(result$other_groups,
-			#		",",
-			#		fixed=TRUE),
-			#		unique),
-			#		length)) < 3)
-			#	result$other_groups <- NULL # remove column
-			#	result <- subset(result, w)
-			#}
 			if (dim(result)[1] > 0) {
 				if (is.null(all_results))
 					all_results <- result
@@ -668,13 +668,10 @@ FindChimeras <- function(dbFile,
 		}
 		
 		if (verbose) {
-			setTxtProgressBar(pBar, 1)
+			if (pBar$getVal() < 1)
+				setTxtProgressBar(pBar, 1)
 			close(pBar)
 		}
-		
-		# free up available memory
-		#gc(verbose=FALSE)
-	
 	}
 	
 	# expand results to include duplicated sequences

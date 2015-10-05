@@ -78,6 +78,7 @@ MIQS                     MIQS Amino Acid Substitution Matrix
 MODELS                   Available Models of DNA Evolution
 NNLS                     Sequential Coordinate-wise Algorithm for the
                          Non-negative Least Squares Problem
+OrientNucleotides        Orient nucleotide sequences
 PredictHEC               Predict Protein Secondary Structure
 RESTRICTION_ENZYMES      Common Restriction Enzyme's Cut Sites
 SearchDB                 Obtain Specific Sequences from A Database

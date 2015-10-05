@@ -29,7 +29,7 @@ Logical specifying whether or not to consider gap-to-letter matches as mismatche
 Logical specifying whether or not to consider gap-to-gap matches as mismatches.  If \code{FALSE} (the default), then gap-to-gap matches are not included in the total length used to calculate distance.
 }
   \item{correction}{
-The substitution model used for distance correction.  This should be (an unambiguous abbreviation of) either \code{"none"} or \code{"Jukes-Cantor"}.
+The substitution model used for distance correction.  This should be (an abbreviation of) either \code{"none"} or \code{"Jukes-Cantor"}.
 }
   \item{processors}{
 The number of processors to use, or \code{NULL} (the default) for all available processors.

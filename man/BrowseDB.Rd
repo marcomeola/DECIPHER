@@ -9,7 +9,7 @@ Opens an html file in a web browser to show the contents of a table in a databas
 \usage{
 BrowseDB(dbFile,
          htmlFile = paste(tempdir(), "/db.html", sep = ""),
-         openURL = TRUE,
+         openURL = interactive(),
          tblName = "DNA",
          identifier = "",
          limit = -1,

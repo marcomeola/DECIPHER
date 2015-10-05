@@ -338,7 +338,7 @@ SEXP matchLists(SEXP x, SEXP verbose, SEXP pBar, SEXP nThreads)
 	return ans;
 }
 
-// matrix of d[i, j] = length x[i] %in% x[j] / max(length)
+// matrix of d[i, j] = length x[i] %in% y[j] / max(length)
 // requires a list of ordered integers
 SEXP matchListsDual(SEXP x, SEXP y, SEXP verbose, SEXP pBar, SEXP nThreads)
 {	

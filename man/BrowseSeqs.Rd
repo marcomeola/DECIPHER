@@ -9,7 +9,7 @@ Opens an html file in a web browser to show the sequences in an \code{XStringSet
 \usage{
 BrowseSeqs(myXStringSet,
            htmlFile = paste(tempdir(), "/myXStringSet.html", sep = ""),
-           openURL = TRUE,
+           openURL = interactive(),
            colorPatterns = TRUE,
            highlight = NA,
            patterns = c("-", alphabet(myXStringSet, baseOnly=TRUE)),

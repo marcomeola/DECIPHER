@@ -29,7 +29,7 @@ A \code{DNAStringSet} or \code{RNAStringSet} of unaligned protein coding sequenc
 An \code{AAStringSet} of reference sequences having accurate translations.
 }
   \item{type}{
-Character string indicating the type of result desired.  This should be (an unambiguous abbreviation of) one of \code{"indels"}, \code{"sequences"}, or \code{"both"}.  (See details section below.)
+Character string indicating the type of result desired.  This should be (an abbreviation of) one of \code{"indels"}, \code{"sequences"}, or \code{"both"}.  (See details section below.)
 }
   \item{acceptDistance}{
 Numeric giving the maximum distance from a reference sequence that is acceptable to skip any remaining comparisons.
@@ -95,7 +95,7 @@ Guan, X., & Uberbacher, E. C. (1996). Alignments of DNA and protein sequences co
 Erik Wright \email{DECIPHER@cae.wisc.edu}
 }
 \seealso{
-\code{\link{AlignTranslation}}
+\code{\link{AlignTranslation}}, \code{\link{OrientNucleotides}}
 }
 \examples{
 fas <- system.file("extdata", "50S_ribosomal_protein_L2.fas", package="DECIPHER")

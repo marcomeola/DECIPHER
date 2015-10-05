@@ -60,10 +60,9 @@ options(width=80)
 \section{Introduction}
 %------------------------------------------------------------
 
-\begin{wrapfigure}{r}{0.42\textwidth}
-\begin{center}
-\includegraphics[width=0.37\textwidth]{AlignmentSpace1}
-\end{center}
+\setlength{\intextsep}{0pt}
+\begin{wrapfigure}{r}{0.31\textwidth}
+\includegraphics[width=0.31\textwidth]{AlignmentSpace1}
 \caption{\label{f1} The art of multiple sequence alignment.}
 \end{wrapfigure}
 
@@ -84,10 +83,8 @@ The workhorse for sequence alignment in \Rpackage{DECIPHER} is \Rfunction{AlignP
 \section{Alignment Speed}
 %------------------------------------------------------------
 
-\begin{wrapfigure}{r}{0.4\textwidth}
-\begin{center}
-\includegraphics[width=0.38\textwidth]{AlignmentSpace2}
-\end{center}
+\begin{wrapfigure}{r}{0.30\textwidth}
+\includegraphics[width=0.30\textwidth]{AlignmentSpace2}
 \caption{\label{f2} The possible alignment space.}
 \end{wrapfigure}
 
@@ -222,7 +219,7 @@ dna <- readDNAStringSet(fas)
 dna # the unaligned sequences
 @
 
-We can align the DNA by either aligning the coding sequences or their translations (amino acid sequences).  Both methods result in an aligned set of DNA sequences, unless the argument \Rfunarg{asAAStringSet} is \code{TRUE} in \Rfunction{AlignTranslation}.  A quick inspection reveals that the method of translating before alignment yields a more appealing result.  In particular, the reading frame is maintained when aligning the translations.  However, if the dna did not code for a protein then the only option would be to use \Rfunction{AlignSeqs} because the translation would be meaningless.
+We can align the DNA by either aligning the coding sequences directly, or their translations (amino acid sequences).  Both methods result in an aligned set of DNA sequences, unless the argument \Rfunarg{asAAStringSet} is \code{TRUE} in \Rfunction{AlignTranslation}.  A quick inspection reveals that the method of translating before alignment yields a more appealing result.  In particular, the reading frame is maintained when aligning the translations.  However, if the dna did not code for a protein then the only option would be to use \Rfunction{AlignSeqs} because the translation would be meaningless.
 
 <<expr2,eval=FALSE,echo=TRUE>>=
 AA <- AlignTranslation(dna, asAAStringSet=TRUE) # align the translation
@@ -247,6 +244,8 @@ U_DNA <- AlignSeqs(u_dna) # align the sequences directly without translation
 DNA <- U_DNA[index]
 names(DNA) <- names(dna) # the re-replicated alignment
 @
+
+Also, when aligning nucleotide sequences (or their translations), it may be the case that the sequences are in different orientations.  If so, consider reorienting the sequences so that they all have the same directionality and complementarity by using \Rfunction{OrientNucleotides} prior to alignment.
 
 %------------------------------------------------------------
 \section{Example:  Building a Guide Tree}

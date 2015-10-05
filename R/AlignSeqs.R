@@ -1,6 +1,5 @@
 AlignSeqs <- function(myXStringSet,
 	guideTree=NULL,
-	orient=FALSE,
 	iterations=1,
 	refinements=1,
 	gapOpening=c(-16, -12),
@@ -28,8 +27,6 @@ AlignSeqs <- function(myXStringSet,
 		if (!all(apply(guideTree, 2, is.numeric)))
 			stop("guideTree must be a data.frame of numerics.")
 	}
-	if (!is.logical(orient))
-		stop("orient must be a logical.")
 	if (!is.numeric(iterations))
 		stop("iterations must be a numeric.")
 	if (iterations != floor(iterations))
@@ -260,51 +257,6 @@ AlignSeqs <- function(myXStringSet,
 			wordSize <- 15
 		if (wordSize < 8)
 			wordSize <- 8
-	}
-	
-	if (orient && type!=3L) {
-		w <- which.max(width(myXStringSet))
-		v1 <- .Call("enumerateSequence",
-			myXStringSet,
-			wordSize,
-			PACKAGE="DECIPHER")
-		X <- v1[[w]]
-		
-		f <- function(x) {
-			m <- match(x, X)
-			return(length(which(!is.na(m))))
-		}
-		v1 <- unlist(lapply(v1, f))
-		
-		v2 <- .Call("enumerateSequence",
-			reverseComplement(myXStringSet),
-			wordSize,
-			PACKAGE="DECIPHER")
-		v2 <- unlist(lapply(v2, f))
-		
-		v3 <- .Call("enumerateSequence",
-			reverse(myXStringSet),
-			wordSize,
-			PACKAGE="DECIPHER")
-		v3 <- unlist(lapply(v3, f))
-		
-		v4 <- .Call("enumerateSequence",
-			complement(myXStringSet),
-			wordSize,
-			PACKAGE="DECIPHER")
-		v4 <- unlist(lapply(v4, f))
-		
-		w <- which(v2*0.5 > v1 & v2 > v3 & v2 > v4)
-		if (length(w) > 0) # reverseComplement >> given orientation
-			myXStringSet[w] <- reverseComplement(myXStringSet[w])
-		w <- which(v3*0.5 > v1 & v3 > v2 & v3 > v4)
-		if (length(w) > 0) # reverse >> given orientation
-			myXStringSet[w] <- reverse(myXStringSet[w])
-		w <- which(v4*0.5 > v1 & v4 > v2 & v4 > v3)
-		if (length(w) > 0) # complement >> given orientation
-			myXStringSet[w] <- complement(myXStringSet[w])
-	} else if (orient && type==3L) {
-		warning("orient is ignored when myXStringSet is an AAStringSet.")
 	}
 	
 	cluster <- FALSE

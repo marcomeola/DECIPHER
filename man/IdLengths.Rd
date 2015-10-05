@@ -26,7 +26,7 @@ Character string specifying the table where the sequences are located.
 Optional character string used to narrow the search results to those matching a specific identifier.  If "" then all identifiers are selected.
 }
   \item{type}{
-The type of \code{XStringSet} being processed.  This should be (an unambiguous abbreviation of) one of \code{"DNAStringSet"} or \code{"RNAStringSet"}.
+The type of \code{XStringSet} being processed.  This should be (an abbreviation of) one of \code{"DNAStringSet"} or \code{"RNAStringSet"}.
 }
   \item{add2tbl}{
 Logical or a character string specifying the table name in which to add the result.

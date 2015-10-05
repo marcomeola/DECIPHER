@@ -163,6 +163,8 @@ Time difference of 13387.34 secs
 \end{Sinput}
 \end{Schunk}
 
+Note that sequences in the reference database must be in the same orientation as the query sequences.  The function \Rfunction{OrientNucleotides} can be used to reorient the query sequences, if necessary.
+
 %------------------------------------------------------------
 \section{Steps to Find Chimeras}
 %------------------------------------------------------------
@@ -301,12 +303,17 @@ Add2DB(z, dbConn)
 Finally, we can use the \Rfunction{FindChimeras} function to search for chimeras in our sequences.  Two sets of parameters are available for 16S sequences.  The defaults apply to sequences longer than 1,000 nucleotides, while the second command applies to sequences that are shorter in length.
 
 <<expr7,eval=FALSE>>=
+# exclude some identifiers from searches
+exclude <- c("unclassified_Bacteria",
+             "unclassified_Root",
+             "unclassified_Archaea")
 # full-length sequences
 chimeras <- FindChimeras(dbConn, dbFileReference=dbRef, add2tbl=TRUE,
-	maxGroupSize=1e4)
+	maxGroupSize=1e4, excludeIDs=exclude)
 # OR for short-length sequences
 chimeras <- FindChimeras(dbConn, dbFileReference=dbRef, minLength=40,
-	minSuspectFragments=2, add2tbl=TRUE, maxGroupSize=1e4)
+	minSuspectFragments=2, add2tbl=TRUE, maxGroupSize=1e4,
+        excludeIDs=exclude)
 @
 
 \begin{Schunk}

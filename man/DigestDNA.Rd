@@ -24,7 +24,7 @@ A \code{DNAStringSet} object or character vector with one or more sequences in 5
 Character string indicating the type of results desired.  This should be (an abbreviation of) either \code{"fragments"} or \code{"positions"}.
 }
   \item{strand}{
-Character string indicating the strand(s) to cut.  This should be (an unambiguous abbreviation of) one of \code{"both"}, \code{"top"}, or \code{"bottom"}.  The top strand is defined as the input DNAStringSet sequence, and the bottom strand is its reverse complement.
+Character string indicating the strand(s) to cut.  This should be (an abbreviation of) one of \code{"both"}, \code{"top"}, or \code{"bottom"}.  The top strand is defined as the input DNAStringSet sequence, and the bottom strand is its reverse complement.
 }
   \item{processors}{
 The number of processors to use, or \code{NULL} (the default) for all available processors.

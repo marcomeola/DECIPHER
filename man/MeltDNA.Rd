@@ -17,7 +17,7 @@ MeltDNA(myDNAStringSet,
 A \code{DNAStringSet} object or character vector with one or more sequences in 5' to 3' orientation.
 }
   \item{type}{
-Character string indicating the type of results desired.  This should be (an unambiguous abbreviation of) one of \code{"derivative curves"}, \code{"melt curves"}, or \code{"positional probabilities"}.
+Character string indicating the type of results desired.  This should be (an abbreviation of) one of \code{"derivative curves"}, \code{"melt curves"}, or \code{"positional probabilities"}.
 }
   \item{temps}{
 Numeric vector of temperatures (in degrees Celsius).

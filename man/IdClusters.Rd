@@ -22,7 +22,7 @@ IdClusters(myDistMatrix = NULL,
 A symmetric \eqn{N} x \eqn{N} distance matrix with the values of dissimilarity between \eqn{N} sequences, or \code{NULL} if \code{method} is \code{"inexact"}.
 }
   \item{method}{
-An agglomeration method to be used.  This should be (an unambiguous abbreviation of) one of \code{"complete"}, \code{"single"}, \code{"UPGMA"}, \code{"WPGMA"}, \code{"NJ"}, \code{"ML"}, or \code{"inexact"}.  (See details section below.)
+An agglomeration method to be used.  This should be (an abbreviation of) one of \code{"complete"}, \code{"single"}, \code{"UPGMA"}, \code{"WPGMA"}, \code{"NJ"}, \code{"ML"}, or \code{"inexact"}.  (See details section below.)
 }
   \item{cutoff}{
 A vector with the maximum edge length separating the sequences in the same cluster.  Multiple cutoffs may be provided in ascending or descending order.  If \code{asDendrogram=TRUE} or \code{showPlot=TRUE} then only one cutoff may be specified.  (See details section below.)

@@ -35,7 +35,7 @@ Character string specifying the table(s) where the sequences are located.  If tw
 Optional character string used to narrow the search results to those matching a specific identifier.  If "" then all identifiers are selected.  If two \code{identifier}s are provided then the set of sequences matching each \code{identifier} will be aligned.
 }
   \item{type}{
-The type of \code{XStringSet} being processed.  This should be (an unambiguous abbreviation of) one of \code{"AAStringSet"}, \code{"DNAStringSet"}, or \code{"RNAStringSet"}.
+The type of \code{XStringSet} being processed.  This should be (an abbreviation of) one of \code{"AAStringSet"}, \code{"DNAStringSet"}, or \code{"RNAStringSet"}.
 }
   \item{add2tbl}{
 Character string specifying the table name in which to add the aligned sequences.

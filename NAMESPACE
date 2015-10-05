@@ -30,8 +30,8 @@ Amplify, AmplifyDNA, CalculateEfficiencyPCR, DesignPrimers, DesignSignatures, Di
 CalculateEfficiencyFISH, DesignProbes,
 # viewing information:
 BrowseSequences, BrowseSeqs, BrowseDB,
-# sequence analysis:
-CorrectFrameshifts, PredictHEC,
+# sequence analysis/manipulation:
+CorrectFrameshifts, OrientNucleotides, PredictHEC,
 # multiple alignment:
 AdjustAlignment, AlignDB, AlignProfiles, AlignSeqs, AlignTranslation, MaskAlignment, StaggerAlignment,
 # synteny:

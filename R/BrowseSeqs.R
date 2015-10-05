@@ -5,7 +5,7 @@ BrowseSequences <- function(...) {
 
 BrowseSeqs <- function(myXStringSet,
 	htmlFile=paste(tempdir(),"/myXStringSet.html",sep=""),
-	openURL=TRUE,
+	openURL=interactive(),
 	colorPatterns=TRUE,
 	highlight=NA,
 	patterns=c("-", alphabet(myXStringSet, baseOnly=TRUE)),
@@ -350,7 +350,7 @@ BrowseSeqs <- function(myXStringSet,
 	
 	writeLines(html, htmlfile)
 	
-	if (openURL && interactive())
+	if (openURL)
 		browseURL(path.expand(htmlFile))
 	
 	invisible(htmlFile)

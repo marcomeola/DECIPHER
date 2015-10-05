@@ -11,6 +11,7 @@ FindChimeras(dbFile,
              tblName = "DNA",
              identifier = "",
              dbFileReference,
+             tblNameReference = "DNA",
              batchSize = 100,
              minNumFragments = 20000,
              tb.width = 5,
@@ -23,6 +24,7 @@ FindChimeras(dbFile,
              add2tbl = FALSE,
              maxGroupSize = -1,
              minGroupSize = 100,
+             excludeIDs = NULL,
              verbose = TRUE)
 }
 \arguments{
@@ -37,6 +39,9 @@ Optional character string used to narrow the search results to those matching a 
 }
   \item{dbFileReference}{
 A SQLite connection object or a character string specifying the path to the reference database file of (presumed to be) good quality sequences.  A 16S reference database is available from \url{DECIPHER.cee.wisc.edu}.
+}
+  \item{tblNameReference}{
+Character string specifying the table with reference sequences.
 }
   \item{batchSize}{
 Number sequences to tile with fragments at a time.
@@ -73,6 +78,9 @@ Maximum number of sequences searched in a group.  A value of less than 0 means t
 }
   \item{minGroupSize}{
 The minimum number of sequences in a group to be considered as part of the search for chimeras.  May need to be set to a small value for reference database with mostly small groups.
+}
+  \item{excludeIDs}{
+Optional character vector of \code{identifier}(s) to exclude from database searches, or \code{NULL} (the default) to not exclude any.
 }
   \item{verbose}{
 Logical indicating whether to display progress.
