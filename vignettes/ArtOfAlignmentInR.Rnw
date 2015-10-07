@@ -83,8 +83,8 @@ The workhorse for sequence alignment in \Rpackage{DECIPHER} is \Rfunction{AlignP
 \section{Alignment Speed}
 %------------------------------------------------------------
 
-\begin{wrapfigure}{r}{0.30\textwidth}
-\includegraphics[width=0.30\textwidth]{AlignmentSpace2}
+\begin{wrapfigure}{r}{0.31\textwidth}
+\includegraphics[width=0.31\textwidth]{AlignmentSpace2}
 \caption{\label{f2} The possible alignment space.}
 \end{wrapfigure}
 

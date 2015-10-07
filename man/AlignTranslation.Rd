@@ -46,6 +46,9 @@ If the \code{readingFrame} is \code{NA} (the default) then an attempt is made to
 \value{
 An \code{XStringSet} matching the input type.
 }
+\references{
+ES Wright (2015) "DECIPHER: harnessing local sequence context to improve protein multiple sequence alignment". BMC Bioinformatics, doi:10.1186/s12859-015-0749-z.
+}
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}
 }

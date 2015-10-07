@@ -67,7 +67,7 @@ The \code{FUN} function is applied during each of the three steps based on \code
 An \code{XStringSet} of aligned sequences.
 }
 \references{
-Coming soon!
+ES Wright (2015) "DECIPHER: harnessing local sequence context to improve protein multiple sequence alignment". BMC Bioinformatics, doi:10.1186/s12859-015-0749-z.
 }
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}

@@ -1,5 +1,5 @@
 AdjustAlignment <- function(myXStringSet,
-	perfectMatch=6,
+	perfectMatch=5,
 	misMatch=0,
 	gapLetter=-3,
 	gapOpening=-0.1,

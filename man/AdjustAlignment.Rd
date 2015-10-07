@@ -8,7 +8,7 @@ Makes small adjustments by shifting groups of gaps left and right to find their 
 }
 \usage{
 AdjustAlignment(myXStringSet,
-                perfectMatch = 6,
+                perfectMatch = 5,
                 misMatch = 0,
                 gapLetter = -3,
                 gapOpening = -0.1,
@@ -61,7 +61,7 @@ The process of multiple sequence alignment often results in the integration of s
 An \code{XStringSet} of aligned sequences.
 }
 \references{
-Coming Soon!
+ES Wright (2015) "DECIPHER: harnessing local sequence context to improve protein multiple sequence alignment". BMC Bioinformatics, doi:10.1186/s12859-015-0749-z.
 }
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}

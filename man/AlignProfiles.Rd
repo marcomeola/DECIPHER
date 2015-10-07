@@ -13,7 +13,7 @@ AlignProfiles(pattern,
               s.weight = 1,
               p.struct = NULL,
               s.struct = NULL,
-              perfectMatch = 6,
+              perfectMatch = 5,
               misMatch = 0,
               gapOpening = -13,
               gapExtension = -1,
@@ -104,6 +104,8 @@ An \code{XStringSet} of aligned sequences.
 Chang, M. S. S., & Benner, S. A. (2004). Empirical Analysis of Protein Insertions and Deletions Determining Parameters for the Correct Placement of Gaps in Protein Sequence Alignments. Journal of Molecular Biology, \bold{341(2)}, 617-631.
 
 Needleman S., Wunsch, C. (1970). A general method applicable to the search for similarities in the amino acid sequence of two proteins. Journal of Molecular Biology, \bold{48(3)}, 443-453.
+
+ES Wright (2015) "DECIPHER: harnessing local sequence context to improve protein multiple sequence alignment". BMC Bioinformatics, doi:10.1186/s12859-015-0749-z.
 }
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}
@@ -123,7 +125,7 @@ BrowseSeqs(alignedDNA, highlight=1)
 subMatrix <- matrix(0,
                     nrow=4, ncol=4,
                     dimnames=list(DNA_BASES, DNA_BASES))
-diag(subMatrix) <- 6 # perfectMatch
+diag(subMatrix) <- 5 # perfectMatch
 alignedDNA.defaultSubM <- AlignProfiles(dna1, dna2, substitutionMatrix=subMatrix)
 all(alignedDNA.defaultSubM==alignedDNA)
 

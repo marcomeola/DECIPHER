@@ -224,7 +224,7 @@ AlignSeqs <- function(myXStringSet,
 				if (!is.numeric(PM))
 					stop("perfectMatch must be a numeric.")
 			} else {
-				PM <- 6
+				PM <- 5
 			}
 			w <- which(m=="misMatch")
 			if (length(w) > 0) {

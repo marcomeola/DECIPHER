@@ -1,7 +1,7 @@
 Package: DECIPHER
 Type: Package
 Title: Database Enabled Code for Ideal Probe Hybridization Employing R
-Version: 1.15.3
+Version: 1.15.4
 Date: 2015-10-05
 Author: Erik Wright
 Maintainer: Erik Wright <DECIPHER@cae.wisc.edu>

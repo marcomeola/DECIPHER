@@ -13,7 +13,7 @@ AlignDB(dbFile,
         type = "DNAStringSet",
         add2tbl = "DNA",
         batchSize = 10000,
-        perfectMatch = 6,
+        perfectMatch = 5,
         misMatch = 0,
         gapOpening = -13,
         gapExtension = -1,
@@ -81,6 +81,9 @@ Two \code{identifier}s or \code{tblName}s must be provided, indicating the two s
 }
 \value{
 Returns the number of newly aligned sequences added to the database.
+}
+\references{
+ES Wright (2015) "DECIPHER: harnessing local sequence context to improve protein multiple sequence alignment". BMC Bioinformatics, doi:10.1186/s12859-015-0749-z.
 }
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}
