@@ -1026,11 +1026,13 @@ FindSynteny <- function(dbFile,
 				}
 				
 				remove <- which(remove)
-				if (length(remove) > 0) {
-					results[g2, g1][[1]] <- results[g2, g1][[1]][-remove,, drop=FALSE]
+				if (length(remove) > 0 || length(hits) > 0) {
+					if (length(remove) > 0)
+						results[g2, g1][[1]] <- results[g2, g1][[1]][-remove,, drop=FALSE]
 					hits <- c(unlist(hits), unlist(chains[remove]))
 					results[g1, g2][[1]] <- results[g1, g2][[1]][-hits,, drop=FALSE]
-					chains <- chains[-remove]
+					if (length(remove) > 0)
+						chains <- chains[-remove]
 					count <- 0L
 					for (i in seq_along(chains)) {
 						results[g2, g1][[1]][i, "first_hit"] <- count + 1L
