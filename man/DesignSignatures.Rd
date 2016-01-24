@@ -8,7 +8,7 @@ Aids the design of pairs of primers for amplifying a unique ``signature'' from e
 }
 \usage{
 DesignSignatures(dbFile,
-                 tblName = "DNA",
+                 tblName = "Seqs",
                  identifier = "",
                  focusID = NA,
                  type = "melt",
@@ -32,8 +32,9 @@ DesignSignatures(dbFile,
                  searchPrimers = 500,
                  maxDictionary = 20000,
                  primerDimer = 1e-07,
+                 pNorm = 1,
                  taqEfficiency = TRUE,
-                 processors = NULL,
+                 processors = 1,
                  verbose = TRUE)
 }
 \arguments{
@@ -112,11 +113,14 @@ Numeric giving the maximum number of primers to search for simultaneously in any
   \item{primerDimer}{
 Numeric giving the maximum amplification efficiency of potential primer-dimer products.
 }
+  \item{pNorm}{
+Numeric specifying the power (p > 0) used in calculating the \eqn{L\textsuperscript{p}}-norm when scoring primer pairs.  By default (p = 1), the score is equivalent to the average difference between pairwise signatures.  When p < 1, many small differences will be preferred over fewer large differences, and vise-versa when p > 1.  This enables prioritizing primer pairs that will yield a greater number of unique signatures (p < 1), or fewer distinct, but more dissimilar, signatures (p > 1).
+}
   \item{taqEfficiency}{
 Logical determining whether to make use of elongation efficiency to increase predictive accuracy for \emph{Taq} DNA Polymerase amplifying primers with mismatches near the 3' terminus.  Note that this should be set to FALSE if using a high-fidelity polymerase with 3' to 5' exonuclease activity.
 }
   \item{processors}{
-The number of processors to use, or \code{NULL} (the default) for all available processors.
+The number of processors to use, or \code{NULL} to automatically detect and use all available processors.
 }
   \item{verbose}{
 Logical indicating whether to display progress.

@@ -11,14 +11,17 @@ Seqs2DB(seqs,
         type,
         dbFile,
         identifier,
-        tblName = "DNA",
-        chunkSize = 1e5,
+        tblName = "Seqs",
+        chunkSize = 1e7,
         replaceTbl = FALSE,
-        verbose = TRUE)
+        fields = c(accession = "ACCESSION", rank = "ORGANISM"),
+        processors = 1,
+        verbose = TRUE,
+        \dots)
 }
 \arguments{
   \item{seqs}{
-A connection object or a character string specifying the file path to the file containing the sequences, an \code{XStringSet} object if \code{type} is \code{XStringSet}, or a \code{QualityScaledXStringSet} object if \code{type} is \code{QualityScaledXStringSet}.
+A connection object or a character string specifying the file path to the file containing the sequences, an \code{XStringSet} object if \code{type} is \code{XStringSet}, or a \code{QualityScaledXStringSet} object if \code{type} is \code{QualityScaledXStringSet}. Files compressed with \code{gzip}, \code{bzip2}, \code{xz}, or \code{lzma} compression are automatically detected and decompressed during import.  Full URL paths (e.g., "http://" or "ftp://") to uncompressed text files or \code{gzip} compressed text files can also be used.
 }
   \item{type}{
 The type of the sequences (\code{seqs}) being imported.  This should be (an unambiguous abbreviation of) one of \code{"FASTA"}, \code{"FASTQ"}, \code{"GenBank"}, \code{"XStringSet"}, or \code{"QualityScaledXStringSet"}.
@@ -33,17 +36,26 @@ Character string specifying the \code{"id"} to give the imported sequences in th
 Character string specifying the table in which to add the sequences.
 }
   \item{chunkSize}{
-Number of lines of the \code{seqs} to read at a time.
+Number of characters to read at a time.
 }
   \item{replaceTbl}{
 Logical.  If \code{FALSE} (the default) then the sequences are appended to any already existing in the table.  If \code{TRUE} then any sequences already in the table are overwritten.
 }
+  \item{fields}{
+Named character vector providing the fields to import from a \code{"GenBank"} formatted file as text columns in the database (not applicable for other \code{"type"}s).  The default is to import the \code{"ACCESSION"} field as a column named \code{"accession"} and the \code{"ORGANISM"} field as a column named \code{"rank"}.  Other uppercase fields, such as \code{"LOCUS"} or \code{"VERSION"}, can be specified in similar manner.  Note that the \code{"DEFINITION"} field is automatically imported as a column named \code{"description"} in the database.
+}
+  \item{processors}{
+The number of processors to use, or \code{NULL} to automatically detect and use all available processors.
+}
   \item{verbose}{
 Logical indicating whether to display each query as it is sent to the database.
 }
+  \item{\dots}{
+Further arguments to be passed directly to \code{\link{Codec}}.
+}
 }
 \details{
-Sequences are imported into the database in chunks of lines specified by \code{chunkSize}.  The sequences can then be identified by searching the database for the \code{identifier} provided.  Sequences are added to the database verbatim, so that no sequence information is lost when the sequences are exported from the database.  The sequence names are recorded into a column named ``description'' in the database.
+Sequences are imported into the database in chunks of lines specified by \code{chunkSize}.  The sequences can then be identified by searching the database for the \code{identifier} provided.  Sequences are added to the database verbatim, so that no sequence information is lost when the sequences are exported from the database.  The sequence (record) names are recorded into a column named ``description'' in the database.
 }
 \value{
 The total number of sequences in the database table is returned after import.
@@ -52,7 +64,7 @@ The total number of sequences in the database table is returned after import.
 Erik Wright \email{DECIPHER@cae.wisc.edu}
 }
 \seealso{
-\code{\link{SearchDB}}, \code{\link{DB2Seqs}}
+\code{\link{BrowseDB}}, \code{\link{SearchDB}}, \code{\link{DB2Seqs}}
 }
 \examples{
 gen <- system.file("extdata", "Bacteria_175seqs.gen", package="DECIPHER")

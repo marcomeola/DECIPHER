@@ -4,12 +4,12 @@
 Add Data To A Database
 }
 \description{
-Adds a \code{data.frame} to a database table by \code{row.names}.
+Adds a \code{data.frame} to a database table by its \code{row.names}.
 }
 \usage{
 Add2DB(myData,
        dbFile,
-       tblName = "DNA",
+       tblName = "Seqs",
        clause = "",
        verbose = TRUE)
 }
@@ -24,7 +24,7 @@ A SQLite connection object or a character string specifying the path to the data
 Character string specifying the table in which to add the data.
 }
   \item{clause}{
-An optional character string to append to the query as a clause.
+An optional character string to append to the query as part of a ``where clause''.
 }
   \item{verbose}{
 Logical indicating whether to display each query as it is sent to the database.

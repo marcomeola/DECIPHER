@@ -8,7 +8,7 @@
 	maxDistance=.4,
 	maxGaps=2,
 	align=FALSE,
-	processors=NULL) {
+	processors=1) {
 	
 	# error checking
 	if (is(primer, "DNAStringSet"))
@@ -87,7 +87,7 @@
 }
 
 DesignSignatures <- function(dbFile,
-	tblName="DNA",
+	tblName="Seqs",
 	identifier="",
 	focusID=NA,
 	type="melt",
@@ -111,8 +111,9 @@ DesignSignatures <- function(dbFile,
 	searchPrimers=500,
 	maxDictionary=20000,
 	primerDimer=1e-7,
+	pNorm=1,
 	taqEfficiency=TRUE,
-	processors=NULL,
+	processors=1,
 	verbose=TRUE) {
 	
 	# error checking:
@@ -228,6 +229,10 @@ DesignSignatures <- function(dbFile,
 		stop("primerDimer must be greater than zero.")
 	if (primerDimer > 1)
 		stop("primerDimer must be less than or equal to one.")
+	if (!is.numeric(pNorm))
+		stop("pNorm must be a numeric.")
+	if (pNorm <= 0)
+		stop("pNorm must be greater than zero.")
 	if (!is.null(processors) && !is.numeric(processors))
 		stop("processors must be a numeric.")
 	if (!is.null(processors) && floor(processors)!=processors)
@@ -308,11 +313,11 @@ DesignSignatures <- function(dbFile,
 			stop("The connection has expired.")
 	}
 	
-	searchExpression <- paste("select distinct id from",
+	searchExpression <- paste("select distinct identifier from",
 		tblName)
 	rs <- dbSendQuery(dbConn, searchExpression)
 	searchResult <- fetch(rs, n=-1)
-	ids <- searchResult$id
+	ids <- searchResult$identifier
 	dbClearResult(rs)
 	
 	if (identifier[1]=="") {
@@ -373,6 +378,7 @@ DesignSignatures <- function(dbFile,
 			type="DNAStringSet",
 			identifier=identifier[i],
 			removeGaps="all",
+			processors=processors,
 			verbose=FALSE)
 		w <- width(dna)
 		dna <- unlist(dna)
@@ -471,6 +477,7 @@ DesignSignatures <- function(dbFile,
 				type="DNAStringSet",
 				identifier=identifier[focusID[i]],
 				removeGaps="all",
+				processors=processors,
 				verbose=FALSE))
 	}
 	w <- width(dna)
@@ -720,6 +727,7 @@ DesignSignatures <- function(dbFile,
 			type="DNAStringSet",
 			identifier=identifier[i],
 			removeGaps="all",
+			processors=processors,
 			verbose=FALSE)
 		w <- width(dna)
 		dna <- unlist(dna)
@@ -1092,6 +1100,7 @@ DesignSignatures <- function(dbFile,
 			type="DNAStringSet",
 			identifier=identifier[i],
 			removeGaps="all",
+			processors=processors,
 			verbose=FALSE)
 		w <- width(dna)
 		if (max(width(dna)) < minProductSize)
@@ -1321,9 +1330,12 @@ DesignSignatures <- function(dbFile,
 						mPs <- colSums(mPs)
 						mPs <- mPs/sum(effs[w])
 						mPs <- mPs/mean(width(products)[w])
+						mPs <- round((levels - 1)*mPs)
+						if (all(mPs==0))
+							next # no signature
 						
 						t[p,] <- .bin(rep(midpoints,
-								round((levels - 1)*mPs)))
+							mPs))
 					}
 				} else if (type==2L) { # length
 					reps <- ceiling(effs*(levels - 1L))
@@ -1436,6 +1448,7 @@ DesignSignatures <- function(dbFile,
 			maxBins,
 			length(w),
 			length(identifier),
+			pNorm,
 			PACKAGE="DECIPHER")
 		prods[i] <- sum(amplicons[w, "Peaks"])
 		
@@ -1466,9 +1479,12 @@ DesignSignatures <- function(dbFile,
 		reverse_primer=I(character(numPrimerSets)),
 		score=I(numeric(numPrimerSets)),
 		coverage=I(numeric(numPrimerSets)),
-		products=I(integer(numPrimerSets)))
+		products=I(integer(numPrimerSets)),
+		similar_signatures=I(character(numPrimerSets)),
+		missing_signatures=I(character(numPrimerSets)))
 	
 	count <- 0L
+	keep <- vector(mode="list", numPrimerSets)
 	for (i in seq_along(o)) {
 		w <- which(m==o[i])
 		forward <- f.primers[amplicons[w[1], "Forward"]]
@@ -1483,13 +1499,61 @@ DesignSignatures <- function(dbFile,
 		reverse <- reverseComplement(reverse)
 		
 		count <- count + 1L
+		keep[[count]] <- w
 		primers[count, "forward_primer"] <- as.character(forward)
 		primers[count, "reverse_primer"] <- as.character(reverse)
 		primers[count, "score"] <- sigs[o[i]]
 		primers[count, "coverage"] <- length(w)/length(identifier)
 		primers[count, "products"] <- prods[o[i]]
 		
-		setTxtProgressBar(pBar, count/numPrimerSets)
+		# record groups with similar signatures
+		signatures <- list()
+		for (j in 1:length(w)) {
+			signatures[[j]] <- .revBin(amplicons[w[j], 4 + 1:ints])
+		}
+		signatures <- matrix(unlist(signatures),
+			nrow=length(w),
+			ncol=length(signatures[[1]]),
+			byrow=TRUE)
+		d <- dist(signatures,
+			method="maximum")
+		if (length(d) > 0) {
+			c <- IdClusters(as.matrix(d),
+				method="single",
+				cutoff=levels/5,
+				processors=processors,
+				verbose=FALSE)
+		} else {
+			c <- data.frame(cluster=1)
+		}
+		t <- tapply(seq_along(w),
+			c$cluster,
+			c,
+			simplify=FALSE)
+		temp <- ""
+		for (j in which(unlist(lapply(t, length)) > 1)) {
+			identifiers <- identifier[amplicons[w[t[[j]]], "Identifier"]]
+			temp <- paste(ifelse(j==1,
+					"",
+					temp),
+				paste("(",
+					paste(identifiers, collapse=", "),
+					")",
+					sep=""),
+				sep=ifelse(j==1, "", "; "))
+		}
+		primers[count, "similar_signatures"] <- temp
+		
+		# record groups with missing signatures
+		w <- which(!(1:length(identifier) %in% amplicons[w, "Identifier"]))
+		temp <- ""
+		if (length(w) > 0) {
+			temp <- paste(identifier[w], collapse=", ")
+			primers[count, "missing_signatures"] <- temp
+		}
+		
+		if (verbose)
+			setTxtProgressBar(pBar, count/numPrimerSets)
 		
 		if (count==numPrimerSets)
 			break
@@ -1503,6 +1567,12 @@ DesignSignatures <- function(dbFile,
 	
 	# find the best restriction enzyme to digest the amplicons
 	if (length(enzymes) > 0) {
+		amplicons <- cbind(amplicons[unlist(keep),],
+			Primers=unlist(lapply(seq_along(keep),
+				function(x) {
+					rep(x, length(keep[[x]]))
+				})))
+		
 		if (verbose) {
 			close(pBar)
 			cat("\n")
@@ -1559,6 +1629,7 @@ DesignSignatures <- function(dbFile,
 				type="DNAStringSet",
 				identifier=identifier[i],
 				removeGaps="all",
+				processors=processors,
 				verbose=FALSE)
 			w <- width(dna)
 			if (max(width(dna)) < minProductSize)
@@ -1818,11 +1889,18 @@ DesignSignatures <- function(dbFile,
 							mPs <- colSums(out)
 							mPs <- mPs/sum(EFFS)
 							mPs <- mPs/mean(width(prods))
+							mPs <- round((levels - 1)*mPs)
+							if (all(mPs==0))
+								next # no signature
 							
 							t[1,] <- .bin(rep(midpoints,
-									round((levels - 1)*mPs)))
+								mPs))
 						} else { # length
-							t <- matrix(.bin(width(prods)),
+							t <- .bin(width(prods))
+							if (all(is.na(t)))
+								next # no signature
+							
+							t <- matrix(t,
 								ncol=ints,
 								byrow=TRUE)
 						}
@@ -1865,6 +1943,7 @@ DesignSignatures <- function(dbFile,
 			m <- m[o]
 			sigs <- prods <- numeric(length(u))
 			pSets <- e <- integer(length(u))
+			similar <- character(length(u))
 			begin <- 1L
 			for (i in 1:length(u)) {
 				w <- .Call("multiMatch", m, i, begin, PACKAGE="DECIPHER")
@@ -1874,9 +1953,6 @@ DesignSignatures <- function(dbFile,
 				e[i] <- fragments[w[1], "Enzyme"]
 				prods[i] <- sum(fragments[w, "Fragments"])
 				
-				if (length(w)==1)
-					next # sigs[i] is 0
-				
 				sigs[i] <- .Call("intDist",
 					fragments[w, 4 + 1:ints],
 					levels,
@@ -1884,13 +1960,60 @@ DesignSignatures <- function(dbFile,
 					maxBins,
 					length(w),
 					length(identifier),
+					pNorm,
 					PACKAGE="DECIPHER")
+				
+				# record groups with similar signatures
+				signatures <- list()
+				for (j in 1:length(w)) {
+					signatures[[j]] <- .revBin(fragments[w[j], 4 + 1:ints])
+				}
+				W <- which(amplicons[, "Primers"]==fragments[w[1], "Primers"] &
+					!(amplicons[, "Identifier"] %in% fragments[w, "Identifier"]))
+				for (j in seq_along(W)) {
+					signatures[[j + length(w)]] <- .revBin(amplicons[W[j], 4 + 1:ints])
+				}
+				W <- c(fragments[w, "Identifier"],
+					amplicons[W, "Identifier"])
+				signatures <- matrix(unlist(signatures),
+					nrow=length(signatures),
+					ncol=length(signatures[[1]]),
+					byrow=TRUE)
+				d <- dist(signatures,
+					method="maximum")
+				if (length(d) > 0) {
+					c <- IdClusters(as.matrix(d),
+						method="single",
+						cutoff=levels/5,
+						processors=processors,
+						verbose=FALSE)
+				} else {
+					c <- data.frame(cluster=1)
+				}
+				t <- tapply(seq_len(dim(signatures)[1]),
+					c$cluster,
+					c,
+					simplify=FALSE)
+				temp <- ""
+				for (j in which(unlist(lapply(t, length)) > 1)) {
+					identifiers <- identifier[W[t[[j]]]]
+					temp <- paste(ifelse(j==1,
+							"",
+							temp),
+						paste("(",
+							paste(identifiers, collapse=", "),
+							")",
+							sep=""),
+						sep=ifelse(j==1, "", "; "))
+				}
+				similar[i] <- temp
 			}
 			
 			primers2 <- primers[pSets,]
 			primers2[, "digest_score"] <- sigs
 			primers2[, "fragments"] <- prods
 			primers2[, "enzyme"] <- names(enzymes)[e]
+			primers2[, "similar_signatures"] <- similar
 			
 			# combine with unrepresented primer sets
 			w <- which(!(seq_len(dim(primers)[1]) %in% pSets))

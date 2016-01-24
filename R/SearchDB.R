@@ -1,5 +1,5 @@
 SearchDB <- function(dbFile,
-	tblName="DNA",
+	tblName="Seqs",
 	identifier="",
 	type="XStringSet",
 	limit=-1,
@@ -9,6 +9,7 @@ SearchDB <- function(dbFile,
 	countOnly=FALSE,
 	removeGaps="none",
 	clause="",
+	processors=1,
 	verbose=TRUE) {
 	
 	# error checking
@@ -39,6 +40,17 @@ SearchDB <- function(dbFile,
 		stop("clause must be a character string.")
 	if (!is.logical(verbose))
 		stop("verbose must be a logical.")
+	if (!is.null(processors) && !is.numeric(processors))
+		stop("processors must be a numeric.")
+	if (!is.null(processors) && floor(processors)!=processors)
+		stop("processors must be a whole number.")
+	if (!is.null(processors) && processors < 1)
+		stop("processors must be at least 1.")
+	if (is.null(processors)) {
+		processors <- detectCores()
+	} else {
+		processors <- as.integer(processors)
+	}
 	if (type > 4 && type != 9 && removeGaps > 1)
 		stop(paste('removeGaps must be "none" when type is ', TYPES[type], '.', sep=''))
 	if (is.numeric(limit)) {
@@ -115,13 +127,15 @@ SearchDB <- function(dbFile,
 	
 	if (identifier!="")
 		searchExpression <- paste(searchExpression,
-			' where id like "',
+			' where identifier is "',
 			identifier,
 			'"',
 			sep="")
 	if (clause!="")
 		searchExpression <- paste(searchExpression,
-			clause)
+			ifelse(identifier=="", " where ", " and "),
+			clause,
+			sep="")
 	
 	if (!countOnly)
 		searchExpression <- paste(searchExpression, ")", sep="")
@@ -136,20 +150,40 @@ SearchDB <- function(dbFile,
 			limit)
 	
 	if (verbose)
-		cat("Search Expression:", strwrap(searchExpression), sep="\n")
+		cat("Search Expression:",
+			strwrap(searchExpression,
+					width=getOption("width") - 1L),
+				sep="\n")
 	
 	rs <- dbSendQuery(dbConn, searchExpression)
 	searchResult <- fetch(rs, n=-1)
 	dbClearResult(rs)
 	
+	bz_header <- as.raw(c(0x42, 0x5a, 0x68))
+	xz_header <- as.raw(c(0xfd, 0x37, 0x7a))
+	.decompress <- function(x) {
+		# choose decompression type
+		if (identical(x[1:3], bz_header)) {
+			memDecompress(x,
+				type="bzip2",
+				asChar=TRUE)
+		} else if (identical(x[1:3], xz_header)) {
+			memDecompress(x,
+				type="xz",
+				asChar=TRUE)
+		} else { # variable header
+			memDecompress(x,
+				type="gzip",
+				asChar=TRUE)
+		}
+	}
+	
 	if (countOnly) {
 		count <- as.integer(searchResult)
 	} else {
 		# decompress the resulting sequences
-		searchResult$sequence <- unlist(lapply(searchResult$sequence,
-			memDecompress,
-			type="gzip",
-			asChar=TRUE))
+		searchResult$sequence <- Codec(searchResult$sequence,
+			processors=processors)
 		
 		if (type==9 || type==10) {
 			# guess the input type of XStringSet
@@ -235,9 +269,7 @@ SearchDB <- function(dbFile,
 			myXStringSet <- BStringSet(searchResult$sequence)
 		} else {
 			searchResult$quality <- unlist(lapply(searchResult$quality,
-				memDecompress,
-				type="gzip",
-				asChar=TRUE))
+				.decompress))
 			if (type==5) {
 				myXStringSet <- QualityScaledDNAStringSet(DNAStringSet(searchResult$sequence),
 					PhredQuality(BStringSet(searchResult$quality)))

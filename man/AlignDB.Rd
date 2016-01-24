@@ -8,10 +8,10 @@ Merges the two separate sequence alignments in a database.  The aligned sequence
 }
 \usage{
 AlignDB(dbFile,
-        tblName = "DNA",
+        tblName = "Seqs",
         identifier = "",
         type = "DNAStringSet",
-        add2tbl = "DNA",
+        add2tbl = "Seqs",
         batchSize = 10000,
         perfectMatch = 5,
         misMatch = 0,
@@ -21,8 +21,9 @@ AlignDB(dbFile,
         terminalGap = -5,
         normPower = 1,
         substitutionMatrix = NULL,
-        processors = NULL,
-        verbose = TRUE)
+        processors = 1,
+        verbose = TRUE,
+        \dots)
 }
 \arguments{
   \item{dbFile}{
@@ -68,10 +69,13 @@ Numeric giving the exponent that controls the degree of normalization applied to
 Either a substitution matrix representing the substitution scores for an alignment or the name of the amino acid substitution matrix to use in alignment.  The latter may be one of the following:  ``BLOSUM45'', ``BLOSUM50'', ``BLOSUM62'', ``BLOSUM80'', ``BLOSUM100'', ``PAM30'', ``PAM40'', ``PAM70'', ``PAM120'', ``PAM250'', or ``MIQS''.  The default (NULL) will use the \code{perfectMatch} and \code{misMatch} penalties for DNA/RNA or ``MIQS'' for AA.  (See examples section below.)
 }
   \item{processors}{
-The number of processors to use, or \code{NULL} (the default) for all available processors.
+The number of processors to use, or \code{NULL} to automatically detect and use all available processors.
 }
   \item{verbose}{
 Logical indicating whether to display progress.
+}
+  \item{\dots}{
+Further arguments to be passed directly to \code{\link{Codec}}.
 }
 }
 \details{

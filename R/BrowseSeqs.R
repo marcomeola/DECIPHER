@@ -1,8 +1,3 @@
-BrowseSequences <- function(...) {
-	.Defunct("BrowseSeqs",
-		msg="'BrowseSequences' is defunct.\nUse 'BrowseSeqs' instead.\nSee help(\"DECIPHER-defunct\").")
-}
-
 BrowseSeqs <- function(myXStringSet,
 	htmlFile=paste(tempdir(),"/myXStringSet.html",sep=""),
 	openURL=interactive(),

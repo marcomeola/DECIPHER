@@ -1053,7 +1053,7 @@ DesignProbes <- function(tiles,
 			probes <- probes[-w,]
 		d <- dim(probes)[1]
 		if (d==0) {
-			warning("No probes met the specified constraints: ",id)
+			warning("No probes met the specified constraints: ", id)
 			next
 		}
 		
@@ -1095,7 +1095,7 @@ DesignProbes <- function(tiles,
 			probes <- probes[-w,]
 		d <- dim(probes)[1]
 		if (d==0) {
-			warning("No probes met the specified constraints: ",id)
+			warning("No probes met the specified constraints: ", id)
 			next
 		}
 		
@@ -1250,7 +1250,7 @@ DesignProbes <- function(tiles,
 					probes <- probes[-w,]
 				d <- dim(probes)[1]
 				if (d==0) {
-					warning("All probes were below the worstScore: ",id)
+					warning("All probes were below the worstScore: ", id)
 					next
 				}
 			}

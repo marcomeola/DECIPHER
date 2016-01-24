@@ -33,7 +33,7 @@ DesignPrimers(tiles,
               ragged5Prime = TRUE,
               taqEfficiency = TRUE,
               induceMismatch = FALSE,
-              processors = NULL,
+              processors = 1,
               verbose = TRUE)
 }
 \arguments{
@@ -116,7 +116,7 @@ Logical determining whether to make use of elongation efficiency and maxDistance
 Logical or integer specifying whether to induce a mismatch in the primer with the template DNA.  If \code{TRUE} then a mismatch is induced at the 6th primer position.  If an integer value is provided between 2 and 6 then a mismatch is induced in that primer position, where the 3'-end is defined as position 1.
 }
   \item{processors}{
-The number of processors to use, or \code{NULL} (the default) for all available processors.
+The number of processors to use, or \code{NULL} to automatically detect and use all available processors.
 }
   \item{verbose}{
 Logical indicating whether to display progress.
@@ -159,7 +159,7 @@ To install OligoArrayAux from the downloaded source folder on Unix-like platform
 \examples{
 db <- system.file("extdata", "Bacteria_175seqs.sqlite", package="DECIPHER")
 # not run (must have OligoArrayAux installed first):
-\dontrun{tiles <- TileSeqs(db, identifier=c("Acinetobacter","Pseudomonas"))}
-\dontrun{primers <- DesignPrimers(tiles, identifier="Acinetobacter", start=280, end=420,
+\dontrun{tiles <- TileSeqs(db, identifier=c("Enterobacteriales","Pseudomonadales"))}
+\dontrun{primers <- DesignPrimers(tiles, identifier="Enterobacteriales", start=280, end=420,
            minProductSize=50, numPrimerSets=1)}
 }

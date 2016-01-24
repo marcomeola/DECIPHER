@@ -76,7 +76,6 @@ SEXP indexByContig(SEXP starts, SEXP ends, SEXP order, SEXP index, SEXP widths)
 	int *w = INTEGER(widths);
 	int *i = INTEGER(index);
 	int l = length(starts);
-	int n = length(widths);
 	
 	SEXP ans;
 	PROTECT(ans = allocVector(INTSXP, l));
@@ -92,7 +91,7 @@ SEXP indexByContig(SEXP starts, SEXP ends, SEXP order, SEXP index, SEXP widths)
 	
 	// index sequences by contig
 	k = 1;
-	for (j = j; j < l; j++) {
+	for (; j < l; j++) { // j = j
 		p = o[j] - 1;
 		while (s[p] > w[k]) {
 			k++;

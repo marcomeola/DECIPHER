@@ -4,7 +4,7 @@
 	P,
 	ions,
 	minOverlap=6,
-	processors=NULL) {
+	processors=1) {
 	
 	RT <- .0019871*(273.15 + temp)
 	
@@ -129,7 +129,7 @@ DesignPrimers <- function(tiles,
 	ragged5Prime=TRUE,
 	taqEfficiency=TRUE,
 	induceMismatch=FALSE,
-	processors=NULL,
+	processors=1,
 	verbose=TRUE) {
 	
 	# error checking
@@ -630,7 +630,7 @@ DesignPrimers <- function(tiles,
 			primers <- primers[-w,]
 		d <- dim(primers)[1]
 		if (d==0) {
-			warning("No primers met the specified constraints: ",id)
+			warning("No primers met the specified constraints: ", id)
 			next
 		}
 		if (verbose) {
@@ -983,7 +983,7 @@ DesignPrimers <- function(tiles,
 					primers <- primers[-w,]
 				d <- dim(primers)[1]
 				if (d==0) {
-					warning("All primers were below the worstScore: ",id)
+					warning("All primers were below the worstScore: ", id)
 					next
 				}
 			}

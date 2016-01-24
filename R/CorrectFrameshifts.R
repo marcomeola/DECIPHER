@@ -10,7 +10,7 @@ CorrectFrameshifts <- function(myXStringSet,
 	geneticCode=GENETIC_CODE,
 	substitutionMatrix="MIQS",
 	verbose=TRUE,
-	processors=NULL) {
+	processors=1) {
 	
 	# error checking
 	if (!is(myXStringSet, "DNAStringSet") && !is(myXStringSet, "RNAStringSet"))

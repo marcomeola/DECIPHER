@@ -1,6 +1,6 @@
 DB2Seqs <- function(file,
 	dbFile,
-	tblName="DNA",
+	tblName="Seqs",
 	identifier="",
 	type="BStringSet",
 	limit=-1,
@@ -98,13 +98,15 @@ DB2Seqs <- function(file,
 	
 	if (identifier!="")
 		searchExpression <- paste(searchExpression,
-			' where id like "',
+			' where identifier is "',
 			identifier,
 			'"',
 			sep="")
 	if (clause!="")
 		searchExpression <- paste(searchExpression,
-			clause)
+			ifelse(identifier=="", " where ", " and "),
+			clause,
+			sep="")
 	
 	if (limit > 0) {
 		searchExpression1 <- paste(searchExpression,
@@ -133,6 +135,25 @@ DB2Seqs <- function(file,
 		searchExpression <- paste(searchExpression,
 			'order by',
 			orderBy)
+	
+	bz_header <- as.raw(c(0x42, 0x5a, 0x68))
+	xz_header <- as.raw(c(0xfd, 0x37, 0x7a))
+	.decompress <- function(x) {
+		# choose decompression type
+		if (identical(x[1:3], bz_header)) {
+			memDecompress(x,
+				type="bzip2",
+				asChar=TRUE)
+		} else if (identical(x[1:3], xz_header)) {
+			memDecompress(x,
+				type="xz",
+				asChar=TRUE)
+		} else { # variable header
+			memDecompress(x,
+				type="gzip",
+				asChar=TRUE)
+		}
+	}
 	
 	if (verbose)
 		pBar <- txtProgressBar(style=3)
@@ -180,11 +201,7 @@ DB2Seqs <- function(file,
 		searchResult2 <- searchResult2[m,]
 		
 		# decompress the resulting sequences
-		searchResult2$sequence <- lapply(searchResult2$sequence,
-			memDecompress,
-			type="gzip",
-			asChar=TRUE)
-		searchResult2$sequence <- paste(searchResult2$sequence)
+		searchResult2$sequence <- Codec(searchResult2$sequence)
 		
 		if (type!=4 && type!=8) {
 			# replace characters that are not in the DNA_ALPHABET
@@ -215,11 +232,8 @@ DB2Seqs <- function(file,
 		
 		if (type > 4) {
 			# decompress the resulting qualities
-			searchResult2$quality <- lapply(searchResult2$quality,
-				memDecompress,
-				type="gzip",
-				asChar=TRUE)
-			searchResult2$quality <- paste(searchResult2$quality)
+			searchResult2$quality <- unlist(lapply(searchResult2$quality,
+				.decompress))
 		}
 		
 		if (type==1 || type==5) {

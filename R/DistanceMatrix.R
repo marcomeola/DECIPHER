@@ -3,7 +3,7 @@ DistanceMatrix <- function(myXStringSet,
 	penalizeGapLetterMatches=TRUE,
 	penalizeGapGapMatches=FALSE,
 	correction="none",
-	processors=NULL,
+	processors=1,
 	verbose=TRUE) {
 	
 	# initialize variables

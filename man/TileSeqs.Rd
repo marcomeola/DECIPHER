@@ -8,13 +8,14 @@ Creates a set of tiles that represent each group of sequences in the database fo
 }
 \usage{
 TileSeqs(dbFile,
-         tblName = "DNA",
+         tblName = "Seqs",
          identifier = "",
          minLength = 26,
          maxLength = 27,
          maxTilePermutations = 10,
          minCoverage = 0.9,
          add2tbl = FALSE,
+         processors = 1,
          verbose = TRUE,
          \dots)
 }
@@ -42,6 +43,9 @@ Numeric providing the fraction of coverage that is desired for each target site 
 }
   \item{add2tbl}{
 Logical or a character string specifying the table name in which to add the result.
+}
+  \item{processors}{
+The number of processors to use, or \code{NULL} to automatically detect and use all available processors.
 }
   \item{verbose}{
 Logical indicating whether to display progress.
@@ -73,5 +77,5 @@ If \code{add2tbl} is \code{TRUE} then the tiles will be added to the database ta
 }
 \examples{
 db <- system.file("extdata", "Bacteria_175seqs.sqlite", package="DECIPHER")
-tiles <- TileSeqs(db, identifier="Pseudomonas")
+tiles <- TileSeqs(db, identifier="Pseudomonadales")
 }

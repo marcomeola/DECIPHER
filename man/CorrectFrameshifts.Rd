@@ -19,7 +19,7 @@ CorrectFrameshifts(myXStringSet,
                    geneticCode = GENETIC_CODE,
                    substitutionMatrix = "MIQS",
                    verbose = TRUE,
-                   processors = NULL)
+                   processors = 1)
 }
 \arguments{
   \item{myXStringSet}{
@@ -59,7 +59,7 @@ Either a substitution matrix representing the substitution scores for matching t
 Logical indicating whether to display progress.
 }
   \item{processors}{
-The number of processors to use, or \code{NULL} (the default) for all available processors.
+The number of processors to use, or \code{NULL} to automatically detect and use all available processors.
 }
 }
 \details{

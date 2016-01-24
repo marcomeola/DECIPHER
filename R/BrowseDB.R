@@ -1,7 +1,7 @@
 BrowseDB <- function(dbFile,
 	htmlFile=paste(tempdir(),"/db.html",sep=""),
 	openURL=interactive(),
-	tblName="DNA",
+	tblName="Seqs",
 	identifier="",
 	limit=-1,
 	orderBy="row_names",
@@ -60,13 +60,15 @@ BrowseDB <- function(dbFile,
 		sep="")
 	if (identifier!="")
 		searchExpression <- paste(searchExpression,
-			' where id like "',
+			' where identifier is "',
 			identifier,
 			'"',
 			sep="")
 	if (clause!="")
 		searchExpression <- paste(searchExpression,
-			clause)
+			ifelse(identifier=="", " where ", " and "),
+			clause,
+			sep="")
 	if (orderBy!="row_names") # default ordering is row_names
 		searchExpression <- paste(searchExpression,
 			'order by',
@@ -76,21 +78,25 @@ BrowseDB <- function(dbFile,
 	count <- as.integer(fetch(rs, n=-1))
 	dbClearResult(rs)
 	
-	if (is.na(count) || count==0)
-		stop("No results returned!")
 	# count is the numer of rows in the table body
-	if (count > limit && # use limit
-		limit > 0 && # limit is positive
-		!is.character(limit)) # no offset
+	if (is.character(limit)) {
+		temp <- as.numeric(strsplit(limit, ",", fixed=TRUE)[[1]])
+		count <- min(count - temp[1], temp[2])
+	} else if (count > limit && # use limit
+		limit > 0) { # limit is positive
 		count <- limit
+	}
+	if (is.na(count) || count <= 0)
+		stop("No results matched the specified constraints.")
 	html <- character(count)
 	
 	# gives the table rows alternating colors
 	for (j in 1:count) {
-		if (j%%2==1)
+		if ((j %% 2)==1) {
 			html[j] <- "<tr class=\"row1\">"
-		else
+		} else {
 			html[j] <- "<tr class=\"row2\">"
+		}
 	}
 	
 	# gets all the fields available
@@ -115,7 +121,7 @@ BrowseDB <- function(dbFile,
 			sep="")
 		if (identifier!="")
 			searchExpression <- paste(searchExpression,
-				' where id like "',
+				' where identifier is "',
 				identifier,
 				'"',
 				sep="")
@@ -139,6 +145,9 @@ BrowseDB <- function(dbFile,
 		# replace missing values
 		searchResult[is.na(searchResult)] <- "NULL"
 		
+		# replace newlines with html breaks
+		searchResult[, 1] <- gsub("\n", "<br>", searchResult[, 1], useBytes=TRUE, fixed=TRUE)
+		
 		if (max(width(searchResult[,1])) > w)
 			w <- max(width(searchResult[,1]))
 		
@@ -152,10 +161,11 @@ BrowseDB <- function(dbFile,
 		
 		# use the multiplier to convert chars to pixels
 		# there are two multipliers for better looks
-		if (w > 10)
+		if (w > 10) {
 			multiplier <- 9
-		else
+		} else {
 			multiplier <- 10
+		}
 		
 		# build table header row
 		header <- paste(header,

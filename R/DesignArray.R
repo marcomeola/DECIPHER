@@ -11,7 +11,7 @@ DesignArray <- function(myDNAStringSet,
 	minMeltingFormamide=15,
 	maxMeltingFormamide=20,
 	minScore=-1e12,
-	processors=NULL,
+	processors=1,
 	verbose=TRUE) {
 	
 	# error checking
@@ -149,7 +149,7 @@ DesignArray <- function(myDNAStringSet,
 			return("")
 		}
 	}
-	mismatches <- unlist(apply(probes[[4]][w,], 1, f, names(myDNAStringSet)))
+	mismatches <- unlist(apply(probes[[4]][w,, drop=FALSE], 1, f, names(myDNAStringSet)))
 	
 	p <- data.frame(name=I(names(myDNAStringSet)[probes[[1]][w,1] + 1]),
 		start=I(probes[[1]][w,2]),

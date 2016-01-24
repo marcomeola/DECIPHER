@@ -118,11 +118,11 @@ for (i in seq_len(length(N0))) {
 		if (j==0) {
 			timings0[i] <- system.time(pairwiseAlignment(string1, string2))[["user.self"]]
 		} else if (j==1) {
-			timings1[i] <- system.time(AlignProfiles(string1, string2, restrict=-Inf, anchor=NA, processors=1))[["user.self"]]
+			timings1[i] <- system.time(AlignProfiles(string1, string2, restrict=-Inf, anchor=NA))[["user.self"]]
 		} else if (j==2) {
-			timings2[i] <- system.time(AlignProfiles(string1, string2, anchor=NA, processors=1))[["user.self"]]
+			timings2[i] <- system.time(AlignProfiles(string1, string2, anchor=NA))[["user.self"]]
 		} else { # j == 3
-			timings3[i] <- system.time(AlignProfiles(string1, string2, processors=1))[["user.self"]]
+			timings3[i] <- system.time(AlignProfiles(string1, string2))[["user.self"]]
 		}
 	}
 }
@@ -137,7 +137,11 @@ plot(N0, timings0,
 	xlab = "Sequence length (nucleotides)",
 	ylab = "Elapsed Time (sec.)",
 	main = "",
-	ylim=c(range(timings0, timings1, timings2, timings3)),
+	ylim=c(range(timings0,
+		timings1,
+		timings2,
+		timings3,
+		predict(c2, data.frame(N2=46340)))),
 	xlim=c(0, max(N3)))
 points(N, predict(c0,
 		data.frame(N0 = N)),

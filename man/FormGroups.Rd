@@ -8,7 +8,7 @@ Agglomerates sequences into groups within a certain size range based on taxonomi
 }
 \usage{
 FormGroups(dbFile,
-           tblName = "DNA",
+           tblName = "Seqs",
            goalSize = 1000,
            minGroupSize = 500,
            maxGroupSize = 10000,
@@ -39,12 +39,12 @@ Logical indicating whether to print database queries and other information.
 }
 }
 \details{
-\code{FormGroups} uses the ``rank'' field in the \code{dbFile} table to group sequences with similar taxonomic rank.  Rank information must be present in the \code{tblName}, such as that created when importing sequences from a GenBank formatted file.  The rank information must not contain repeated taxonomic names belonging to different lineages.
+\code{FormGroups} uses the ``rank'' field in the \code{dbFile} table to group sequences with similar taxonomic rank.  Rank information must be present in the \code{tblName}, such as that created by default when importing sequences from a GenBank formatted file.  The rank information must not contain repeated taxonomic names belonging to different lineages.
 
 Beginning with the least common ranks, the algorithm agglomerates groups with similar ranks until the \code{goalSize} is reached.  If the group size is below \code{minGroupSize} then further agglomeration is attempted with a larger group.  If additional agglomeration results in a group larger than \code{maxGroupSize} then the agglomeration is undone so that the group is smaller.
 }
 \value{
-Returns a \code{data.frame} of rank and id for each group.  If \code{add2tbl} is not \code{FALSE} then the \code{tblName} is updated with the group as the identifier.
+A \code{data.frame} with the \code{rank} and corresponding identifier as \code{identifier}.  The \code{origin} gives the \code{rank} preceding the \code{identifier}.  If \code{add2tbl} is not \code{FALSE} then the ``identifier'' and ``origin'' columns are updated in \code{dbFile}.
 }
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}
@@ -55,4 +55,5 @@ Erik Wright \email{DECIPHER@cae.wisc.edu}
 \examples{
 db <- system.file("extdata", "Bacteria_175seqs.sqlite", package="DECIPHER")
 g <- FormGroups(db, goalSize=10, minGroupSize=5, maxGroupSize=20)
+head(g)
 }

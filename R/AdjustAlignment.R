@@ -8,7 +8,7 @@ AdjustAlignment <- function(myXStringSet,
 	shiftPenalty=-0.2,
 	threshold=0.1,
 	weight=1,
-	processors=NULL) {
+	processors=1) {
 	
 	# error checking
 	type <- switch(class(myXStringSet),

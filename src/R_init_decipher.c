@@ -69,10 +69,10 @@ static const R_CallMethodDef callMethods[] = { // method call, pointer, num args
 	{"matchOrderDual", (DL_FUNC) &matchOrderDual, 3},
 	{"boundedMatches", (DL_FUNC) &boundedMatches, 3},
 	{"gcContent", (DL_FUNC) &gcContent, 3},
-	{"intDist", (DL_FUNC) &intDist, 6},
+	{"intDist", (DL_FUNC) &intDist, 7},
 	{"meltPolymer", (DL_FUNC) &meltPolymer, 4},
 	{"insertGaps", (DL_FUNC) &insertGaps, 5},
-	{"intMatchOnce", (DL_FUNC) &intMatchOnce, 2},
+	{"intMatchOnce", (DL_FUNC) &intMatchOnce, 4},
 	{"expandAmbiguities", (DL_FUNC) &expandAmbiguities, 2},
 	{"colScoresAA", (DL_FUNC) &colScoresAA, 7},
 	{"colScores", (DL_FUNC) &colScores, 7},
@@ -89,7 +89,7 @@ static const R_CallMethodDef callMethods[] = { // method call, pointer, num args
 	{"composition", (DL_FUNC) &composition, 1},
 	{"matchListsDual", (DL_FUNC) &matchListsDual, 5},
 	{"findFrameshifts", (DL_FUNC) &findFrameshifts, 13},
-	{"radixOrder", (DL_FUNC) &radixOrder, 1},
+	{"radixOrder", (DL_FUNC) &radixOrder, 2},
 	{"fillOverlaps", (DL_FUNC) &fillOverlaps, 2},
 	{"indexByContig", (DL_FUNC) &indexByContig, 5},
 	{"chainSegments", (DL_FUNC) &chainSegments, 17},
@@ -98,6 +98,11 @@ static const R_CallMethodDef callMethods[] = { // method call, pointer, num args
 	{"positionWeightMatrix", (DL_FUNC) &positionWeightMatrix, 4},
 	{"extendSegments", (DL_FUNC) &extendSegments, 13},
 	{"maskRepeats", (DL_FUNC) &maskRepeats, 5},
+	{"firstSeqsPosEqual", (DL_FUNC) &firstSeqsPosEqual, 7},
+	{"collapse", (DL_FUNC) &collapse, 3},
+	{"compress", (DL_FUNC) &compress, 4},
+	{"decompress", (DL_FUNC) &decompress, 2},
+	{"extractFields", (DL_FUNC) &extractFields, 4},
 	{NULL, NULL, 0}
 };
 

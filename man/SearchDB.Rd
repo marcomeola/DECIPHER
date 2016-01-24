@@ -8,7 +8,7 @@ Returns the set of sequences meeting the search criteria.
 }
 \usage{
 SearchDB(dbFile,
-         tblName = "DNA",
+         tblName = "Seqs",
          identifier = "",
          type = "XStringSet",
          limit = -1,
@@ -18,6 +18,7 @@ SearchDB(dbFile,
          countOnly = FALSE,
          removeGaps = "none",
          clause = "",
+         processors = 1,
          verbose = TRUE)
 }
 \arguments{
@@ -52,7 +53,10 @@ Logical specifying whether to return only the number of sequences.
 Determines how gaps ("-" or "." characters) are removed in the sequences.  This should be (an unambiguous abbreviation of) one of \code{"none"}, \code{"all"} or \code{"common"}.
 }
   \item{clause}{
-An optional character string to append to the query as a clause.
+An optional character string to append to the query as part of a ``where clause''.
+}
+  \item{processors}{
+The number of processors to use, or \code{NULL} to automatically detect and use all available processors.
 }
   \item{verbose}{
 Logical indicating whether to display queries as they are sent to the database.
@@ -80,5 +84,5 @@ dna <- SearchDB(db, orderBy="random()", limit=1)
 dna <- SearchDB(db, identifier="Mycobacterium", removeGaps="all")
 # provide a more complex query:
 dna <- SearchDB(db, nameBy="description", orderBy="bases", removeGaps="common",
-                clause="where nonbases is 0")
+                clause="nonbases is 0")
 }

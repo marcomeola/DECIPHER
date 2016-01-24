@@ -2,7 +2,7 @@ StaggerAlignment <- function(myXStringSet,
 	tree=NULL,
 	threshold=3,
 	fullLength=FALSE,
-	processors=NULL,
+	processors=1,
 	verbose=TRUE) {
 	
 	# error checking

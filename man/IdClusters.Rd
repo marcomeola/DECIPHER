@@ -14,7 +14,7 @@ IdClusters(myDistMatrix = NULL,
            asDendrogram = FALSE,
            myXStringSet = NULL,
            model = MODELS,
-           processors = NULL,
+           processors = 1,
            verbose = TRUE)
 }
 \arguments{
@@ -40,7 +40,7 @@ If \code{method} is \code{"ML"}, the \code{DNAStringSet} or \code{RNAStringSet} 
 One or more of the available \code{MODELS} of DNA evolution.  Only applicable if \code{method} is \code{"ML"}.
 }
   \item{processors}{
-The number of processors to use, or \code{NULL} (the default) for all available processors.
+The number of processors to use, or \code{NULL} to automatically detect and use all available processors.
 }
   \item{verbose}{
 Logical indicating whether to display progress.

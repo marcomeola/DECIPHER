@@ -15,7 +15,7 @@ AlignProfiles <- function(pattern,
 	normPower=1,
 	substitutionMatrix=NULL,
 	structureMatrix=NULL,
-	processors=NULL) {
+	processors=1) {
 	
 	# error checking
 	type <- switch(class(pattern),
@@ -262,10 +262,10 @@ AlignProfiles <- function(pattern,
 	f <- function(p.profile, s.profile, tGaps=terminalGap) {
 		p.d <- dim(p.profile)[2]
 		s.d <- dim(s.profile)[2]
-		size <- p.d*s.d
+		size <- as.numeric(p.d)*as.numeric(s.d)
 		if (size > 2147483647) # maximum when indexing by signed integer
 			stop(paste("Alignment larger (",
-				size,
+				format(size, big.mark=","),
 				") than the maximum allowable size (2,147,483,647).",
 				sep=""))
 		if (p.d < 100 || s.d < 100) {
@@ -438,11 +438,23 @@ AlignProfiles <- function(pattern,
 					anchors[3, n], anchors[4, n],
 					type,
 					PACKAGE="DECIPHER")) {
-					temp <- f(p.profile[, anchors[1, n]:anchors[2, n], drop=FALSE],
-						s.profile[, anchors[3, n]:anchors[4, n], drop=FALSE],
-						tGaps=c(-1e9, -1e9))
-					inserts[[1]] <- c(inserts[[1]], temp[[1]] + anchors[1, n] - 1L)
-					inserts[[3]] <- c(inserts[[3]], temp[[3]] + anchors[3, n] - 1L)
+					temp <- .Call("firstSeqsPosEqual",
+						pattern,
+						subject,
+						anchors[1, n], anchors[2, n],
+						anchors[3, n], anchors[4, n],
+						type,
+						PACKAGE="DECIPHER")
+					if (length(temp)==4) {
+						inserts[[1]] <- c(inserts[[1]], temp[[1]])
+						inserts[[3]] <- c(inserts[[3]], temp[[3]])
+					} else { # number of sites differs
+						temp <- f(p.profile[, anchors[1, n]:anchors[2, n], drop=FALSE],
+							s.profile[, anchors[3, n]:anchors[4, n], drop=FALSE],
+							tGaps=c(-1e9, -1e9))
+						inserts[[1]] <- c(inserts[[1]], temp[[1]] + anchors[1, n] - 1L)
+						inserts[[3]] <- c(inserts[[3]], temp[[3]] + anchors[3, n] - 1L)
+					}
 					inserts[[2]] <- c(inserts[[2]], temp[[2]])
 					inserts[[4]] <- c(inserts[[4]], temp[[4]])
 				}

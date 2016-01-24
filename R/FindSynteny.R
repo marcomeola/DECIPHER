@@ -1,5 +1,5 @@
 FindSynteny <- function(dbFile,
-	tblName="DNA",
+	tblName="Seqs",
 	identifier="",
 	useFrames=TRUE,
 	alphabet=c("MF", "ILV", "A", "C", "WYQHP", "G", "TSN", "RK", "DE"),
@@ -13,6 +13,7 @@ FindSynteny <- function(dbFile,
 	minScore=200,
 	dropScore=-100,
 	maskRepeats=TRUE,
+	processors=1,
 	verbose=TRUE) {
 	
 	# error checking
@@ -58,6 +59,17 @@ FindSynteny <- function(dbFile,
 		stop("maskRepeats must be a logical.")
 	if (!is.logical(verbose))
 		stop("verbose must be a logical.")
+	if (!is.null(processors) && !is.numeric(processors))
+		stop("processors must be a numeric.")
+	if (!is.null(processors) && floor(processors)!=processors)
+		stop("processors must be a whole number.")
+	if (!is.null(processors) && processors < 1)
+		stop("processors must be at least 1.")
+	if (is.null(processors)) {
+		processors <- detectCores()
+	} else {
+		processors <- as.integer(processors)
+	}
 	
 	if (verbose)
 		time.1 <- Sys.time()
@@ -76,8 +88,8 @@ FindSynteny <- function(dbFile,
 	}
 	
 	ids <- dbGetQuery(dbConn,
-		paste("select distinct id from",
-			tblName))$id
+		paste("select distinct identifier from",
+			tblName))$identifier
 	if (identifier[1]=="") {
 		identifier <- ids
 	} else {
@@ -203,6 +215,7 @@ FindSynteny <- function(dbFile,
 			identifier=identifier[g1],
 			type="DNAStringSet",
 			removeGaps="all",
+			processors=processors,
 			verbose=FALSE)
 		w1 <- width(s1)
 		INDEX1 <- seq_along(s1)
@@ -235,6 +248,7 @@ FindSynteny <- function(dbFile,
 				identifier=identifier[g2],
 				type="DNAStringSet",
 				removeGaps="all",
+				processors=processors,
 				verbose=FALSE)
 			w2 <- width(s2)
 			INDEX2 <- seq_along(s2)
@@ -303,23 +317,25 @@ FindSynteny <- function(dbFile,
 			
 			O1 <- .Call("radixOrder",
 				E1,
+				0L,
 				PACKAGE="DECIPHER")
 			o2 <- .Call("radixOrder",
 				e2,
+				0L,
 				PACKAGE="DECIPHER")
 			
 			# match E1 to e2
-			m <- integer(length(E1))
-			m[O1] <- o2[.Call("intMatchOnce",
-				E1[O1],
-				e2[o2],
-				PACKAGE="DECIPHER")]
+			m <- .Call("intMatchOnce",
+				E1,
+				e2,
+				O1,
+				o2,
+				PACKAGE="DECIPHER")
 			.Call("fillOverlaps", m, N, PACKAGE="DECIPHER")
-			d <- diff(m)
-			r <- Rle(d)
-			w <- which(runValue(r)==1)
-			widths <- runLength(r)[w] + N
-			ends <- cumsum(runLength(r))[w] + N
+			r <- rle(diff(m))
+			w <- which(r$values==1)
+			widths <- r$lengths[w] + N
+			ends <- cumsum(r$lengths)[w] + N
 			
 			ends1 <- ends
 			starts1 <- ends1 - widths + 1L
@@ -335,6 +351,7 @@ FindSynteny <- function(dbFile,
 				WIDTH1)
 			o <- .Call("radixOrder",
 				starts2,
+				1L,
 				PACKAGE="DECIPHER")
 			index2 <- .Call("indexByContig",
 				starts2,
@@ -386,6 +403,7 @@ FindSynteny <- function(dbFile,
 					
 					o1 <- .Call("radixOrder",
 						e1,
+						0L,
 						PACKAGE="DECIPHER")
 					
 					for (rF2 in 1:3) {
@@ -422,20 +440,21 @@ FindSynteny <- function(dbFile,
 						
 						o2 <- .Call("radixOrder",
 							e2,
+							0L,
 							PACKAGE="DECIPHER")
 						
 						# match e1 to e2
-						m <- integer(length(e1))
-						m[o1] <- o2[.Call("intMatchOnce",
-							e1[o1],
-							e2[o2],
-							PACKAGE="DECIPHER")]
+						m <- .Call("intMatchOnce",
+							e1,
+							e2,
+							o1,
+							o2,
+							PACKAGE="DECIPHER")
 						.Call("fillOverlaps", m, N_AA, PACKAGE="DECIPHER")
-						d <- diff(m)
-						r <- Rle(d)
-						w <- which(runValue(r)==1)
-						widths <- runLength(r)[w] + N_AA
-						ends <- cumsum(runLength(r))[w] + N_AA
+						r <- rle(diff(m))
+						w <- which(r$values==1)
+						widths <- r$lengths[w] + N_AA
+						ends <- cumsum(r$lengths)[w] + N_AA
 						
 						ends1 <- ends
 						starts1 <- ends1 - widths + 1L
@@ -457,6 +476,7 @@ FindSynteny <- function(dbFile,
 							width1)
 						o <- .Call("radixOrder",
 							starts2,
+							1L,
 							PACKAGE="DECIPHER")
 						index2 <- .Call("indexByContig",
 							starts2,
@@ -546,7 +566,7 @@ FindSynteny <- function(dbFile,
 			result1 <- matrix(c(x.i[used],
 					y.i[used],
 					rep(0L, length(used)),
-					weights[used],
+					x.e[used] - x.s[used] + 1L,
 					x.s[used],
 					y.s[used],
 					x.f[used],
@@ -596,20 +616,21 @@ FindSynteny <- function(dbFile,
 			
 			o2 <- .Call("radixOrder",
 				e2,
+				0L,
 				PACKAGE="DECIPHER")
 			
 			# match E1 to e2
-			m <- integer(length(E1))
-			m[O1] <- o2[.Call("intMatchOnce",
-				E1[O1],
-				e2[o2],
-				PACKAGE="DECIPHER")]
+			m <- .Call("intMatchOnce",
+				E1,
+				e2,
+				O1,
+				o2,
+				PACKAGE="DECIPHER")
 			.Call("fillOverlaps", m, N, PACKAGE="DECIPHER")
-			d <- diff(m)
-			r <- Rle(d)
-			w <- which(runValue(r)==1)
-			widths <- runLength(r)[w] + N
-			ends <- cumsum(runLength(r))[w] + N
+			r <- rle(diff(m))
+			w <- which(r$values==1)
+			widths <- r$lengths[w] + N
+			ends <- cumsum(r$lengths)[w] + N
 			
 			ends1 <- ends
 			starts1 <- ends1 - widths + 1L
@@ -625,6 +646,7 @@ FindSynteny <- function(dbFile,
 				WIDTH1)
 			o <- .Call("radixOrder",
 				starts2,
+				1L,
 				PACKAGE="DECIPHER")
 			index2 <- .Call("indexByContig",
 				starts2,
@@ -682,6 +704,7 @@ FindSynteny <- function(dbFile,
 					
 					o1 <- .Call("radixOrder",
 						e1,
+						0L,
 						PACKAGE="DECIPHER")
 					
 					for (rF2 in 1:3) {
@@ -718,20 +741,21 @@ FindSynteny <- function(dbFile,
 						
 						o2 <- .Call("radixOrder",
 							e2,
+							0L,
 							PACKAGE="DECIPHER")
 						
 						# match e1 to e2
-						m <- integer(length(e1))
-						m[o1] <- o2[.Call("intMatchOnce",
-							e1[o1],
-							e2[o2],
-							PACKAGE="DECIPHER")]
+						m <- .Call("intMatchOnce",
+							e1,
+							e2,
+							o1,
+							o2,
+							PACKAGE="DECIPHER")
 						.Call("fillOverlaps", m, N_AA, PACKAGE="DECIPHER")
-						d <- diff(m)
-						r <- Rle(d)
-						w <- which(runValue(r)==1)
-						widths <- runLength(r)[w] + N_AA
-						ends <- cumsum(runLength(r))[w] + N_AA
+						r <- rle(diff(m))
+						w <- which(r$values==1)
+						widths <- r$lengths[w] + N_AA
+						ends <- cumsum(r$lengths)[w] + N_AA
 						
 						ends1 <- ends
 						starts1 <- ends1 - widths + 1L
@@ -753,6 +777,7 @@ FindSynteny <- function(dbFile,
 							width1)
 						o <- .Call("radixOrder",
 							starts2,
+							1L,
 							PACKAGE="DECIPHER")
 						index2 <- .Call("indexByContig",
 							starts2,
@@ -854,7 +879,7 @@ FindSynteny <- function(dbFile,
 			result2 <- matrix(c(x.i[used],
 					y.i[used],
 					rep(1L, length(used)),
-					weights[used],
+					x.e[used] - x.s[used] + 1L,
 					x.s[used],
 					y.e[used],
 					x.f[used],
@@ -947,30 +972,42 @@ FindSynteny <- function(dbFile,
 								remove[o[i]] <- TRUE
 							}
 						} else {
-							# partly overlapping
-							chain_i <- chains[[o[i]]]
+							# remove partial overlap from last
 							chain_l <- chains[[o[last]]]
-							over_i <- which(ss1[chain_i] <= ends1[o[last]])
-							over_l <- which(ee1[chain_l] >= starts1[o[i]])
-							if (length(over_i)==length(chain_i)) {
-								remove[o[i]] <- TRUE
-							} else if (length(over_l)==length(chain_l)) {
+							over_l <- which(ss1[chain_l] >= (starts1[o[i]] - 2)) # min anchor width of 2
+							if (length(over_l)==length(chain_l)) {
 								remove[o[last]] <- TRUE
 								last <- i
-							} else { # remove overlapping hits from end of last
+								next
+							} else if (length(over_l) > 0) {
+								# remove completely overlapping hits
 								hits[[length(hits) + 1L]] <- chain_l[over_l]
 								chain_l <- chain_l[-over_l]
 								chains[[o[last]]] <- chain_l
-								results[g2, g1][[1]][o[last], "end1"] <- ee1[chain_l[length(chain_l)]]
-								if (strand[o[last]]==0) {
-									ends2[o[last]] <- ee2[chain_l[length(chain_l)]]
-									results[g2, g1][[1]][o[last], "end2"] <- ends2[o[last]]
-								} else {
-									starts2[o[last]] <- ss2[chain_l[length(chain_l)]]
-									results[g2, g1][[1]][o[last], "start2"] <- starts2[o[last]]
-								}
-								last <- i
 							}
+							
+							cl <- chain_l[length(chain_l)]
+							overlap <- ee1[cl] - starts1[o[i]] + 1L
+							if (overlap > 0) {
+								# remove overlap from last hit
+								results[g1, g2][[1]][cl, "width"] <- results[g1, g2][[1]][cl, "width"] - overlap
+								ee1[cl] <- ee1[cl] - overlap
+								if (strand[o[last]]==0) {
+									ee2[cl] <- ee2[cl] - overlap
+								} else {
+									ss2[cl] <- ss2[cl] + overlap
+								}
+							}
+							ends1[o[last]] <- ee1[cl]
+							results[g2, g1][[1]][o[last], "end1"] <- ee1[cl]
+							if (strand[o[last]]==0) {
+								ends2[o[last]] <- ee2[cl]
+								results[g2, g1][[1]][o[last], "end2"] <- ee2[cl]
+							} else {
+								starts2[o[last]] <- ss2[cl]
+								results[g2, g1][[1]][o[last], "start2"] <- ss2[cl]
+							}
+							last <- i
 						}
 					} else { # non-overlapping
 						last <- i
@@ -996,36 +1033,55 @@ FindSynteny <- function(dbFile,
 								remove[o[i]] <- TRUE
 							}
 						} else {
-							# partly overlapping
-							chain_i <- chains[[o[i]]]
+							# remove partial overlap from last
 							chain_l <- chains[[o[last]]]
-							over_i <- which(ss2[chain_i] <= ends2[o[last]])
-							over_l <- which(ee2[chain_l] >= starts2[o[i]])
-							if (length(over_i)==length(chain_i)) {
-								remove[o[i]] <- TRUE
-							} else if (length(over_l)==length(chain_l)) {
+							over_l <- which(ss2[chain_l] >= (starts2[o[i]] - 2)) # min anchor width of 2
+							if (length(over_l)==length(chain_l)) {
 								remove[o[last]] <- TRUE
 								last <- i
-							} else { # remove overlapping hits from last
+								next
+							} else if (length(over_l) > 0) {
+								# remove completely overlapping hits
 								hits[[length(hits) + 1L]] <- chain_l[over_l]
 								chain_l <- chain_l[-over_l]
 								chains[[o[last]]] <- chain_l
-								if (strand[o[last]]==0) {
-									results[g2, g1][[1]][o[last], "end1"] <- ee1[chain_l[length(chain_l)]]
-									results[g2, g1][[1]][o[last], "end2"] <- ee2[chain_l[length(chain_l)]]
-								} else {
-									results[g2, g1][[1]][o[last], "start1"] <- ss1[chain_l[1]]
-									results[g2, g1][[1]][o[last], "end2"] <- ee2[chain_l[1]]
-								}
-								last <- i
 							}
+							if (strand[o[last]]==0) {
+								cl <- chain_l[length(chain_l)]
+							} else {
+								cl <- chain_l[1]
+							}
+							overlap <- ee2[cl] - starts2[o[i]] + 1L
+							if (overlap > 0) {
+								# remove overlap from last hit
+								results[g1, g2][[1]][cl, "width"] <- results[g1, g2][[1]][cl, "width"] - overlap
+								if (strand[o[last]]==0) {
+									ee1[cl] <- ee1[cl] - overlap
+									ee2[cl] <- ee2[cl] - overlap
+								} else {
+									ss1[cl] <- ss1[cl] + overlap
+									ee2[cl] <- ee2[cl] - overlap
+									results[g1, g2][[1]][cl, "start1"] <- results[g1, g2][[1]][cl, "start1"] + overlap
+									results[g1, g2][[1]][cl, "start2"] <- results[g1, g2][[1]][cl, "start2"] - overlap
+								}
+							}
+							if (strand[o[last]]==0) {
+								results[g2, g1][[1]][o[last], "end1"] <- ee1[cl]
+								results[g2, g1][[1]][o[last], "end2"] <- ee2[cl]
+							} else {
+								results[g2, g1][[1]][o[last], "start1"] <- ss1[cl]
+								results[g2, g1][[1]][o[last], "end2"] <- ee2[cl]
+							}
+							last <- i
 						}
 					} else { # non-overlapping
 						last <- i
 					}
 				}
 				
-				remove <- which(remove)
+				widths <- results[g2, g1][[1]][, "end1"] - results[g2, g1][[1]][, "start1"] + 1L
+				remove <- which(remove |
+					widths*log(4) < minScore) # max possible score is too low
 				if (length(remove) > 0 || length(hits) > 0) {
 					if (length(remove) > 0)
 						results[g2, g1][[1]] <- results[g2, g1][[1]][-remove,, drop=FALSE]
@@ -1090,6 +1146,30 @@ FindSynteny <- function(dbFile,
 					PACKAGE="DECIPHER")
 			}
 			
+			# extend outer anchors to match extended blocks
+			strand <- results[g2, g1][[1]][, "strand"]
+			if (length(strand) > 0) {
+				first_hit <- results[g2, g1][[1]][, "first_hit"]
+				last_hit <- results[g2, g1][[1]][, "last_hit"]
+				starts1 <- results[g2, g1][[1]][, "start1"]
+				ends1 <- results[g2, g1][[1]][, "end1"]
+				starts2 <- results[g2, g1][[1]][, "start2"]
+				ends2 <- results[g2, g1][[1]][, "end2"]
+				
+				# adjust width, start1, and start2 of first_hit
+				results[g1, g2][[1]][first_hit, "width"] <- results[g1, g2][[1]][first_hit, "start1"] + results[g1, g2][[1]][first_hit, "width"] - starts1
+				results[g1, g2][[1]][first_hit, "start1"] <- starts1
+				results[g1, g2][[1]][first_hit, "start2"] <- ifelse(strand==0,
+					starts2,
+					ends2)
+				
+				# adjust width and start2 of last_hit
+				results[g1, g2][[1]][last_hit, "width"] <- ends1 - results[g1, g2][[1]][last_hit, "start1"] + 1L
+				results[g1, g2][[1]][last_hit, "start2"] <- ifelse(strand==0,
+					ends2 - results[g1, g2][[1]][last_hit, "width"] + 1L,
+					starts2 + results[g1, g2][[1]][last_hit, "width"] - 1L)
+			}
+			
 			if (verbose) {
 				its <- its + 0.5
 				setTxtProgressBar(pBar, its/tot)
@@ -1105,6 +1185,7 @@ FindSynteny <- function(dbFile,
 			identifier=identifier[length(identifier)],
 			type="DNAStringSet",
 			removeGaps="all",
+			processors=processors,
 			verbose=FALSE)
 		w2 <- width(s2)
 	}

@@ -12,7 +12,7 @@ DistanceMatrix(myXStringSet,
                penalizeGapLetterMatches = TRUE,
                penalizeGapGapMatches = FALSE,
                correction = "none",
-               processors = NULL,
+               processors = 1,
                verbose = TRUE)
 }
 \arguments{
@@ -32,7 +32,7 @@ Logical specifying whether or not to consider gap-to-gap matches as mismatches. 
 The substitution model used for distance correction.  This should be (an abbreviation of) either \code{"none"} or \code{"Jukes-Cantor"}.
 }
   \item{processors}{
-The number of processors to use, or \code{NULL} (the default) for all available processors.
+The number of processors to use, or \code{NULL} to automatically detect and use all available processors.
 }
   \item{verbose}{
 Logical indicating whether to display progress.

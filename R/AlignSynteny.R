@@ -1,7 +1,8 @@
 AlignSynteny <- function(synteny,
 	dbFile,
-	tblName="DNA",
+	tblName="Seqs",
 	identifier="",
+	processors=1,
 	verbose=TRUE,
 	...) {
 	
@@ -39,6 +40,17 @@ AlignSynteny <- function(synteny,
 	l <- length(identifier)
 	if (l < 2)
 		stop("At least two identifiers are required.")
+	if (!is.null(processors) && !is.numeric(processors))
+		stop("processors must be a numeric.")
+	if (!is.null(processors) && floor(processors)!=processors)
+		stop("processors must be a whole number.")
+	if (!is.null(processors) && processors < 1)
+		stop("processors must be at least 1.")
+	if (is.null(processors)) {
+		processors <- detectCores()
+	} else {
+		processors <- as.integer(processors)
+	}
 	
 	# initialize database
 	driver = dbDriver("SQLite")
@@ -71,6 +83,7 @@ AlignSynteny <- function(synteny,
 			identifier=identifier[o[i]],
 			type="DNAStringSet",
 			removeGaps="all",
+			processors=processors,
 			verbose=FALSE)
 		if (length(seq1)==0 ||
 			!all(width(seq1)==synteny[index1, index1][[1]]))
@@ -84,6 +97,7 @@ AlignSynteny <- function(synteny,
 				identifier=identifier[o[j]],
 				type="DNAStringSet",
 				removeGaps="all",
+				processors=processors,
 				verbose=FALSE)
 			if (length(seq2)==0 ||
 				!all(width(seq2)==synteny[index2, index2][[1]]))
@@ -169,6 +183,7 @@ AlignSynteny <- function(synteny,
 				result[[k]] <- AlignProfiles(seg1[k],
 					seg2[k],
 					anchor=anchors,
+					processors=processors,
 					...)
 				
 				if (verbose)

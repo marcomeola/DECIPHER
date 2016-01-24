@@ -1,8 +1,8 @@
 FindChimeras <- function(dbFile,
-	tblName="DNA",
+	tblName="Seqs",
 	identifier="",
 	dbFileReference,
-	tblNameReference="DNA",
+	tblNameReference="Seqs",
 	batchSize=100,
 	minNumFragments=20000,
 	tb.width=5,
@@ -16,6 +16,7 @@ FindChimeras <- function(dbFile,
 	maxGroupSize=-1,
 	minGroupSize=100,
 	excludeIDs=NULL,
+	processors=1,
 	verbose=TRUE) {
 	
 	# error checking
@@ -71,6 +72,17 @@ FindChimeras <- function(dbFile,
 		stop("minGroupSize must be at least zero.")
 	if (minGroupSize != floor(minGroupSize))
 		stop("minGroupSize must be an integer.")
+	if (!is.null(processors) && !is.numeric(processors))
+		stop("processors must be a numeric.")
+	if (!is.null(processors) && floor(processors)!=processors)
+		stop("processors must be a whole number.")
+	if (!is.null(processors) && processors < 1)
+		stop("processors must be at least 1.")
+	if (is.null(processors)) {
+		processors <- detectCores()
+	} else {
+		processors <- as.integer(processors)
+	}
 	
 	if (verbose)
 		time.1 <- Sys.time()
@@ -99,19 +111,19 @@ FindChimeras <- function(dbFile,
 			stop("The connection has expired.")
 	}
 	
-	searchExpression <- paste("select distinct id, origin from",
+	searchExpression <- paste("select distinct identifier, origin from",
 		tblNameReference)
 	rs <- dbSendQuery(dbConn2, searchExpression)
 	searchResult <- fetch(rs, n=-1)
-	groups <- searchResult$id
+	groups <- searchResult$identifier
 	origins <- searchResult$origin
 	dbClearResult(rs)
 	
-	searchExpression <- paste("select distinct id from",
+	searchExpression <- paste("select distinct identifier from",
 		tblName)
 	rs <- dbSendQuery(dbConn1, searchExpression)
 	searchResult <- fetch(rs, n=-1)
-	myGroups <- searchResult$id
+	myGroups <- searchResult$identifier
 	dbClearResult(rs)
 	
 	if (identifier[1] != "") {
@@ -146,15 +158,17 @@ FindChimeras <- function(dbFile,
 			numG <- SearchDB(dbConn2,
 				tblName=tblNameReference,
 				identifier=group,
+				processors=processors,
 				verbose=FALSE,
-				clause="and nonbases < 20",
+				clause="nonbases < 20",
 				countOnly=TRUE)
 		} else {
 			numG <- SearchDB(dbConn2,
 				identifier=group,
 				tblName=tblNameReference,
+				processors=processors,
 				verbose=FALSE,
-				clause="and chimera is NULL and nonbases < 20",
+				clause="chimera is NULL and nonbases < 20",
 				countOnly=TRUE)
 		}
 		if (numG < minGroupSize) # too small
@@ -178,20 +192,22 @@ FindChimeras <- function(dbFile,
 			group_dna <- SearchDB(dbConn2,
 				tblName=tblNameReference,
 				identifier=group,
+				processors=processors,
 				verbose=FALSE,
 				type="DNAStringSet",
 				limit=maxGroupSize,
 				removeGaps="all",
-				clause="and nonbases < 20")
+				clause="nonbases < 20")
 		} else {
 			group_dna <- SearchDB(dbConn2,
 				tblName=tblNameReference,
 				identifier=group,
+				processors=processors,
 				verbose=FALSE,
 				type="DNAStringSet",
 				limit=maxGroupSize,
 				removeGaps="all",
-				clause="and chimera is NULL and nonbases < 20")
+				clause="chimera is NULL and nonbases < 20")
 		}
 		numG <- length(group_dna)
 		
@@ -202,6 +218,7 @@ FindChimeras <- function(dbFile,
 				type="DNAStringSet",
 				replaceChar="",
 				removeGaps="all",
+				processors=processors,
 				verbose=FALSE)
 		} else {
 			dna <- SearchDB(dbConn1,
@@ -210,8 +227,9 @@ FindChimeras <- function(dbFile,
 				type="DNAStringSet",
 				replaceChar="",
 				removeGaps="all",
+				processors=processors,
 				verbose=FALSE,
-				clause="and chimera is NULL")
+				clause="chimera is NULL")
 		}
 		
 		# reduce to the set of unique dna sequences
@@ -514,20 +532,22 @@ FindChimeras <- function(dbFile,
 					other_dna <- SearchDB(dbConn2,
 						tblName=tblNameReference,
 						identifier=other,
+						processors=processors,
 						verbose=FALSE,
 						type="DNAStringSet",
 						limit=maxGroupSize,
 						removeGaps="all",
-						clause="and nonbases < 20")
+						clause="nonbases < 20")
 				} else {
 					other_dna <- SearchDB(dbConn2,
 						tblName=tblNameReference,
 						identifier=other,
+						processors=processors,
 						verbose=FALSE,
 						type="DNAStringSet",
 						limit=maxGroupSize,
 						removeGaps="all",
-						clause="and nonbases < 20 and chimera is NULL")
+						clause="nonbases < 20 and chimera is NULL")
 				}
 				
 				if (length(other_dna) <= multiplier)

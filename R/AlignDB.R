@@ -1,8 +1,8 @@
 AlignDB <- function(dbFile,
-	tblName="DNA",
+	tblName="Seqs",
 	identifier="",
 	type="DNAStringSet",
-	add2tbl="DNA",
+	add2tbl="Seqs",
 	batchSize=10000,
 	perfectMatch=5,
 	misMatch=0,
@@ -12,8 +12,9 @@ AlignDB <- function(dbFile,
 	terminalGap=-5,
 	normPower=1,
 	substitutionMatrix=NULL,
-	processors=NULL,
-	verbose=TRUE) {
+	processors=1,
+	verbose=TRUE,
+	...) {
 	
 	# error checking
 	if (!is.character(identifier))
@@ -46,6 +47,7 @@ AlignDB <- function(dbFile,
 		stop("normPower must be at least zero.")
 	if (!is.logical(verbose))
 		stop("verbose must be a logical.")
+	
 	# initialize database
 	driver = dbDriver("SQLite")
 	if (is.character(dbFile)) {
@@ -133,6 +135,7 @@ AlignDB <- function(dbFile,
 		identifier=identifier[1],
 		tblName=tblName[1],
 		countOnly=TRUE,
+		processors=processors,
 		verbose=FALSE)
 	if (count1==0)
 		stop("No sequences found in dbFile matching the specified criteria.")
@@ -140,6 +143,7 @@ AlignDB <- function(dbFile,
 		identifier=identifier[ifelse(length(identifier)==1, 1, 2)],
 		tblName=tblName[ifelse(length(tblName)==1, 1, 2)],
 		countOnly=TRUE,
+		processors=processors,
 		verbose=FALSE)
 	if (count2==0)
 		stop("No sequences found in dbFile matching the specified criteria.")
@@ -158,6 +162,7 @@ AlignDB <- function(dbFile,
 				",",
 				batchSize,
 				sep=""),
+			processors=processors,
 			verbose=FALSE)
 		
 		temp <- unique(width(myXStringSet))
@@ -206,6 +211,7 @@ AlignDB <- function(dbFile,
 				",",
 				batchSize,
 				sep=""),
+			processors=processors,
 			verbose=FALSE)
 		
 		temp <- unique(width(myXStringSet))
@@ -307,6 +313,7 @@ AlignDB <- function(dbFile,
 				",",
 				batchSize,
 				sep=""),
+			processors=processors,
 			verbose=FALSE)
 		ns <- names(myXStringSet)
 		
@@ -326,7 +333,9 @@ AlignDB <- function(dbFile,
 			dbConn,
 			id,
 			add2tbl,
-			verbose=FALSE)
+			processors=processors,
+			verbose=FALSE,
+			...)
 		
 		if (verbose) {
 			totSeqs <- totSeqs + length(myXStringSet)
@@ -344,6 +353,7 @@ AlignDB <- function(dbFile,
 				",",
 				batchSize,
 				sep=""),
+			processors=processors,
 			verbose=FALSE)
 		ns <- names(myXStringSet)
 		
@@ -357,12 +367,15 @@ AlignDB <- function(dbFile,
 		names(myXStringSet) <- paste(ns,
 			ifelse(length(identifier)==2, identifier[2], tblName[2]),
 			sep="_")
+		
 		Seqs2DB(myXStringSet,
 			TYPES[type],
 			dbConn,
 			id,
 			add2tbl,
-			verbose=FALSE)
+			processors=processors,
+			verbose=FALSE,
+			...)
 		
 		if (verbose) {
 			totSeqs <- totSeqs + length(myXStringSet)
@@ -373,14 +386,17 @@ AlignDB <- function(dbFile,
 	
 	if (verbose) {
 		close(pBar)
-		cat("\nAdded ",
-			count1 + count2,
-			" aligned sequences to table ",
-			add2tbl,
-			" with identifier '",
-			id,
-			"'.\n\n",
-			sep="")
+		cat(strwrap(paste("\nAdded ",
+					count1 + count2,
+					" aligned sequences to table ",
+					add2tbl,
+					" with identifier '",
+					id,
+					"'.\n\n",
+					sep="",
+					collapse=""),
+				width=getOption("width") - 1L),
+			sep="\n")
 	}
 	
 	invisible(count1 + count2)

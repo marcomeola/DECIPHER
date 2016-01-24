@@ -1,9 +1,10 @@
 IdLengths <- function(dbFile,
-	tblName="DNA",
+	tblName="Seqs",
 	identifier="",
 	type="DNAStringSet",
 	add2tbl=FALSE,
 	batchSize=10000,
+	processors=1,
 	verbose=TRUE) {
 	
 	# error checking
@@ -29,6 +30,17 @@ IdLengths <- function(dbFile,
 		stop("batchSize must be greater than zero.")
 	if (!is.logical(verbose))
 		stop("verbose must be a logical.")
+	if (!is.null(processors) && !is.numeric(processors))
+		stop("processors must be a numeric.")
+	if (!is.null(processors) && floor(processors)!=processors)
+		stop("processors must be a whole number.")
+	if (!is.null(processors) && processors < 1)
+		stop("processors must be at least 1.")
+	if (is.null(processors)) {
+		processors <- detectCores()
+	} else {
+		processors <- as.integer(processors)
+	}
 	# initialize database
 	driver = dbDriver("SQLite")
 	if (is.character(dbFile)) {
@@ -42,10 +54,14 @@ IdLengths <- function(dbFile,
 			stop("The connection has expired.")
 	}
 	
+	if (verbose)
+		time.1 <- Sys.time()
+	
 	count <- SearchDB(dbFile=dbFile,
 		identifier=identifier,
 		tblName=tblName,
 		countOnly=TRUE,
+		processors=processors,
 		verbose=FALSE)
 	
 	if (count > batchSize) {
@@ -63,6 +79,7 @@ IdLengths <- function(dbFile,
 					",",
 					batchSize,
 					sep=""),
+				processors=processors,
 				verbose=FALSE)
 			
 			numF <- length(myXStringSet)
@@ -138,6 +155,7 @@ IdLengths <- function(dbFile,
 			identifier=identifier,
 			tblName=tblName,
 			type=TYPES[type],
+			processors=processors,
 			verbose=FALSE)
 		
 		numF <- length(myXStringSet)
@@ -180,6 +198,13 @@ IdLengths <- function(dbFile,
 				":  \"bases\", \"nonbases\", and \"width\".",
 				sep="")
 		cat("\n\n")
+		
+		time.2 <- Sys.time()
+		print(round(difftime(time.2,
+			time.1,
+			units='secs'),
+			digits=2))
+		cat("\n")
 	}
 	
 	return(lengths)

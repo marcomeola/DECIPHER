@@ -24,7 +24,7 @@ AlignProfiles(pattern,
               normPower = 1,
               substitutionMatrix = NULL,
               structureMatrix = NULL,
-              processors = NULL)
+              processors = 1)
 }
 \arguments{
   \item{pattern}{
@@ -79,7 +79,7 @@ Either a substitution matrix representing the substitution scores for an alignme
 A structure matrix if \code{p.struct} and \code{s.struct} are supplied, or \code{NULL} otherwise.  (See examples section below.)
 }
   \item{processors}{
-The number of processors to use, or \code{NULL} (the default) for all available processors.
+The number of processors to use, or \code{NULL} to automatically detect and use all available processors.
 }
 }
 \details{

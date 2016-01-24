@@ -1,14 +1,15 @@
 IdConsensus <- function(dbFile,
-	tblName="DNA",
+	tblName="Seqs",
 	identifier="",
 	type="DNAStringSet",
-	colName="id",
-	add2tbl=FALSE,
+	colName="identifier",
+	processors=1,
 	verbose=TRUE,
 	...) {
 	
 	# initialize variables
-	time.1 <- Sys.time()
+	if (verbose)
+		time.1 <- Sys.time()
 	
 	# error checking
 	if (!is.character(identifier))
@@ -23,10 +24,19 @@ IdConsensus <- function(dbFile,
 		stop("tblName must be a character string.")
 	if (!is.character(colName))
 		stop("colName must be a character string.")
-	if (!is.logical(add2tbl) && !is.character(add2tbl))
-		stop("add2tbl must be a logical or table name.")
 	if (!is.logical(verbose))
 		stop("verbose must be a logical.")
+	if (!is.null(processors) && !is.numeric(processors))
+		stop("processors must be a numeric.")
+	if (!is.null(processors) && floor(processors)!=processors)
+		stop("processors must be a whole number.")
+	if (!is.null(processors) && processors < 1)
+		stop("processors must be at least 1.")
+	if (is.null(processors)) {
+		processors <- detectCores()
+	} else {
+		processors <- as.integer(processors)
+	}
 	
 	# initialize database
 	driver = dbDriver("SQLite")
@@ -53,7 +63,7 @@ IdConsensus <- function(dbFile,
 		sep="")
 	if (identifier != "")
 		searchExpression <- paste(searchExpression,
-			" where id like '",
+			" where identifier is '",
 			identifier,
 			"'",
 			sep="")
@@ -92,10 +102,8 @@ IdConsensus <- function(dbFile,
 			type=TYPES[type],
 			verbose=FALSE,
 			identifier=identifier,
-			clause=paste(ifelse(identifier=="",
-					"where ",
-					"and "),
-				colName,
+			processors=processors,
+			clause=paste(colName,
 				"= '",
 				gsub("'", "''", i, fixed=TRUE),
 				"'",
@@ -128,24 +136,8 @@ IdConsensus <- function(dbFile,
 	
 	names(consensus) <- groups
 	
-	if (is.character(add2tbl) || add2tbl) {
-		Seqs2DB(consensus,
-			type="XStringSet",
-			dbFile=dbFile,
-			tblName=ifelse(is.character(add2tbl),add2tbl,tblName),
-			identifier=identifier,
-			verbose=FALSE)
-	}
-	
 	if (verbose) {
 		close(pBar)
-		if (is.character(add2tbl) || add2tbl)
-			cat("\nAdded ",
-				length(groups),
-				" consensus sequences to ",
-				ifelse(is.character(add2tbl),add2tbl,tblName),
-				".",
-				sep="")
 		
 		cat("\nFound consensus for ",
 			length(groups),
@@ -154,10 +146,10 @@ IdConsensus <- function(dbFile,
 		
 		cat("\n")
 		time.2 <- Sys.time()
-			print(round(difftime(time.2,
-				time.1,
-				units='secs'),
-				digits=2))
+		print(round(difftime(time.2,
+			time.1,
+			units='secs'),
+			digits=2))
 		cat("\n")
 	}
 	return(consensus)

@@ -8,11 +8,12 @@ Counts the number of bases (A, C, G, T) and ambiguities/degeneracies in each seq
 }
 \usage{
 IdLengths(dbFile,
-          tblName = "DNA",
+          tblName = "Seqs",
           identifier = "",
           type = "DNAStringSet",
           add2tbl = FALSE,
           batchSize = 10000,
+          processors = 1,
           verbose = TRUE)
 }
 \arguments{
@@ -34,6 +35,9 @@ Logical or a character string specifying the table name in which to add the resu
   \item{batchSize}{
 Integer specifying the number of sequences to process at a time.
 }
+  \item{processors}{
+The number of processors to use, or \code{NULL} to automatically detect and use all available processors.
+}
   \item{verbose}{
 Logical indicating whether to display progress.
 }
@@ -50,4 +54,5 @@ Erik Wright \email{DECIPHER@cae.wisc.edu}
 \examples{
 db <- system.file("extdata", "Bacteria_175seqs.sqlite", package="DECIPHER")
 l <- IdLengths(db)
+head(l)
 }

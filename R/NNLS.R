@@ -1,7 +1,7 @@
 NNLS <- function(A,
 	b,
 	precision=sqrt(.Machine$double.eps),
-	processors=NULL,
+	processors=1,
 	verbose=TRUE) {
 	
 	# error checking:

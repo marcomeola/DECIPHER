@@ -11,7 +11,7 @@ import(parallel)
 
 export(
 # interacting with a database:
-Add2DB, Seqs2DB, SearchDB, DB2Seqs,
+Add2DB, Codec, Seqs2DB, SearchDB, DB2Seqs,
 # assigning an identifier:
 FormGroups, IdentifyByRank,
 # lengths:
@@ -25,11 +25,11 @@ FindChimeras, CreateChimeras,
 # microarrays:
 DesignArray, Array2Matrix, NNLS, CalculateEfficiencyArray,
 # primers:
-Amplify, AmplifyDNA, CalculateEfficiencyPCR, DesignPrimers, DesignSignatures, DigestDNA, MeltDNA,
+AmplifyDNA, CalculateEfficiencyPCR, DesignPrimers, DesignSignatures, DigestDNA, MeltDNA,
 # probes:
 CalculateEfficiencyFISH, DesignProbes,
 # viewing information:
-BrowseSequences, BrowseSeqs, BrowseDB,
+BrowseSeqs, BrowseDB,
 # sequence analysis/manipulation:
 CorrectFrameshifts, OrientNucleotides, PredictHEC,
 # multiple alignment:

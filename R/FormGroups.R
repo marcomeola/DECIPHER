@@ -1,5 +1,5 @@
 FormGroups <- function(dbFile,
-	tblName="DNA",
+	tblName="Seqs",
 	goalSize=1000,
 	minGroupSize=500,
 	maxGroupSize=10000,
@@ -51,19 +51,23 @@ FormGroups <- function(dbFile,
 		decreasing=FALSE),]
 	
 	searchResult$origin <- ""
-	searchResult$id <- ""
+	searchResult$identifier <- ""
 	
 	if (verbose)
 		pBar <- txtProgressBar(style=3)
 	
-	for (i in 1:length(searchResult$rank)) {		if (searchResult$id[i]=="") {			lineage <- unlist(strsplit(as.character(searchResult$rank[i]),				";",				fixed=TRUE))
-			# remove leading/trailing spaces
-			lineage <- gsub("^ .", "", lineage)
-			lineage <- gsub(". $", "", lineage)			for (j in length(lineage):1) {				w <- which(grepl(paste(lineage[1:j], collapse=";"),
-					searchResult$rank,
+	rank <- unlist(lapply(strsplit(searchResult$rank,
+			"\n",
+			fixed=TRUE),
+		function (x) {
+			x <- paste(x[-1], collapse=" ")
+		}))
+	for (i in seq_along(rank)) {		if (searchResult$identifier[i]=="") {			lineage <- unlist(strsplit(as.character(rank[i]),				";",				fixed=TRUE))
+			for (j in length(lineage):1) {				w <- which(grepl(paste(lineage[1:j], collapse=";"),
+					rank,
 					fixed=TRUE))				counts <- sum(abs(searchResult$count[w]))				
 				if (counts > goalSize) {					if (counts > maxGroupSize && j < length(lineage)) {						j <- j + 1 # go down one rank						w <- which(grepl(paste(lineage[1:j], collapse=";"),
-							searchResult$rank,
+							rank,
 							fixed=TRUE))
 						counts <- sum(abs(searchResult$count[w]))					}
 					
@@ -77,29 +81,24 @@ FormGroups <- function(dbFile,
 									searchResult$count[w2[w3]] <- -abs(searchResult$count[w2[w3]])									w <- c(w, w2[w3])
 								}							}
 						}					}
-					
-#					if (substr(origin,
-#						nchar(origin),
-#						nchar(origin))=='"')
-#						origin <- substr(origin,
-#							1,
-#							nchar(origin) - 1)					searchResult$origin[w] <- origin										# remove some punctuation					lineage[j] <- gsub('"', '', lineage[j], fixed=TRUE)					lineage[j] <- gsub('.', '', lineage[j], fixed=TRUE)					searchResult$id[w] <- lineage[j]					break				} else if (j==1 && counts < goalSize) {
+										searchResult$origin[w] <- origin										# remove some punctuation					lineage[j] <- gsub('"', '', lineage[j], fixed=TRUE)					lineage[j] <- gsub('.', '', lineage[j], fixed=TRUE)					searchResult$identifier[w] <- gsub("^\\s+|\\s+$", "", lineage[j])
+					break				} else if (j==1 && counts < goalSize) {
 					searchResult$origin[i] <- ""
 					
 					# remove some punctuation
 					lineage[j] <- gsub('"', '', lineage[j], fixed=TRUE)
 					lineage[j] <- gsub('.', '', lineage[j], fixed=TRUE)
-					searchResult$id[i] <- lineage[j]
+					searchResult$identifier[i] <- gsub("^\\s+|\\s+$", "", lineage[j])
 				}
 			}		}
 		if (verbose)
-			setTxtProgressBar(pBar, i/length(searchResult$rank))	}
+			setTxtProgressBar(pBar, i/length(rank))	}
 	
 	if (is.character(add2tbl) || add2tbl) {		dbWriteTable(dbConn, "taxa", searchResult)		
 		if (verbose)
-			cat("\nUpdating column: \"id\"...")		searchExpression <- paste("update or replace ",
+			cat("\nUpdating column: \"identifier\"...")		searchExpression <- paste("update or replace ",
 			tblName,
-			" set id = (select id from taxa where ",
+			" set identifier = (select identifier from taxa where ",
 			ifelse(is.character(add2tbl), add2tbl, tblName),
 			".rank = taxa.rank) where ",
 			ifelse(is.character(add2tbl), add2tbl, tblName),
@@ -124,12 +123,12 @@ FormGroups <- function(dbFile,
 	
 	if (verbose) {
 		cat("\nFormed",
-			length(unique(searchResult$id)),
+			length(unique(searchResult$identifier)),
 			"distinct groups.")
 		if (is.character(add2tbl) || add2tbl)
 			cat("\nAdded to table ",
 				ifelse(is.character(add2tbl), add2tbl, tblName),
-				": \"id\", \"origin\".",
+				": \"identifier\", \"origin\".",
 				sep="")
 		
 		cat("\n")

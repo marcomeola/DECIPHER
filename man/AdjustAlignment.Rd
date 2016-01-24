@@ -17,7 +17,7 @@ AdjustAlignment(myXStringSet,
                 shiftPenalty = -0.2,
                 threshold = 0.1,
                 weight = 1,
-                processors = NULL)
+                processors = 1)
 }
 \arguments{
   \item{myXStringSet}{
@@ -51,7 +51,7 @@ Numeric specifying the improvement in score required to permanently apply an adj
 A numeric vector of weights for each sequence, or a single number implying equal weights.
 }
   \item{processors}{
-The number of processors to use, or \code{NULL} (the default) for all available processors.
+The number of processors to use, or \code{NULL} to automatically detect and use all available processors.
 }
 }
 \details{

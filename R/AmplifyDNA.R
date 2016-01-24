@@ -1,8 +1,3 @@
-Amplify <- function(...) {
-	.Defunct("AmplifyDNA",
-		msg="'Amplify' is defunct.\nUse 'AmplifyDNA' instead.\nSee help(\"DECIPHER-defunct\").")
-}
-
 AmplifyDNA <- function(primers,
 	myDNAStringSet,
 	maxProductSize,

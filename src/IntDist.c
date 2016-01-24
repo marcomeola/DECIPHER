@@ -16,6 +16,9 @@
  */
 #include <R_ext/Rdynload.h>
 
+// for math functions
+#include <math.h>
+
 // DECIPHER header file
 #include "DECIPHER.h"
 
@@ -24,7 +27,7 @@
 
 // decode integer vector
 // NOTE:  Zeros the elements of SEXP x
-SEXP intDist(SEXP x, SEXP levels, SEXP bins, SEXP maxBins, SEXP numRows, SEXP totRows)
+SEXP intDist(SEXP x, SEXP levels, SEXP bins, SEXP maxBins, SEXP numRows, SEXP totRows, SEXP power)
 {	
 	int i, j, k, pos;
 	int *X = INTEGER(x);
@@ -34,6 +37,7 @@ SEXP intDist(SEXP x, SEXP levels, SEXP bins, SEXP maxBins, SEXP numRows, SEXP to
 	int n = asInteger(numRows);
 	int cols = length(x)/n;
 	int t = asInteger(totRows);
+	double p = asReal(power);
 	div_t Y;
 	
 	SEXP ans;
@@ -80,7 +84,11 @@ SEXP intDist(SEXP x, SEXP levels, SEXP bins, SEXP maxBins, SEXP numRows, SEXP to
 				skip[j] = 1;
 				weight++;
 			} else {
-				avg += avg_j*weight;
+				if (p == 1) { // L1-norm
+					avg += avg_j*weight;
+				} else { // LP-norm
+					avg += pow(avg_j/(double)(b*(l - 1)), p)*weight;
+				}
 			}
 		}
 	}
@@ -93,7 +101,11 @@ SEXP intDist(SEXP x, SEXP levels, SEXP bins, SEXP maxBins, SEXP numRows, SEXP to
 	
 	// calculate the weighted mean including missing dists
 	// sum of distances divided by half triangle of matrix
-	d[0] = avg/(double)(b*(l - 1))/(double)((t*t - t)/2);
+	if (p == 1) { // average L1-norm
+		d[0] = avg/(double)(b*(l - 1))/(double)((t*t - t)/2);
+	} else { // average LP-norm
+		d[0] = pow(avg, 1/p)/(double)((t*t - t)/2);
+	}
 	
 	UNPROTECT(2);
 	

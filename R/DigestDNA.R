@@ -2,7 +2,7 @@ DigestDNA <- function(sites,
 	myDNAStringSet,
 	type="fragments",
 	strand="both",
-	processors=NULL) {
+	processors=1) {
 	
 	# error checking
 	if (!is.character(sites))

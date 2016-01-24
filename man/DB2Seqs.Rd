@@ -9,7 +9,7 @@ Exports a database containing sequences to a FASTA or FASTQ formatted file of se
 \usage{
 DB2Seqs(file,
          dbFile,
-         tblName = "DNA",
+         tblName = "Seqs",
          identifier = "",
          type = "BStringSet",
          limit = -1,
@@ -68,7 +68,7 @@ Logical specifying whether to compress the output file using gzip compression.
 Number of lines of the \code{file} to write at a time.  Cannot be less than the total number of sequences if \code{removeGaps} is \code{"common"}.
 }
   \item{clause}{
-An optional character string to append to the query as a clause.
+An optional character string to append to the query as part of a ``where clause''.
 }
   \item{verbose}{
 Logical indicating whether to display status.
@@ -91,6 +91,6 @@ Erik Wright \email{DECIPHER@cae.wisc.edu}
 db <- system.file("extdata", "Bacteria_175seqs.sqlite", package="DECIPHER")
 tf <- tempfile()
 DB2Seqs(tf, db, limit=10)
-file.show(tf)
+file.show(tf) # press 'q' to exit
 unlink(tf)
 }

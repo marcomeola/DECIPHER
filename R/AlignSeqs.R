@@ -7,7 +7,7 @@ AlignSeqs <- function(myXStringSet,
 	structures=NULL,
 	FUN=AdjustAlignment,
 	levels=c(0.95, 0.7, 10, 5),
-	processors=NULL,
+	processors=1,
 	verbose=TRUE,
 	...) {
 	

@@ -18,5 +18,6 @@ Restriction enzymes sold by \href{http://www.neb.com}{New England BioLabs}.
 }
 \examples{
 data(RESTRICTION_ENZYMES)
+RESTRICTION_ENZYMES
 }
 \keyword{datasets}

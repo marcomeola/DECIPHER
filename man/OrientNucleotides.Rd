@@ -13,7 +13,7 @@ OrientNucleotides(myXStringSet,
                   orientation = "all",
                   threshold = 0.05,
                   verbose = TRUE,
-                  processors = NULL)
+                  processors = 1)
 }
 \arguments{
   \item{myXStringSet}{
@@ -35,7 +35,7 @@ Numeric giving the decrease in k-mer distance required to adopt the alternative 
 Logical indicating whether to display progress.
 }
   \item{processors}{
-The number of processors to use, or \code{NULL} (the default) for all available processors.
+The number of processors to use, or \code{NULL} to automatically detect and use all available processors.
 }
 }
 \details{
@@ -64,5 +64,5 @@ s <- sample(169, 30)
 DNA[s] <- complement(dna[s])
 
 DNA <- OrientNucleotides(DNA, reference=170:175)
-DNA==dna
+DNA==dna # all were correctly reoriented
 }

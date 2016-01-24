@@ -61,13 +61,14 @@ options(width=80)
 
 The \Rpackage{DECIPHER} function \Rfunction{DesignSignatures} was created to perform the most common primer design task:  to efficiently amplify a shared region of DNA that will produce maximal amplicon diversity.  This goal is independent of the method being used to differentiate amplicons, although some of the design details may depend on the technique being employed.  \Rfunction{DesignSignatures} supports three common methods for distinguishing amplicons:  sequencing, High Resolution Melting (HRM) analysis, and Fragment Length Polymorphism (FLP) analysis.  As a case study, this tutorial focuses on designing primers to differentiate SNP alleles using HRM analysis.  However, the methods described here can easily be adjusted to the other experimental techniques.
 
-As input, we will use known sequence variants of the Isocitrate Dehydrogenase 2 (\href{https://en.wikipedia.org/wiki/IDH2}{\textit{IDH2}}) gene that have been implicated in human gliomas.  First, a database is constructed where the variants are identified by their unique name.  Next, this database is used to design primers that will yield maximal amplicon diversity.  The top scoring primers are further investigated to determine whether they can easily be distinguished experimentally.  Finally, the process is repeated using a restriction enzyme to further diversify the amplicons' signatures.  Note that much of the functionality described here is accessible via a web tool at \url{http://DECIPHER.cee.wisc.edu}.
+As input, we will use known sequence variants of the Isocitrate Dehydrogenase 2 (\underline{\href{https://en.wikipedia.org/wiki/IDH2}{\textit{IDH2}}}) gene that have been implicated in human gliomas.  First, a database is constructed where the variants are identified by their unique name.  Next, this database is used to design primers that will yield maximal amplicon diversity.  The top scoring primers are further investigated to determine whether they can easily be distinguished experimentally.  Finally, the process is repeated using a restriction enzyme to further diversify the amplicons' signatures.  Note that much of the functionality described here is accessible via a web tool at \underline{\url{http://DECIPHER.cee.wisc.edu}}.
 
 %------------------------------------------------------------
 \section{Getting Started}
 %------------------------------------------------------------
 
 \subsection{Startup}
+\label{sec:startup}
 
 To get started we need to load the \Rpackage{DECIPHER} package, which automatically loads several other required packages.
 
@@ -76,13 +77,15 @@ library(DECIPHER)
 @
 
 Help for the \Rfunction{DesignSignatures} function can be accessed through:
+
 \begin{Schunk}
 \begin{Sinput}
 > ? DesignSignatures
 \end{Sinput}
 \end{Schunk}
 
-If this vignette was installed on your system then the code in each example can be obtained by:
+If \Rpackage{DECIPHER} is installed on your system, the code in each example can be obtained via:
+
 \begin{Schunk}
 \begin{Sinput}
 > browseVignettes("DECIPHER")
@@ -113,14 +116,18 @@ N # number of sequences in the database
 
 \subsection{Defining Groups}
 
-At this point it is necessary to define groups of related sequences in the database we have just created.  Ideally, groups should designate the different organisms (i.e., strains or alleles) that we hope to distinguish.  In the example described here, we will define groups based on the allele's name, which was included in the description of each FASTA record that we imported.  In the simplest case, where each sequence is its own variant, we could also have simply assigned the groups numbers as described below.  In more complex cases, we could use the functions \Rfunction{IdentifyByRank}, \Rfunction{FormGroups}, or \Rfunction{IdClusters} to define groups.
+At this point it is necessary to define groups of related sequences in the database we have just created.  Ideally, groups should designate the different variants (i.e., strains or alleles) that we hope to distinguish.
+
+In this example, we will define groups based on the allele's name, which was included in the description of each FASTA record that we imported.  This is the most common case, and simply uses each sequence's name as its group name.
+
+To assign group names directly from the sequence names (FASTA identifiers), simply run the code shown below.  In more complex cases, we could use the functions \Rfunction{IdentifyByRank}, \Rfunction{FormGroups}, or \Rfunction{IdClusters} to define groups.
 
 <<expr3,eval=TRUE>>=
 # if each sequence belongs to its own group,
 # then identify the sequences with a number:
 desc <- as.character(seq_len(N)) # N is the number of sequences
 # OR get the FASTA record description:
-desc <- dbGetQuery(dbConn, "select description from DNA")$description
+desc <- dbGetQuery(dbConn, "select description from Seqs")$description
 # show the unique descriptors:
 unique(desc)
 @
@@ -128,7 +135,7 @@ unique(desc)
 Now that we have unique names for our four variants, we must add them to the database as the identifier of each sequence.
 
 <<expr4,eval=TRUE>>=
-Add2DB(data.frame(id=desc), dbConn)
+Add2DB(data.frame(identifier=desc), dbConn)
 @
 
 %------------------------------------------------------------
@@ -176,12 +183,12 @@ LEVELS <- 10
 
 \subsection{Select Restriction Enzymes}
 
-The following step is not applicable to sequencing experiments (i.e., the \code{TYPE} above is \code{"sequence"}), and is optional for other types of experiments.  If using HRM or FLP analysis to differentiate amplicon signatures, a digestion step following PCR amplification may generate fragments with widely different signatures.  This is especially useful when trying to distinguish a large number of different groups based on small variations.  Potential enzymes can be selected from the built-in \Robject{RESTRICTION_ENZYMES} dataset, which includes all of the standard enzymes sold by \href{https://www.neb.com/}{New England BioLabs}.
+The following step is not applicable to sequencing experiments (i.e., the \code{TYPE} above is \code{"sequence"}), and is optional for other types of experiments.  If using HRM or FLP analysis to differentiate amplicon signatures, a digestion step following PCR amplification may generate fragments with widely different signatures.  This is especially useful when trying to distinguish a large number of different groups based on small variations.  Potential enzymes can be selected from the built-in \Robject{RESTRICTION_ENZYMES} dataset, which includes all of the standard enzymes sold by \underline{\href{https://www.neb.com/}{New England BioLabs}}.
 
 <<expr6,eval=TRUE>>=
 ENZYMES <- NULL # required for sequencing
 # OR select restriction enzymes to consider
-data(RESTRICTION_ENZYMES)
+data(RESTRICTION_ENZYMES) # load available enzymes
 # for this tutorial we will use the enzyme MslI
 ENZYMES <- RESTRICTION_ENZYMES["MslI"]
 ENZYMES
@@ -200,7 +207,6 @@ primers <- DesignSignatures(dbConn,
                             levels=LEVELS,
                             enzymes=ENZYMES)
 @
-
 \begin{Schunk}
 \begin{Sinput}
 Tallying 8-mers for 4 groups:
@@ -240,35 +246,33 @@ Time difference of 8.69 secs
 \end{Sinput}
 \end{Schunk}
 
-The output \code{data.frame} is sorted by the sum of \code{"score"} and \code{"digest_score"}, because it is sometimes possible to obtain both signatures experimentally.  However, we can separately look at the top scoring primers with and without using restriction enzymes.
+The output \code{data.frame} is sorted by the sum of \code{"score"} and \code{"digest_score"}.  However, we can separately look at the top scoring primers with and without using restriction enzymes.
 
 <<expr8,eval=FALSE>>=
 primers[which.max(primers$score),] # best primers without digestion
 @
-
 \begin{Schunk}
 \begin{Sinput}
        forward_primer       reverse_primer        score coverage products
 70 TGGCTGGACCAAGCCCAT GCCTTGTACTGGTCGCCATG 0.049074....        1        4
-   enzyme digest_score fragments
-70   MslI            0         2
+   similar_signatures missing_signatures enzyme digest_score fragments
+70                                         MslI            0         2
 \end{Sinput}
 \end{Schunk}
 
 <<expr9,eval=FALSE>>=
 primers[which.max(primers$digest_score),] # best primers with digestion
 @
-
 \begin{Schunk}
 \begin{Sinput}
        forward_primer       reverse_primer        score coverage products
 1 AGTCCCTGGCTGGACCAAG CTGTGGCCTTGTACTGGTCG 0.037037....        1        4
-  enzyme digest_score fragments
-1   MslI    0.1618056        13
+  similar_signatures missing_signatures enzyme digest_score fragments
+1                                         MslI    0.1618056        13
 \end{Sinput}
 \end{Schunk}
 
-The PCR products digested with \textit{MslI} are substantially high scoring (\code{digest_score}) than the undigested primers (\code{score}).
+The PCR products digested with \textit{MslI} are substantially higher scoring (\code{digest_score}) than the undigested primers (\code{score}).  Note that the columns \code{"similar_signatures"} and \code{"missing_signatures"} are both empty for this primer set, indicating that all of the groups have distinct signatures after digestion with the restriction enzyme.
 
 %------------------------------------------------------------
 \section{Assessing the Results}
@@ -284,11 +288,10 @@ PSET <- 1 # examine the top scoring primer set overall
 # select the first sequence from each group
 dna <- SearchDB(dbConn,
                 remove="all",
-                nameBy="id",
-                clause="where row_names =
-                        (select min(row_names)
-                         from DNA as S
-                         where S.id = DNA.id)",
+                nameBy="identifier",
+                clause="row_names =
+                        (select min(row_names) from Seqs as S
+                         where S.identifier = Seqs.identifier)",
                 verbose=FALSE)
 
 f_primer <- DNAStringSet(primers$forward_primer[PSET])
@@ -312,7 +315,7 @@ We can see in Figure \ref{f1} that the forward and reverse primers target sites 
 
 \subsection{Plot the Signatures}
 
-Next we will compare the signatures of the top scoring primers with and without digestion.  The simplest way to accomplish this is to use the \Rpackage{Biostrings} function \Rfunction{matchLRPatterns} to find the amplicons.  This requires a fair amount of code, much of which depends on the type of experiment (HRM, FLP, or sequencing):
+Next we will compare the signatures of the top scoring primers with and without digestion.  The simplest way to accomplish this is to use the \Rpackage{Biostrings} function \Rfunction{matchLRPatterns} to find the amplicons.    Refer to section~\ref{sec:startup} above for how to easily obtain the code shown below:
 
 <<expr10,eval=FALSE>>=
 PSET <- which.max(primers$score) # top scoring without digestion
@@ -321,7 +324,7 @@ f_primer <- DNAString(primers$forward_primer[PSET])
 r_primer <- DNAString(primers$reverse_primer[PSET])
 r_primer <- reverseComplement(r_primer)
 
-ids <- dbGetQuery(dbConn, "select distinct id from DNA")$id
+ids <- dbGetQuery(dbConn, "select distinct id from Seqs")$id
 
 if (TYPE=="sequence") {
     signatures <- matrix(0, nrow=4^RESOLUTION, ncol=length(ids))
@@ -330,12 +333,13 @@ if (TYPE=="sequence") {
 } else { # TYPE=="length"
     signatures <- matrix(0, nrow=length(RESOLUTION) - 1, ncol=length(ids))
 }
+colnames(signatures) <- abbreviate(ids, 15)
 
 for (i in seq_along(ids)) {
     dna <- SearchDB(dbConn, identifier=ids[i], remove="all", verbose=FALSE)
     amplicons <- matchLRPatterns(f_primer, r_primer,
                                  MAX_SIZE, unlist(dna),
-                                 max.Lmismatch=1, max.Rmismatch=1,
+                                 max.Lmismatch=2, max.Rmismatch=2,
                                  Lfixed="subject", Rfixed="subject")
     amplicons <- as(amplicons, "DNAStringSet")
     if (length(amplicons)==0)
@@ -357,21 +361,32 @@ for (i in seq_along(ids)) {
 }
 
 if (TYPE=="sequence") {
-    d <- dist(t(signatures))
-    h <- hclust(d)
-    plot(h, labels=ids, cex=0.7, ann=FALSE)
-    mtext(paste(RES, "-mer Profile Distance", sep=""), side=2, padj=-4)
+    d <- dist(t(signatures), "minkowski", p=1) # L1-Norm
+    IdClusters(as.matrix(d), showPlot=T, verbose=FALSE)
+    mtext(paste(RESOLUTION, "-mer Profile Distance", sep=""),
+        side=2, padj=-4)
 } else if (TYPE=="melt") {
     matplot(RESOLUTION, signatures, type="l",
         xlab="Temperature (degrees Celsius)", ylab="Average Helicity")
 } else { # TYPE=="length"
-    plot(NA, xlim=c(1, length(ids)), ylim=range(RESOLUTION),
-        xlab="Group Index", ylab="Amplicon Length", yaxs="i", xaxs="i")
+    if (length(ids) > 20) {
+        plot(NA,
+            xlim=c(0.5, length(ids) + 0.5), ylim=range(RESOLUTION),
+            xlab="Group Index", ylab="Amplicon Length",
+            yaxs="i", xaxs="i")
+        axis(1, at=1:length(ids), labels=FALSE, tck=-0.01)
+    } else {
+        plot(NA,
+            xlim=c(0.5, length(ids) + 0.5), ylim=range(RESOLUTION),
+            xlab="", ylab="Amplicon Length",
+            yaxs="i", xaxs="i", xaxt="n")
+        axis(1, at=1:length(ids), labels=abbreviate(ids, 7), las=2)
+    }
     xaxs <- RESOLUTION[-1] - diff(RESOLUTION)/2 # average lengths
     for (i in seq_along(ids)) {
         w <- which(signatures[, i] > 0)
         if (length(w) > 0)
-            segments(i, xaxs[w], i + 1, xaxs[w], lwd=2)
+            segments(i - 0.45, xaxs[w], i + 0.45, xaxs[w], lwd=2)
     }
 }
 @
@@ -398,7 +413,7 @@ for (i in seq_along(ids)) {
     dna <- SearchDB(dbConn, identifier=ids[i], remove="all", verbose=FALSE)
     amplicons <- matchLRPatterns(f_primer, r_primer,
                                  MAX_SIZE, unlist(dna),
-                                 max.Lmismatch=1, max.Rmismatch=1,
+                                 max.Lmismatch=2, max.Rmismatch=2,
                                  Lfixed="subject", Rfixed="subject")
     amplicons <- as(amplicons, "DNAStringSet")
     if (length(amplicons)==0)
@@ -422,13 +437,24 @@ if (TYPE=="melt") {
     matplot(RESOLUTION, signatures, type="l",
         xlab="Temperature (degrees Celsius)", ylab="Average Helicity")
 } else { # TYPE=="length"
-    plot(NA, xlim=c(1, length(ids)), ylim=range(RESOLUTION),
-        xlab="Group Index", ylab="Amplicon Length", yaxs="i", xaxs="i")
+    if (length(ids) > 20) {
+        plot(NA,
+            xlim=c(0.5, length(ids) + 0.5), ylim=range(RESOLUTION),
+            xlab="Group Index", ylab="Amplicon Length",
+            yaxs="i", xaxs="i")
+        axis(1, at=1:length(ids), labels=FALSE, tck=-0.01)
+    } else {
+        plot(NA,
+            xlim=c(0.5, length(ids) + 0.5), ylim=range(RESOLUTION),
+            xlab="", ylab="Amplicon Length",
+            yaxs="i", xaxs="i", xaxt="n")
+        axis(1, at=1:length(ids), labels=abbreviate(ids, 7), las=2)
+    }
     xaxs <- RESOLUTION[-1] - diff(RESOLUTION)/2 # average lengths
     for (i in seq_along(ids)) {
         w <- which(signatures[, i] > 0)
         if (length(w) > 0)
-            segments(i, xaxs[w], i + 1, xaxs[w], lwd=2)
+            segments(i - 0.45, xaxs[w], i + 0.45, xaxs[w], lwd=2)
     }
 }
 @
@@ -444,7 +470,7 @@ Figure \ref{f3} shows that the two amplicons which had nearly identical melt cur
 
 \subsection{Finishing Up}
 
-Finally, we can order the top scoring forward and reverse primers for synthesis and try them out in a PCR reaction!  The primers should be synthesized in the same orientation and sense that they are listed in the output (\code{primers}).
+Finally, we can order the top scoring forward and reverse primers for synthesis and try them out in a PCR reaction!  The primers should be synthesized in the same orientation given in the output (\code{primers}).
 
 \section{Session Information}
 All of the output in this vignette was produced under the following conditions:

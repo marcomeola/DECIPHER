@@ -10,7 +10,7 @@ Opens an html file in a web browser to show the contents of a table in a databas
 BrowseDB(dbFile,
          htmlFile = paste(tempdir(), "/db.html", sep = ""),
          openURL = interactive(),
-         tblName = "DNA",
+         tblName = "Seqs",
          identifier = "",
          limit = -1,
          orderBy = "row_names",
@@ -43,7 +43,7 @@ Character string giving the column name for sorting the results.  Defaults to th
 Maximum number of characters to display in each column.
 }
   \item{clause}{
-An optional character string to append to the query as a clause.
+An optional character string to append to the query as part of a ``where clause''.
 }
 }
 \value{

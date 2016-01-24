@@ -1,11 +1,12 @@
 TileSeqs <- function(dbFile,
-	tblName="DNA",
+	tblName="Seqs",
 	identifier="",
 	minLength=26,
 	maxLength=27,
 	maxTilePermutations=10,
 	minCoverage=0.9,
 	add2tbl=FALSE,
+	processors=1,
 	verbose=TRUE,
 	...) {
 	
@@ -51,12 +52,23 @@ TileSeqs <- function(dbFile,
 		stop("maxLength must be at least 1.")
 	if (minLength > maxLength)
 		stop("minLength must be less than or equal to maxLength.")
+	if (!is.null(processors) && !is.numeric(processors))
+		stop("processors must be a numeric.")
+	if (!is.null(processors) && floor(processors)!=processors)
+		stop("processors must be a whole number.")
+	if (!is.null(processors) && processors < 1)
+		stop("processors must be at least 1.")
+	if (is.null(processors)) {
+		processors <- detectCores()
+	} else {
+		processors <- as.integer(processors)
+	}
 	
-	searchExpression <- paste("select distinct id from",
+	searchExpression <- paste("select distinct identifier from",
 		tblName)
 	rs <- dbSendQuery(dbConn, searchExpression)
 	searchResult <- fetch(rs, n=-1)
-	ids <- searchResult$id
+	ids <- searchResult$identifier
 	dbClearResult(rs)
 	
 	if (identifier[1]=="") {
@@ -93,6 +105,7 @@ TileSeqs <- function(dbFile,
 			tblName=tblName,
 			type="DNAStringSet",
 			identifier=identifier[k],
+			processors=processors,
 			verbose=FALSE,
 			...)
 		numF <- length(target)

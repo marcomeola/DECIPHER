@@ -16,7 +16,7 @@ AlignSeqs(myXStringSet,
          structures = NULL,
          FUN = AdjustAlignment,
          levels = c(0.95, 0.7, 10, 5),
-         processors = NULL,
+         processors = 1,
          verbose = TRUE,
          \dots)
 }
@@ -49,7 +49,7 @@ A function to be applied after each profile-to-profile alignment.  (See details 
 Numeric with four elements specifying the levels above which to apply \code{FUN}.  (See details section below.)
 }
   \item{processors}{
-The number of processors to use, or \code{NULL} (the default) for all available processors.
+The number of processors to use, or \code{NULL} to automatically detect and use all available processors.
 }
   \item{verbose}{
 Logical indicating whether to display progress.

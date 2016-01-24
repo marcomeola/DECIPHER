@@ -6,7 +6,7 @@ CreateChimeras <- function(myDNAStringSet,
 	minChimericRegionLength=30,
 	randomLengths=TRUE,
 	includeParents=TRUE,
-	processors=NULL,
+	processors=1,
 	verbose=TRUE) {
 	
 	# error checking

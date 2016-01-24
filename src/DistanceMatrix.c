@@ -436,7 +436,7 @@ SEXP firstSeqsEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, SEXP
 	
 	UNPROTECT(1);
 	
-	return(ans);
+	return ans;
 }
 
 SEXP firstSeqsGapsEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, SEXP end_y, SEXP t)
@@ -488,5 +488,192 @@ SEXP firstSeqsGapsEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, 
 	
 	UNPROTECT(1);
 	
-	return(ans);
+	return ans;
+}
+
+SEXP firstSeqsPosEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, SEXP end_y, SEXP t)
+{
+	XStringSet_holder x_set;
+	XStringSet_holder y_set;
+	Chars_holder x_i, y_i;
+	int sx = asInteger(start_x);
+	int ex = asInteger(end_x);
+	int sy = asInteger(start_y);
+	int ey = asInteger(end_y);
+	int type = asInteger(t);
+	
+	int sizex = 100, sizey = 100;
+	int *nx = Calloc(sizex, int); // number of gaps in x
+	int *px = Calloc(sizex, int); // position of gaps in x
+	int *ny = Calloc(sizey, int); // number of gaps in y
+	int *py = Calloc(sizey, int); // position of gaps in y
+	
+	int i = sx - 1, j = sy - 1; // position in x or y
+	int cx = 0, cy = 0; // number of sites
+	int ci = 1, cj = 1; // include site in count
+	int gx = -1, gy = -1; // index of current gap
+	int itx = 0, ity = 0; // iterate position
+	
+	x_set = hold_XStringSet(x);
+	y_set = hold_XStringSet(y);
+	x_i = get_elt_from_XStringSet_holder(&x_set, 0);
+	y_i = get_elt_from_XStringSet_holder(&y_set, 0);
+	
+	while (i < ex && j < ey) {
+		if (ci) {
+			if (type==3) { // AAStringSet
+				if (!(!((*((char *)x_i.ptr + i)) ^ 0x2D) || !((*((char *)x_i.ptr + i)) ^ 0x2E))) {
+					cx++; // site
+				}
+			} else { // DNAStringSet or RNAStringSet
+				if (!((*((char *)x_i.ptr + i)) & 0x10 || (*((char *)x_i.ptr + i)) & 0x40)) {
+					cx++; // site
+				}
+			}
+		}
+		if (cj) {
+			if (type==3) { // AAStringSet
+				if (!(!((*((char *)y_i.ptr + j)) ^ 0x2D) || !((*((char *)y_i.ptr + j)) ^ 0x2E))) {
+					cy++; // site
+				}
+			} else { // DNAStringSet or RNAStringSet
+				if (!((*((char *)y_i.ptr + j)) & 0x10 || (*((char *)y_i.ptr + j)) & 0x40)) {
+					cy++; // site
+				}
+			}
+		}
+		
+		if (cx > cy) {
+			j++;
+			if (itx) {
+				nx[gx]++;
+			} else {
+				ci = 0;
+				itx = 1;
+				gx++;
+				
+				if (gx >= (sizex - 1)) {
+					sizex += 100;
+					nx = Realloc(nx, sizex, int);
+					px = Realloc(px, sizex, int);
+				}
+				
+				nx[gx] = 1;
+				px[gx] = i + 1;
+			}
+		} else if (cx < cy) {
+			i++;
+			if (ity) {
+				ny[gy]++;
+			} else {
+				cj = 0;
+				ity = 1;
+				gy++;
+				
+				if (gy >= (sizey - 1)) {
+					sizey += 100;
+					ny = Realloc(ny, sizey, int);
+					py = Realloc(py, sizey, int);
+				}
+				
+				ny[gy] = 1;
+				py[gy] = j + 1;
+			}
+		} else {
+			ci = 1;
+			cj = 1;
+			i++;
+			j++;
+			itx = 0;
+			ity = 0;
+		}
+	}
+	
+	if (i < ex) {
+		gy++;
+		ny[gy] = ex - i;
+		py[gy] = ey + 1;
+		
+		if (!ci)
+			i++;
+			
+			while (i < ex) {
+				if (type==3) { // AAStringSet
+					if (!(!((*((char *)x_i.ptr + i)) ^ 0x2D) || !((*((char *)x_i.ptr + i)) ^ 0x2E))) {
+						cx++; // site
+					}
+				} else { // DNAStringSet or RNAStringSet
+					if (!((*((char *)x_i.ptr + i)) & 0x10 || (*((char *)x_i.ptr + i)) & 0x40)) {
+						cx++; // site
+					}
+				}
+				i++;
+			}
+	}
+	
+	if (j < ey) {
+		gx++;
+		nx[gx] = ey - j;
+		px[gx] = ex + 1;
+		
+		if (!cj)
+			j++;
+			
+			while (j < ey) {
+				if (type==3) { // AAStringSet
+					if (!(!((*((char *)y_i.ptr + j)) ^ 0x2D) || !((*((char *)y_i.ptr + j)) ^ 0x2E))) {
+						cy++; // site
+					}
+				} else { // DNAStringSet or RNAStringSet
+					if (!((*((char *)y_i.ptr + j)) & 0x10 || (*((char *)y_i.ptr + j)) & 0x40)) {
+						cy++; // site
+					}
+				}
+				j++;
+			}
+	}
+	
+	SEXP ret_list, ans;
+	if (cx==cy) { // same number of sites
+		PROTECT(ret_list = allocVector(VECSXP, 4));
+		int *rans;
+		
+		PROTECT(ans = allocVector(INTSXP, gx + 1));
+		rans = INTEGER(ans);
+		for (i = 0; i <= gx; i++) {
+			*(rans + i) = px[i];
+		}
+		SET_VECTOR_ELT(ret_list, 0, ans);
+		PROTECT(ans = allocVector(INTSXP, gx + 1));
+		rans = INTEGER(ans);
+		for (i = 0; i <= gx; i++) {
+			*(rans + i) = nx[i];
+		}
+		SET_VECTOR_ELT(ret_list, 1, ans);
+		PROTECT(ans = allocVector(INTSXP, gy + 1));
+		rans = INTEGER(ans);
+		for (i = 0; i <= gy; i++) {
+			*(rans + i) = py[i];
+		}
+		SET_VECTOR_ELT(ret_list, 2, ans);
+		PROTECT(ans = allocVector(INTSXP, gy + 1));
+		rans = INTEGER(ans);
+		for (i = 0; i <= gy; i++) {
+			*(rans + i) = ny[i];
+		}
+		SET_VECTOR_ELT(ret_list, 3, ans);
+	}
+	
+	Free(nx);
+	Free(px);
+	Free(ny);
+	Free(py);
+	
+	if (cx==cy) { // same number of sites
+		UNPROTECT(5);
+		
+		return ret_list;
+	} else {
+		return R_NilValue;
+	}
 }

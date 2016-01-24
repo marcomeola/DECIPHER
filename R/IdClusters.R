@@ -172,7 +172,7 @@ to.dendrogram <- function (object) {
 	model,
 	myDNAStringSet,
 	N,
-	processors=NULL) {
+	processors=1) {
 	
 	rates <- as.integer(sub("([^+]*)(\\+G(\\d+))?", "\\3", model))
 	model <- sub("([^+]*)(\\+G(\\d+))?", "\\1", model)
@@ -1099,7 +1099,7 @@ IdClusters <- function(myDistMatrix=NULL,
 	asDendrogram=FALSE,
 	myXStringSet=NULL,
 	model=MODELS,
-	processors=NULL,
+	processors=1,
 	verbose=TRUE) {
 	
 	# initialize variables
@@ -1825,7 +1825,7 @@ IdClusters <- function(myDistMatrix=NULL,
 			plot(d,
 				horiz=FALSE,
 				leaflab=leaves,	
-				nodePar = list(lab.cex=fontSize, pch = NA))
+				nodePar=list(lab.cex=fontSize, pch = NA))
 	}
 	
 	if (verbose) {

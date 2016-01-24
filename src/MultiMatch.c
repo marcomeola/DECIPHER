@@ -798,11 +798,17 @@ SEXP boundedMatches(SEXP x, SEXP bl, SEXP bu)
 // first unmatched occurrence of x in y for ascending order integer vectors
 // requires NAs to be first in the ordering (treated as the most negative)
 // similar to match(x, y, incomparables=NA) without repetition in the result
-SEXP intMatchOnce(SEXP x, SEXP y)
+// performs the following reorderings of the inputs and output:
+// ans[o1] <- o2[intMatchOnce(x[o1], y[o2])] + 1
+// where o1 and o2 are indexed starting at zero, and ans starts at 1
+SEXP intMatchOnce(SEXP x, SEXP y, SEXP o1, SEXP o2)
 {	
 	int *v = INTEGER(x);
 	int *w = INTEGER(y);
-	int i, j, k, start = 0;
+	int *p = INTEGER(o1);
+	int *q = INTEGER(o2);
+	
+	int i, j, k, temp, start = 0;
 	int size_x = length(x);
 	int size_y = length(y);
 	
@@ -811,29 +817,35 @@ SEXP intMatchOnce(SEXP x, SEXP y)
 	int *rans = INTEGER(ans);
 	
 	for (i = 0; i < size_x; i++) {
-		rans[i] = NA_INTEGER;
-		if (v[i] != NA_INTEGER)
+		rans[p[i]] = NA_INTEGER;
+		if (v[p[i]] != NA_INTEGER)
 			break;
 	}
 	
-	for (i = i; i < size_x; i++) {
-		rans[i] = NA_INTEGER;
+	for (; i < size_x; i++) { // i = i
+		temp = NA_INTEGER;
 		for (j = start; j < size_y; j++) {
-			if (v[i] < w[j]) {
+			if (v[p[i]] < w[q[j]]) {
 				start = j;
 				break;
-			} else if (v[i] == w[j]) {
+			} else if (v[p[i]] == w[q[j]]) {
 				k = j + 1;
 				if (k < size_y &&
-					w[j] == w[k]) {
+					w[q[j]] == w[q[k]]) {
 					start = k; // prevent repeated matching
-					rans[i] = start; // index starting from 1
+					temp = j;
 				} else {
 					start = j; // allow repeated matching
-					rans[i] = k; // index starting from 1
+					temp = j;
 				}
 				break;
 			}
+		}
+		
+		if (temp == NA_INTEGER) {
+			rans[p[i]] = NA_INTEGER;
+		} else {
+			rans[p[i]] = q[temp] + 1;
 		}
 	}
 	

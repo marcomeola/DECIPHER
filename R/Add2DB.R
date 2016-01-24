@@ -24,7 +24,7 @@
 
 Add2DB <- function(myData,
 	dbFile,
-	tblName="DNA",
+	tblName="Seqs",
 	clause="",
 	verbose=TRUE) {
 	
@@ -91,8 +91,9 @@ Add2DB <- function(myData,
 					sep="")
 				if (verbose)
 					cat("Expression:\n",
-						paste(strwrap(expression1),
-							sep="\n"),
+						paste(strwrap(expression1,
+								width=getOption("width") - 1L),
+							collapse="\n"),
 						"\n\n",
 						sep="")
 				dbGetQuery(dbConn, expression1)
@@ -109,11 +110,14 @@ Add2DB <- function(myData,
 				sep="")
 			if (clause!="")
 				expression2 <- paste(expression2,
-					clause)
+					" where ",
+					clause,
+					sep="")
 			if (verbose)
 				cat("Expression:\n",
-					paste(strwrap(expression2),
-						sep="\n"),
+					paste(strwrap(expression2,
+							width=getOption("width") - 1L),
+						collapse="\n"),
 					"\n\n",
 					sep="")
 			dbBegin(dbConn)

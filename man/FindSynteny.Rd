@@ -8,7 +8,7 @@ Finds syntenic blocks between groups of sequences in a database.
 }
 \usage{
 FindSynteny(dbFile,
-            tblName = "DNA",
+            tblName = "Seqs",
             identifier = "",
             useFrames = TRUE,
             alphabet = c("MF", "ILV", "A", "C", "WYQHP", "G", "TSN", "RK", "DE"),
@@ -22,6 +22,7 @@ FindSynteny(dbFile,
             minScore = 200,
             dropScore = -100,
             maskRepeats = TRUE,
+            processors = 1,
             verbose = TRUE)
 }
 \arguments{
@@ -69,6 +70,9 @@ The change from maximal score required to stop extending blocks.
 }
   \item{maskRepeats}{
 Logical specifying whether to ``soft'' mask repeats when searching for hits.
+}
+  \item{processors}{
+The number of processors to use, or \code{NULL} to automatically detect and use all available processors.
 }
   \item{verbose}{
 Logical indicating whether to display progress.

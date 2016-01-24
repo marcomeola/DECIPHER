@@ -11,7 +11,7 @@ DigestDNA(sites,
           myDNAStringSet,
           type = "fragments",
           strand = "both",
-          processors = NULL)
+          processors = 1)
 }
 \arguments{
   \item{sites}{
@@ -27,7 +27,7 @@ Character string indicating the type of results desired.  This should be (an abb
 Character string indicating the strand(s) to cut.  This should be (an abbreviation of) one of \code{"both"}, \code{"top"}, or \code{"bottom"}.  The top strand is defined as the input DNAStringSet sequence, and the bottom strand is its reverse complement.
 }
   \item{processors}{
-The number of processors to use, or \code{NULL} (the default) for all available processors.
+The number of processors to use, or \code{NULL} to automatically detect and use all available processors.
 }
 }
 \details{

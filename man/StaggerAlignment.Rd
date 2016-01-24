@@ -11,7 +11,7 @@ StaggerAlignment(myXStringSet,
                  tree = NULL,
                  threshold = 3,
                  fullLength = FALSE,
-                 processors = NULL,
+                 processors = 1,
                  verbose = TRUE)
 }
 \arguments{
@@ -28,7 +28,7 @@ Numeric giving the ratio of insertions to deletions that must be met to stagger 
 Logical specifying whether the sequences are full-length (\code{TRUE}), or terminal gaps should be treated as missing data (\code{FALSE}, the default).  Either a single logical, a vector with one logical per sequence, or a list with \code{right} and \code{left} components containing logicals for the right and left sides of the alignment.
 }
   \item{processors}{
-The number of processors to use, or \code{NULL} (the default) for all available processors.
+The number of processors to use, or \code{NULL} to automatically detect and use all available processors.
 }
   \item{verbose}{
 Logical indicating whether to display progress.

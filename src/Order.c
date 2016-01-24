@@ -22,11 +22,12 @@
 // DECIPHER header file
 #include "DECIPHER.h"
 
-SEXP radixOrder(SEXP x)
+SEXP radixOrder(SEXP x, SEXP startAt)
 {	
 	int i, k, o1;
 	int l = length(x);
 	int *v = INTEGER(x);
+	int s = asInteger(startAt); // starting index
 	
 	int size = sizeof(int)*CHAR_BIT; // unit size of memory
 	int R = size/2; // size of radix key
@@ -39,21 +40,18 @@ SEXP radixOrder(SEXP x)
 	for (i = 0; i < l; i++)
 		rans[i] = i;
 	
-	unsigned int *shifted = Calloc(l, unsigned int);
+	unsigned int shifted;
 	
 	// least significant digit first
 	for (k = 1; k <= (size/R); k++) {
 		// subset bits in Radix k
 		o1 = size - k*R;
-		for (i = 0; i < l; i++) {
-			shifted[i] = v[rans[i]] << o1; // clear left bits
-			shifted[i] >>= o2; // clear right bits
-		}
-		
-		// count frequencies
 		int *counts = Calloc(count, int); // initialized to zero
-		for (i = 0; i < l; i++)
-			counts[shifted[i]]++;
+		for (i = 0; i < l; i++) {
+			shifted = v[rans[i]] << o1; // clear left bits
+			shifted >>= o2; // clear right bits
+			counts[shifted]++;
+		}
 		
 		// cumulative sum
 		for (i = 1; i < count; i++)
@@ -65,8 +63,11 @@ SEXP radixOrder(SEXP x)
 		
 		// move orders
 		int *temp = Calloc(l, int);
-		for (i = 0; i < l; i++)
-			temp[counts[shifted[i]]++] = rans[i];
+		for (i = 0; i < l; i++) {
+			shifted = v[rans[i]] << o1; // clear left bits
+			shifted >>= o2; // clear right bits
+			temp[counts[shifted]++] = rans[i];
+		}
 		
 		// replace orders
 		for (i = 0; i < l; i++)
@@ -75,8 +76,6 @@ SEXP radixOrder(SEXP x)
 		Free(counts);
 		Free(temp);
 	}
-	
-	Free(shifted);
 	
 	// reorder on sign bit
 	for (i = 0; i < l; i++) {
@@ -92,13 +91,14 @@ SEXP radixOrder(SEXP x)
 		for (k = 0; k < i; k++, count++)
 			temp[count] = rans[k];
 		
-		for (i = 0; i < l; i++)
-			rans[i] = temp[i] + 1; // start index at 1
+		if (s != 0)
+			for (i = 0; i < l; i++)
+				rans[i] = temp[i] + s;
 		
 		Free(temp);
-	} else {
+	} else if (s != 0) {
 		for (i = 0; i < l; i++)
-			rans[i]++; // start index at 1
+			rans[i]++;
 	}
 	
 	UNPROTECT(1);

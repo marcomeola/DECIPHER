@@ -3,10 +3,10 @@
 \alias{DECIPHER}
 \docType{package}
 \title{
-Database Enabled Code for Ideal Probe Hybridization Employing R
+Tools for curating, analyzing, and manipulating biological sequences
 }
 \description{
-Database Enabled Code for Ideal Probe Hybridization Employing R (DECIPHER) is a software toolset that can be used for deciphering and managing biological sequences efficiently using the R statistical programming language.  The program is designed to be used with non-destructive workflows that guide the user through the process of importing, maintaining, analyzing, manipulating, and exporting a massive amount of sequences.  Some functionality of the program is provided online through web tools.  DECIPHER is an ongoing project at the University of Wisconsin - Madison and is freely available for download.
+DECIPHER is a software toolset that can be used for deciphering and managing biological sequences efficiently using the R statistical programming language.  The program is designed to be used with non-destructive workflows for importing, maintaining, analyzing, manipulating, and exporting a massive amount of sequences.
 }
 \details{
 \tabular{ll}{
@@ -39,6 +39,7 @@ CalculateEfficiencyArray Predict the Hybridization Efficiency of
 CalculateEfficiencyFISH  Predict Thermodynamic Parameters of Probe/Target
                          Sequence Pairs
 CalculateEfficiencyPCR   Predict Amplification Efficiency of Primer Sequences
+Codec                    Compression/Decompression of Character Vectors
 ConsensusSequence        Create A Consensus Sequence
 CorrectFrameshifts       Corrects Frameshift Errors In Protein Coding
                          Sequences

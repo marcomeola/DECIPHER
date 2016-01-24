@@ -30,6 +30,8 @@ SEXP firstSeqsEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, SEXP
 
 SEXP firstSeqsGapsEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, SEXP end_y, SEXP t);
 
+SEXP firstSeqsPosEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, SEXP end_y, SEXP t);
+
 // ClusterNJ.c
 
 SEXP clusterNJ(SEXP x, SEXP cutoff, SEXP verbose, SEXP pBar, SEXP nThreads);
@@ -78,7 +80,7 @@ SEXP matchRanges(SEXP x, SEXP y, SEXP wordSize, SEXP maxLength, SEXP threshold);
 
 SEXP boundedMatches(SEXP x, SEXP bl, SEXP bu);
 
-SEXP intMatchOnce(SEXP x, SEXP y);
+SEXP intMatchOnce(SEXP x, SEXP y, SEXP o1, SEXP o2);
 
 SEXP matchListsDual(SEXP x, SEXP y, SEXP verbose, SEXP pBar, SEXP nThreads);
 
@@ -136,7 +138,7 @@ SEXP positionWeightMatrix(SEXP x, SEXP begins, SEXP ends, SEXP width);
 
 // IntDist.c
 
-SEXP intDist(SEXP x, SEXP levels, SEXP bins, SEXP maxBins, SEXP numRows, SEXP totRows);
+SEXP intDist(SEXP x, SEXP levels, SEXP bins, SEXP maxBins, SEXP numRows, SEXP totRows, SEXP power);
 
 // MeltPolymer.c
 
@@ -184,7 +186,7 @@ SEXP findFrameshifts(SEXP t, SEXP l, SEXP f, SEXP index, SEXP maxComp, SEXP go, 
 
 // Order.c
 
-SEXP radixOrder(SEXP x);
+SEXP radixOrder(SEXP x, SEXP startAt);
 
 // ChainSegments.c
 
@@ -201,3 +203,15 @@ SEXP maskRepeats(SEXP e, SEXP size, SEXP minL, SEXP maxL, SEXP totL);
 // Translate.c
 
 SEXP basicTranslate(SEXP x, SEXP code, SEXP starts);
+
+// Import.c
+
+SEXP collapse(SEXP x, SEXP index1, SEXP index2);
+
+SEXP extractFields(SEXP x, SEXP fields, SEXP starts, SEXP ends);
+
+// Compression.c
+
+SEXP compress(SEXP x, SEXP y, SEXP compRepeats, SEXP nThreads);
+
+SEXP decompress(SEXP x, SEXP nThreads);

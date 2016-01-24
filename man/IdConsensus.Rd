@@ -8,11 +8,11 @@ Forms a consensus sequence representing the sequences in each group.
 }
 \usage{
 IdConsensus(dbFile,
-            tblName = "DNA",
+            tblName = "Seqs",
             identifier = "",
             type = "DNAStringSet",
-            colName = "id",
-            add2tbl = FALSE,
+            colName = "identifier",
+            processors = 1,
             verbose = TRUE,
             \dots)
 }
@@ -32,8 +32,8 @@ The type of \code{XStringSet} (sequences) to use in forming consensus.  This sho
   \item{colName}{
 Column containing the group name of each sequence.
 }
-  \item{add2tbl}{
-Logical or a character string specifying the table name in which to add the result.
+  \item{processors}{
+The number of processors to use, or \code{NULL} to automatically detect and use all available processors.
 }
   \item{verbose}{
 Logical indicating whether to display progress.
@@ -56,6 +56,6 @@ Erik Wright \email{DECIPHER@cae.wisc.edu}
 }
 \examples{
 db <- system.file("extdata", "Bacteria_175seqs.sqlite", package="DECIPHER")
-con <- IdConsensus(db, colName="id", noConsensusChar="N")
+con <- IdConsensus(db, colName="identifier", noConsensusChar="N")
 BrowseSeqs(con)
 }

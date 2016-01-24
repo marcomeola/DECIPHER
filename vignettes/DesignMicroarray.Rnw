@@ -77,13 +77,15 @@ library(DECIPHER)
 @
 
 Help for the \Rfunction{DesignArray} function can be accessed through:
+
 \begin{Schunk}
 \begin{Sinput}
 > ? DesignArray
 \end{Sinput}
 \end{Schunk}
 
-If this vignette was installed on your system then the code in each example can be obtained by:
+If \Rpackage{DECIPHER} is installed on your system, the code in each example can be obtained via:
+
 \begin{Schunk}
 \begin{Sinput}
 > browseVignettes("DECIPHER")

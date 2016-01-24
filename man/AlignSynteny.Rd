@@ -9,8 +9,9 @@ Performs pairwise alignment of all blocks of synteny between sets of sequences.
 \usage{
 AlignSynteny(synteny,
              dbFile,
-             tblName = "DNA",
+             tblName = "Seqs",
              identifier = "",
+             processors = 1,
              verbose = TRUE,
              ...)
 }
@@ -26,6 +27,9 @@ Character string specifying the table where the sequences are located that were 
 }
   \item{identifier}{
 Optional character string used to narrow the search results to those matching a specific identifier, or an integer sequence corresponding to indices of \code{rownames(synteny)}.  If "" (the default), then all identifiers are selected from \code{synteny}.
+}
+  \item{processors}{
+The number of processors to use, or \code{NULL} to automatically detect and use all available processors.
 }
   \item{verbose}{
 Logical indicating whether to display progress.

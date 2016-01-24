@@ -53,7 +53,7 @@ options(width=80)
 \section{Introduction}
 %------------------------------------------------------------
 
-This document illustrates how to detect chimeric sequences using the \Rpackage{DECIPHER} package through the use of the \Rfunction{FindChimeras} function.  The function finds chimeric sequences present in a database (\Rfunarg{dbFile}) of sequences by making use of a reference database (\Rfunarg{dbFileReference}) of good sequences.  The examples in this document are directed towards finding chimeric 16S rRNA sequences, although a similar strategy could be used with any type of sequence.  For 16S sequences the functionality of \Rfunction{FindChimeras} is implemented as a web tool available at \url{http://DECIPHER.cee.wisc.edu}.
+This document illustrates how to detect chimeric sequences using the \Rpackage{DECIPHER} package through the use of the \Rfunction{FindChimeras} function.  The function finds chimeric sequences present in a database (\Rfunarg{dbFile}) of sequences by making use of a reference database (\Rfunarg{dbFileReference}) of good sequences.  The examples in this document are directed towards finding chimeric 16S rRNA sequences, although a similar strategy could be used with any type of sequence.  For 16S sequences the functionality of \Rfunction{FindChimeras} is implemented as a web tool available at \underline{\url{http://DECIPHER.cee.wisc.edu}}.
 
 %------------------------------------------------------------
 \section{Chimera Finding Problems}
@@ -77,14 +77,16 @@ To get started we need to load the \Rpackage{DECIPHER} package, which automatica
 library(DECIPHER)
 @
 
-Help for any \Rpackage{DECIPHER} function, such as \Rfunction{FindChimeras}, can be accessed through
+Help for any \Rpackage{DECIPHER} function, such as \Rfunction{FindChimeras}, can be accessed through:
+
 \begin{Schunk}
 \begin{Sinput}
 > ? FindChimeras
 \end{Sinput}
 \end{Schunk}
 
-If this vignette was installed on your system then the code in each example can be obtained by
+If \Rpackage{DECIPHER} is installed on your system, the code in each example can be obtained via:
+
 \begin{Schunk}
 \begin{Sinput}
 > browseVignettes("DECIPHER")
@@ -95,7 +97,7 @@ If this vignette was installed on your system then the code in each example can 
 \section{Obtaining/Building A Reference Database}
 %------------------------------------------------------------
 
-The first step necessary to use \Rfunction{FindChimeras} is to obtain a reference database (\Rfunarg{dbFileReference}) of good sequences.  In order for the algorithm to work accurately, it is crucial that the reference database is free of any chimeras.  The examples given in this document use 16S rRNA sequences, and a suitable reference database can be found at \url{http://DECIPHER.cee.wisc.edu/Download.html}.  The 16S reference database must be unzipped after download.
+The first step necessary to use \Rfunction{FindChimeras} is to obtain a reference database (\Rfunarg{dbFileReference}) of good sequences.  In order for the algorithm to work accurately, it is crucial that the reference database is free of any chimeras.  The examples given in this document use 16S rRNA sequences, and a suitable reference database can be found at \underline{\url{http://DECIPHER.cee.wisc.edu/Download.html}}.  The 16S reference database must be unzipped after download.
 
 If a reference database is not present then it is feasible to create a one if a significantly large repository of sequences is available.  By using the input database as the reference database it is possible to remove chimeras from the database.  Iteratively repeating the process can eventually result in a clean reference database that is chimera free.
 
@@ -105,7 +107,7 @@ The reference database is required to have several fields of information that ar
 \item \term{origin} as provided by the function \Rfunction{FormGroups}.  The origin column contains the taxonomic rank above the level shared by the whole group.  For example, the origin of the group \textit{Nanoarchaeum} would be \textit{Root; Archaea; Nanoarchaeota}.  Without the taxonomic rank it would be possible to substitute numbers.  For example, the rank 3.1.4.2 with a group named 4 that included 4.1 and 4.2 would have origin 3.1.  These numbers could be generated using \Rfunction{IdClusters} with multiple \Rfunarg{cutoffs}.
 \end{enumerate}
 
-Below is an example of building a reference database \textit{de novo} from a FASTA file of LSU rRNA (23S) sequences downloaded from SILVA (http://www.arb-silva.de/).  Of course, the reference database must match the type of the query sequences, so in the remainder of this vignette we use a comprehensive SSU rRNA (16S) database.  The information in this section is only given as an example of how to build a reference database from scratch.
+Below is an example of building a reference database \textit{de novo} from a FASTA file of LSU rRNA (23S) sequences downloaded from SILVA (\underline{\url{http://www.arb-silva.de/}}).  Of course, the reference database must match the type of the query sequences, so in the remainder of this vignette we use a comprehensive SSU rRNA (16S) database.  The information in this section is only given as an example of how to build a reference database from scratch.
 
 \begin{Schunk}
 \begin{Sinput}
@@ -123,7 +125,7 @@ When importing a GenBank file the rank (classification) information is automatic
 
 \begin{Schunk}
 \begin{Sinput}
-> class <- dbGetQuery(dbConn, "select description from DNA")
+> class <- dbGetQuery(dbConn, "select description from Seqs")
 > f <- function (x) {paste(x[2:length(x)], collapse="")}
 > class <- unlist(lapply(strsplit(class$description, " ", fixed=TRUE), f))
 > Add2DB(data.frame(rank=class), dbConn)
@@ -173,7 +175,7 @@ Note that sequences in the reference database must be in the same orientation as
 
 \subsubsection{Classifying Sequences}
 
-In order to assign new sequences to a group in the reference database, it is necessary to first classify the sequences.  There are a wide variety of classification methods that would work for this purpose.  Here we make use of the RDP Multiclassifier available from \url{http://rdp.cme.msu.edu/classifier/}.  After downloading the multiclassifier.jar we need to use it to classify our sequences.  Be sure to change the path names to those on your system by replacing all of the text inside quotes labeled ``$<<$path to ...$>>$'' with the actual path on your system.
+In order to assign new sequences to a group in the reference database, it is necessary to first classify the sequences.  There are a wide variety of classification methods that would work for this purpose.  Here we make use of the RDP Multiclassifier available from \underline{\url{http://rdp.cme.msu.edu/classifier/}}.  After downloading the multiclassifier.jar we need to use it to classify our sequences.  Be sure to change the path names to those on your system by replacing all of the text inside quotes labeled ``$<<$path to ...$>>$'' with the actual path on your system.
 
 <<expr1,eval=FALSE>>=
 output.file <- tempfile()
@@ -199,9 +201,9 @@ Next we need to determine which groups are present in the reference database and
 
 <<expr3,eval=FALSE>>=
 dbRef <- dbConnect(SQLite(), '<<path to reference database>>')
-t <- dbGetQuery(dbRef, "select distinct rank, id from DNA group by rank")
+t <- dbGetQuery(dbRef, "select distinct rank, id from Seqs group by rank")
 y <- dbGetQuery(dbRef, paste("select distinct id,
-	count(*) as count from DNA", "where chimera is null group by id"))
+	count(*) as count from Seqs", "where chimera is null group by id"))
 
 t$count <- 0
 for (i in 1:dim(t)[1])
@@ -215,7 +217,7 @@ We can now assign each of the classified sequences to a group in the reference d
 <<expr4,eval=FALSE>>=
 r <- readLines(output.file)
 
-z <- data.frame(id=I(character(length(r))),
+z <- data.frame(identifier=I(character(length(r))),
 	row.names=1:length(r))
 confidence <- .51
 for (i in 1:length(r)) {
@@ -245,9 +247,9 @@ for (i in 1:length(r)) {
 		fixed=TRUE)
 	
 	if (length(index) == 0)
-		z$id[i] <- "unknown_lineage"
+		z$identifier[i] <- "unknown_lineage"
 	else
-		z$id[i] <- as.character(t$id[index[1]])
+		z$identifier[i] <- as.character(t$id[index[1]])
 }
 @
 
@@ -255,7 +257,7 @@ At this point we should have the group assignment for each sequence.
 \begin{Schunk}
 \begin{Sinput}
 > head(z)
-                   id
+           identifier
 1      Lysinibacillus
 2      Staphylococcus
 3      Staphylococcus

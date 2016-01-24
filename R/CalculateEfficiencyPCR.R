@@ -7,7 +7,7 @@ CalculateEfficiencyPCR <- function(primer,
 	taqEfficiency=TRUE,
 	maxDistance=0.4,
 	maxGaps=2,
-	processors=NULL) {
+	processors=1) {
 	
 	# error checking
 	if (is.character(primer))

@@ -157,7 +157,6 @@ SEXP findFrameshifts(SEXP t, SEXP l, SEXP f, SEXP index, SEXP maxComp, SEXP go, 
 	PROTECT(ret_list = allocVector(VECSXP, f_length));
 	
 	int before, v, *rPercentComplete;
-	double soFar;
 	v = asLogical(verbose);
 	SEXP percentComplete, utilsPackage;
 	if (v) { // percent complete variables

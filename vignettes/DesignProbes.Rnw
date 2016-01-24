@@ -59,7 +59,7 @@ options(width=80)
 \section{Introduction}
 %------------------------------------------------------------
 
-This document describes how to design group-specific FISH probes using the \Rpackage{DECIPHER} package through the use of the \Rfunction{DesignProbes} function.  Fluorescent In-Situ Hybridization (FISH) is an laboratory technique that enables visualizing specific microorganisms in their natural environment using fluorescent microscopy.  As a case study, this tutorial focuses on the small-subunit ribosomal RNA (SSU rRNA) from a collection of bacteria found in drinking water.  Here we describe how to design probes targeting a group of interest that will not cross-hybridize with other bacteria from the same sample.  A similar strategy could be used with any set of aligned sequences that are separated into groups.  For example, genus-specific probes designed with this program that target all named bacteria and archaea genera are provided online at \url{http://DECIPHER.cee.wisc.edu/16SOligos.html}.
+This document describes how to design group-specific FISH probes using the \Rpackage{DECIPHER} package through the use of the \Rfunction{DesignProbes} function.  Fluorescent In-Situ Hybridization (FISH) is an laboratory technique that enables visualizing specific microorganisms in their natural environment using fluorescent microscopy.  As a case study, this tutorial focuses on the small-subunit ribosomal RNA (SSU rRNA) from a collection of bacteria found in drinking water.  Here we describe how to design probes targeting a group of interest that will not cross-hybridize with other bacteria from the same sample.  A similar strategy could be used with any set of aligned sequences that are separated into groups.  For example, genus-specific probes designed with this program that target all named bacteria and archaea genera are provided online at \underline{\url{http://DECIPHER.cee.wisc.edu/16SOligos.html}}.
 
 A database of aligned DNA sequences separated into groups is used as input to the program.  First the function \Rfunction{TileSeqs} is used to pre-process the sequences into overlapping tiles, which will serve as the template DNA for probe design.  Second, the \Rfunction{DesignProbes} function determines the set of all possible probes that meet certain design constraints, such as the ability to hybridize with the group of interest under specified experimental conditions.  Next, the complete set of probes is scored by its potential to cross-hybridize with sequences from other groups including a comprehensive database of non-target sequences.  Finally, the optimal set of dual probes is chosen that could be used in a FISH experiment to identify the microbes of interest.
 
@@ -77,12 +77,11 @@ In cases where the desired level of specificity cannot be achieved, \Rfunction{D
 
 \subsection{Installing OligoArrayAux}
 
-The program OligoArrayAux (\url{http://mfold.rna.albany.edu/?q=DINAMelt/OligoArrayAux}) is used to predict hybridization efficiency and must be installed in a location accessible by the system.  For example, the following code should print the installed OligoArrayAux version when executed from the \term{R} console:
+The program OligoArrayAux (\underline{\url{http://mfold.rna.albany.edu/?q=DINAMelt/OligoArrayAux}}) is used to predict hybridization efficiency and must be installed in a location accessible by the system.  For example, the following code should print the installed OligoArrayAux version when executed from the \term{R} console:
 
 <<expr0,eval=FALSE>>=
 system("hybrid-min -V")
 @
-
 \begin{Schunk}
 \begin{Sinput}
 hybrid-min (OligoArrayAux) 3.8
@@ -94,6 +93,7 @@ Troy, NY 12810-3590 USA
 \end{Schunk}
 
 \subsection{Startup}
+\label{sec:startup}
 
 To get started we need to load the \Rpackage{DECIPHER} package, which automatically loads several other required packages.
 
@@ -102,13 +102,15 @@ library(DECIPHER)
 @
 
 Help for the \Rfunction{DesignProbes} function can be accessed through:
+
 \begin{Schunk}
 \begin{Sinput}
 > ? DesignProbes
 \end{Sinput}
 \end{Schunk}
 
-If this vignette was installed on your system then the code in each example can be obtained by:
+If \Rpackage{DECIPHER} is installed on your system, the code in each example can be obtained via:
+
 \begin{Schunk}
 \begin{Sinput}
 > browseVignettes("DECIPHER")
@@ -138,7 +140,7 @@ Seqs2DB(gb, "GenBank", dbConn, "Bacteria")
 
 \subsection{Defining Groups}
 
-At this point we need to define groups of related sequences in the database we just created.  In this case we wish to define phylogenetic groups based on the taxonomic information included in the original GenBank file.  The advantage of using a GenBank file is that the taxonomic information is automatically imported from the ORGANISM field into a ``rank'' column in the sequence database.  When importing from a FASTA or FASTQ file the taxonomic information must come from another source, such as parsing the sequence identifiers or by building a tree with the function \Rfunction{IdClusters}.  The ``rank'' column can then be used by the function \Rfunction{IdentifyByRank} to identify the groups at any taxonomic level (e.g., genus).  Alternatively we could build the taxonomy directly from the sequences by using the function \Rfunction{IdClusters} to define groups.
+At this point we need to define groups of related sequences in the database we just created.  In this case we wish to define phylogenetic groups based on the taxonomic information included in the original GenBank file.  The advantage of using a GenBank file is that the taxonomic information is automatically imported from the ORGANISM field into a ``rank'' column in the sequence database.  When importing from a FASTA or FASTQ file the taxonomic information must come from another source, such as parsing the sequence identifiers or by building a tree with the function \Rfunction{IdClusters}.  In the case of a GenBank file, the ``rank'' column can be used by the function \Rfunction{IdentifyByRank} to identify the groups at any taxonomic level (e.g., genus).
 
 <<expr3,eval=TRUE>>=
 ids <- IdentifyByRank(dbConn, level=Inf, add2tbl=TRUE)
@@ -155,12 +157,11 @@ We continue by creating a set of k-mers, known as ``tiles'', that represent the 
 <<expr4,eval=FALSE>>=
 tiles <- TileSeqs(dbConn, add2tbl="Tiles")
 @
-
 \begin{Schunk}
 \begin{Sinput}
   |===========================================================================| 100%
 
-Time difference of 708.99 secs
+Time difference of 572.06 secs
 \end{Sinput}
 \end{Schunk}
 
@@ -172,13 +173,12 @@ Next we wish to design probes targeting the 5 sequences identified as belonging 
 probes <- DesignProbes(tiles, identifier="Sphingopyxis",
 	start=120, end=1450)
 @
-
 \begin{Schunk}
 \begin{Sinput}
 Sphingopyxis (678):
   |===========================================================================| 100%
 
-Time difference of 270 secs
+Time difference of 250 secs
 \end{Sinput}
 \end{Schunk}
 
@@ -188,7 +188,6 @@ We can now examine the top-scoring probe with maximal sensitivity and specificit
 o <- order(probes$score, decreasing=TRUE)
 probes[o[1],]
 @
-
 \begin{Schunk}
 \begin{Sinput}
       identifier start start_aligned permutations
@@ -216,11 +215,8 @@ The best probe out of 678 candidate target sites has three permutations, with fo
 <<expr7,eval=FALSE>>=
 ConsensusSequence(DNAStringSet(probes[o[1], "probe"][1:3]))
 @
-
 \begin{Schunk}
 \begin{Sinput}
-Time difference of 0 secs
-
   A DNAStringSet instance of length 1
     width seq
 [1]    23 CCGCGATYAGGATGTCAAAYGCT
@@ -266,7 +262,7 @@ legend("topright", legend=c("Targets", "Non-Targets", "50% Efficiency",
 
 \subsection{Finding Non-targets in a Comprehensive Reference Database}
 
-It is now important to find potential non-targets not included in the sequence set used for design.  For this purpose we can either build a new comprehensive reference database, or download one online from \url{http://DECIPHER.cee.wisc.edu/Download.html}.  The reference database must be unzipped after download.  Each database includes a pre-processed set of tiles, generated in the same manner as shown above, that can be found in the table named ``Tiles''.  Be sure to change the path names to those on your system by replacing all of the text inside quotes labeled ``$<<$path to ...$>>$'' with the actual path on your system.
+It is now important to find potential non-targets not included in the sequence set used for design.  For this purpose we can either build a new comprehensive reference database, or download one online from \underline{\url{http://DECIPHER.cee.wisc.edu/Download.html}}.  The reference database must be unzipped after download.  Each database includes a pre-processed set of tiles, generated in the same manner as shown above, that can be found in the table named ``Tiles''.  Be sure to change the path names to those on your system by replacing all of the text inside quotes labeled ``$<<$path to ...$>>$'' with the actual path on your system.
 
 <<expr9,eval=FALSE>>=
 dbConn_ref <- dbConnect(SQLite(), "<<path to reference database>>")
@@ -279,7 +275,7 @@ ref_tiles$id <- paste("ref", ref_tiles$id, sep="_")
 
 Next we can use these tiles to find hits in the comprehensive database of non-targets that may not have been included in the sequence set used for design.  This step is unnecessary if a comprehensive sequence set was used during the design steps above.  Here we used a reduced set of non-targets during design, so we must search the comprehensive reference database for other non-targets.
 
-This step requires searching for a substantial number of probes in a very large number of non-targets.  To accomplish this feat in a reasonable time we will leverage \Rpackage{Biostrings}' dictionary matching functionality.  Nevertheless this step still requires several minutes to complete.  Note that this process can be accelerated by eliminating the lowest scoring probes (i.e., \code{probes <- probes[o[1:20],]}), but this should only be used in cases where the number of non-targets included in the design sequence set was sufficient to narrow down the list of potential probes.
+This step requires searching for a substantial number of probes in a very large number of non-targets.  To accomplish this feat in a reasonable time we will leverage \Rpackage{Biostrings}' dictionary matching functionality.  Nevertheless this step still requires several minutes to complete.  Note that this process can be accelerated by eliminating the lowest scoring probes (i.e., \code{probes <- probes[o[1:20],]}), but this should only be used in cases where the number of non-targets included in the design sequence set was sufficient to narrow down the list of potential probes to reasonable candidates.
 
 <<expr10,eval=FALSE>>=
 seqs <- DNAStringSet(ref_tiles$target_site)
@@ -298,7 +294,7 @@ names(hits2) <- rep(1:length(l), l)
 hits <- c(hits1, hits2)
 @
 
-Now we can use the thermodynamic model to predict the degree of cross-hybridization between each probe and non-target.  This information is used to update the score for every probe, and is stored in the column \textit{mismatches} alongside previous non-targets identified during design.  Since this requires a fair amount of code it may be helpful to access the code shown here directly.  As with any vignette, its source code can be found using the \code{vignette} command with the name of the vignette (i.e., \code{edit(vignette("DesignProbes"))}).
+Now we can use the thermodynamic model to predict the degree of cross-hybridization between each probe and non-target.  This information is used to update the score for every probe, and is stored in the column \textit{mismatches} alongside previous non-targets identified during design.  Refer to section~\ref{sec:startup} above for how to easily obtain the code shown below:
 
 <<expr11,eval=FALSE>>=
 Hyb_FA <- 35 # the default Hybridization [FA] (%; v/v)
@@ -367,7 +363,6 @@ for (i in 1:dim(probes)[1]) {
 	setTxtProgressBar(pBar, i/dim(probes)[1])
 }
 @
-
 \begin{Schunk}
 \begin{Sinput}
   |===========================================================================| 100%
@@ -380,7 +375,6 @@ Finally, we can examine the top scoring single probe after updating the results 
 # the original best scoring probe after searching the comprehensive database
 probes[o[1],]
 @
-
 \begin{Schunk}
 \begin{Sinput}
       identifier start start_aligned permutations        score
@@ -426,7 +420,6 @@ o <- order(probes$score, -1*probes$permutations,
 	decreasing=TRUE)
 probes[o[1],]
 @
-
 \begin{Schunk}
 \begin{Sinput}
       identifier start start_aligned permutations        score
@@ -470,7 +463,6 @@ probes <- DesignProbes(tiles, identifier="Sphingopyxis",
 	start=120, end=1450,
 	numProbeSets=100) # note numProbeSets > 0
 @
-
 \begin{Schunk}
 \begin{Sinput}
 Sphingopyxis (678):
@@ -483,7 +475,6 @@ Time difference of 270 secs
 <<expr15,eval=FALSE>>=
 dim(probes) # now there are 100 potential probe sets
 @
-
 \begin{Schunk}
 \begin{Sinput}
 [1] 100 21
@@ -493,7 +484,7 @@ dim(probes) # now there are 100 potential probe sets
 \item If searching through non-targets using a comprehensive reference database (as outlined in the sections above) then it is simpler to continue from where we left off above, because we already finished designing all single probes and searching for potential non-targets.  In this case, all we need to do is search for the combination of two probes with the minimal mismatch overlap, as described below.
 \end{enumerate}
 
-To continue, we first compute the score for using each pair of probes as a dual probe set.  The new score for using two probes is based off the minimal cross-hybridization between each pair of probes and every non-target.  For example, if probe \#1 cross-hybridizes with a non-target, but probe \#2 does not then the non-target is not a threat when the two probes are used in conjunction because the hybridization of both probes is required for a positive identification.
+To continue, we first compute the score for using each pair of probes as a dual probe set.  The new score for using two probes is based off the minimal cross-hybridization between each pair of probes and every non-target.  For example, if probe \#1 cross-hybridizes with a non-target, but probe \#2 does not, then the non-target is not a threat when the two probes are used in conjunction because the hybridization of both probes is required for a positive identification.
 
 <<expr16,eval=FALSE>>=
 numProbeSets <- 100 # number of probe sets to generate
@@ -624,7 +615,6 @@ pSets$mismatches_set <- mismatches
 
 pSets[1, -which(names(pSets) %in% c("mismatches_one", "mismatches_two"))]
 @
-
 \begin{Schunk}
 \begin{Sinput}
     identifier_one start_one start_aligned_one permutations_one
@@ -668,7 +658,7 @@ There are now multiple candidate dual probe sets for consideration, all of which
 Often it is useful to visualize the target sites where the probes will hybridize on both the target and non-targets side-by-side.  We can accomplish this by highlighting the region of both probes in the sequence set with \Rfunction{BrowseSeqs}.  After querying the database for the sequences of interest, we can selectively color the target site regions given by \code{start_aligned_one} and \code{start_aligned_two} outputs of \Rfunction{DesignProbes}.  Next we name and order the sequences in the set such that the target (\textit{Sphingopyxis}) appears at the top.
 
 <<expr19,eval=FALSE>>=
-dna <- SearchDB(dbConn, nameBy="id", verbose=FALSE)
+dna <- SearchDB(dbConn, nameBy="identifier", verbose=FALSE)
 dbDisconnect(dbConn)
 
 # move the target group to the top of the sequence set

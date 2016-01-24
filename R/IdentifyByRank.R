@@ -1,6 +1,6 @@
 IdentifyByRank <- function(dbFile,
-	tblName="DNA",
-	level=Inf,
+	tblName="Seqs",
+	level=0,
 	add2tbl=FALSE,
 	verbose=TRUE) {
 	
@@ -11,8 +11,8 @@ IdentifyByRank <- function(dbFile,
 		stop("verbose must be a logical.")
 	if (!is.logical(add2tbl) && !is.character(add2tbl))
 		stop("add2tbl must be a logical or table name.")
-	if (!is.numeric(level) || level == 0 || floor(level) != level)
-		stop("level must be an integer other than zero.")
+	if (!is.numeric(level) || floor(level) != level)
+		stop("level must be an integer.")
 	
 	if (verbose)
 		time.1 <- Sys.time()
@@ -35,54 +35,67 @@ IdentifyByRank <- function(dbFile,
 			tblName))))
 		stop("No rank column in table.")
 	
-	searchExpression <- paste("select rank from", tblName)
+	searchExpression <- paste("select distinct rank from", tblName)
 	rs <- dbSendQuery(dbConn, searchExpression)
-	searchResult <- fetch(rs, n=-1)
+	x <- fetch(rs, n=-1)
 	dbClearResult(rs)
-	f <- factor(searchResult$rank)
-	x <- data.frame(table(f))
 	
 	z <- x
-	for (j in 1:length(x$f)) {
-		a <- strsplit(as.character(x$f[j]), ";")[[1]]
-		l <- length(a)
-		if (level < 0) {
-			temp_level <- l + level
-		} else {
-			temp_level <- level
+	if (level==0) {
+		x <- strsplit(x$rank, "\n", fixed=TRUE)
+		z$origin <- unlist(lapply(x,
+			function (x) {
+				x <- paste(x[-1], collapse=" ")
+			}))
+		z$identifier <- unlist(lapply(x, `[`, 1L))
+	} else {
+		x$rank <- unlist(lapply(strsplit(x$rank,
+				"\n",
+				fixed=TRUE),
+			function (x) {
+				x <- paste(x[-1], collapse=" ")
+			}))
+		for (j in seq_along(x$rank)) {
+			a <- strsplit(x$rank[j], ";")[[1]]
+			l <- length(a)
+			if (level < 0) {
+				temp_level <- l + level
+			} else {
+				temp_level <- level
+			}
+			
+			if (temp_level > l) {
+				id <- as.character(a[l])
+			} else if (temp_level < 1) {
+				id <- as.character(a[1])
+			} else {
+				id <- as.character(a[temp_level])
+			}
+			z$origin[j] <- unlist(strsplit(as.character(x$rank[j]),
+				id,
+				fixed=TRUE))[1]
+			id <- .Call("replaceChar", id, ";", "", PACKAGE="DECIPHER")
+			id <- .Call("replaceChar", id, ".", "", PACKAGE="DECIPHER")
+			id <- .Call("replaceChar", id, '"', "", PACKAGE="DECIPHER")
+			id <- .Call("replaceChar", id, "'", "", PACKAGE="DECIPHER")
+			id <- .Call("replaceChar", id, " ", "", PACKAGE="DECIPHER")
+			z$identifier[j] <- as.character(id)
 		}
-		
-		if (temp_level > l) {
-			id <- as.character(a[l])
-		} else if (temp_level < 1) {
-			id <- as.character(a[1])
-		} else {
-			id <- as.character(a[temp_level])
-		}
-		z$origin[j] <- unlist(strsplit(as.character(x$f[j]),
-			id,
-			fixed=TRUE))[1]
-		id <- .Call("replaceChar", id, ";", "", PACKAGE="DECIPHER")
-		id <- .Call("replaceChar", id, ".", "", PACKAGE="DECIPHER")
-		id <- .Call("replaceChar", id, '"', "", PACKAGE="DECIPHER")
-		id <- .Call("replaceChar", id, "'", "", PACKAGE="DECIPHER")
-		id <- .Call("replaceChar", id, " ", "", PACKAGE="DECIPHER")
-		z$id[j] <- as.character(id)
 	}
 	
 	if (is.character(add2tbl) || add2tbl) {
 		dbWriteTable(dbConn, "taxa", z)
 		
 		if (verbose)
-			cat("\nUpdating column: \"id\"...")
+			cat("\nUpdating column: \"identifier\"...")
 		
 		searchExpression <- paste("update or replace ",
 			ifelse(is.character(add2tbl),add2tbl,tblName),
-			" set id = (select id from taxa where ",
+			" set identifier = (select identifier from taxa where ",
 			ifelse(is.character(add2tbl),add2tbl,tblName),
-			".rank = taxa.f) where ",
+			".rank = taxa.rank) where ",
 			ifelse(is.character(add2tbl),add2tbl,tblName),
-			".rank in (select f from taxa)",
+			".rank in (select rank from taxa)",
 			sep="")
 		dbGetQuery(dbConn, searchExpression)
 		
@@ -92,12 +105,12 @@ IdentifyByRank <- function(dbFile,
 	
 	if (verbose) {
 		cat("\nFormed",
-			length(unique(z$id)),
+			length(unique(z$identifier)),
 			"distinct groups.")
 		if (is.character(add2tbl) || add2tbl)
 			cat("\nAdded to table ",
 				ifelse(is.character(add2tbl),add2tbl,tblName),
-				": \"id\".",
+				": \"identifier\".",
 				sep="")
 		
 		cat("\n")

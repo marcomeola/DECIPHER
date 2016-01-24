@@ -8,10 +8,10 @@ Finds chimeras present in a database of sequences.  Makes use of a reference dat
 }
 \usage{
 FindChimeras(dbFile,
-             tblName = "DNA",
+             tblName = "Seqs",
              identifier = "",
              dbFileReference,
-             tblNameReference = "DNA",
+             tblNameReference = "Seqs",
              batchSize = 100,
              minNumFragments = 20000,
              tb.width = 5,
@@ -25,6 +25,7 @@ FindChimeras(dbFile,
              maxGroupSize = -1,
              minGroupSize = 100,
              excludeIDs = NULL,
+             processors = 1,
              verbose = TRUE)
 }
 \arguments{
@@ -81,6 +82,9 @@ The minimum number of sequences in a group to be considered as part of the searc
 }
   \item{excludeIDs}{
 Optional character vector of \code{identifier}(s) to exclude from database searches, or \code{NULL} (the default) to not exclude any.
+}
+  \item{processors}{
+The number of processors to use, or \code{NULL} to automatically detect and use all available processors.
 }
   \item{verbose}{
 Logical indicating whether to display progress.

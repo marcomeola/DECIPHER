@@ -4,7 +4,7 @@ OrientNucleotides <- function(myXStringSet,
 	orientation="all",
 	threshold=0.05,
 	verbose=TRUE,
-	processors=NULL) {
+	processors=1) {
 	
 	# error checking
 	if (!(is(myXStringSet, "DNAStringSet") ||

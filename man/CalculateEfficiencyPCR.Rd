@@ -16,7 +16,7 @@ CalculateEfficiencyPCR(primer,
                        taqEfficiency = TRUE,
                        maxDistance = 0.4,
                        maxGaps = 2,
-                       processors = NULL)
+                       processors = 1)
 }
 \arguments{
   \item{primer}{
@@ -47,7 +47,7 @@ Numeric specifying the maximal fraction of mismatched base pairings on a rolling
 Integer specifying the maximum number of insertions or deletions (indels) in the primer/target alignment.  Only used if \code{taqEfficiency} is \code{TRUE}.
 }
   \item{processors}{
-The number of processors to use, or \code{NULL} (the default) for all available processors.
+The number of processors to use, or \code{NULL} to automatically detect and use all available processors.
 }
 }
 \details{
