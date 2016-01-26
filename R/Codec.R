@@ -34,7 +34,7 @@ Codec <- function(x,
 	
 	if (typeof(x)=="character") {
 		if (compression=="auto" || compression=="nbit") {
-			y <- .Call("compress",
+			y <- .Call("nbit",
 				x,
 				ifelse(compression=="nbit", 1L, 0L),
 				compressRepeats,

@@ -100,7 +100,7 @@ static const R_CallMethodDef callMethods[] = { // method call, pointer, num args
 	{"maskRepeats", (DL_FUNC) &maskRepeats, 5},
 	{"firstSeqsPosEqual", (DL_FUNC) &firstSeqsPosEqual, 7},
 	{"collapse", (DL_FUNC) &collapse, 3},
-	{"compress", (DL_FUNC) &compress, 4},
+	{"nbit", (DL_FUNC) &nbit, 4},
 	{"decompress", (DL_FUNC) &decompress, 2},
 	{"extractFields", (DL_FUNC) &extractFields, 4},
 	{NULL, NULL, 0}

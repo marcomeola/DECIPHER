@@ -406,7 +406,7 @@ int revcompDiff(const char curr, const char last)
 }
 
 // compression algorithm
-SEXP compress(SEXP x, SEXP y, SEXP compRepeats, SEXP nThreads)
+SEXP nbit(SEXP x, SEXP y, SEXP compRepeats, SEXP nThreads)
 {
 	int i, j, k, pos;
 	int n = length(x);

@@ -212,6 +212,6 @@ SEXP extractFields(SEXP x, SEXP fields, SEXP starts, SEXP ends);
 
 // Compression.c
 
-SEXP compress(SEXP x, SEXP y, SEXP compRepeats, SEXP nThreads);
+SEXP nbit(SEXP x, SEXP y, SEXP compRepeats, SEXP nThreads);
 
 SEXP decompress(SEXP x, SEXP nThreads);
