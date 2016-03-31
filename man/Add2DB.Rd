@@ -1,7 +1,7 @@
 \name{Add2DB}
 \alias{Add2DB}
 \title{
-Add Data To A Database
+Add Data to a Database
 }
 \description{
 Adds a \code{data.frame} to a database table by its \code{row.names}.

@@ -1,7 +1,7 @@
 \name{FindChimeras}
 \alias{FindChimeras}
 \title{
-Find Chimeras In A Sequence Database
+Find Chimeras in a Sequence Database
 }
 \description{
 Finds chimeras present in a database of sequences.  Makes use of a reference database of (presumed to be) good quality sequences.

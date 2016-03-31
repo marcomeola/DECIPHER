@@ -1,7 +1,7 @@
 \name{AlignDB}
 \alias{AlignDB}
 \title{
-Align Two Sets of Aligned Sequences In A Sequence Database
+Align Two Sets of Aligned Sequences in a Sequence Database
 }
 \description{
 Merges the two separate sequence alignments in a database.  The aligned sequences must have separate identifiers in the same table or be located in different database tables.

@@ -130,7 +130,7 @@ static void assignNumsAA(const Chars_holder *P, int *residues)
 	}
 }
 
-SEXP findFrameshifts(SEXP t, SEXP l, SEXP f, SEXP index, SEXP maxComp, SEXP go, SEXP ge, SEXP fs, SEXP minD, SEXP maxD, SEXP subMatrix, SEXP verbose, SEXP pBar)
+SEXP findFrameshifts(SEXP t, SEXP l, SEXP f, SEXP index, SEXP oindex, SEXP maxComp, SEXP go, SEXP ge, SEXP fs, SEXP minD, SEXP maxD, SEXP subMatrix, SEXP verbose, SEXP pBar)
 {
 	int s, o, i, j, k, I, J, K, n, m, w, r, c, rc;
 	int nIns, nDels, pm, d, pos, newL;
@@ -143,6 +143,7 @@ SEXP findFrameshifts(SEXP t, SEXP l, SEXP f, SEXP index, SEXP maxComp, SEXP go, 
 	double aD = asReal(minD);
 	double rD = asReal(maxD);
 	int *ind = INTEGER(index);
+	int *oind = INTEGER(oindex);
 	double *subM = REAL(subMatrix);
 	int *lengths = INTEGER(l);
 	
@@ -409,7 +410,7 @@ SEXP findFrameshifts(SEXP t, SEXP l, SEXP f, SEXP index, SEXP maxComp, SEXP go, 
 				nDels = 0;
 				INTEGER(refNum)[0] = 0;
 			} else {
-				INTEGER(refNum)[0] = *(ind + o*f_length + s);
+				INTEGER(refNum)[0] = *(oind + *(ind + o*f_length + s) - 1);
 			}
 			
 			newL = *(lengths + s) - nIns + nDels;

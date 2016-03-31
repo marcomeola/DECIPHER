@@ -27,7 +27,7 @@ SEXP radixOrder(SEXP x, SEXP startAt)
 	int i, k, o1;
 	int l = length(x);
 	int *v = INTEGER(x);
-	int s = asInteger(startAt); // starting index
+	int s = asInteger(startAt); // start of index
 	
 	int size = sizeof(int)*CHAR_BIT; // unit size of memory
 	int R = size/2; // size of radix key
@@ -40,18 +40,21 @@ SEXP radixOrder(SEXP x, SEXP startAt)
 	for (i = 0; i < l; i++)
 		rans[i] = i;
 	
-	unsigned int shifted;
+	unsigned int *shifted = Calloc(l, unsigned int);
 	
 	// least significant digit first
 	for (k = 1; k <= (size/R); k++) {
 		// subset bits in Radix k
 		o1 = size - k*R;
-		int *counts = Calloc(count, int); // initialized to zero
 		for (i = 0; i < l; i++) {
-			shifted = v[rans[i]] << o1; // clear left bits
-			shifted >>= o2; // clear right bits
-			counts[shifted]++;
+			shifted[i] = v[rans[i]] << o1; // clear left bits
+			shifted[i] >>= o2; // clear right bits
 		}
+		
+		// count frequencies
+		int *counts = Calloc(count, int); // initialized to zero
+		for (i = 0; i < l; i++)
+			counts[shifted[i]]++;
 		
 		// cumulative sum
 		for (i = 1; i < count; i++)
@@ -63,11 +66,8 @@ SEXP radixOrder(SEXP x, SEXP startAt)
 		
 		// move orders
 		int *temp = Calloc(l, int);
-		for (i = 0; i < l; i++) {
-			shifted = v[rans[i]] << o1; // clear left bits
-			shifted >>= o2; // clear right bits
-			temp[counts[shifted]++] = rans[i];
-		}
+		for (i = 0; i < l; i++)
+			temp[counts[shifted[i]]++] = rans[i];
 		
 		// replace orders
 		for (i = 0; i < l; i++)
@@ -76,6 +76,8 @@ SEXP radixOrder(SEXP x, SEXP startAt)
 		Free(counts);
 		Free(temp);
 	}
+	
+	Free(shifted);
 	
 	// reorder on sign bit
 	for (i = 0; i < l; i++) {
@@ -98,7 +100,7 @@ SEXP radixOrder(SEXP x, SEXP startAt)
 		Free(temp);
 	} else if (s != 0) {
 		for (i = 0; i < l; i++)
-			rans[i]++;
+			rans[i] += s;
 	}
 	
 	UNPROTECT(1);

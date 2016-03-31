@@ -1,7 +1,7 @@
 FindSynteny <- function(dbFile,
 	tblName="Seqs",
 	identifier="",
-	useFrames=TRUE,
+	useFrames=FALSE,
 	alphabet=c("MF", "ILV", "A", "C", "WYQHP", "G", "TSN", "RK", "DE"),
 	geneticCode=GENETIC_CODE,
 	sepCost=-0.01,
@@ -13,6 +13,7 @@ FindSynteny <- function(dbFile,
 	minScore=200,
 	dropScore=-100,
 	maskRepeats=TRUE,
+	storage=0.5,
 	processors=1,
 	verbose=TRUE) {
 	
@@ -59,6 +60,11 @@ FindSynteny <- function(dbFile,
 		stop("maskRepeats must be a logical.")
 	if (!is.logical(verbose))
 		stop("verbose must be a logical.")
+	if (!is.numeric(storage))
+		stop("storage must be a numeric.")
+	if (storage < 0)
+		stop("storage must be at least zero.")
+	storage <- storage*1e9 # convert to bytes
 	if (!is.null(processors) && !is.numeric(processors))
 		stop("processors must be a numeric.")
 	if (!is.null(processors) && floor(processors)!=processors)
@@ -204,19 +210,42 @@ FindSynteny <- function(dbFile,
 				"first_hit",
 				"last_hit")))
 	
+	store <- rep(list(list(S=list(),
+			E=list(`nt`=list(),
+				`nt_rc`=list(),
+				`aa`=list(list(), list(), list()),
+				`aa_rc`=list(list(), list(), list())),
+			O=list(`nt`=list(),
+				`nt_rc`=list(),
+				`aa`=list(list(), list(), list()),
+				`aa_rc`=list(list(), list(), list())))),
+		l)
+	
 	if (verbose) {
 		pBar <- txtProgressBar(style=3)
 		tot <- l*(l - 1)/2
 		its <- 0
 	}
 	for (g1 in 1:(l - 1)) {
-		s1 <- SearchDB(dbConn,
-			tblName=tblName,
-			identifier=identifier[g1],
-			type="DNAStringSet",
-			removeGaps="all",
-			processors=processors,
-			verbose=FALSE)
+		# remove unnecessary items from store
+		store[g1][[1L]][["E"]][["nt_rc"]] <- list()
+		store[g1][[1L]][["E"]][["aa_rc"]] <- list()
+		store[g1][[1L]][["O"]][["nt_rc"]] <- list()
+		store[g1][[1L]][["O"]][["aa_rc"]] <- list()
+		
+		s1 <- store[g1][[1L]][["S"]]
+		if (length(s1)==0) {
+			s1 <- SearchDB(dbConn,
+				tblName=tblName,
+				identifier=identifier[g1],
+				type="DNAStringSet",
+				removeGaps="all",
+				processors=processors,
+				verbose=FALSE)
+		} else {
+			s1 <- s1[[1L]]
+			store[g1][[1L]][["S"]] <- list() # clear s1 from store
+		}
 		w1 <- width(s1)
 		INDEX1 <- seq_along(s1)
 		results[g1, g1] <- list(w1)
@@ -243,13 +272,20 @@ FindSynteny <- function(dbFile,
 		}
 		
 		for (g2 in (g1 + 1):l) {
-			s2 <- SearchDB(dbConn,
-				tblName=tblName,
-				identifier=identifier[g2],
-				type="DNAStringSet",
-				removeGaps="all",
-				processors=processors,
-				verbose=FALSE)
+			s2 <- store[g2][[1L]][["S"]]
+			if (length(s2)==0) {
+				s2 <- SearchDB(dbConn,
+					tblName=tblName,
+					identifier=identifier[g2],
+					type="DNAStringSet",
+					removeGaps="all",
+					processors=processors,
+					verbose=FALSE)
+				if ((object.size(s2) + object.size(store)) < storage)
+					store[g2][[1L]][["S"]][[1L]] <- s2
+			} else {
+				s2 <- s2[[1L]]
+			}
 			w2 <- width(s2)
 			INDEX2 <- seq_along(s2)
 			
@@ -273,8 +309,8 @@ FindSynteny <- function(dbFile,
 			}
 			
 			# calculate the k-mer size with approximately
-			# a 10% probability of occurring by chance
-			M <- max(width(s1), width(s2))*10
+			# a 1% probability of occurring by chance
+			M <- max(width(s1), width(s2))*100
 			N <- as.integer(ceiling(log(M, 4)))
 			if (N > 16L)
 				N <- 16L
@@ -282,47 +318,65 @@ FindSynteny <- function(dbFile,
 			if (N_AA > n)
 				N_AA <- n
 			
-			E1 <- .Call("enumerateSequence",
-				seq1,
-				N,
-				PACKAGE="DECIPHER")[[1]]
-			e2 <- .Call("enumerateSequence",
-				seq2,
-				N,
-				PACKAGE="DECIPHER")[[1]]
-			
-			for (i in which(WIDTH1 > (N - 2) & WIDTH1 < length(E1))) {
-				E1[(WIDTH1[i] - (N - 2)):WIDTH1[i]] <- NA
+			E1 <- store[g1][[1L]][["E"]][["nt"]][N][[1L]]
+			if (is.null(E1)) {
+				E1 <- .Call("enumerateSequence",
+					seq1,
+					N,
+					PACKAGE="DECIPHER")[[1]]
+				for (i in which(WIDTH1 > (N - 2) & WIDTH1 < length(E1)))
+					E1[(WIDTH1[i] - (N - 2)):WIDTH1[i]] <- NA
+				if (maskRepeats)
+					.Call("maskRepeats",
+						E1,
+						N,
+						7L, # minimum period
+						12L, # maximum period
+						30L, # minimum length
+						PACKAGE="DECIPHER")
+				if ((object.size(E1) + object.size(store)) < storage)
+					store[g1][[1L]][["E"]][["nt"]][[N]] <- E1
 			}
-			for (i in which(WIDTH2 > (N - 2) & WIDTH2 < length(e2))) {
-				e2[(WIDTH2[i] - (N - 2)):WIDTH2[i]] <- NA
+			
+			e2 <- store[g2][[1L]][["E"]][["nt"]][N][[1L]]
+			if (is.null(e2)) {
+				e2 <- .Call("enumerateSequence",
+					seq2,
+					N,
+					PACKAGE="DECIPHER")[[1]]
+				for (i in which(WIDTH2 > (N - 2) & WIDTH2 < length(e2)))
+					e2[(WIDTH2[i] - (N - 2)):WIDTH2[i]] <- NA
+				if (maskRepeats)
+					.Call("maskRepeats",
+						e2,
+						N,
+						7L, # minimum period
+						12L, # maximum period
+						30L, # minimum length
+						PACKAGE="DECIPHER")
+				if ((object.size(e2) + object.size(store)) < storage)
+					store[g2][[1L]][["E"]][["nt"]][[N]] <- e2
 			}
 			
-			if (maskRepeats) {
-				.Call("maskRepeats",
+			O1 <- store[g1][[1L]][["O"]][["nt"]][N][[1L]]
+			if (is.null(O1)) {
+				O1 <- .Call("radixOrder",
 					E1,
-					N,
-					7L, # minimum period
-					12L, # maximum period
-					30L, # minimum length
+					0L,
 					PACKAGE="DECIPHER")
-				.Call("maskRepeats",
-					e2,
-					N,
-					7L, # minimum period
-					12L, # maximum period
-					30L, # minimum length
-					PACKAGE="DECIPHER")
+				if ((object.size(O1) + object.size(store)) < storage)
+					store[g1][[1L]][["O"]][["nt"]][[N]] <- O1
 			}
 			
-			O1 <- .Call("radixOrder",
-				E1,
-				0L,
-				PACKAGE="DECIPHER")
-			o2 <- .Call("radixOrder",
-				e2,
-				0L,
-				PACKAGE="DECIPHER")
+			o2 <- store[g2][[1L]][["O"]][["nt"]][N][[1L]]
+			if (is.null(o2)) {
+				o2 <- .Call("radixOrder",
+					e2,
+					0L,
+					PACKAGE="DECIPHER")
+				if ((object.size(o2) + object.size(store)) < storage)
+					store[g2][[1L]][["O"]][["nt"]][[N]] <- o2
+			}
 			
 			# match E1 to e2
 			m <- .Call("intMatchOnce",
@@ -332,10 +386,10 @@ FindSynteny <- function(dbFile,
 				o2,
 				PACKAGE="DECIPHER")
 			.Call("fillOverlaps", m, N, PACKAGE="DECIPHER")
-			r <- rle(diff(m))
-			w <- which(r$values==1)
-			widths <- r$lengths[w] + N
-			ends <- cumsum(r$lengths)[w] + N
+			r <- Rle(.Call("intDiff", m, PACKAGE="DECIPHER"))
+			w <- which(r@values==1)
+			widths <- r@lengths[w] + N
+			ends <- cumsum(r@lengths)[w] + N
 			
 			ends1 <- ends
 			starts1 <- ends1 - widths + 1L
@@ -381,30 +435,37 @@ FindSynteny <- function(dbFile,
 						t1 <- AAStringSet(unlist(t1))
 					}
 					
-					e1 <- .Call("enumerateSequenceReducedAA",
-						t1,
-						N_AA,
-						alphabet,
-						PACKAGE="DECIPHER")[[1]]
-					for (i in which(width1 > (N_AA - 2) & width1 < length(e1))) {
-						e1[(width1[i] - (N_AA - 2)):width1[i]] <- NA
+					e1 <- store[g1][[1L]][["E"]][["aa"]][[rF1]][N_AA][[1L]]
+					if (is.null(e1)) {
+						e1 <- .Call("enumerateSequenceReducedAA",
+							t1,
+							N_AA,
+							alphabet,
+							PACKAGE="DECIPHER")[[1]]
+						for (i in which(width1 > (N_AA - 2) & width1 < length(e1)))
+							e1[(width1[i] - (N_AA - 2)):width1[i]] <- NA
+						if (maskRepeats)
+							.Call("maskRepeats",
+								e1,
+								N_AA,
+								3L, # minimum period
+								11L, # maximum period
+								15L, # minimum length
+								PACKAGE="DECIPHER")
+						if ((object.size(e1) + object.size(store)) < storage)
+							store[g1][[1L]][["E"]][["aa"]][[rF1]][[N_AA]] <- e1
 					}
 					width1 <- width1*3L
 					
-					if (maskRepeats) {
-						.Call("maskRepeats",
+					o1 <- store[g1][[1L]][["O"]][["aa"]][[rF1]][N_AA][[1L]]
+					if (is.null(o1)) {
+						o1 <- .Call("radixOrder",
 							e1,
-							N_AA,
-							3L, # minimum period
-							11L, # maximum period
-							15L, # minimum length
+							0L,
 							PACKAGE="DECIPHER")
+						if ((object.size(o1) + object.size(store)) < storage)
+							store[g1][[1L]][["O"]][["aa"]][[rF1]][[N_AA]] <- o1
 					}
-					
-					o1 <- .Call("radixOrder",
-						e1,
-						0L,
-						PACKAGE="DECIPHER")
 					
 					for (rF2 in 1:3) {
 						t2 <- .Call("basicTranslate",
@@ -417,31 +478,37 @@ FindSynteny <- function(dbFile,
 							t2 <- AAStringSet(unlist(t2))
 						}
 						
-						e2 <- .Call("enumerateSequenceReducedAA",
-							t2,
-							N_AA,
-							alphabet,
-							PACKAGE="DECIPHER")[[1]]
-						
-						for (i in which(width2 > (N_AA - 2) & width2 < length(e2))) {
-							e2[(width2[i] - (N_AA - 2)):width2[i]] <- NA
+						e2 <- store[g2][[1L]][["E"]][["aa"]][[rF2]][N_AA][[1L]]
+						if (is.null(e2)) {
+							e2 <- .Call("enumerateSequenceReducedAA",
+								t2,
+								N_AA,
+								alphabet,
+								PACKAGE="DECIPHER")[[1]]
+							for (i in which(width2 > (N_AA - 2) & width2 < length(e2)))
+								e2[(width2[i] - (N_AA - 2)):width2[i]] <- NA
+							if (maskRepeats)
+								.Call("maskRepeats",
+									e2,
+									N_AA,
+									3L, # minimum period
+									11L, # maximum period
+									15L, # minimum length
+									PACKAGE="DECIPHER")
+							if ((object.size(e2) + object.size(store)) < storage)
+								store[g2][[1L]][["E"]][["aa"]][[rF2]][[N_AA]] <- e2
 						}
 						width2 <- width2*3L
 						
-						if (maskRepeats) {
-							.Call("maskRepeats",
+						o2 <- store[g2][[1L]][["O"]][["aa"]][[rF2]][N_AA][[1L]]
+						if (is.null(o2)) {
+							o2 <- .Call("radixOrder",
 								e2,
-								N_AA,
-								3L, # minimum period
-								11L, # maximum period
-								15L, # minimum length
+								0L,
 								PACKAGE="DECIPHER")
+							if ((object.size(o2) + object.size(store)) < storage)
+								store[g2][[1L]][["O"]][["aa"]][[rF2]][[N_AA]] <- o2
 						}
-						
-						o2 <- .Call("radixOrder",
-							e2,
-							0L,
-							PACKAGE="DECIPHER")
 						
 						# match e1 to e2
 						m <- .Call("intMatchOnce",
@@ -451,10 +518,10 @@ FindSynteny <- function(dbFile,
 							o2,
 							PACKAGE="DECIPHER")
 						.Call("fillOverlaps", m, N_AA, PACKAGE="DECIPHER")
-						r <- rle(diff(m))
-						w <- which(r$values==1)
-						widths <- r$lengths[w] + N_AA
-						ends <- cumsum(r$lengths)[w] + N_AA
+						r <- Rle(.Call("intDiff", m, PACKAGE="DECIPHER"))
+						w <- which(r@values==1)
+						widths <- r@lengths[w] + N_AA
+						ends <- cumsum(r@lengths)[w] + N_AA
 						
 						ends1 <- ends
 						starts1 <- ends1 - widths + 1L
@@ -595,29 +662,35 @@ FindSynteny <- function(dbFile,
 				seq2 <- s3
 			}
 			
-			e2 <- .Call("enumerateSequence",
-				seq2,
-				N,
-				PACKAGE="DECIPHER")[[1]]
-			
-			for (i in which(WIDTH2 > (N - 2) & WIDTH2 < length(e2))) {
-				e2[(WIDTH2[i] - (N - 2)):WIDTH2[i]] <- NA
-			}
-			
-			if (maskRepeats) {
-				.Call("maskRepeats",
-					e2,
+			e2 <- store[g2][[1L]][["E"]][["nt_rc"]][N][[1L]]
+			if (is.null(e2)) {
+				e2 <- .Call("enumerateSequence",
+					seq2,
 					N,
-					7L, # minimum period
-					12L, # maximum period
-					30L, # minimum length
-					PACKAGE="DECIPHER")
+					PACKAGE="DECIPHER")[[1]]
+				for (i in which(WIDTH2 > (N - 2) & WIDTH2 < length(e2)))
+					e2[(WIDTH2[i] - (N - 2)):WIDTH2[i]] <- NA
+				if (maskRepeats)
+					.Call("maskRepeats",
+						e2,
+						N,
+						7L, # minimum period
+						12L, # maximum period
+						30L, # minimum length
+						PACKAGE="DECIPHER")
+				if ((object.size(e2) + object.size(store)) < storage)
+					store[g2][[1L]][["E"]][["nt_rc"]][[N]] <- e2
 			}
 			
-			o2 <- .Call("radixOrder",
-				e2,
-				0L,
-				PACKAGE="DECIPHER")
+			o2 <- store[g2][[1L]][["O"]][["nt_rc"]][N][[1L]]
+			if (is.null(o2)) {
+				o2 <- .Call("radixOrder",
+					e2,
+					0L,
+					PACKAGE="DECIPHER")
+				if ((object.size(o2) + object.size(store)) < storage)
+					store[g2][[1L]][["O"]][["nt_rc"]][[N]] <- o2
+			}
 			
 			# match E1 to e2
 			m <- .Call("intMatchOnce",
@@ -627,10 +700,10 @@ FindSynteny <- function(dbFile,
 				o2,
 				PACKAGE="DECIPHER")
 			.Call("fillOverlaps", m, N, PACKAGE="DECIPHER")
-			r <- rle(diff(m))
-			w <- which(r$values==1)
-			widths <- r$lengths[w] + N
-			ends <- cumsum(r$lengths)[w] + N
+			r <- Rle(.Call("intDiff", m, PACKAGE="DECIPHER"))
+			w <- which(r@values==1)
+			widths <- r@lengths[w] + N
+			ends <- cumsum(r@lengths)[w] + N
 			
 			ends1 <- ends
 			starts1 <- ends1 - widths + 1L
@@ -682,30 +755,37 @@ FindSynteny <- function(dbFile,
 						t1 <- AAStringSet(unlist(t1))
 					}
 					
-					e1 <- .Call("enumerateSequenceReducedAA",
-						t1,
-						N_AA,
-						alphabet,
-						PACKAGE="DECIPHER")[[1]]
-					for (i in which(width1 > (N_AA - 2) & width1 < length(e1))) {
-						e1[(width1[i] - (N_AA - 2)):width1[i]] <- NA
+					e1 <- store[g1][[1L]][["E"]][["aa"]][[rF1]][N_AA][[1L]]
+					if (is.null(e1)) {
+						e1 <- .Call("enumerateSequenceReducedAA",
+							t1,
+							N_AA,
+							alphabet,
+							PACKAGE="DECIPHER")[[1]]
+						for (i in which(width1 > (N_AA - 2) & width1 < length(e1)))
+							e1[(width1[i] - (N_AA - 2)):width1[i]] <- NA
+						if (maskRepeats)
+							.Call("maskRepeats",
+								e1,
+								N_AA,
+								3L, # minimum period
+								11L, # maximum period
+								15L, # minimum length
+								PACKAGE="DECIPHER")
+						if ((object.size(e1) + object.size(store)) < storage)
+							store[g1][[1L]][["E"]][["aa"]][[rF1]][[N_AA]] <- e1
 					}
 					width1 <- width1*3L
 					
-					if (maskRepeats) {
-						.Call("maskRepeats",
+					o1 <- store[g1][[1L]][["O"]][["aa"]][[rF1]][N_AA][[1L]]
+					if (is.null(o1)) {
+						o1 <- .Call("radixOrder",
 							e1,
-							N_AA,
-							3L, # minimum period
-							11L, # maximum period
-							15L, # minimum length
+							0L,
 							PACKAGE="DECIPHER")
+						if ((object.size(o1) + object.size(store)) < storage)
+							store[g1][[1L]][["O"]][["aa"]][[rF1]][[N_AA]] <- o1
 					}
-					
-					o1 <- .Call("radixOrder",
-						e1,
-						0L,
-						PACKAGE="DECIPHER")
 					
 					for (rF2 in 1:3) {
 						t2 <- .Call("basicTranslate",
@@ -718,31 +798,37 @@ FindSynteny <- function(dbFile,
 							t2 <- AAStringSet(unlist(t2))
 						}
 						
-						e2 <- .Call("enumerateSequenceReducedAA",
-							t2,
-							N_AA,
-							alphabet,
-							PACKAGE="DECIPHER")[[1]]
-						
-						for (i in which(width2 > (N_AA - 2) & width2 < length(e2))) {
-							e2[(width2[i] - (N_AA - 2)):width2[i]] <- NA
+						e2 <- store[g2][[1L]][["E"]][["aa_rc"]][[rF2]][N_AA][[1L]]
+						if (is.null(e2)) {
+							e2 <- .Call("enumerateSequenceReducedAA",
+								t2,
+								N_AA,
+								alphabet,
+								PACKAGE="DECIPHER")[[1]]
+							for (i in which(width2 > (N_AA - 2) & width2 < length(e2)))
+								e2[(width2[i] - (N_AA - 2)):width2[i]] <- NA
+							if (maskRepeats)
+								.Call("maskRepeats",
+									e2,
+									N_AA,
+									3L, # minimum period
+									11L, # maximum period
+									15L, # minimum length
+									PACKAGE="DECIPHER")
+							if ((object.size(e2) + object.size(store)) < storage)
+								store[g2][[1L]][["E"]][["aa_rc"]][[rF2]][[N_AA]] <- e2
 						}
 						width2 <- width2*3L
 						
-						if (maskRepeats) {
-							.Call("maskRepeats",
+						o2 <- store[g2][[1L]][["O"]][["aa_rc"]][[rF2]][N_AA][[1L]]
+						if (is.null(o2)) {
+							o2 <- .Call("radixOrder",
 								e2,
-								N_AA,
-								3L, # minimum period
-								11L, # maximum period
-								15L, # minimum length
+								0L,
 								PACKAGE="DECIPHER")
+							if ((object.size(o2) + object.size(store)) < storage)
+								store[g2][[1L]][["O"]][["aa_rc"]][[rF2]][[N_AA]] <- o2
 						}
-						
-						o2 <- .Call("radixOrder",
-							e2,
-							0L,
-							PACKAGE="DECIPHER")
 						
 						# match e1 to e2
 						m <- .Call("intMatchOnce",
@@ -752,10 +838,10 @@ FindSynteny <- function(dbFile,
 							o2,
 							PACKAGE="DECIPHER")
 						.Call("fillOverlaps", m, N_AA, PACKAGE="DECIPHER")
-						r <- rle(diff(m))
-						w <- which(r$values==1)
-						widths <- r$lengths[w] + N_AA
-						ends <- cumsum(r$lengths)[w] + N_AA
+						r <- Rle(.Call("intDiff", m, PACKAGE="DECIPHER"))
+						w <- which(r@values==1)
+						widths <- r@lengths[w] + N_AA
+						ends <- cumsum(r@lengths)[w] + N_AA
 						
 						ends1 <- ends
 						starts1 <- ends1 - widths + 1L
@@ -1175,6 +1261,8 @@ FindSynteny <- function(dbFile,
 				setTxtProgressBar(pBar, its/tot)
 			}
 		}
+		
+		store[[g1]] <- list()
 	}
 	
 	if (!exists("w2",

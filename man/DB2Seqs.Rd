@@ -21,6 +21,7 @@ DB2Seqs(file,
          width = 80,
          compress = FALSE,
          chunkSize = 1e5,
+         sep = "::",
          clause = "",
          verbose = TRUE)
 }
@@ -47,7 +48,7 @@ Number of results to display.  The default (\code{-1}) does not limit the number
 Optional character used to replace any characters of the sequence that are not present in the \code{XStringSet}'s alphabet.  Not applicable if \code{type=="BStringSet"}.  (See details section below.)
 }
   \item{nameBy}{
-Character string giving the column name(s) for identifying each sequence record.  If more than one column name is provided, the information in each column is concatenated, separated by pairs of colons (``::''), in the order specified.
+Character string giving the column name(s) for identifying each sequence record.  If more than one column name is provided, the information in each column is concatenated, separated by \code{sep}, in the order specified.
 }
   \item{orderBy}{
 Character string giving the column name for sorting the results.  Defaults to the order of entries in the database.  Optionally can be followed by \code{" ASC"} or \code{" DESC"} to specify ascending (the default) or descending order.
@@ -65,7 +66,10 @@ Integer specifying the maximum number of characters per line of sequence.  Not a
 Logical specifying whether to compress the output file using gzip compression.
 }
   \item{chunkSize}{
-Number of lines of the \code{file} to write at a time.  Cannot be less than the total number of sequences if \code{removeGaps} is \code{"common"}.
+Number of sequences to write to the \code{file} at a time.  Cannot be less than the total number of sequences if \code{removeGaps} is \code{"common"}.
+}
+  \item{sep}{
+Character string providing the separator between fields in each sequence's name, by default pairs of colons (``::'').
 }
   \item{clause}{
 An optional character string to append to the query as part of a ``where clause''.

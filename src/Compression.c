@@ -1084,6 +1084,8 @@ SEXP nbit(SEXP x, SEXP y, SEXP compRepeats, SEXP nThreads)
 							success = 0; // compression failed
 							break;
 						}
+						if (len > 16777215)
+							len = 16777215;
 						p[c++] = 0;
 						p[c++] = rev==0 ? 254 : 255;
 						p[c++] = (unsigned char)(lastHit >> 16);
@@ -1097,6 +1099,8 @@ SEXP nbit(SEXP x, SEXP y, SEXP compRepeats, SEXP nThreads)
 							success = 0; // compression failed
 							break;
 						}
+						if (len > 65535)
+							len = 65535;
 						p[c++] = 0;
 						p[c++] = rev==0 ? 254 : 255;
 						p[c++] = (unsigned char)(lastHit >> 8);
@@ -1108,6 +1112,8 @@ SEXP nbit(SEXP x, SEXP y, SEXP compRepeats, SEXP nThreads)
 							success = 0; // compression failed
 							break;
 						}
+						if (len > 255)
+							len = 255;
 						p[c++] = 0;
 						p[c++] = rev==0 ? 254 : 255;
 						p[c++] = (unsigned char)lastHit;

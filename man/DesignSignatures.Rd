@@ -137,7 +137,7 @@ The signatures can be diversified by using a restriction enzyme to digest the PC
 A \code{data.frame} with the top-scoring pairs of forward and reverse primers, their score, the total number of PCR products, and associated columns for the restriction enzyme (if \code{enzyme} is not \code{NULL}).
 }
 \references{
-Coming soon!
+Wright, E.S. & Vetsigian, K.H. (2016) "DesignSignatures: a tool for designing primers that yields amplicons with distinct signatures." Bioinformatics, doi:10.1093/bioinformatics/btw047.
 }
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}

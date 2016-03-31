@@ -1,7 +1,7 @@
 \name{MaskAlignment}
 \alias{MaskAlignment}
 \title{
-Masks Highly Variable Regions of An Alignment
+Mask Highly Variable Regions of An Alignment
 }
 \description{
 Automatically masks poorly aligned regions of an alignment based on sequence conservation and gap frequency.

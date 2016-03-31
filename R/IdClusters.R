@@ -1,12 +1,10 @@
-# below function from stats package
+# below function modified from stats package
 .memberDend <- function(x) {
 	
-	r <- attr(x,"x.member")
-	if(is.null(r)) {
-		r <- attr(x,"members")
-		if(is.null(r))
-			r <- 1L
-	}
+	r <- attr(x, "members")
+	if(is.null(r))
+		r <- 1L
+	
 	return(r)
 }
 

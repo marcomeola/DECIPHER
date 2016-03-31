@@ -12,6 +12,7 @@ DB2Seqs <- function(file,
 	width=80,
 	compress=FALSE,
 	chunkSize=1e5,
+	sep="::",
 	clause="",
 	verbose=TRUE) {
 	
@@ -59,6 +60,10 @@ DB2Seqs <- function(file,
 		stop("width must be at least 1.")
 	if (width > 20001)
 		stop("width must be at most 20001.")
+	if (!is.character(sep))
+		stop("sep must be a character string.")
+	if (length(sep)!=1)
+		stop("sep must be a single character string.")
 	GAPS <- c("none", "all", "common")
 	removeGaps <- pmatch(removeGaps, GAPS)
 	if (is.na(removeGaps))
@@ -249,7 +254,7 @@ DB2Seqs <- function(file,
 		if (length(nameBy) > 1) {
 			names(myXStringSet) <- do.call(paste,
 				c(searchResult[, nameBy],
-					sep="::"))
+					sep=sep))
 		} else {
 			names(myXStringSet) <- searchResult[, nameBy]
 		}

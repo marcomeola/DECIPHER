@@ -1,7 +1,7 @@
 \name{ConsensusSequence}
 \alias{ConsensusSequence}
 \title{
-Create A Consensus Sequence
+Create a Consensus Sequence
 }
 \description{
 Forms a consensus sequence representing a set of sequences.

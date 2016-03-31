@@ -110,7 +110,7 @@ The functions of DECIPHER can be grouped into several categories based on intend
 \item Functions related to forming consensus:
 \begin{enumerate} \item \Rfunction{ConsensusSequence} \item \Rfunction{Disambiguate} \item \Rfunction{IdConsensus} \end{enumerate}
 \item Phylogenetics and sequence comparison:
-\begin{enumerate} \item \Rfunction{DistanceMatrix} \item \Rfunction{IdClusters} \item \Rfunction{MaskAlignment} \item \Rfunction{StaggerAlignment} \end{enumerate}
+\begin{enumerate} \item \Rfunction{DistanceMatrix} \item \Rfunction{IdClusters} \item \Rfunction{MaskAlignment} \item \Rfunction{ReadDendrogram} \item \Rfunction{StaggerAlignment} \item \Rfunction{WriteDendrogram} \end{enumerate}
 \item Visualization with a web browser:
 \begin{enumerate} \item \Rfunction{BrowseDB} \item \Rfunction{BrowseSeqs} \end{enumerate}
 \item Manipulating and analyzing sequences:

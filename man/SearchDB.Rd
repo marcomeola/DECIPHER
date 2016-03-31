@@ -1,7 +1,7 @@
 \name{SearchDB}
 \alias{SearchDB}
 \title{
-Obtain Specific Sequences from A Database
+Obtain Specific Sequences from a Database
 }
 \description{
 Returns the set of sequences meeting the search criteria.

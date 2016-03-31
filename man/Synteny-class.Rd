@@ -22,7 +22,15 @@ Syntenic blocks are DNA segments composed of conserved hits occurring in the sam
      \dots)
 
 \method{plot}{Synteny}(x,
+     colorBy = 1,
+     colorRamp = colorRampPalette(c("#FCF9EE", "#FFF272",
+                                    "#FFAC28", "#EC5931",
+                                    "#EC354D", "#ECA6B1")),
+     barColor = "#CCCCCC",
+     barSides = ifelse(nrow(x) < 100, TRUE, FALSE),
+     horizontal = TRUE,
      labels = abbreviate(rownames(x), 9),
+     width = 0.7,
      \dots)
 
 \method{print}{Synteny}(x,
@@ -40,8 +48,26 @@ Logical specifying whether to plot sequence boundaries as horizontal or vertical
   \item{boxBlocks}{
 Logical indicating whether to draw a rectangle around hits belonging to the same block of synteny.
 }
+  \item{colorBy}{
+Numeric giving the index of a reference sequence, or a character string indicating to color by ``neighbor'', ``frequency'', or ``none''.  (See details section below.)
+}
+  \item{colorRamp}{
+A function that will return \code{n} colors when given a number \code{n}.  Examples are \code{rainbow}, \code{heat.colors}, \code{terrain.colors}, \code{cm.colors}, or (the default) \code{colorRampPalette}.
+}
+  \item{barColor}{
+Character string giving the background color of each bar.
+}
+  \item{barSides}{
+Logical indicating whether to draw black lines along the long-sides of each bar.
+}
+  \item{horizontal}{
+Logical indicating whether to plot the sequences horizontally (\code{TRUE}) or vertically (\code{FALSE}).
+}
   \item{labels}{
 Character vector providing names corresponding to each ``identifier'' for labels on the diagonal.
+}
+  \item{width}{
+Numeric giving the fractional width of each bar between zero and one.
 }
   \item{gap}{
 Distance between subplots, in margin lines.
@@ -68,7 +94,9 @@ Other graphical parameters for \code{pairs} or \code{plot}, including:  \code{ma
 \details{
 Objects of class \code{Synteny} are stored as square matrices of list elements with \code{dimnames} giving the ``identifier'' of the corresponding sequences.  The synteny matrix can be separated into three parts:  along, above, and below the diagonal.  Each list element along the diagonal contains an integer vector with the width of the sequence(s) belonging to that ``identifier''.  List elements above the diagonal (column \emph{j} > row \emph{i}) each contain a \code{matrix} with ``hits'' corresponding to matches between sequences \emph{i} and \emph{j}.  List elements below the diagonal each contain a \code{matrix} with ``blocks'' of synteny between sequences \emph{j} and \emph{i}.
 
-The \code{pairs} method creates a scatterplot matrix from a \code{Synteny} object.  Dot plots above the diagonal show hits between identifier \emph{i} and \emph{j}, where forward hits are colored in black, and hits to the reverse strand of identifier \emph{j} are colored in red.  Plots below the diagonal show blocks of synteny colored by their score, from green (highest scoring) to blue to magenta (lowest scoring).  The \code{plot} method displays a block view of the sequence groups in the same order as the input object (\code{x}).  The endpoints of each block are connected by a pair of lines, which can cross if one block corresponds to the opposite strand of the other sequence.
+The \code{pairs} method creates a scatterplot matrix from a \code{Synteny} object.  Dot plots above the diagonal show hits between identifier \emph{i} and \emph{j}, where forward hits are colored in black, and hits to the reverse strand of identifier \emph{j} are colored in red.  Plots below the diagonal show blocks of synteny colored by their score, from green (highest scoring) to blue to magenta (lowest scoring).
+
+The \code{plot} method displays a bar view of the sequences in the same order as the input object (\code{x}).  The coloring scheme of each bar is determined by the  \code{colorBy} argument, and the color palette is set by \code{colorRamp}.  When \code{colorBy} is an index, the sequences are colored according to regions of shared homology with the specified reference sequence (by default \code{1}).  If \code{colorBy} is ``neighbor'' then shared syntenic blocks are connected between neighboring sequences.  If \code{colorBy} is ``frequency'' then positions in each sequence are colored based on the degree of conservation with the other sequences.  In each case, regions that have no correspondence in a sequence are colored \code{barColor}.
 }
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}
@@ -108,5 +136,9 @@ synteny[j, i][[1]] # blocks between i & j
 
 # plotting
 pairs(synteny) # dot plots
-plot(synteny) # block view
+
+plot(synteny) # bar view colored by position in genome 1
+plot(synteny, barColor="#268FD6") # emphasize missing regions
+plot(synteny, "frequency") # most regions are shared by all
+plot(synteny, "neighbor")
 }

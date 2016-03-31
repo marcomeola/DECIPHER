@@ -88,7 +88,7 @@ static const R_CallMethodDef callMethods[] = { // method call, pointer, num args
 	{"consolidateGaps", (DL_FUNC) &consolidateGaps, 2},
 	{"composition", (DL_FUNC) &composition, 1},
 	{"matchListsDual", (DL_FUNC) &matchListsDual, 5},
-	{"findFrameshifts", (DL_FUNC) &findFrameshifts, 13},
+	{"findFrameshifts", (DL_FUNC) &findFrameshifts, 14},
 	{"radixOrder", (DL_FUNC) &radixOrder, 2},
 	{"fillOverlaps", (DL_FUNC) &fillOverlaps, 2},
 	{"indexByContig", (DL_FUNC) &indexByContig, 5},
@@ -103,6 +103,7 @@ static const R_CallMethodDef callMethods[] = { // method call, pointer, num args
 	{"nbit", (DL_FUNC) &nbit, 4},
 	{"decompress", (DL_FUNC) &decompress, 2},
 	{"extractFields", (DL_FUNC) &extractFields, 4},
+	{"intDiff", (DL_FUNC) &intDiff, 1},
 	{NULL, NULL, 0}
 };
 

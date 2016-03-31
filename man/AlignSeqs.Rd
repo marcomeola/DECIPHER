@@ -1,7 +1,7 @@
 \name{AlignSeqs}
 \alias{AlignSeqs}
 \title{
-Align A Set of Unaligned Sequences
+Align a Set of Unaligned Sequences
 }
 \description{
 Performs profile-to-profile alignment of multiple unaligned sequences following a guide tree.

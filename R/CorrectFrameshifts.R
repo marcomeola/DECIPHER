@@ -39,7 +39,8 @@ CorrectFrameshifts <- function(myXStringSet,
 	a <- vcountPattern(".", myAAStringSet)
 	if (any(a > 0))
 		stop("Unknown characters ('.') in myAAStringSet must be removed before correcting frameshifts.")
-	myAAStringSet <- unique(myAAStringSet)
+	org_index <- which(!duplicated(myAAStringSet))
+	myAAStringSet <- myAAStringSet[org_index]
 	if (!is.null(processors) && !is.numeric(processors))
 		stop("processors must be a numeric.")
 	if (!is.null(processors) && floor(processors)!=processors)
@@ -216,6 +217,7 @@ CorrectFrameshifts <- function(myXStringSet,
 		ends,
 		frames,
 		index,
+		org_index,
 		maxComparisons,
 		gapOpening,
 		gapExtension,

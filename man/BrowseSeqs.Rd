@@ -1,7 +1,7 @@
 \name{BrowseSeqs}
 \alias{BrowseSeqs}
 \title{
-View Sequences In A Web Browser
+View Sequences in a Web Browser
 }
 \description{
 Opens an html file in a web browser to show the sequences in an \code{XStringSet}.
@@ -38,7 +38,7 @@ Numeric specifying which sequence in the set to use for comparison or \code{NA} 
 Either an \code{AAStringSet}, \code{DNAStringSet}, or \code{RNAStringSet} object, or a character vector containing regular expressions to be colored in the XStringSet.  Regular expressions are searched sequentially with multiple matches allowed, even within other previously matched \code{patterns}.  (See details section below.)
 }
   \item{colors}{
-Character vector providing the color for each of the matched \code{patterns}.  Typically a character vector with elements of 7 characters:  ``#'' followed by the red, blue, green values in hexadecimal (after rescaling to 0 ... 255).  Positions given background color are also given white font.
+Character vector providing the color for each of the matched \code{patterns}.  Typically a character vector with elements of 7 characters:  ``#'' followed by the red, blue, green values in hexadecimal (after rescaling to 0 ... 255).
 }
   \item{colWidth}{
 Integer giving the maximum number of nucleotides wide the display can be before starting a new page.  Must be a multiple of \code{20} (e.g., \code{100}), or \code{Inf} (the default) to display all the sequences in one set of rows.

@@ -43,6 +43,8 @@ Add2DB <- function(myData,
 		stop("clause must be a character string.")
 	if (!is.logical(verbose))
 		stop("verbose must be a logical.")
+	if (grepl(".", names(myData), fixed=TRUE))
+		stop("Column names cannot contain periods.")
 	
 	# initialize database
 	driver = dbDriver("SQLite")

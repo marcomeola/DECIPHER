@@ -16,8 +16,8 @@ Add2DB, Codec, Seqs2DB, SearchDB, DB2Seqs,
 FormGroups, IdentifyByRank,
 # lengths:
 IdLengths, TerminalChar,
-# grouping sequences:
-DistanceMatrix, IdClusters, MODELS,
+# phylogenetics:
+DistanceMatrix, IdClusters, MODELS, ReadDendrogram, WriteDendrogram,
 # forming consensus:
 ConsensusSequence, Disambiguate, IdConsensus, TileSeqs,
 # chimeras:

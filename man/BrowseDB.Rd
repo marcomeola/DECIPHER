@@ -1,7 +1,7 @@
 \name{BrowseDB}
 \alias{BrowseDB}
 \title{
-View A Database Table In A Web Browser
+View a Database Table in a Web Browser
 }
 \description{
 Opens an html file in a web browser to show the contents of a table in a database.

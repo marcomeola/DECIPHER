@@ -21,26 +21,26 @@ LazyLoad: \tab yes\cr
 
 Index:
 \preformatted{
-Add2DB                   Add Data To A Database
+Add2DB                   Add Data to a Database
 AdjustAlignment          Improve An Existing Alignment By Adjusting Gap
                          Placements
-AlignDB                  Align Two Sets of Aligned Sequences In A Sequence
+AlignDB                  Align Two Sets of Aligned Sequences in a Sequence
                          Database
 AlignProfiles            Align Two Sets of Aligned Sequences
-AlignSeqs                Align A Set of Unaligned Sequences
+AlignSeqs                Align a Set of Unaligned Sequences
 AlignSynteny             Pairwise Aligns Syntenic Blocks
 AlignTranslation         Align Sequences By Their Amino Acid Translation
 AmplifyDNA               Simulate Amplification of DNA by PCR
 Array2Matrix             Create a Matrix Representation of a Microarray
-BrowseDB                 View A Database Table In A Web Browser
-BrowseSeqs               View Sequences In A Web Browser
+BrowseDB                 View a Database Table in a Web Browser
+BrowseSeqs               View Sequences in a Web Browser
 CalculateEfficiencyArray Predict the Hybridization Efficiency of
                          Probe/Target Sequence Pairs
 CalculateEfficiencyFISH  Predict Thermodynamic Parameters of Probe/Target
                          Sequence Pairs
 CalculateEfficiencyPCR   Predict Amplification Efficiency of Primer Sequences
 Codec                    Compression/Decompression of Character Vectors
-ConsensusSequence        Create A Consensus Sequence
+ConsensusSequence        Create a Consensus Sequence
 CorrectFrameshifts       Corrects Frameshift Errors In Protein Coding
                          Sequences
 CreateChimeras           Create Artificial Chimeras
@@ -63,8 +63,8 @@ DigestDNA                Simulate Restriction Digestion of DNA
 Disambiguate             Expand Ambiguities into All Permutations of a
                          DNAStringSet
 DistanceMatrix           Calculate the Distance Between Sequences
-FindChimeras             Find Chimeras In A Sequence Database
-FindSynteny              Finds Synteny In A Sequence Database
+FindChimeras             Find Chimeras in a Sequence Database
+FindSynteny              Finds Synteny in a Sequence Database
 FormGroups               Forms Groups By Rank
 HEC_MI                   Mutual Information for Protein Secondary Structure
                          Prediction
@@ -73,7 +73,7 @@ IdConsensus              Create Consensus Sequences by Groups
 IdentifyByRank           Identify By Taxonomic Rank
 IdLengths                Determine the Number of Bases, Nonbases, and Width
                          of Each Sequence
-MaskAlignment            Masks Highly Variable Regions of An Alignment
+MaskAlignment            Mask Highly Variable Regions of An Alignment
 MeltDNA                  Simulate Melting of DNA
 MIQS                     MIQS Amino Acid Substitution Matrix
 MODELS                   Available Models of DNA Evolution
@@ -81,13 +81,15 @@ NNLS                     Sequential Coordinate-wise Algorithm for the
                          Non-negative Least Squares Problem
 OrientNucleotides        Orient nucleotide sequences
 PredictHEC               Predict Protein Secondary Structure
+Read Dendrogram          Read a Dendrogram from a Newick Formatted File
 RESTRICTION_ENZYMES      Common Restriction Enzyme's Cut Sites
-SearchDB                 Obtain Specific Sequences from A Database
+SearchDB                 Obtain Specific Sequences from a Database
 Seqs2DB                  Add Sequences from Text File to Database
 StaggerAlignment         Produce a Staggered Alignment
 Synteny-class            Synteny blocks and hits
 TerminalChar             Determine the Number of Terminal Characters
 TileSeqs                 Form a Set of Tiles for Each Group of Sequences
+WriteDendrogram          Write a Dendrogram to Newick Format
 }
 }
 \author{

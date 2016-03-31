@@ -182,7 +182,7 @@ SEXP consolidateGaps(SEXP x, SEXP type);
 
 // FindFrameshifts.c
 
-SEXP findFrameshifts(SEXP t, SEXP l, SEXP f, SEXP index, SEXP maxComp, SEXP go, SEXP ge, SEXP fs, SEXP minD, SEXP maxD, SEXP subMatrix, SEXP verbose, SEXP pBar);
+SEXP findFrameshifts(SEXP t, SEXP l, SEXP f, SEXP index, SEXP oindex, SEXP maxComp, SEXP go, SEXP ge, SEXP fs, SEXP minD, SEXP maxD, SEXP subMatrix, SEXP verbose, SEXP pBar);
 
 // Order.c
 
@@ -215,3 +215,7 @@ SEXP extractFields(SEXP x, SEXP fields, SEXP starts, SEXP ends);
 SEXP nbit(SEXP x, SEXP y, SEXP compRepeats, SEXP nThreads);
 
 SEXP decompress(SEXP x, SEXP nThreads);
+
+// Diff.c
+
+SEXP intDiff(SEXP x);

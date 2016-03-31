@@ -1,7 +1,7 @@
 \name{FindSynteny}
 \alias{FindSynteny}
 \title{
-Finds Synteny In A Sequence Database
+Finds Synteny in a Sequence Database
 }
 \description{
 Finds syntenic blocks between groups of sequences in a database.
@@ -10,7 +10,7 @@ Finds syntenic blocks between groups of sequences in a database.
 FindSynteny(dbFile,
             tblName = "Seqs",
             identifier = "",
-            useFrames = TRUE,
+            useFrames = FALSE,
             alphabet = c("MF", "ILV", "A", "C", "WYQHP", "G", "TSN", "RK", "DE"),
             geneticCode = GENETIC_CODE,
             sepCost = -0.01,
@@ -22,6 +22,7 @@ FindSynteny(dbFile,
             minScore = 200,
             dropScore = -100,
             maskRepeats = TRUE,
+            storage = 0.5,
             processors = 1,
             verbose = TRUE)
 }
@@ -36,7 +37,7 @@ Character string specifying the table where the sequences are located.
 Optional character string used to narrow the search results to those matching a specific identifier.  If "" then all identifiers are selected.
 }
   \item{useFrames}{
-Logical specifying whether to use 6-frame amino acid translations to help find more distant hits.  If \code{FALSE} then faster but less sensitive to distant homology.
+Logical specifying whether to use 6-frame amino acid translations to help find more distant hits.  If \code{FALSE} (the default) then faster but less sensitive to distant homology.
 }
   \item{alphabet}{
 Character vector of amino acid groupings used to reduce the 20 standard amino acids into smaller groups.  Alphabet reduction helps to find more distant homologies between sequences.  A non-reduced amino acid alphabet can be used by setting \code{alphabet} equal to \code{AA_STANDARD}.
@@ -71,6 +72,9 @@ The change from maximal score required to stop extending blocks.
   \item{maskRepeats}{
 Logical specifying whether to ``soft'' mask repeats when searching for hits.
 }
+  \item{storage}{
+Excess gigabytes available to store objects so that they do not need to be recomputed in later steps.  This should be a number between zero and a (modest) fraction of the available system memory.  Note that more than \code{storage} gigabytes may be required, but will not be stored for later reuse.
+}
   \item{processors}{
 The number of processors to use, or \code{NULL} to automatically detect and use all available processors.
 }
@@ -92,7 +96,7 @@ Erik Wright \email{DECIPHER@cae.wisc.edu}
 }
 \examples{
 db <- system.file("extdata", "Influenza.sqlite", package="DECIPHER")
-synteny <- FindSynteny(db, minScore=50)
+synteny <- FindSynteny(db, useFrames=TRUE, minScore=50)
 synteny
 pairs(synteny) # scatterplot matrix
 }
