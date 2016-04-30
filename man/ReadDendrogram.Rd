@@ -51,5 +51,8 @@ layout(matrix(1:2))
 plot(dend1, main="Dendrogram Written")
 plot(dend2, main="Dendrogram Read")
 
+# Note that the ordering information is lost
+any(unlist(dend1) != unlist(dend2)) # TRUE
+
 unlink(tf)
 }
