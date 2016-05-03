@@ -1,0 +1,425 @@
+%\VignetteIndexEntry{The Art of Multiple Sequence Alignment in R}
+%\VignettePackage{DECIPHER}
+
+\documentclass[10pt]{article}
+
+\usepackage{times}
+\usepackage{hyperref}
+\usepackage{underscore}
+\usepackage{enumerate}
+\usepackage{graphics}
+\usepackage{wrapfig}
+
+\textwidth=6.5in
+\textheight=8.5in
+%\parskip=.3cm
+\oddsidemargin=-.1in
+\evensidemargin=-.1in
+\headheight=-.3in
+
+\newcommand{\scscst}{\scriptscriptstyle}
+\newcommand{\scst}{\scriptstyle}
+
+\newcommand{\R}{{\textsf{R}}}
+\newcommand{\C}{{\textsf{C}}}
+\newcommand{\code}[1]{{\texttt{#1}}}
+\newcommand{\term}[1]{{\emph{#1}}}
+\newcommand{\Rpackage}[1]{\textsf{#1}}
+\newcommand{\Rfunction}[1]{\texttt{#1}}
+\newcommand{\Robject}[1]{\texttt{#1}}
+\newcommand{\Rclass}[1]{{\textit{#1}}}
+\newcommand{\Rmethod}[1]{{\textit{#1}}}
+\newcommand{\Rfunarg}[1]{{\textit{#1}}}
+
+\bibliographystyle{plainnat}
+
+\begin{document}
+%\setkeys{Gin}{width=0.55\textwidth}
+
+\title{The Art of Multiple Sequence Alignment in R}
+\author{Erik S. Wright \\
+  University of Wisconsin \\
+  Madison, WI}
+\date{\today}
+\maketitle
+
+\newenvironment{centerfig}
+{\begin{figure}[htp]\centering}
+{\end{figure}}
+\renewcommand{\indent}{\hspace*{\tindent}}
+\DefineVerbatimEnvironment{Sinput}{Verbatim} {xleftmargin=2em} \DefineVerbatimEnvironment{Soutput}{Verbatim}{xleftmargin=2em} \DefineVerbatimEnvironment{Scode}{Verbatim}{xleftmargin=2em} \fvset{listparameters={\setlength{\topsep}{0pt}}} \renewenvironment{Schunk}{\vspace{\topsep}}{\vspace{\topsep}}
+\SweaveOpts{keep.source=TRUE}
+<<echo=false>>=
+options(continue=" ")
+options(width=80)
+@
+
+\tableofcontents
+
+%------------------------------------------------------------
+\section{Introduction}
+%------------------------------------------------------------
+
+\setlength{\intextsep}{0pt}
+\begin{wrapfigure}{r}{0.31\textwidth}
+\includegraphics[width=0.31\textwidth]{AlignmentSpace1}
+\caption{\label{f1} The art of multiple sequence alignment.}
+\end{wrapfigure}
+
+This document is intended to illustrate the art of multiple sequence alignment in \R{} using \Rpackage{DECIPHER}.  Even though its beauty is often concealed, multiple sequence alignment is a form of art in more ways than one.  Take a look at Figure 1 for an illustration of what is happening behind the scenes during multiple sequence alignment.  The practice of sequence alignment is one that requires a degree of skill, and it is that art which this vignette intends to convey.  It is not simply enough to ``plug'' sequences into a multiple sequence aligner and blindly trust the result.  An appreciation for the art as well a careful consideration of the results are required.
+
+What really is multiple sequence alignment, and is there a single correct alignment?  Generally speaking, alignment seeks to perform the act of taking multiple divergent biological sequences of the same ``type'' and fitting them to a form that reflects some shared quality.  That quality may be how they look structurally, how they evolved from a common ancestor, or optimization of a mathematical construct.  As with most multiple sequence aligners, \Rpackage{DECIPHER} is ``trained'' to maximize scoring metrics in order to accomplish a combination of both structural alignment and evolutionary alignment.  The idea is to give the alignment a biological basis even though the molecules that the sequences represent will never meet each other and align under any natural circumstance.
+
+The workhorse for sequence alignment in \Rpackage{DECIPHER} is \Rfunction{AlignProfiles}, which takes in two aligned sets of DNA, RNA, or amino acid (AA) sequences and returns a merged alignment.  For more than two sequences, the function \Rfunction{AlignSeqs} will perform multiple sequence alignment in a progressive/iterative manner on sequences of the same kind.  In this case, multiple alignment works by aligning two sequences, merging with another sequence, merging with another set of sequences, and so-forth until all the sequences are aligned.  This process is iterated to further refine the alignment.  There are other functions that extend use of \Rfunction{AlignSeqs} for different purposes:
+\begin{enumerate}
+\item The first is \Rfunction{AlignTranslation}, which will align DNA/RNA sequences based on their amino acid translation and then reverse translate them back to DNA/RNA.  Aligning protein sequences is more accurate since amino acids are more conserved than their corresponding coding sequence.
+\item The second function, \Rfunction{AlignDB}, enables generating alignments from many more sequences than possible to fit in memory.  Its main purpose is to merge sub-alignments where each alignment alone is composed of many thousands of sequences.  This is accomplished by storing all of the sequences in a database and only working with ``profiles'' representing the sequences.
+\item The function \Rfunction{AdjustAlignment} takes in an existing alignment and shifts groups of gaps right and left to achieve a better alignment.  Its purpose is to eliminate artifacts that accumulate during progressive alignment, and to replace the tedious \& subjective process of manually correcting an alignment.
+\item Finally, \Rfunction{StaggerAlignment} will create a ``staggered'' alignment by separating potentially non-homologous positions into separate columns.  This function will help minimize false homologies when building a phylogenetic tree, although the resulting alignment is not as aesthetically pleasing.
+\item The functions \Rfunction{FindSynteny} and \Rfunction{AlignSynteny} can be used in combination to perform pairwise alignment of homologous regions from multiple genomes or non-collinear sequences.  These functions interact with a sequence database containing the genomes, which can each be comprised of multiple sequences (i.e., contigs or chromosomes).
+\end{enumerate}
+
+%------------------------------------------------------------
+\section{Alignment Speed}
+%------------------------------------------------------------
+
+\begin{wrapfigure}{r}{0.31\textwidth}
+\includegraphics[width=0.31\textwidth]{AlignmentSpace2}
+\caption{\label{f2} The possible alignment space.}
+\end{wrapfigure}
+
+The dynamic programming method using by \Rpackage{DECIPHER} for aligning two profiles requires order \code{N*M} time and memory space where \code{N} and \code{M} are the width of the pattern and subject.  Since multiple sequence alignment is an inherently challenging problem for large sequences, heuristics are employed to maximize speed while maintaining reasonable accuracy.  In this regard, the two critical parameters available to the user are \Rfunarg{restrict} and \Rfunarg{anchor}.  The objective of the \Rfunarg{restrict} parameter is to convert the problem from one taking quadratic time to linear time.  The goal of the \Rfunarg{anchor} parameter is do the equivalent for memory space so that very long sequences can be efficiently aligned.
+
+The orange anti-diagonal line in Figure 2 shows the optimal path for aligning two sequence profiles.  The blue segments to the left and right of the optimal path give the constraint boundaries, which the user controls with the \Rfunarg{restrict} parameter.  Areas above and below the upper and lower (respectively) constraint boundaries are neglected from further consideration.  A higher (less negative) value of \Rfunarg{restrict} will further constrain the possible ``alignment space,'' which represents all possible alignments between two sequences.  Since the optimal path is not known till completion of the matrix, it is risky to overly constrain the matrix.  This is particularly true in situations where the sequences are not mostly overlapping because the optimal path will likely not be diagonal, causing the path to cross a constraint boundary.  In the non-overlapping case \Rfunarg{restrict} should be set below the default to ensure that the entire ``alignment space'' is available.
+
+Neglecting the ``corners'' of the alignment space effectively converts a quadratic time problem into a near-linear time problem.  We can see this by comparing \Rfunction{AlignProfiles} with and without restricting the matrix at different sequence lengths.  To extend our comparison we can include the \Rpackage{Biostrings} function \Rfunction{pairwiseAlignment}.  In this simulation, two sequences with 90\% identity are aligned and the elapsed time is recorded for a variety of sequence lengths.  As can be seen in Figure 3 below, \textit{without} restriction \Rfunction{AlignProfiles} takes quadratic time in the same manner as \Rfunction{pairwiseAlignment}.  However, \textit{with} restriction \Rfunction{AlignProfiles} takes linear time, requiring only a few microseconds per nucleotide.
+
+\begin{centerfig}
+<<expr0,eval=TRUE,echo=FALSE,results=hide,fig=TRUE,include=TRUE,height=7,width=8.5>>=
+library(DECIPHER)
+n_points <- 10
+N0 <- ceiling(2^seq(5, 13, length.out=n_points))
+N1 <- ceiling(2^seq(5, 12, length.out=n_points))
+N2 <- ceiling(2^seq(5, 13, length.out=n_points))
+N3 <- ceiling(2^seq(5, 16, length.out=n_points))
+timings0 <- setNames(rep(0, length(N0)), N0)
+timings1 <- setNames(rep(0, length(N1)), N1)
+timings2 <- setNames(rep(0, length(N2)), N2)
+timings3 <- setNames(rep(0, length(N3)), N3)
+for (i in seq_len(length(N0))) {
+	for (j in 0:3) {
+		N <- eval(parse(text=paste("N", j, sep="")))
+		# simulate sequences with 15% distance
+		string1 <- DNAStringSet(paste(sample(DNA_ALPHABET[1:4], N[i], replace = TRUE), collapse = ""))
+		string2 <- replaceAt(string1,
+			at=IRanges(sample(N[i], ceiling(N[i]/5)), width=1),
+			sample(c(DNA_ALPHABET[1:4], ""), ceiling(N[i]/5), replace = TRUE))
+		# align the sequences using two methods
+		if (j==0) {
+			timings0[i] <- system.time(pairwiseAlignment(string1, string2))[["user.self"]]
+		} else if (j==1) {
+			timings1[i] <- system.time(AlignProfiles(string1, string2, restrict=-Inf, anchor=NA))[["user.self"]]
+		} else if (j==2) {
+			timings2[i] <- system.time(AlignProfiles(string1, string2, anchor=NA))[["user.self"]]
+		} else { # j == 3
+			timings3[i] <- system.time(AlignProfiles(string1, string2))[["user.self"]]
+		}
+	}
+}
+
+c0 <- lm(timings0 ~ N0 + I(N0^2))
+c1 <- lm(timings1 ~ N1 + I(N1^2))
+c2 <- lm(timings2 ~ N2)
+c3 <- lm(timings3 ~ N3)
+
+N <- seq(1, 46340, length.out=1000) # prediction range
+plot(N0, timings0,
+	xlab = "Sequence length (nucleotides)",
+	ylab = "Elapsed Time (sec.)",
+	main = "",
+	ylim=c(range(timings0,
+		timings1,
+		timings2,
+		timings3,
+		predict(c2, data.frame(N2=46340)))),
+	xlim=c(0, max(N3)))
+points(N, predict(c0,
+		data.frame(N0 = N)),
+	type="l", lty=3)
+points(N1, timings1,
+	col="blue", pch=0)
+points(N, predict(c1,
+		data.frame(N1 = N)),
+	type="l", lty=3, col="blue")
+points(N2, timings2,
+	col="red", pch=5)
+points(N, predict(c2,
+		data.frame(N2 = N)),
+	type="l", lty=3, col="red")
+N <- seq(1, max(N3), length.out=1000) # prediction range
+points(N3, timings3,
+	col="green", pch=2)
+points(N, predict(c3,
+		data.frame(N3 = N)),
+	type="l", lty=3, col="green")
+legend("bottomright",
+	c("Biostrings::pairwiseAlignment",
+		"AlignProfiles (unrestricted, unanchored)",
+		"AlignProfiles (restricted, unanchored)",
+		"AlignProfiles (restricted, anchored)"),
+	pch=c(1, 0, 5, 2), lty=3,
+	col=c("black", "blue", "red", "green"), bg="white")
+@
+\caption{Global Pairwise Sequence Alignment Timings.}
+\end{centerfig}
+
+The parameter \Rfunarg{anchor} controls the fraction of sequences that must share a common region to anchor the alignment space (Fig. 2).  \Rfunction{AlignProfiles} will search for shared anchor points between the two sequence sets being aligned, and if the fraction shared is above \Rfunarg{anchor} (70\% by default) then that position is fixed in the ``alignment space.''  Anchors are 15-mer (for DNA/RNA) or 7-mer (for AA) exact matches between two sequences that must occur in the same order in both sequence profiles.  Anchoring generally does not affect accuracy, but can greatly diminish the amount of memory required for alignment.  In Fig. 2, the largest white box represents the maximal memory space required with anchoring, while the entire alignment space (grey plus white areas) would be required without anchoring.  The longest pair of sequence profiles that can be aligned without anchoring is 46 thousand nucleotides as shown by the end of the red dotted line in Figure 3.  If regularly spaced anchor points are available then the maximum sequence length is greatly extended.  In the vast majority of cases anchoring gives the same result as without anchoring, but with less time and memory space required.
+
+%------------------------------------------------------------
+\section{Alignment Accuracy}
+%------------------------------------------------------------
+
+Figure 4 compares the performance of \Rpackage{DECIPHER} and other sequence alignment software on structural amino acid benchmarks \cite{Edgar:2010}.  All benchmarks have flaws, some of which can easily be found by eye in highly similar sequence sets, and therefore benchmark results should treated with care \cite{Iantorno:2014}.  As can be seen in the figure, the performance of \Rpackage{DECIPHER} is similar to that of other popular alignment software such as MAFFT \cite{Katoh:2002} and MUSCLE \cite{Edgar:2004}.  Most importantly, the accuracy of protein alignment begins to drop-off when sequences in the reference alignment have less than 40\% average pairwise identity.  A similar decline in performance is observed with DNA/RNA sequences, but the drop-off occurs much earlier at around 60\% sequence identity.  Therefore, it is generally preferable to align coding sequences by their translation using \Rfunction{AlignTranslation}.  This function first translates the input DNA/RNA sequences, then aligns the translation, and finally reverse translates to obtain aligned DNA/RNA sequences.  Nevertheless, even protein alignment cannot be considered reliable when the sequences being aligned differ by more than 70\%.
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=1\textwidth]{AlignmentBenchmarks}
+\caption{\label{f4} Performance comparison between different programs for multiple alignment (\cite{Thompson:1994}, \cite{Edgar:2004}, \cite{Katoh:2002}) using amino acid structural benchmarks.  The x-axis shows percent identity between sequences in each reference alignment.  The y-axis gives the percentage of correctly aligned residues in the estimated alignment according to the reference alignment (SP-score).  The upper-left plot is for the PREFAB (version 4) benchmark \cite{Edgar:2004}.  The upper-right plot shows the results of the BALIBASE (version 3) benchmark \cite{Thompson:2005}.  The lower-left plot is for SABMARK (version 1.65) \cite{VanWalle:2005}.  The lower-right plot gives the results on the OXBENCH alignments \cite{Raghava:2003}.  A comparison of these benchmarks can be found in reference \cite{Edgar:2010}.}
+\end{center}
+\end{figure}
+
+\clearpage
+
+%------------------------------------------------------------
+\section{Recommendations for optimal performance}
+%------------------------------------------------------------
+
+\Rpackage{DECIPHER} has a number of alignment functions and associated parameters.  The flow-chart in Figure 5 is intended to simplify this process for the most frequently encountered multiple sequence alignment tasks.  For more information on any of these suggestions, refer to the examples in the following sections of this vignette.
+
+\begin{figure}
+\begin{center}
+\includegraphics[height=0.6\textheight,keepaspectratio]{AlignmentFlowChart}
+\end{center}
+\caption{\label{f5} Flow-chart depicting how to choose the best combination of alignment functions and parameters for the most common multiple sequence alignment problems.}
+\end{figure}
+
+\clearpage
+
+%------------------------------------------------------------
+\section{Example:  Single Gene Alignment}
+%------------------------------------------------------------
+
+For this example we are going to align the \textit{rplB} coding sequence from many different Bacteria.  The \textit{rplB} gene encodes one of the primary ribosomal RNA binding proteins:  the 50S ribosomal protein L2.  We begin by loading the library and importing the sequences from a FASTA file.  Be sure to change the path names to those on your system by replacing all of the text inside quotes labeled ``$<<$path to ...$>>$'' with the actual path on your system.
+
+<<expr1,eval=TRUE,echo=TRUE>>=
+library(DECIPHER)
+
+# specify the path to your sequence file:
+fas <- "<<path to FASTA file>>"
+# OR find the example sequence file used in this tutorial:
+fas <- system.file("extdata", "50S_ribosomal_protein_L2.fas", package="DECIPHER")
+
+dna <- readDNAStringSet(fas)
+dna # the unaligned sequences
+@
+
+We can align the DNA by either aligning the coding sequences directly, or their translations (amino acid sequences).  Both methods result in an aligned set of DNA sequences, unless the argument \Rfunarg{asAAStringSet} is \code{TRUE} in \Rfunction{AlignTranslation}.  A quick inspection reveals that the method of translating before alignment yields a more appealing result.  In particular, the reading frame is maintained when aligning the translations.  However, if the dna did not code for a protein then the only option would be to use \Rfunction{AlignSeqs} because the translation would be meaningless.
+
+<<expr2,eval=FALSE,echo=TRUE>>=
+AA <- AlignTranslation(dna, asAAStringSet=TRUE) # align the translation
+BrowseSeqs(AA, highlight=1) # view the alignment
+
+DNA <- AlignSeqs(dna) # align the sequences directly without translation
+DNA <- AlignTranslation(dna) # align the translation then reverse translate
+
+# write the aligned sequences to a FASTA file
+writeXStringSet(DNA, file="<<path to output file>>")
+@
+
+Note that frameshift errors can greatly disrupt the alignment of protein coding sequences.  Frameshifts can be corrected by first using \Rfunction{CorrectFrameshifts} on the nucleotide sequences, and then using the corrected sequences as input to \Rfunction{AlignTranslation} with \Rfunarg{readingFrame} equal to \code{1}.
+
+If the input sequences include exact replicates, then alignment can be accelerated by de-replicating the sequences before alignment.  The sequences can then be re-replicated after alignment to create a larger alignment of all the original sequences.  \Rfunction{AlignSeqs} does not automatically handle redundancy in the input sequences, but doing so is fairly straightforward.
+
+<<expr3,eval=FALSE,echo=TRUE>>=
+u_dna <- unique(dna) # the unique input sequences
+index <- match(dna, u_dna) # de-replication index
+
+U_DNA <- AlignSeqs(u_dna) # align the sequences directly without translation
+DNA <- U_DNA[index]
+names(DNA) <- names(dna) # the re-replicated alignment
+@
+
+Also, when aligning nucleotide sequences (or their translations), it may be the case that the sequences are in different orientations.  If so, consider reorienting the sequences so that they all have the same directionality and complementarity by using \Rfunction{OrientNucleotides} prior to alignment.
+
+%------------------------------------------------------------
+\section{Example:  Building a Guide Tree}
+%------------------------------------------------------------
+
+The \Rfunction{AlignSeqs} function uses a guide tree to decide in which order to align pairs of sequence profiles.  The \Rfunarg{guideTree} input is a \Rclass{data.frame} with the grouping of each sequence at increasing levels of dissimilarity between the groups.  By default this guide tree is generated directly from the sequences using the order of shared k-mers (i.e., when the argument \Rfunarg{guideTree} is \code{NULL}).  This default guide tree performs very well, but it may desirable or necessary to specify a guide tree when aligning thousands of sequences.  For example, beyond 46,340 sequences an alternative guide tree is always required because this is the largest guide tree that can be constructed by \Rpackage{DECIPHER}.
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=1\textwidth]{DefaultVsChainedGuideTrees}
+\caption{\label{f6} Comparison between the default and chained guide trees when aligning increasing numbers of Cytochrome P450 sequence sets.  Use of a chained guide tree often provides an alignment with equivalent accuracy when aligning thousands of protein sequences.}
+\end{center}
+\end{figure}
+
+As the number of sequences being aligned increases beyond a certain point, the performance of the default guide tree tends to diminish.  It has been shown that reasonably accurate alignments of tens of thousands of sequences can be obtained by using a chain guide tree \cite{Boyce:2014}.  With a chained guide tree, sequences are added one-by-one to a growing profile representing all of the aligned sequences.  Figure 6 shows the result of using \Rpackage{DECIPHER} to align increasing numbers of Cytochrome P450 sequences (in accordance with the method in reference \cite{Boyce:2014}), using either a chained guide tree or the default guide tree.  A chained guide tree allows for faster alignment and provides reasonable quality when many thousands of sequences are being aligned.  A chained guide tree can easily be generated, as shown below.
+
+<<expr4,eval=FALSE,echo=TRUE>>=
+# form a chained guide tree
+gT <- data.frame(seq_along(dna))
+
+# use the guide tree as input for alignment
+DNA <- AlignTranslation(dna, guideTree=gT) # align by translation
+@
+
+Use of a chained guide tree is recommended when aligning more than ten thousand sequences for purposes other than phylogenetics.  With a moderate number of sequences the automatically generated (default) guide tree tends to provide the best result, especially if the input sequences vary in width considerably.
+
+%------------------------------------------------------------
+\section{Example:  Aligning Two Aligned Sequence Sets}
+%------------------------------------------------------------
+
+It is sometimes useful to align two or more previously-aligned sets of sequences.  Here we can use the function \Rfunction{AlignProfiles} to directly align profiles of the two sequence sets:
+
+<<expr5,eval=FALSE,echo=TRUE>>=
+half <- floor(length(dna)/2)
+dna1 <- dna[1:half] # first half
+dna2 <- dna[(half + 1):length(dna)] # second half
+
+AA1 <- AlignTranslation(dna1, asAAStringSet=TRUE)
+AA2 <- AlignTranslation(dna2, asAAStringSet=TRUE)
+AA <- AlignProfiles(AA1, AA2) # align two alignments
+@
+
+When the two sequence sets are very large it may be impossible to fit both sets of input sequences and the output alignment into memory at once.  The function \Rfunction{AlignDB} can align the sequences in two database tables, or two sets of sequences corresponding to separate \term{identifier}s in the same table.  \Rfunction{AlignDB} takes as input two \term{tblName}s and/or \term{identifier}s, and iteratively builds a profile for each of those respective sequence alignments in the database.  These profiles are aligned, and the insertions are iteratively applied to each of the input sequences until the completed alignment has been stored in \term{add2tbl}.
+
+<<expr6,eval=FALSE,echo=TRUE>>=
+# Align DNA sequences stored in separate tables:
+dbConn <- dbConnect(SQLite(), ":memory:")
+Seqs2DB(AA1, "DNAStringSet", dbConn, "AA1", tblName="AA1")
+Seqs2DB(AA2, "DNAStringSet", dbConn, "AA2", tblName="AA2")
+AlignDB(dbConn, tblName=c("AA1", "AA2"), add2tbl="AA",
+        type="AAStringSet")
+AA <- SearchDB(dbConn, tblName="AA", type="AAStringSet")
+BrowseDB(dbConn, tblName="AA")
+dbDisconnect(dbConn)
+@
+
+The number of sequences required to fit into memory when aligning two sequence sets with \Rfunction{AlignDB} is controlled by the \term{batchSize} parameter.  In this way \Rfunction{AlignDB} can be used to align large sequence alignments with only minimal memory required.
+
+%------------------------------------------------------------
+\section{Example:  Post-processing an Existing Multiple Alignment}
+%------------------------------------------------------------
+
+There are several steps that can be taken after alignment to verify or improve the alignment.  The most important step is to look at the result to ensure that it meets expectations.  Spurious (unalignable) sequences can then be removed and the alignment process repeated as desired.  The simplest way to view sequences with \Rpackage{DECIPHER} is with the function \Rfunction{BrowseSeqs}.  The \Rfunarg{highlight} parameter controls which sequence, if any, is in focus (highlighted).  A value of zero highlights the consensus sequence as shown below.
+
+<<expr7,eval=FALSE,echo=TRUE>>=
+BrowseSeqs(DNA, highlight=0)
+@
+
+All \Rpackage{DECIPHER} multiple sequence alignments are optimized using \Rfunction{AdjustAlignment} (unless the input argument \Rfunarg{FUN} is changed by the user), with the goal of removing artifacts of the progressive alignment process.  This function will efficiently correct most obvious inaccuracies that could be found by-eye.  Therefore, making manual corrections is not recommended unless additional expert knowledge of the sequences is available.  The advantage of using \Rfunction{AdjustAlignment} is that it is a repeatable process that not subjective, unlike most manual adjustments.  In order to further refine an existing alignment, \Rfunction{AdjustAlignment} can be called directly.
+
+<<expr8,eval=FALSE,echo=TRUE>>=
+DNA_adjusted <- AdjustAlignment(DNA)
+@
+
+It is common to use alignment as the initial step in the creation of a phylogenetic tree.  \Rpackage{DECIPHER}, like the majority of alignment programs, attempts to maximize homologous positions between the sequences being aligned.  Such an alignment is particularly useful when investigating which residues are in the same structural position of a protein.  However, disparate sequence regions tend to be concentrated into the same ``gappy'' areas of the alignment.  When viewed from a phylogenetic perspective these homologies have highly implausible insertion/deletion scenarios.
+
+To mitigate the problem of false homologies, \Rfunction{StaggerAlignment} will automatically generate a staggered version of an existing alignment.  Staggered alignments separate potentially non-homologous regions into separate columns of the alignment.  The result is an alignment that is less visually appealing, but likely more accurate in a phylogenetic sense.  As such, this is an important post-processing step whenever the alignment will be used to construct a phylogenetic tree (e.g., with \Rfunction{IdClusters}).
+
+<<expr10,eval=FALSE,echo=TRUE>>=
+DNA_staggered <- StaggerAlignment(DNA)
+@
+
+%------------------------------------------------------------
+\section{Example:  Aligning Homologous Regions of Multiple Genomes}
+%------------------------------------------------------------
+
+The functions described so far have all required collinear sequences as input.  This requirement is frequently broken by genomes, which may include many sequence rearrangements such as inversion, duplication, and reordering.  \Rfunction{FindSynteny} will find homologous regions between pairs of genomes, which can then be aligned using \Rfunction{AlignSynteny}.  A database of sequences identified by their genome name is used as input to both functions.  This enables the alignment of genomes that are composed of many contigs, because they will all share the same \code{identifier} in the database.  The example below uses a database containing five \emph{Influenza virus A} genomes, which are each composed of eight separate segments.
+
+<<expr11,eval=TRUE,echo=TRUE>>=
+db <- system.file("extdata", "Influenza.sqlite", package="DECIPHER")
+synteny <- FindSynteny(db, minScore=50, verbose=FALSE)
+synteny # an object of class `Synteny`
+InfluenzaA <- AlignSynteny(synteny, db, verbose=FALSE)
+unlist(InfluenzaA[[1]])
+@
+
+The output is a list, which each list component containing a \code{DNAStringSetList} of pairwise alignments between two genomes.  Names of the output correspond to their sequence's \code{identifier} in the database, and the index of the syntenic block.
+
+\clearpage
+
+It is also possible to display the blocks of synteny between all pairs of genomes.  In the scatterplot matrix shown below, the different genome segments (i.e., sequences) are separated by thin horizontal and vertical lines.  The syntenic blocks are diagonal lines that are composed of many homologous ``hits'' between the genomes.
+
+\begin{centerfig}
+<<expr12,eval=TRUE,echo=TRUE,fig=TRUE,include=TRUE,height=8.5,width=8.5>>=
+pairs(synteny, boxBlocks=TRUE) # scatterplot matrix
+@
+\caption{Dot plots showing the homologous regions among five \emph{Influenza virus A} genomes.}
+\end{centerfig}
+
+\clearpage
+
+%------------------------------------------------------------
+\section{Session Information}
+%------------------------------------------------------------
+
+All of the output in this vignette was produced under the following
+conditions:
+
+<<sessinfo,echo=FALSE,results=tex>>=
+toLatex(sessionInfo(), locale=FALSE)
+@
+
+\begin{thebibliography}{}
+
+\bibitem{Boyce:2014}
+{Boyce, K.}, {Sievers, F.}, \& {Higgins, D. G.}
+\newblock Simple chained guide trees give high-quality protein multiple sequence alignments.
+\newblock {\em Proceedings of the National Academy of Sciences of the United States of America.}, 111(29), 10556-10561. doi:10.1073/pnas.1405628111, 2014.
+
+\bibitem{Edgar:2010}
+{Edgar, R. C.}
+\newblock Quality measures for protein alignment benchmarks.
+\newblock {\em Nucleic Acids Research}, 38(7), 2145-2153. doi:10.1093/nar/gkp1196, 2010.
+
+\bibitem{Edgar:2004}
+{Edgar, R. C.}
+\newblock MUSCLE: multiple sequence alignment with high accuracy and high throughput.
+\newblock {\em Nucleic Acids Research},  32(5), 1792-97, 2004.
+
+\bibitem{Iantorno:2014}
+{Iantorno, S.}, {Gori, K.}, {Goldman, N.}, {Gil, M.}, \& {Dessimoz, C.}
+\newblock Who watches the watchmen? An appraisal of benchmarks for multiple sequence alignment.
+\newblock {\em Methods in Molecular Biology (Clifton, N.J.)}, 1079, 59-73. doi:10.1007/978-1-62703-646-7_4, 2014.
+
+\bibitem{Katoh:2002}
+{Katoh, K.}, {Misawa, K.}, {Kuma, K.-I.}, \& {Miyata, T.}
+\newblock MAFFT: a novel method for rapid multiple sequence alignment based on fast Fourier transform.
+\newblock {\em Nucleic Acids Research}, 30(14), 3059-3066, 2002.
+
+\bibitem{Raghava:2003}
+{Raghava, G. P.}, {Searle, S. M.}, {Audley, P. C.}, {Barber, J. D.}, \& {Barton, G. J.}
+\newblock OXBench: a benchmark for evaluation of protein multiple sequence 
+alignment accuracy.
+\newblock {\em BMC Bioinformatics}, 4: 47, 2003.
+
+\bibitem{Thompson:1994}
+{Thompson, J. D.}, {Higgins, D. G.}, \& {Gibson, T. J.}
+\newblock CLUSTAL W: improving the sensitivity of progressive multiple sequence alignment through sequence weighting, position-specific gap penalties and weight matrix choice.
+\newblock {\em Nucleic Acids Research}, 22(22), 4673-4680, 1994.
+
+\bibitem{Thompson:2005}
+{Thompson, J. D.}, {Koehl, P.}, {Ripp, R.}, \& {Poch, O.}
+\newblock BAliBASE 3.0: Latest developments of the multiple sequence alignment benchmark.
+\newblock {\em Proteins}, 61(1), 127-136, 2005.
+
+\bibitem{VanWalle:2005}
+{Van Walle, I.}, {Lasters, I.}, \& {Wyns, L.}
+\newblock SABmark--a benchmark for sequence alignment that covers the entire known fold space.
+\newblock {\em Bioinformatics}, 21(7), 1267-1268, 2005.
+
+\end{thebibliography}
+
+\end{document}
