@@ -21,16 +21,21 @@
 
 // clears "ins" attribute in-place within a nested list
 SEXP clearIns(SEXP x)
-{	
-	if (length(x) > 1) { // not a leaf
-		clearIns(VECTOR_ELT(x, 0));
-		clearIns(VECTOR_ELT(x, 1));
+{
+	SEXP ans;
+	PROTECT(ans = duplicate(x));
+	
+	if (length(ans) > 1) { // not a leaf
+		SET_VECTOR_ELT(ans, 0, clearIns(VECTOR_ELT(ans, 0)));
+		SET_VECTOR_ELT(ans, 1, clearIns(VECTOR_ELT(ans, 1)));
 	}
 	
 	// clear "ins" attribute
-	setAttrib(x, install("ins"), R_NilValue);
+	setAttrib(ans, install("ins"), R_NilValue);
 	
-	return R_NilValue;
+	UNPROTECT(1);
+	
+	return ans;
 }
 
 // returns TRUE when all are true and NA if all are NA

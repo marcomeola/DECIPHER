@@ -59,7 +59,7 @@ IdentifyByRank <- function(dbFile,
 			a <- strsplit(x$rank[j], ";")[[1]]
 			l <- length(a)
 			if (level < 0) {
-				temp_level <- l + level
+				temp_level <- l + level + 1L
 			} else {
 				temp_level <- level
 			}

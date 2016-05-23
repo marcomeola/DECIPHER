@@ -585,7 +585,7 @@ SEXP clusterNJ(SEXP x, SEXP cutoff, SEXP verbose, SEXP pBar, SEXP nThreads)
 	return ans;
 }
 
-SEXP reclusterNJ(SEXP ans, SEXP cutoff)
+SEXP reclusterNJ(SEXP x, SEXP cutoff)
 {
 	// bin sequences
 	// assign cluster numbers to nodes within cutoff percent different
@@ -598,6 +598,8 @@ SEXP reclusterNJ(SEXP ans, SEXP cutoff)
 	int i, j;
 	double *cut, *rans;
 	cut = REAL(cutoff);
+	SEXP ans;
+	PROTECT(ans = duplicate(x));
 	rans = REAL(ans);
 	const int length = length(ans)/10 + 1; // number of rows
 	
@@ -672,6 +674,8 @@ SEXP reclusterNJ(SEXP ans, SEXP cutoff)
 		}
 		
 	}
+	
+	UNPROTECT(1);
 	
 	return ans;
 }

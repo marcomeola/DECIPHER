@@ -281,7 +281,7 @@ FindSynteny <- function(dbFile,
 					removeGaps="all",
 					processors=processors,
 					verbose=FALSE)
-				if ((object.size(s2) + object.size(store)) < storage)
+				if ((object.size(s2) + object.size(store) + object.size(results)) < storage)
 					store[g2][[1L]][["S"]][[1L]] <- s2
 			} else {
 				s2 <- s2[[1L]]
@@ -334,7 +334,7 @@ FindSynteny <- function(dbFile,
 						12L, # maximum period
 						30L, # minimum length
 						PACKAGE="DECIPHER")
-				if ((object.size(E1) + object.size(store)) < storage)
+				if ((object.size(E1) + object.size(store) + object.size(results)) < storage)
 					store[g1][[1L]][["E"]][["nt"]][[N]] <- E1
 			}
 			
@@ -354,27 +354,29 @@ FindSynteny <- function(dbFile,
 						12L, # maximum period
 						30L, # minimum length
 						PACKAGE="DECIPHER")
-				if ((object.size(e2) + object.size(store)) < storage)
+				if ((object.size(e2) + object.size(store) + object.size(results)) < storage)
 					store[g2][[1L]][["E"]][["nt"]][[N]] <- e2
 			}
 			
 			O1 <- store[g1][[1L]][["O"]][["nt"]][N][[1L]]
 			if (is.null(O1)) {
-				O1 <- .Call("radixOrder",
-					E1,
-					0L,
-					PACKAGE="DECIPHER")
-				if ((object.size(O1) + object.size(store)) < storage)
+#				O1 <- .Call("radixOrder",
+#					E1,
+#					0L,
+#					PACKAGE="DECIPHER")
+				O1 <- order(E1, method="radix", na.last=FALSE) - 1L
+				if ((object.size(O1) + object.size(store) + object.size(results)) < storage)
 					store[g1][[1L]][["O"]][["nt"]][[N]] <- O1
 			}
 			
 			o2 <- store[g2][[1L]][["O"]][["nt"]][N][[1L]]
 			if (is.null(o2)) {
-				o2 <- .Call("radixOrder",
-					e2,
-					0L,
-					PACKAGE="DECIPHER")
-				if ((object.size(o2) + object.size(store)) < storage)
+#				o2 <- .Call("radixOrder",
+#					e2,
+#					0L,
+#					PACKAGE="DECIPHER")
+				o2 <- order(e2, method="radix", na.last=FALSE) - 1L
+				if ((object.size(o2) + object.size(store) + object.size(results)) < storage)
 					store[g2][[1L]][["O"]][["nt"]][[N]] <- o2
 			}
 			
@@ -385,7 +387,7 @@ FindSynteny <- function(dbFile,
 				O1,
 				o2,
 				PACKAGE="DECIPHER")
-			.Call("fillOverlaps", m, N, PACKAGE="DECIPHER")
+			m <- .Call("fillOverlaps", m, N, PACKAGE="DECIPHER") # in-place change of m
 			r <- Rle(.Call("intDiff", m, PACKAGE="DECIPHER"))
 			w <- which(r@values==1)
 			widths <- r@lengths[w] + N
@@ -403,16 +405,23 @@ FindSynteny <- function(dbFile,
 				seq_along(starts1),
 				INDEX1,
 				WIDTH1)
-			o <- .Call("radixOrder",
-				starts2,
-				1L,
-				PACKAGE="DECIPHER")
+			starts1 <- index1[[2]]
+			ends1 <- index1[[3]]
+			index1 <- index1[[1]]
+#			o <- .Call("radixOrder",
+#				starts2,
+#				1L,
+#				PACKAGE="DECIPHER")
+			o <- order(starts2, method="radix", na.last=FALSE)
 			index2 <- .Call("indexByContig",
 				starts2,
 				ends2,
 				o,
 				INDEX2,
 				WIDTH2)
+			starts2 <- index2[[2]]
+			ends2 <- index2[[3]]
+			index2 <- index2[[1]]
 			
 			if (useFrames) {
 				x.s <- list(starts1)
@@ -452,18 +461,19 @@ FindSynteny <- function(dbFile,
 								11L, # maximum period
 								15L, # minimum length
 								PACKAGE="DECIPHER")
-						if ((object.size(e1) + object.size(store)) < storage)
+						if ((object.size(e1) + object.size(store) + object.size(results)) < storage)
 							store[g1][[1L]][["E"]][["aa"]][[rF1]][[N_AA]] <- e1
 					}
 					width1 <- width1*3L
 					
 					o1 <- store[g1][[1L]][["O"]][["aa"]][[rF1]][N_AA][[1L]]
 					if (is.null(o1)) {
-						o1 <- .Call("radixOrder",
-							e1,
-							0L,
-							PACKAGE="DECIPHER")
-						if ((object.size(o1) + object.size(store)) < storage)
+#						o1 <- .Call("radixOrder",
+#							e1,
+#							0L,
+#							PACKAGE="DECIPHER")
+						o1 <- order(e1, method="radix", na.last=FALSE) - 1L
+						if ((object.size(o1) + object.size(store) + object.size(results)) < storage)
 							store[g1][[1L]][["O"]][["aa"]][[rF1]][[N_AA]] <- o1
 					}
 					
@@ -495,18 +505,19 @@ FindSynteny <- function(dbFile,
 									11L, # maximum period
 									15L, # minimum length
 									PACKAGE="DECIPHER")
-							if ((object.size(e2) + object.size(store)) < storage)
+							if ((object.size(e2) + object.size(store) + object.size(results)) < storage)
 								store[g2][[1L]][["E"]][["aa"]][[rF2]][[N_AA]] <- e2
 						}
 						width2 <- width2*3L
 						
 						o2 <- store[g2][[1L]][["O"]][["aa"]][[rF2]][N_AA][[1L]]
 						if (is.null(o2)) {
-							o2 <- .Call("radixOrder",
-								e2,
-								0L,
-								PACKAGE="DECIPHER")
-							if ((object.size(o2) + object.size(store)) < storage)
+#							o2 <- .Call("radixOrder",
+#								e2,
+#								0L,
+#								PACKAGE="DECIPHER")
+							o2 <- order(e2, method="radix", na.last=FALSE) - 1L
+							if ((object.size(o2) + object.size(store) + object.size(results)) < storage)
 								store[g2][[1L]][["O"]][["aa"]][[rF2]][[N_AA]] <- o2
 						}
 						
@@ -517,7 +528,7 @@ FindSynteny <- function(dbFile,
 							o1,
 							o2,
 							PACKAGE="DECIPHER")
-						.Call("fillOverlaps", m, N_AA, PACKAGE="DECIPHER")
+						m <- .Call("fillOverlaps", m, N_AA, PACKAGE="DECIPHER") # in-place change of m
 						r <- Rle(.Call("intDiff", m, PACKAGE="DECIPHER"))
 						w <- which(r@values==1)
 						widths <- r@lengths[w] + N_AA
@@ -541,16 +552,23 @@ FindSynteny <- function(dbFile,
 							seq_along(starts1),
 							INDEX1,
 							width1)
-						o <- .Call("radixOrder",
-							starts2,
-							1L,
-							PACKAGE="DECIPHER")
+						starts1 <- index1[[2]]
+						ends1 <- index1[[3]]
+						index1 <- index1[[1]]
+#						o <- .Call("radixOrder",
+#							starts2,
+#							1L,
+#							PACKAGE="DECIPHER")
+						o <- order(starts2, method="radix", na.last=FALSE)
 						index2 <- .Call("indexByContig",
 							starts2,
 							ends2,
 							o,
 							INDEX2,
 							width2)
+						starts2 <- index2[[2]]
+						ends2 <- index2[[3]]
+						index2 <- index2[[1]]
 						
 						x.s <- c(x.s, list(starts1))
 						x.e <- c(x.e, list(ends1))
@@ -678,17 +696,18 @@ FindSynteny <- function(dbFile,
 						12L, # maximum period
 						30L, # minimum length
 						PACKAGE="DECIPHER")
-				if ((object.size(e2) + object.size(store)) < storage)
+				if ((object.size(e2) + object.size(store) + object.size(results)) < storage)
 					store[g2][[1L]][["E"]][["nt_rc"]][[N]] <- e2
 			}
 			
 			o2 <- store[g2][[1L]][["O"]][["nt_rc"]][N][[1L]]
 			if (is.null(o2)) {
-				o2 <- .Call("radixOrder",
-					e2,
-					0L,
-					PACKAGE="DECIPHER")
-				if ((object.size(o2) + object.size(store)) < storage)
+#				o2 <- .Call("radixOrder",
+#					e2,
+#					0L,
+#					PACKAGE="DECIPHER")
+				o2 <- order(e2, method="radix", na.last=FALSE) - 1L
+				if ((object.size(o2) + object.size(store) + object.size(results)) < storage)
 					store[g2][[1L]][["O"]][["nt_rc"]][[N]] <- o2
 			}
 			
@@ -699,7 +718,7 @@ FindSynteny <- function(dbFile,
 				O1,
 				o2,
 				PACKAGE="DECIPHER")
-			.Call("fillOverlaps", m, N, PACKAGE="DECIPHER")
+			m <- .Call("fillOverlaps", m, N, PACKAGE="DECIPHER") # in-place change of m
 			r <- Rle(.Call("intDiff", m, PACKAGE="DECIPHER"))
 			w <- which(r@values==1)
 			widths <- r@lengths[w] + N
@@ -717,16 +736,23 @@ FindSynteny <- function(dbFile,
 				seq_along(starts1),
 				INDEX1,
 				WIDTH1)
-			o <- .Call("radixOrder",
-				starts2,
-				1L,
-				PACKAGE="DECIPHER")
+			starts1 <- index1[[2]]
+			ends1 <- index1[[3]]
+			index1 <- index1[[1]]
+#			o <- .Call("radixOrder",
+#				starts2,
+#				1L,
+#				PACKAGE="DECIPHER")
+			o <- order(starts2, method="radix", na.last=FALSE)
 			index2 <- .Call("indexByContig",
 				starts2,
 				ends2,
 				o,
 				INDEX2,
 				WIDTH2)
+			starts2 <- index2[[2]]
+			ends2 <- index2[[3]]
+			index2 <- index2[[1]]
 			
 			# correct for reverse complement positioning
 			w <- w2[index2]
@@ -772,18 +798,19 @@ FindSynteny <- function(dbFile,
 								11L, # maximum period
 								15L, # minimum length
 								PACKAGE="DECIPHER")
-						if ((object.size(e1) + object.size(store)) < storage)
+						if ((object.size(e1) + object.size(store) + object.size(results)) < storage)
 							store[g1][[1L]][["E"]][["aa"]][[rF1]][[N_AA]] <- e1
 					}
 					width1 <- width1*3L
 					
 					o1 <- store[g1][[1L]][["O"]][["aa"]][[rF1]][N_AA][[1L]]
 					if (is.null(o1)) {
-						o1 <- .Call("radixOrder",
-							e1,
-							0L,
-							PACKAGE="DECIPHER")
-						if ((object.size(o1) + object.size(store)) < storage)
+#						o1 <- .Call("radixOrder",
+#							e1,
+#							0L,
+#							PACKAGE="DECIPHER")
+						o1 <- order(e1, method="radix", na.last=FALSE) - 1L
+						if ((object.size(o1) + object.size(store) + object.size(results)) < storage)
 							store[g1][[1L]][["O"]][["aa"]][[rF1]][[N_AA]] <- o1
 					}
 					
@@ -815,18 +842,19 @@ FindSynteny <- function(dbFile,
 									11L, # maximum period
 									15L, # minimum length
 									PACKAGE="DECIPHER")
-							if ((object.size(e2) + object.size(store)) < storage)
+							if ((object.size(e2) + object.size(store) + object.size(results)) < storage)
 								store[g2][[1L]][["E"]][["aa_rc"]][[rF2]][[N_AA]] <- e2
 						}
 						width2 <- width2*3L
 						
 						o2 <- store[g2][[1L]][["O"]][["aa_rc"]][[rF2]][N_AA][[1L]]
 						if (is.null(o2)) {
-							o2 <- .Call("radixOrder",
-								e2,
-								0L,
-								PACKAGE="DECIPHER")
-							if ((object.size(o2) + object.size(store)) < storage)
+#							o2 <- .Call("radixOrder",
+#								e2,
+#								0L,
+#								PACKAGE="DECIPHER")
+							o2 <- order(e2, method="radix", na.last=FALSE) - 1L
+							if ((object.size(o2) + object.size(store) + object.size(results)) < storage)
 								store[g2][[1L]][["O"]][["aa_rc"]][[rF2]][[N_AA]] <- o2
 						}
 						
@@ -837,7 +865,7 @@ FindSynteny <- function(dbFile,
 							o1,
 							o2,
 							PACKAGE="DECIPHER")
-						.Call("fillOverlaps", m, N_AA, PACKAGE="DECIPHER")
+						m <- .Call("fillOverlaps", m, N_AA, PACKAGE="DECIPHER") # in-place change of m
 						r <- Rle(.Call("intDiff", m, PACKAGE="DECIPHER"))
 						w <- which(r@values==1)
 						widths <- r@lengths[w] + N_AA
@@ -861,16 +889,23 @@ FindSynteny <- function(dbFile,
 							seq_along(starts1),
 							INDEX1,
 							width1)
-						o <- .Call("radixOrder",
-							starts2,
-							1L,
-							PACKAGE="DECIPHER")
+						starts1 <- index1[[2]]
+						ends1 <- index1[[3]]
+						index1 <- index1[[1]]
+#						o <- .Call("radixOrder",
+#							starts2,
+#							1L,
+#							PACKAGE="DECIPHER")
+						o <- order(starts2, method="radix", na.last=FALSE)
 						index2 <- .Call("indexByContig",
 							starts2,
 							ends2,
 							o,
 							INDEX2,
 							width2)
+						starts2 <- index2[[2]]
+						ends2 <- index2[[3]]
+						index2 <- index2[[1]]
 						
 						# correct for reverse complement positioning
 						w <- w2[index2]
@@ -1215,7 +1250,7 @@ FindSynteny <- function(dbFile,
 				o2n <- r + 1L
 				o2n <- o[o2n] # index of next start
 				
-				.Call("extendSegments",
+				results[g2, g1][[1]] <- .Call("extendSegments",
 					results[g2, g1][[1]],
 					w1,
 					w2,

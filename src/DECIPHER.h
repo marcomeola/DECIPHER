@@ -36,7 +36,7 @@ SEXP firstSeqsPosEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, S
 
 SEXP clusterNJ(SEXP x, SEXP cutoff, SEXP verbose, SEXP pBar, SEXP nThreads);
 
-SEXP reclusterNJ(SEXP ans, SEXP cutoff);
+SEXP reclusterNJ(SEXP x, SEXP cutoff);
 
 SEXP adjustHeights(SEXP x);
 
@@ -44,7 +44,7 @@ SEXP adjustHeights(SEXP x);
 
 SEXP clusterUPGMA(SEXP x, SEXP cutoff, SEXP method, SEXP verbose, SEXP pBar, SEXP nThreads);
 
-SEXP reclusterUPGMA(SEXP ans, SEXP cutoff);
+SEXP reclusterUPGMA(SEXP x, SEXP cutoff);
 
 // ClusterML.c
 

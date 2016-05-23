@@ -109,6 +109,12 @@ pairs.Synteny <- function(x,
 	on.exit(dev.flush(),
 		add=TRUE)
 	
+	if (is.null(cex.labels)) {
+		cex.labels <- max(0.8,
+			min(2,
+				0.8/max(strwidth(labels, "figure"))))
+	}
+	
 	for (i in seq_len(d[1])) {
 		for (j in seq_len(d[2])) {
 			c1 <- cumsum(c(0, x[i, i][[1]]))
@@ -138,18 +144,10 @@ pairs.Synteny <- function(x,
 			}
 			
 			if (i==j) {
-				if (is.null(cex.labels)) {
-					cex <- max(0.8,
-						min(2,
-							0.8/max(strwidth(labels, "figure"))))
-				} else {
-					cex <- cex.labels
-				}
-				
 				text((c2[length(c2)] - 1)/2,
 					(c1[length(c1)] - 1)/2,
 					labels[i],
-					cex=cex,
+					cex=cex.labels,
 					font=font.labels)
 			} else if (j > i) {
 				if (bounds) {
@@ -279,6 +277,7 @@ plot.Synteny <- function(x,
 	barSides=ifelse(nrow(x) < 100, TRUE, FALSE),
 	horizontal=TRUE,
 	labels=abbreviate(rownames(x), 9),
+	cex.labels=NULL,
 	width=0.7,
 	...) {
 	
@@ -342,10 +341,12 @@ plot.Synteny <- function(x,
 			xaxs='i',
 			ylab="",
 			xlab="Cumulative Position (nucleotides)",
+			cex.lab=cex.labels,
 			...)
 		usr <- par()$usr
-		cex.labels <- min(1,
-				0.7/(strheight(labels, "figure")[1]*d[1]))
+		if (is.null(cex.labels))
+			cex.labels <- min(0.8,
+					0.7/(strheight(labels, "figure")[1]*d[1]))
 		text(y=seq_len(d[1]),
 			x=usr[2]*-0.015,
 			labels=labels,
@@ -361,10 +362,12 @@ plot.Synteny <- function(x,
 			xaxs='i',
 			xlab="",
 			ylab="Cumulative Position (nucleotides)",
+			cex.lab=cex.labels,
 			...)
 		usr <- par()$usr
-		cex.labels <- min(1,
-				0.7/(strheight(labels, "figure")[1]*d[1]))
+		if (is.null(cex.labels))
+			cex.labels <- min(1,
+					0.7/(strheight(labels, "figure")[1]*d[1]))
 		text(x=seq_len(d[1]),
 			y=usr[3] - 0.01*(usr[4] - usr[3]),
 			labels=labels,
@@ -520,6 +523,8 @@ plot.Synteny <- function(x,
 						s0 <- s[, "start1"] + c0[s[, "index1"]]
 						e1 <- s[, "end2"] + c1[s[, "index2"]]
 						e0 <- s[, "end1"] + c0[s[, "index1"]]
+					} else {
+						s0 <- s1 <- e0 <- e1 <- numeric()
 					}
 				} else { # i < colorBy
 					s <- x[colorBy, i][[1]]
@@ -528,6 +533,8 @@ plot.Synteny <- function(x,
 						s0 <- s[, "start2"] + c0[s[, "index2"]]
 						e1 <- s[, "end1"] + c1[s[, "index1"]]
 						e0 <- s[, "end2"] + c0[s[, "index2"]]
+					} else {
+						s0 <- s1 <- e0 <- e1 <- numeric()
 					}
 				}
 				

@@ -525,9 +525,9 @@ SEXP matchOrder(SEXP x, SEXP verbose, SEXP pBar, SEXP nThreads)
 			}
 			
 			if (lx < ly) {
-				*(rans + i*size_x + j) = 1 - (double)matches/(double)(lx);
+				*(rans + i*size_x + j) = 1 - (double)matches/(double)lx;
 			} else {
-				*(rans + i*size_x + j) = 1 - (double)matches/(double)(ly);
+				*(rans + i*size_x + j) = 1 - (double)matches/(double)ly;
 			}
 			
 			*(rans + i + j*size_x) = *(rans + i*size_x + j);
