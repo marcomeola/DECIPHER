@@ -156,7 +156,7 @@ StaggerAlignment <- function(myXStringSet,
 			if ((indels[1] + indels[3]) >= (1 + indels[2])) {
 				# subtree can be better explained by one insertion
 				indels <- c(1L, indels[2], indels[2])
-				.Call("clearIns", x, PACKAGE="DECIPHER")
+				x <- .Call("clearIns", x, PACKAGE="DECIPHER")
 				# mark branch as an insertion
 				#a[["edgePar"]] <- list(col = "plum")
 				a[["ins"]] <- TRUE

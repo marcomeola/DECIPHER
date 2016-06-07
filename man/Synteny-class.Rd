@@ -30,6 +30,7 @@ Syntenic blocks are DNA segments composed of conserved hits occurring in the sam
      barSides = ifelse(nrow(x) < 100, TRUE, FALSE),
      horizontal = TRUE,
      labels = abbreviate(rownames(x), 9),
+     cex.labels = NULL,
      width = 0.7,
      \dots)
 
@@ -76,7 +77,7 @@ Distance between subplots, in margin lines.
 If \code{main} is specified, \code{line.main} provides the \code{line} argument to \code{mtext}.
 }
   \item{cex.labels}{
-Magnification of labels on the diagonal.
+Magnification of the labels.
 }
   \item{font.labels}{
 Font of labels on the diagonal.

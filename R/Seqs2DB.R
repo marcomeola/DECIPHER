@@ -14,6 +14,8 @@ Seqs2DB <- function(seqs,
 	time.1 <- Sys.time()
 	
 	# error checking
+	if (length(seqs)==0)
+		stop("seqs is zero length.")
 	SEQTYPES <- c("FASTA", "FASTQ", "GenBank", "XStringSet", "DNAStringSet", "RNAStringSet", "AAStringSet", "BStringSet", "QualityScaledXStringSet", "QualityScaledDNAStringSet", "QualityScaledRNAStringSet", "QualityScaledAAStringSet", "QualityScaledBStringSet")
 	type <- pmatch(type, SEQTYPES)
 	if (is.na(type))
@@ -214,12 +216,33 @@ Seqs2DB <- function(seqs,
 					sep=""))
 			}
 			
-			# read in chunk
+			# read in chunkSize characters
 			r <- readChar(con=con,
 				nchars=chunkSize,
 				useBytes=TRUE)
-			if (nchar(r) != chunkSize)
-				enter <- FALSE
+			if (length(r)==0L) {
+				# reached the end of the connection
+				if (buffer=="") {
+					break
+				} else {
+					enter <- FALSE
+				}
+			} else if (nchar(r) < chunkSize) {
+				# need to ensure that the end of the connection was reached
+				# because reading can terminate unexpectedly before chunkSize
+				r2 <- readChar(con=con,
+					nchars=chunkSize - nchar(r),
+					useBytes=TRUE)
+				while (length(r2) > 0 && nchar(r) < chunkSize) {
+					r <- paste(r, r2, sep="")
+					r2 <- readChar(con=con,
+						nchars=chunkSize - nchar(r),
+						useBytes=TRUE)
+				}
+				
+				if (nchar(r) < chunkSize)
+					enter <- FALSE
+			}
 			
 			if (buffer != "")
 				r <- paste(buffer, r, sep=ifelse(newline, "\n", ""))
@@ -350,12 +373,33 @@ Seqs2DB <- function(seqs,
 					sep=""))
 			}
 			
-			# read in chunk
+			# read in chunkSize characters
 			r <- readChar(con=con,
 				nchars=chunkSize,
 				useBytes=TRUE)
-			if (nchar(r) != chunkSize)
-				enter <- FALSE
+			if (length(r)==0L) {
+				# reached the end of the connection
+				if (buffer=="") {
+					break
+				} else {
+					enter <- FALSE
+				}
+			} else if (nchar(r) < chunkSize) {
+				# need to ensure that the end of the connection was reached
+				# because reading can terminate unexpectedly before chunkSize
+				r2 <- readChar(con=con,
+					nchars=chunkSize - nchar(r),
+					useBytes=TRUE)
+				while (length(r2) > 0 && nchar(r) < chunkSize) {
+					r <- paste(r, r2, sep="")
+					r2 <- readChar(con=con,
+						nchars=chunkSize - nchar(r),
+						useBytes=TRUE)
+				}
+				
+				if (nchar(r) < chunkSize)
+					enter <- FALSE
+			}
 			
 			if (buffer != "")
 				r <- paste(buffer, r, sep=ifelse(newline, "\n", ""))
@@ -476,12 +520,33 @@ Seqs2DB <- function(seqs,
 					sep=""))
 			}
 			
-			# read in chunk
+			# read in chunkSize characters
 			r <- readChar(con=con,
 				nchars=chunkSize,
 				useBytes=TRUE)
-			if (nchar(r) != chunkSize)
-				enter <- FALSE
+			if (length(r)==0L) {
+				# reached the end of the connection
+				if (buffer=="") {
+					break
+				} else {
+					enter <- FALSE
+				}
+			} else if (nchar(r) < chunkSize) {
+				# need to ensure that the end of the connection was reached
+				# because reading can terminate unexpectedly before chunkSize
+				r2 <- readChar(con=con,
+					nchars=chunkSize - nchar(r),
+					useBytes=TRUE)
+				while (length(r2) > 0 && nchar(r) < chunkSize) {
+					r <- paste(r, r2, sep="")
+					r2 <- readChar(con=con,
+						nchars=chunkSize - nchar(r),
+						useBytes=TRUE)
+				}
+				
+				if (nchar(r) < chunkSize)
+					enter <- FALSE
+			}
 			
 			if (buffer != "")
 				r <- paste(buffer, r, sep=ifelse(newline, "\n", ""))

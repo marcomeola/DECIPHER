@@ -631,7 +631,7 @@
 	eff[z] <- P*Kov/(1 + P*Kov)
 	
 	FAm <- numeric(length(z))
-	FAm[] <- NA
+	FAm[] <- -Inf
 	range <- -1000:1000
 	for (i in 1:length(z)) {
 		f <- function(FA) {

@@ -399,8 +399,8 @@ SEXP gaps(SEXP x, SEXP t)
 	return ans;
 }
 
-//ans_start <- .Call("firstSeqsEqual", dna1, dna2, start1, end1, start2, end2, PACKAGE="DECIPHER")
-SEXP firstSeqsEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, SEXP end_y)
+//ans_start <- .Call("firstSeqsEqual", dna1, dna2, start1, end1, start2, end2, first1, first2, PACKAGE="DECIPHER")
+SEXP firstSeqsEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, SEXP end_y, SEXP first_x, SEXP first_y)
 {	
 	int i, j;
 	XStringSet_holder x_set;
@@ -408,8 +408,10 @@ SEXP firstSeqsEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, SEXP
 	Chars_holder x_i, y_i;
 	int sx = asInteger(start_x);
 	int ex = asInteger(end_x);
+	int fx = asInteger(first_x);
 	int sy = asInteger(start_y);
 	int ey = asInteger(end_y);
+	int fy = asInteger(first_y);
 	
 	
 	SEXP ans;
@@ -422,8 +424,8 @@ SEXP firstSeqsEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, SEXP
 	} else {
 		x_set = hold_XStringSet(x);
 		y_set = hold_XStringSet(y);
-		x_i = get_elt_from_XStringSet_holder(&x_set, 0);
-		y_i = get_elt_from_XStringSet_holder(&y_set, 0);
+		x_i = get_elt_from_XStringSet_holder(&x_set, fx - 1);
+		y_i = get_elt_from_XStringSet_holder(&y_set, fy - 1);
 		for (i = sx - 1, j = sy - 1;
 			 i < ex; // i <= ex - 1 covers j <= ey - 1 because equal length
 			 i++, j++) {
@@ -439,7 +441,7 @@ SEXP firstSeqsEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, SEXP
 	return ans;
 }
 
-SEXP firstSeqsGapsEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, SEXP end_y, SEXP t)
+SEXP firstSeqsGapsEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, SEXP end_y, SEXP t, SEXP first_x, SEXP first_y)
 {	
 	int i, j;
 	XStringSet_holder x_set;
@@ -447,8 +449,10 @@ SEXP firstSeqsGapsEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, 
 	Chars_holder x_i, y_i;
 	int sx = asInteger(start_x);
 	int ex = asInteger(end_x);
+	int fx = asInteger(first_x);
 	int sy = asInteger(start_y);
 	int ey = asInteger(end_y);
+	int fy = asInteger(first_y);
 	
 	
 	SEXP ans;
@@ -461,8 +465,8 @@ SEXP firstSeqsGapsEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, 
 	} else {
 		x_set = hold_XStringSet(x);
 		y_set = hold_XStringSet(y);
-		x_i = get_elt_from_XStringSet_holder(&x_set, 0);
-		y_i = get_elt_from_XStringSet_holder(&y_set, 0);
+		x_i = get_elt_from_XStringSet_holder(&x_set, fx - 1);
+		y_i = get_elt_from_XStringSet_holder(&y_set, fy - 1);
 		if (asInteger(t)==3) { // AAStringSet
 			for (i = sx - 1, j = sy - 1;
 				 i < ex; // i <= ex - 1 covers j <= ey - 1 because equal length
@@ -491,15 +495,17 @@ SEXP firstSeqsGapsEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, 
 	return ans;
 }
 
-SEXP firstSeqsPosEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, SEXP end_y, SEXP t)
+SEXP firstSeqsPosEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, SEXP end_y, SEXP t, SEXP first_x, SEXP first_y)
 {
 	XStringSet_holder x_set;
 	XStringSet_holder y_set;
 	Chars_holder x_i, y_i;
 	int sx = asInteger(start_x);
 	int ex = asInteger(end_x);
+	int fx = asInteger(first_x);
 	int sy = asInteger(start_y);
 	int ey = asInteger(end_y);
+	int fy = asInteger(first_y);
 	int type = asInteger(t);
 	
 	int sizex = 100, sizey = 100;
@@ -516,8 +522,8 @@ SEXP firstSeqsPosEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, S
 	
 	x_set = hold_XStringSet(x);
 	y_set = hold_XStringSet(y);
-	x_i = get_elt_from_XStringSet_holder(&x_set, 0);
-	y_i = get_elt_from_XStringSet_holder(&y_set, 0);
+	x_i = get_elt_from_XStringSet_holder(&x_set, fx - 1);
+	y_i = get_elt_from_XStringSet_holder(&y_set, fy - 1);
 	
 	while (i < ex && j < ey) {
 		if (ci) {

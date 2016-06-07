@@ -38,6 +38,9 @@
 // in-place fills missing sequence in the input
 SEXP fillOverlaps(SEXP m, SEXP n)
 {	
+	if (NAMED(m)==2)
+		error(".Call function 'fillOverlaps' called in incorrect context.");
+	
 	int i;
 	int *x = INTEGER(m);
 	int l = length(m);
@@ -63,23 +66,25 @@ SEXP fillOverlaps(SEXP m, SEXP n)
 		p++;
 	}
 	
-	return R_NilValue;
+	return m;
 }
 
-// in-place adjusts starts and ends in order to be within widths
+// adjusts starts and ends in order to be within widths
 SEXP indexByContig(SEXP starts, SEXP ends, SEXP order, SEXP index, SEXP widths)
 {	
 	int j, k, p;
-	int *s = INTEGER(starts);
-	int *e = INTEGER(ends);
 	int *o = INTEGER(order);
 	int *w = INTEGER(widths);
 	int *i = INTEGER(index);
 	int l = length(starts);
 	
-	SEXP ans;
-	PROTECT(ans = allocVector(INTSXP, l));
-	int *rans = INTEGER(ans);
+	SEXP ans1, ans2, ans3;
+	PROTECT(ans1 = allocVector(INTSXP, l));
+	int *rans = INTEGER(ans1);
+	PROTECT(ans2 = duplicate(starts));
+	int *s = INTEGER(ans2);
+	PROTECT(ans3 = duplicate(ends));
+	int *e = INTEGER(ans3);
 	
 	// fill initial values
 	for (j = 0; j < l; j++) {
@@ -101,9 +106,15 @@ SEXP indexByContig(SEXP starts, SEXP ends, SEXP order, SEXP index, SEXP widths)
 		rans[p] = i[k];
 	}
 	
-	UNPROTECT(1);
+	SEXP ret_list;
+	PROTECT(ret_list = allocVector(VECSXP, 3));
+	SET_VECTOR_ELT(ret_list, 0, ans1);
+	SET_VECTOR_ELT(ret_list, 1, ans2);
+	SET_VECTOR_ELT(ret_list, 2, ans3);
 	
-	return ans;
+	UNPROTECT(4);
+	
+	return ret_list;
 }
 
 SEXP chainSegments(SEXP x_s, SEXP x_e, SEXP x_i, SEXP x_f, SEXP y_s, SEXP y_e, SEXP y_i, SEXP y_f, SEXP weights, SEXP sepCost, SEXP gapCost, SEXP shiftCost, SEXP codingCost, SEXP maxSep, SEXP maxGap, SEXP ordering, SEXP minScore)
@@ -637,7 +648,6 @@ int extend(const Chars_holder *S1, const Chars_holder *S2, int *s1_start, int *s
 SEXP extendSegments(SEXP X, SEXP W1, SEXP W2, SEXP S1, SEXP S2, SEXP O1P, SEXP O1N, SEXP O2P, SEXP O2N, SEXP S, SEXP maxDrop, SEXP INDEX1, SEXP INDEX2)
 {
 	int j, b, b1, b2, d, strand, *begin, score;
-	int *x = INTEGER(X); // results matrix
 	int *w1 = INTEGER(W1); // widths of sequence set 1
 	int *w2 = INTEGER(W2); // widths of sequence set 2
 	int *o1p = INTEGER(O1P); // order of previous starts
@@ -651,6 +661,10 @@ SEXP extendSegments(SEXP X, SEXP W1, SEXP W2, SEXP S1, SEXP S2, SEXP O1P, SEXP O
 	int l = length(S);
 	SEXP dim = getAttrib(X, R_DimSymbol);
 	int n = INTEGER(dim)[0]; // total rows in results
+	
+	SEXP ans;
+	PROTECT(ans = duplicate(X));
+	int *x = INTEGER(ans);
 	
 	XStringSet_holder s1_set, s2_set;
 	Chars_holder s1, s2;
@@ -729,7 +743,9 @@ SEXP extendSegments(SEXP X, SEXP W1, SEXP W2, SEXP S1, SEXP S2, SEXP O1P, SEXP O
 		//Rprintf("\nj = %d b1 = %d b2 = %d start1 = %d start2 = %d", j, b1, b2, x[6*n + s[j]], *begin);
 	}
 	
-	return R_NilValue;
+	UNPROTECT(1);
+	
+	return ans;
 }
 
 // changes repeat regions to NAs

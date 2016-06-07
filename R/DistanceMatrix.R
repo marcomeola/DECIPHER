@@ -52,7 +52,7 @@ DistanceMatrix <- function(myXStringSet,
 	}
 	numF <- length(myXStringSet)
 	if (numF < 2) {
-		stop("Too few sequences!")
+		stop("At least two sequences are required.")
 	}
 	
 	# initialize a progress bar

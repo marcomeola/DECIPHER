@@ -35,7 +35,7 @@ Character string indicating the type of result desired.  This should be (an abbr
 Numeric giving the maximum distance from a reference sequence that is acceptable to skip any remaining comparisons.
 }
   \item{rejectDistance}{
-Numeric giving the maximum distance from a reference sequence that is allowed when correcting frameshifts.  Sequences in \code{myXStringSet} that are greater than \code{rejectDistance} from the nearest reference sequence will only have their length trimmed from the 3'-end to a multiple of 3 nucleotides without any frameshift correction.
+Numeric giving the maximum distance from a reference sequence that is allowed when correcting frameshifts.  Sequences in \code{myXStringSet} that are greater than \code{rejectDistance} from the nearest reference sequence will only have their length trimmed from the 3'-end to a multiple of three nucleotides without any frameshift correction.
 }
   \item{maxComparisons}{
 The number of reference comparisons to make before stopping the search for a closer reference sequence.
@@ -72,7 +72,7 @@ Multiple inputs control the time required for frameshift correction.  The number
 \value{
 If \code{type} is \code{"indels"} then the returned object is a list with the same length as \code{myXStringSet}.  Each element is a list with four components:
   \item{insertions}{
-Approximate positions of inserted nucleotides, which could be removed to correct the reading frame.
+Approximate positions of inserted nucleotides, which could be removed to correct the reading frame, or excess nucleotides at the 3'-end that make the length longer than a multiple of three.
 }
   \item{deletions}{
 Approximate positions of deleted nucleotides, which could be added back to correct the reading frame.
@@ -83,6 +83,7 @@ The amino acid distance from the nearest reference sequence, between 0 and 1.
   \item{index}{
 The integer index of the reference sequence that was used for frame correction, or \code{0} if no reference sequence was within \code{rejectDistance}.
 }
+Note that positions in \code{insertions} and \code{deletions} are sometimes repeated to indicate that the same position needs to be shifted successively more than once to correct the reading frame.
 
 If \code{type} is \code{"sequences"} then the returned object is an \code{XStringSet} of the same type as the input (\code{myXStringSet}).  Nucleotides are added or deleted as necessary to correct for frameshifts.  The returned sequences all have a reading frame starting from position 1, so that they can be translated directly.
 

@@ -252,11 +252,11 @@ AlignSeqs <- function(myXStringSet,
 		if (wordSize > 7)
 			wordSize <- 7
 	} else {
-		wordSize <- ceiling(mean(width(myXStringSet))^0.25)
+		wordSize <- ceiling(mean(width(myXStringSet))^0.22)
 		if (wordSize > 15)
 			wordSize <- 15
-		if (wordSize < 8)
-			wordSize <- 8
+		if (wordSize < 5)
+			wordSize <- 5
 	}
 	
 	cluster <- FALSE
@@ -286,7 +286,12 @@ AlignSeqs <- function(myXStringSet,
 				PACKAGE="DECIPHER")
 		}
 		
-		d <- .Call("matchOrder", v, verbose, pBar, processors, PACKAGE="DECIPHER")
+		d <- .Call("matchOrder",
+			v,
+			verbose,
+			pBar,
+			processors,
+			PACKAGE="DECIPHER")
 		
 		if (verbose) {
 			setTxtProgressBar(pBar, 100)

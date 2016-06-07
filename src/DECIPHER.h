@@ -26,17 +26,17 @@ SEXP distMatrix(SEXP x, SEXP t, SEXP terminalGaps, SEXP penalizeGapGaps, SEXP pe
 
 SEXP gaps(SEXP x, SEXP t);
 
-SEXP firstSeqsEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, SEXP end_y);
+SEXP firstSeqsEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, SEXP end_y, SEXP first_x, SEXP first_y);
 
-SEXP firstSeqsGapsEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, SEXP end_y, SEXP t);
+SEXP firstSeqsGapsEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, SEXP end_y, SEXP t, SEXP first_x, SEXP first_y);
 
-SEXP firstSeqsPosEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, SEXP end_y, SEXP t);
+SEXP firstSeqsPosEqual(SEXP x, SEXP y, SEXP start_x, SEXP end_x, SEXP start_y, SEXP end_y, SEXP t, SEXP first_x, SEXP first_y);
 
 // ClusterNJ.c
 
 SEXP clusterNJ(SEXP x, SEXP cutoff, SEXP verbose, SEXP pBar, SEXP nThreads);
 
-SEXP reclusterNJ(SEXP ans, SEXP cutoff);
+SEXP reclusterNJ(SEXP x, SEXP cutoff);
 
 SEXP adjustHeights(SEXP x);
 
@@ -44,7 +44,7 @@ SEXP adjustHeights(SEXP x);
 
 SEXP clusterUPGMA(SEXP x, SEXP cutoff, SEXP method, SEXP verbose, SEXP pBar, SEXP nThreads);
 
-SEXP reclusterUPGMA(SEXP ans, SEXP cutoff);
+SEXP reclusterUPGMA(SEXP x, SEXP cutoff);
 
 // ClusterML.c
 

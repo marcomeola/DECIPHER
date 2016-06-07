@@ -471,11 +471,13 @@ SEXP clusterUPGMA(SEXP x, SEXP cutoff, SEXP method, SEXP verbose, SEXP pBar, SEX
 	return ans;
 }
 
-SEXP reclusterUPGMA(SEXP ans, SEXP cutoff)
+SEXP reclusterUPGMA(SEXP x, SEXP cutoff)
 {
 	int i;
 	double *cut, *rans;
 	cut = REAL(cutoff);
+	SEXP ans;
+	PROTECT(ans = duplicate(x));
 	rans = REAL(ans);
 	const int length = length(ans)/10 + 1; // number of rows
 	
@@ -511,6 +513,8 @@ SEXP reclusterUPGMA(SEXP ans, SEXP cutoff)
 			}
 		}
 	}
+	
+	UNPROTECT(1);
 	
 	return ans;
 }

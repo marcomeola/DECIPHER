@@ -128,16 +128,6 @@ CorrectFrameshifts <- function(myXStringSet,
 	if (min(ends) < 2)
 		stop("All sequences in myXStringSet must be at least two nucleotides long.")
 	
-	if (verbose) {
-		time.1 <- Sys.time()
-		cat("Finding the closest reference amino acid sequences:\n",
-			sep="")
-		flush.console()
-		pBar <- txtProgressBar(max=100, style=3)
-	} else {
-		pBar <- NULL
-	}
-	
 	frames <- AAStringSet()
 	for (i in 1:3) {
 		end <- ends
@@ -156,44 +146,60 @@ CorrectFrameshifts <- function(myXStringSet,
 			AA)
 	}
 	
-	v1 <- .Call("enumerateSequenceAA",
-		frames,
-		7L,
-		PACKAGE="DECIPHER")
-	v2 <- .Call("enumerateSequenceAA",
-		myAAStringSet,
-		7L,
-		PACKAGE="DECIPHER")
-	
-	v1 <- lapply(v1,
-		sort.int,
-		method="quick")
-	v2 <- lapply(v2,
-		sort.int,
-		method="quick")
-	
-	d <- .Call("matchListsDual",
-		v1,
-		v2,
-		verbose,
-		pBar,
-		processors,
-		PACKAGE="DECIPHER")
-	d <- rowsum(d,
-		rep(seq_len(l),
-			3),
-		na.rm=TRUE)
+	if (length(myAAStringSet) > 1) {
+		if (verbose) {
+			time.1 <- Sys.time()
+			cat("Finding the closest reference amino acid sequences:\n",
+				sep="")
+			flush.console()
+			pBar <- txtProgressBar(max=100, style=3)
+		} else {
+			pBar <- NULL
+		}
+		
+		v1 <- .Call("enumerateSequenceAA",
+			frames,
+			7L,
+			PACKAGE="DECIPHER")
+		v2 <- .Call("enumerateSequenceAA",
+			myAAStringSet,
+			7L,
+			PACKAGE="DECIPHER")
+		
+		v1 <- lapply(v1,
+			sort.int,
+			method="radix")
+		v2 <- lapply(v2,
+			sort.int,
+			method="radix")
+		
+		d <- .Call("matchListsDual",
+			v1,
+			v2,
+			verbose,
+			pBar,
+			processors,
+			PACKAGE="DECIPHER")
+		d <- rowsum(d,
+			rep(seq_len(l),
+				3),
+			na.rm=TRUE)
+		
+		if (verbose) {
+			setTxtProgressBar(pBar, 100)
+			close(pBar)
+			cat("\n")
+			time.2 <- Sys.time()
+			print(round(difftime(time.2,
+				time.1,
+				units='secs'),
+				digits=2))
+		}
+	} else {
+		d <- matrix(0, nrow=l)
+	}
 	
 	if (verbose) {
-		setTxtProgressBar(pBar, 100)
-		close(pBar)
-		cat("\n")
-		time.2 <- Sys.time()
-		print(round(difftime(time.2,
-			time.1,
-			units='secs'),
-			digits=2))
-		
 		time.1 <- Sys.time()
 		cat("\nAssessing frameshifts in nucleotide sequences:\n",
 			sep="")

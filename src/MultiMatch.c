@@ -338,7 +338,7 @@ SEXP matchLists(SEXP x, SEXP verbose, SEXP pBar, SEXP nThreads)
 	return ans;
 }
 
-// matrix of d[i, j] = length x[i] %in% y[j] / max(length)
+// matrix of d[i, j] = length x[i] %in% y[j] / min(length)
 // requires a list of ordered integers
 SEXP matchListsDual(SEXP x, SEXP y, SEXP verbose, SEXP pBar, SEXP nThreads)
 {	
@@ -406,7 +406,7 @@ SEXP matchListsDual(SEXP x, SEXP y, SEXP verbose, SEXP pBar, SEXP nThreads)
 					}
 				}
 				
-				if (lx < ly) {
+				if (lx > ly) {
 					*(rans + j*size_x + i) = (double)count/(double)ly;
 				} else {
 					*(rans + j*size_x + i) = (double)count/(double)lx;
@@ -525,9 +525,9 @@ SEXP matchOrder(SEXP x, SEXP verbose, SEXP pBar, SEXP nThreads)
 			}
 			
 			if (lx < ly) {
-				*(rans + i*size_x + j) = 1 - (double)matches/(double)(lx);
+				*(rans + i*size_x + j) = 1 - (double)matches/(double)lx;
 			} else {
-				*(rans + i*size_x + j) = 1 - (double)matches/(double)(ly);
+				*(rans + i*size_x + j) = 1 - (double)matches/(double)ly;
 			}
 			
 			*(rans + i + j*size_x) = *(rans + i*size_x + j);

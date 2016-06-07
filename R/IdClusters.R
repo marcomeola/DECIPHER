@@ -1150,18 +1150,16 @@ IdClusters <- function(myDistMatrix=NULL,
 		stop("showPlot must be FALSE if method is 'inexact'")
 	if (length(cutoff) > 1 && (showPlot || asDendrogram))
 		stop("Only one cutoff may be specified when showPlot or asDendrogram is TRUE.")
+	if (method==7 && any(cutoff < 0))
+		stop("cutoff must be at least zero when method is 'inexact'.")
+	if (method==7 && any(cutoff >= 1))
+		stop("cutoff must be less than one when method is 'inexact'.")
 	ASC <- TRUE
-	if (method==7) {
-		cutoff <- rev(cutoff)
-		if (is.unsorted(cutoff))
-			stop("cutoff must be sorted in descending order.")
-	} else { # method!=7
-		if (is.unsorted(cutoff)) {
-			if (is.unsorted(rev(cutoff))) {
-				stop("cutoff must be sorted.")
-			} else {
-				ASC <- FALSE
-			}
+	if (is.unsorted(cutoff)) {
+		if (is.unsorted(rev(cutoff))) {
+			stop("cutoff must be sorted.")
+		} else {
+			ASC <- FALSE
 		}
 	}
 	if (!is.logical(verbose))
@@ -1202,10 +1200,11 @@ IdClusters <- function(myDistMatrix=NULL,
 	}
 	
 	if (method == 7) {
-		if (!is(myXStringSet, "DNAStringSet") &&
-			!is(myXStringSet, "RNAStringSet") &&
-			!is(myXStringSet, "AAStringSet"))
-			stop("myXStringSet must be a DNAStringSet, RNAStringSet, or AAStringSet.")
+		type <- switch(class(myXStringSet),
+			`DNAStringSet` = 1L,
+			`RNAStringSet` = 2L,
+			`AAStringSet` = 3L,
+			stop("pattern must be an AAStringSet, DNAStringSet, or RNAStringSet."))
 		a <- vcountPattern("-", myXStringSet)
 		if (any(a > 0))
 			stop("Gap characters ('-') must be removed before inexact clustering.")
@@ -1215,21 +1214,35 @@ IdClusters <- function(myDistMatrix=NULL,
 		a <- vcountPattern(".", myXStringSet)
 		if (any(a > 0))
 			stop("Unknown characters ('.') must be removed before inexact clustering.")
-		if (verbose)
-			pBar <- txtProgressBar(style=3)
+		if (all(width(myXStringSet)==0L))
+			stop("All sequences in myXStringSet are zero width.")
 		
-		if (is(myXStringSet, "AAStringSet")) {
-			wordSize <- ceiling(mean(width(myXStringSet))^0.2) # always >= 1
+		if (verbose) {
+			lastValue <- 0
+			pBar <- txtProgressBar(style=3)
+		}
+		if (type==3L) { # AAStringSet
+			wordSize <- ceiling(log(100*mean(width(myXStringSet)), 20))
 			if (wordSize > 7)
 				wordSize <- 7
-		} else {
-			wordSize <- ceiling(mean(width(myXStringSet))^0.25) # always >= 1
+			if (wordSize < 1)
+				wordSize <- 1
+			words <- 20^wordSize
+		} else { # DNAStringSet or RNAStringSet
+			wordSize <- ceiling(log(100*mean(width(myXStringSet)), 4))
 			if (wordSize > 15)
 				wordSize <- 15
+			if (wordSize < 1)
+				wordSize <- 1
+			words <- 4^wordSize
 		}
 		
+		l <- length(myXStringSet)
+		if (l==0)
+			stop("myXStringSet contains no sequences.")
+		lc <- length(cutoff)
 		if (is.null(names(myXStringSet))) {
-			dNames <- 1:length(myXStringSet)
+			dNames <- 1:l
 		} else {
 			dNames <- names(myXStringSet)
 			w <- which(duplicated(dNames))
@@ -1240,7 +1253,7 @@ IdClusters <- function(myDistMatrix=NULL,
 					sep="_")
 			}
 		}
-		if (length(cutoff) > 1) {
+		if (lc > 1) {
 			cNames <- paste("cluster",
 				gsub("\\.", "_", cutoff),
 				METHODS[method],
@@ -1249,134 +1262,200 @@ IdClusters <- function(myDistMatrix=NULL,
 			cNames <- "cluster"
 		}
 		c <- matrix(0L,
-			nrow=length(myXStringSet),
-			ncol=length(cutoff),
+			nrow=l,
+			ncol=lc,
 			dimnames=list(dNames,
 				cNames))
 		
-		#cutoff <- cutoff/2 # cluster radius is half the diameter
-		dists <- numeric()
-		for (i in length(cutoff):1L) {
-			if (i < length(cutoff)) {
-				o <- order(c[, i + 1], width(myXStringSet), decreasing=TRUE)
+		# identify duplicated sequences
+		x <- selfmatch(myXStringSet)
+		u <- unique(x)
+		l <- length(u)
+		t <- tabulate(x, length(x))[u]
+		
+		cutoff <- cutoff/2 # cluster radius is half the diameter
+		for (i in seq_len(lc)) {
+			if (!ASC && i > 1) {
+				o <- u[order(c[u, i - 1],
+					width(myXStringSet)[u],
+					t, # frequency
+					decreasing=TRUE)]
 			} else {
-				o <- order(width(myXStringSet), decreasing=TRUE)
+				o <- u[order(width(myXStringSet)[u],
+					t, # frequency
+					decreasing=TRUE)]
 			}
-			cluster_num <- 1L
-			offset <- 0L
-			c[o[cluster_num], i] <- cluster_num
 			
-			if (is(myXStringSet, "AAStringSet")) {
+			if (type==3L) { # AAStringSet
 				v <- .Call("enumerateSequenceAA",
-					myXStringSet[o[1:ifelse(length(myXStringSet) > 999, 999, length(myXStringSet))]],
+					myXStringSet[o[1:ifelse(l > 999, 999, l)]],
 					wordSize,
 					PACKAGE="DECIPHER")
 			} else { # DNAStringSet or RNAStringSet
 				v <- .Call("enumerateSequence",
-					myXStringSet[o[1:ifelse(length(myXStringSet) > 999, 999, length(myXStringSet))]],
+					myXStringSet[o[1:ifelse(l > 999, 999, l)]],
 					wordSize,
 					PACKAGE="DECIPHER")
 			}
+			v <- lapply(v,
+				sort.int,
+				method="radix")
 			
-			seeds.nums <- v[1L]
-			names(seeds.nums)[length(seeds.nums)] <- o[cluster_num]
-			seeds.seqs <- myXStringSet[o[1]]
-			names(seeds.seqs) <- cluster_num
+			cluster_num <- 1L
+			offset <- 0L
+			c[o[cluster_num], i] <- cluster_num
+			
+			nGroups <- 1L
+			seeds.reps <- v[1L]
+			seeds.nums <- list(v[1L])
+			seeds.seqs <- list(.Call("subsetXStringSet",
+				myXStringSet,
+				o[1],
+				type,
+				processors))
+			seeds.clust <- list(1L)
 			
 			index <- 1L
-			if (length(o) > 1L) {
-				for (j in 2L:length(o)) {
-					if (verbose)
-						setTxtProgressBar(pBar, ((length(cutoff) - i)*length(o) + j)/length(cutoff)/length(o))
-					
-					if (j %% 1000 == 0) {
-						index <- 1L
-						if (is(myXStringSet, "AAStringSet")) {
-							v <- .Call("enumerateSequenceAA",
-								myXStringSet[o[j:ifelse(j + 999 > length(myXStringSet), length(myXStringSet), j + 999)]],
-								wordSize,
-								PACKAGE="DECIPHER")
-						} else { # DNAStringSet or RNAStringSet
-							v <- .Call("enumerateSequence",
-								myXStringSet[o[j:ifelse(j + 999 > length(myXStringSet), length(myXStringSet), j + 999)]],
-								wordSize,
-								PACKAGE="DECIPHER")
-						}
-					} else {
-						index <- index + 1L
+			for (j in seq_along(o)[-1]) {
+				if (verbose) {
+					value <- round(((lc - i)*l + j)/lc/l, 2)
+					if (value > lastValue) {
+						lastValue <- value
+						setTxtProgressBar(pBar, value)
 					}
-					
-					if (i < length(cutoff)) {
-						if (c[o[j], i + 1] != c[o[j - 1], i + 1]) {
-							# different clusters in last cutoff
-							offset <- offset + cluster_num
-							cluster_num <- 1L
-							c[o[j], i] <- cluster_num + offset
-							seeds.nums <- list()
-							seeds.nums[cluster_num] <- v[index]
-							names(seeds.nums)[length(seeds.nums)] <- o[j]
-							seeds.seqs <- myXStringSet[o[j]]
-							names(seeds.seqs) <- cluster_num + offset
-							next
-						}
-					}
-					
-					d <- dists[paste(o[j], names(seeds.nums))]
-					w <- which(d < cutoff[i])
-					matched <- FALSE
-					if (length(w) > 0) {
-						matched <- TRUE
-						c[o[j], i] <- w[1] + offset
-					} else {
-						m <- .Call("matchOrderDual",
-							v[index],
-							seeds.nums,
-							processors,
+				}
+				
+				if (j %% 1000 == 0) {
+					index <- 1L
+					if (type==3L) { # AAStringSet
+						v <- .Call("enumerateSequenceAA",
+							myXStringSet[o[j:ifelse(j + 999 > l, l, j + 999)]],
+							wordSize,
 							PACKAGE="DECIPHER")
-						m <- m*0.5 # approximately scale to percent distance
-						
-						w <- which(m < cutoff[i])
-						if (length(w) > 0) {
-							matched <- TRUE
-							c[o[j], i] <- w[1] + offset
-						} else {
-							weights <- 1 - m
-							weights <- weights/mean(weights)
-							if (any(!is.finite(weights)))
-								weights <- 1
-							temp <- AlignProfiles(myXStringSet[o[j]],
-								seeds.seqs,
-								s.weight=weights,
-								processors=processors)
-							d <- .Call("distMatrix",
-								temp,
-								ifelse(is(myXStringSet, "AAStringSet"), 3L, 1L),
-								FALSE, # includeTerminalGaps
-								FALSE, # penalizeGapGapMatches
-								TRUE, # penalizeGapLetterMatches
-								FALSE, # full matrix
-								FALSE,
-								NULL,
-								processors,
-								PACKAGE="DECIPHER")[1, 2:length(temp)]
-							w <- which(d < cutoff[i])
-							if (length(w) > 0) {
-								matched <- TRUE
-								c[o[j], i] <- w[1] + offset
-								dists <- c(dists, setNames(d, paste(o[j], names(seeds.nums)[w[1]])))
-							}
-						}
+					} else { # DNAStringSet or RNAStringSet
+						v <- .Call("enumerateSequence",
+							myXStringSet[o[j:ifelse(j + 999 > l, l, j + 999)]],
+							wordSize,
+							PACKAGE="DECIPHER")
 					}
-					if (!matched) {
-						cluster_num <- cluster_num + 1L
+					v <- lapply(v,
+						sort.int,
+						method="radix")
+				} else {
+					index <- index + 1L
+				}
+				
+				if (!ASC && i > 1) {
+					if (c[o[j], i - 1] != c[o[j - 1], i - 1]) {
+						# different clusters in last cutoff
+						offset <- offset + cluster_num
+						cluster_num <- 1L
 						c[o[j], i] <- cluster_num + offset
-						seeds.nums[cluster_num] <- v[index]
-						names(seeds.nums)[length(seeds.nums)] <- o[j]
-						seeds.seqs <- temp
-						names(seeds.seqs)[1] <- cluster_num + offset
+						nGroups <- 1L
+						seeds.reps <- v[index]
+						seeds.nums <- list(v[index])
+						seeds.seqs <- list(.Call("subsetXStringSet",
+							myXStringSet,
+							o[j],
+							type,
+							processors))
+						seeds.clust <- list(cluster_num)
+						next
+					}
+				}
+				
+				# Determine to which group does the sequence belong
+				m <- .Call("matchListsDual",
+					v[index],
+					seeds.reps,
+					FALSE, # verbose
+					NULL, # pBar
+					processors,
+					PACKAGE="DECIPHER")
+				
+				# expected number of occurrences of a random word
+				probs <- lengths(seeds.reps)/words
+				probs <- ifelse(probs > 1, 1, probs)
+				# probability of >= `q` matches in `size` trials
+				prob <- 1 - pbinom(q=m*length(v[[index]]),
+					size=length(v[[index]]),
+					prob=probs)
+				group <- which(prob < 0.01) # < 1% likelihood by chance
+				
+				if (length(group)==0) {
+					# form a new group
+					cluster_num <- cluster_num + 1L
+					c[o[j], i] <- cluster_num
+					nGroups <- nGroups + 1L
+					seeds.reps[nGroups] <- v[index]
+					seeds.nums[[nGroups]] <- v[index]
+					seeds.seqs[[nGroups]] <- .Call("subsetXStringSet",
+						myXStringSet,
+						o[j],
+						type,
+						processors)
+					seeds.clust[[nGroups]] <- cluster_num
+				} else { # part of an existing group
+					if (length(group) > 1)
+						group <- group[which.max(m[group])]
+					
+					m <- .Call("matchListsDual",
+						v[index],
+						seeds.nums[[group]],
+						FALSE, # verbose
+						NULL, # pBar
+						processors,
+						PACKAGE="DECIPHER")
+					
+					w <- which((1 - m) <= cutoff[i])
+					if (length(w) > 0) {
+						w <- w[which.max(m[w])]
+						c[o[j], i] <- seeds.clust[[group]][w] + offset
+					} else {
+						pattern <- .Call("subsetXStringSet",
+							myXStringSet,
+							o[j],
+							type,
+							processors)
+						
+						weights <- m^3 # emphasize closest sequences
+						weights <- weights/mean(weights)
+						if (any(!is.finite(weights)))
+							weights <- 1
+						
+						temp <- AlignProfiles(pattern,
+							seeds.seqs[[group]],
+							s.weight=weights,
+							processors=processors)
+						d <- .Call("distMatrix",
+							temp,
+							type,
+							FALSE, # includeTerminalGaps
+							FALSE, # penalizeGapGapMatches
+							TRUE, # penalizeGapLetterMatches
+							FALSE, # full matrix
+							FALSE, # verbose
+							NULL, # pBar
+							processors,
+							PACKAGE="DECIPHER")[-1L]
+						w <- which(d <= cutoff[i])
+						if (length(w) > 0) {
+							w <- w[which.min(d[w])]
+							c[o[j], i] <- seeds.clust[[group]][w] + offset
+						} else { # form a new cluster
+							cluster_num <- cluster_num + 1L
+							c[o[j], i] <- cluster_num + offset
+							seeds.nums[[group]] <- c(v[index],
+								seeds.nums[[group]])
+							seeds.seqs[[group]] <- temp
+							seeds.clust[[group]] <- c(cluster_num,
+								seeds.clust[[group]])
+						}
 					}
 				}
 			}
+			
+			c[, i] <- c[x, i]
 		}
 		myClusters <- as.data.frame(c)
 	} else {

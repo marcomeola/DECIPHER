@@ -85,7 +85,7 @@ OrientNucleotides <- function(myXStringSet,
 	result <- character(l)
 	result[reference] <- NA
 	
-	wordSize <- ceiling(log(mean(width(myXStringSet))*50, 4))
+	wordSize <- ceiling(log(100*mean(width(myXStringSet)), 4))
 	if (wordSize > 15)
 		wordSize <- 15
 	if (wordSize < 2)
@@ -95,7 +95,7 @@ OrientNucleotides <- function(myXStringSet,
 		myXStringSet,
 		wordSize,
 		PACKAGE="DECIPHER")
-	v <- lapply(v, sort.int)
+	v <- lapply(v, sort.int, method="radix")
 	X <- v[reference]
 	
 	dists <- function(x) {
