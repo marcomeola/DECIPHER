@@ -1384,7 +1384,7 @@ DesignSignatures <- function(dbFile,
 			setTxtProgressBar(pBar, i/length(identifier))
 	}
 	
-	w <- which(is.na(amplicons[, 1]))
+	w <- which(is.na(amplicons[, 1]) | is.na(amplicons[, 5]))
 	if (length(w) > 0)
 		amplicons <- amplicons[-w, ]
 	
@@ -1434,7 +1434,7 @@ DesignSignatures <- function(dbFile,
 	m <- m[o]
 	sigs <- prods <- numeric(length(u))
 	begin <- 1L
-	for (i in 1:length(u)) {
+	for (i in seq_along(u)) {
 		w <- .Call("multiMatch", m, i, begin, PACKAGE="DECIPHER")
 		begin <- w[length(w)]
 		
@@ -1924,7 +1924,7 @@ DesignSignatures <- function(dbFile,
 				setTxtProgressBar(pBar, i/length(identifier))
 		}
 		
-		w <- which(is.na(fragments[, 1]))
+		w <- which(is.na(fragments[, 1]) | is.na(fragments[, 5]))
 		if (length(w) > 0)
 			fragments <- fragments[-w, ]
 		
@@ -1945,7 +1945,7 @@ DesignSignatures <- function(dbFile,
 			pSets <- e <- integer(length(u))
 			similar <- character(length(u))
 			begin <- 1L
-			for (i in 1:length(u)) {
+			for (i in seq_along(u)) {
 				w <- .Call("multiMatch", m, i, begin, PACKAGE="DECIPHER")
 				begin <- w[length(w)]
 				

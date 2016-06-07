@@ -396,11 +396,16 @@ AlignProfiles <- function(pattern,
 		if (numAnchors==0) {
 			inserts <- f(p.profile, s.profile)
 		} else {
+			max.p <- which.max(p.weight)
+			max.s <- which.max(s.weight)
+			
 			if (!.Call("firstSeqsEqual",
 				pattern,
 				subject,
 				1L, anchors[1, 1],
 				1L, anchors[3, 1],
+				max.p,
+				max.s,
 				PACKAGE="DECIPHER")) {
 				inserts <- f(p.profile[, 1L:anchors[1, 1], drop=FALSE],
 					s.profile[, 1L:anchors[3, 1], drop=FALSE],
@@ -417,6 +422,8 @@ AlignProfiles <- function(pattern,
 					subject,
 					anchors[2, n - 1], anchors[1, n],
 					anchors[4, n - 1], anchors[3, n],
+					max.p,
+					max.s,
 					PACKAGE="DECIPHER")) {
 					temp <- f(p.profile[, anchors[2, n - 1]:anchors[1, n], drop=FALSE],
 						s.profile[, anchors[4, n - 1]:anchors[3, n], drop=FALSE],
@@ -437,6 +444,8 @@ AlignProfiles <- function(pattern,
 					anchors[1, n], anchors[2, n],
 					anchors[3, n], anchors[4, n],
 					type,
+					max.p,
+					max.s,
 					PACKAGE="DECIPHER")) {
 					temp <- .Call("firstSeqsPosEqual",
 						pattern,
@@ -444,6 +453,8 @@ AlignProfiles <- function(pattern,
 						anchors[1, n], anchors[2, n],
 						anchors[3, n], anchors[4, n],
 						type,
+						max.p,
+						max.s,
 						PACKAGE="DECIPHER")
 					if (length(temp)==4) {
 						inserts[[1]] <- c(inserts[[1]], temp[[1]])
@@ -476,6 +487,8 @@ AlignProfiles <- function(pattern,
 				subject,
 				anchors[2, numAnchors], w.p,
 				anchors[4, numAnchors], w.s,
+				max.p,
+				max.s,
 				PACKAGE="DECIPHER")) { # need to align
 				temp <- f(p.profile[, anchors[2, numAnchors]:w.p, drop=FALSE],
 					s.profile[, anchors[4, numAnchors]:w.s, drop=FALSE],

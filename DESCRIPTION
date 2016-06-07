@@ -1,8 +1,8 @@
 Package: DECIPHER
 Type: Package
 Title: Tools for curating, analyzing, and manipulating biological sequences
-Version: 2.0.1
-Date: 2016-05-23
+Version: 2.0.2
+Date: 2016-06-07
 Author: Erik Wright
 Maintainer: Erik Wright <DECIPHER@cae.wisc.edu>
 biocViews: Clustering, Genetics, Sequencing, DataImport, Visualization, Microarray, QualityControl, qPCR, Alignment, WholeGenome, Microbiome

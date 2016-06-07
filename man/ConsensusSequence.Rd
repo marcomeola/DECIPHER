@@ -62,4 +62,10 @@ ConsensusSequence(dna)
 aa <- AAStringSet(c("ANQIH-", "ADELW."))
 ConsensusSequence(aa)
 # returns "ABZJX-"
+
+AAAT <- DNAStringSet(c("A", "A", "A", "T"))
+ConsensusSequence(AAAT) # "W"
+ConsensusSequence(AAAT, threshold=0.3) # "A"
+ConsensusSequence(AAAT, threshold=0.3, minInformation=0.8) # "+"
+ConsensusSequence(AAAT, threshold=0.3, minInformation=0.8, noConsensusChar="N") # "N"
 }

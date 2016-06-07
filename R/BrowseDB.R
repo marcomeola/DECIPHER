@@ -127,7 +127,9 @@ BrowseDB <- function(dbFile,
 				sep="")
 		if (clause!="")
 			searchExpression <- paste(searchExpression,
-				clause)
+				ifelse(identifier=="", " where ", " and "),
+				clause,
+				sep="")
 		if (orderBy!="row_names") # default ordering is row_names
 			searchExpression <- paste(searchExpression,
 				'order by',

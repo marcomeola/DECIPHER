@@ -255,8 +255,8 @@ AlignSeqs <- function(myXStringSet,
 		wordSize <- ceiling(mean(width(myXStringSet))^0.22)
 		if (wordSize > 15)
 			wordSize <- 15
-		if (wordSize < 8)
-			wordSize <- 8
+		if (wordSize < 5)
+			wordSize <- 5
 	}
 	
 	cluster <- FALSE

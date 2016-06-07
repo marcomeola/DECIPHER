@@ -175,7 +175,7 @@ CalculateEfficiencyFISH <- function(probe,
 	eff <- P*K1/(1 + P*K1)
 	
 	FAm <- numeric(l)
-	FAm[] <- NA
+	FAm[] <- -Inf
 	for (i in 1:l) {
 		f <- function(FA) {
 			K1 <- exp(-(dG1[i] + FA*(0.0175 + 0.0028*n[i]))/RT)
