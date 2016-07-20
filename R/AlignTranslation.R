@@ -2,7 +2,7 @@ AlignTranslation <- function(myXStringSet,
 	sense="+",
 	direction="5' to 3'",
 	readingFrame=NA,
-	asAAStringSet=FALSE,
+	type=class(myXStringSet),
 	geneticCode=GENETIC_CODE,
 	...) {
 	
@@ -25,8 +25,6 @@ AlignTranslation <- function(myXStringSet,
 		stop('readingFrame must be either NA, 1, 2, or 3.')
 	if (any(!is.na(readingFrame) & floor(readingFrame) != readingFrame))
 		stop('readingFrame must be either NA, 1, 2, or 3.')
-	if (!is.logical(asAAStringSet))
-		stop('asAAStringSet must be a logical.')
 	a <- vcountPattern("-", myXStringSet)
 	if (any(a > 0))
 		stop("Gap characters ('-') must be removed before alignment.")
@@ -36,6 +34,21 @@ AlignTranslation <- function(myXStringSet,
 	a <- vcountPattern(".", myXStringSet)
 	if (any(a > 0))
 		stop("Unknown characters ('.') must be removed before alignment.")
+	if (length(type)==0)
+		stop("No type specified.")
+	TYPES <- c("DNAStringSet", "RNAStringSet", "AAStringSet", "both")
+	type <- pmatch(type, TYPES)
+	if (is.na(type))
+		stop("Invalid type.")
+	if (type==-1)
+		stop("Ambiguous type.")
+	if (type==1) {
+		if (class(myXStringSet) != "DNAStringSet")
+			stop("type cannot be 'RNAStringSet' when myXStringSet is a DNAStringSet.")
+	} else if (type==2) {
+		if (class(myXStringSet) != "RNAStringSet")
+			stop("type cannot be 'DNAStringSet' when myXStringSet is a RNAStringSet.")
+	}
 	
 	if (sense=="-")
 		myXStringSet <- reverseComplement(myXStringSet)
@@ -83,10 +96,14 @@ AlignTranslation <- function(myXStringSet,
 			readingFrame[w])
 	}
 	
+	names(AA) <- names(myXStringSet)
 	AA <- AlignSeqs(myXStringSet=AA, ...)
-	if (asAAStringSet) {
-		names(AA) <- names(myXStringSet)
-		return(AA)
+	if (type > 2) {
+		if (type==4) {
+			results <- list(NULL, AA)
+		} else {
+			return(AA)
+		}
 	}
 	
 	# correct for shifts introduced by "+"
@@ -138,5 +155,10 @@ AlignTranslation <- function(myXStringSet,
 	if (direction=="3' to 5'")
 		myXStringSet <- reverse(myXStringSet)
 	
-	return(myXStringSet)
+	if (type==4) {
+		results[[1]] <- myXStringSet
+		return(results)
+	} else {
+		return(myXStringSet)
+	}
 }

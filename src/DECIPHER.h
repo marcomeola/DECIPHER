@@ -90,8 +90,6 @@ SEXP replaceChars(SEXP x, SEXP r, SEXP t);
 
 SEXP replaceChar(SEXP x, SEXP c, SEXP r);
 
-SEXP trimChar(SEXP x, SEXP y);
-
 // TerminalMismatch.c
 
 SEXP terminalMismatch(SEXP p, SEXP t, SEXP cutoff, SEXP mGaps, SEXP nThreads);
@@ -156,14 +154,6 @@ SEXP expandAmbiguities(SEXP x, SEXP c);
 
 SEXP removeCommonGaps(SEXP x, SEXP type, SEXP nThreads);
 
-// SubsetXStringSet.c
-
-SEXP subsetXStringSet(SEXP x, SEXP subset, SEXP type, SEXP nThreads);
-
-// AppendXStringSets.c
-
-SEXP appendXStringSets(SEXP x, SEXP y, SEXP type, SEXP nThreads);
-
 // PredictHEC.c
 
 SEXP predictHEC(SEXP x, SEXP windowSize, SEXP background, SEXP HEC_MI1, SEXP HEC_MI2, SEXP output);
@@ -214,8 +204,18 @@ SEXP extractFields(SEXP x, SEXP fields, SEXP starts, SEXP ends);
 
 SEXP nbit(SEXP x, SEXP y, SEXP compRepeats, SEXP nThreads);
 
+SEXP qbit(SEXP x, SEXP y, SEXP nThreads);
+
 SEXP decompress(SEXP x, SEXP nThreads);
 
 // Diff.c
 
 SEXP intDiff(SEXP x);
+
+// MovingAverage.c
+
+SEXP movAvg(SEXP x, SEXP type, SEXP alpha, SEXP thresh, SEXP start, SEXP end);
+
+// GetPools.c
+
+SEXP getPools(SEXP x);

@@ -90,7 +90,7 @@ StaggerAlignment <- function(myXStringSet,
 		
 		suppressWarnings(tree <- IdClusters(d,
 			method="NJ",
-			asDendrogram=TRUE,
+			type="dendrogram",
 			processors=processors,
 			verbose=verbose))
 	} else {
@@ -194,12 +194,8 @@ StaggerAlignment <- function(myXStringSet,
 		ncol=u)
 	t <- TerminalChar(myXStringSet)
 	for (i in seq_along(myXStringSet)) {
-		x <- .Call("subsetXStringSet",
-			myXStringSet,
-			i,
-			type,
-			processors)
-		x <- strsplit(as.character(x), "", fixed=T)[[1]]
+		x <- .subset(myXStringSet, i)
+		x <- strsplit(as.character(x), "", fixed=TRUE)[[1]]
 		s[i,] <- x=="-" | x=="."
 		
 		# exclude terminal gaps
@@ -255,30 +251,26 @@ StaggerAlignment <- function(myXStringSet,
 				
 				for (i in 2:length(groups)) {
 					g <- groups[[i]]
-					seqs <- .Call("subsetXStringSet",
-						myXStringSet,
-						v[-g],
-						type,
-						processors)
-					myXStringSet[-g] <- .Call("insertGaps",
-						seqs,
-						pos + 1L,
-						runLength,
-						type,
-						processors,
-						PACKAGE="DECIPHER")
-					seqs <- .Call("subsetXStringSet",
-						myXStringSet,
-						g,
-						type,
-						processors)
-					myXStringSet[g] <- .Call("insertGaps",
-						seqs,
-						pos - runLength + 1L,
-						runLength,
-						type,
-						processors,
-						PACKAGE="DECIPHER")
+					seqs <- .subset(myXStringSet, v[-g])
+					myXStringSet <- .replace(myXStringSet,
+						.Call("insertGaps",
+							seqs,
+							pos + 1L,
+							runLength,
+							type,
+							processors,
+							PACKAGE="DECIPHER"),
+						seq_along(myXStringSet)[-g])
+					seqs <- .subset(myXStringSet, g)
+					myXStringSet <- .replace(myXStringSet,
+						.Call("insertGaps",
+							seqs,
+							pos - runLength + 1L,
+							runLength,
+							type,
+							processors,
+							PACKAGE="DECIPHER"),
+						g)
 				}
 			}
 		}

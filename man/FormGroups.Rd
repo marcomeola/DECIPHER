@@ -44,7 +44,7 @@ Logical indicating whether to print database queries and other information.
 Beginning with the least common ranks, the algorithm agglomerates groups with similar ranks until the \code{goalSize} is reached.  If the group size is below \code{minGroupSize} then further agglomeration is attempted with a larger group.  If additional agglomeration results in a group larger than \code{maxGroupSize} then the agglomeration is undone so that the group is smaller.
 }
 \value{
-A \code{data.frame} with the \code{rank} and corresponding identifier as \code{identifier}.  The \code{origin} gives the \code{rank} preceding the \code{identifier}.  If \code{add2tbl} is not \code{FALSE} then the ``identifier'' and ``origin'' columns are updated in \code{dbFile}.
+A \code{data.frame} with the \code{rank} and corresponding identifier as \code{identifier}.  Note that quotes are stripped from identifiers to prevent problems that they may cause.  The \code{origin} gives the \code{rank} preceding the \code{identifier}.  If \code{add2tbl} is not \code{FALSE} then the ``identifier'' and ``origin'' columns are updated in \code{dbFile}.
 }
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}

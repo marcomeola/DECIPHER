@@ -223,10 +223,10 @@ dna <- readDNAStringSet(fas)
 dna # the unaligned sequences
 @
 
-We can align the DNA by either aligning the coding sequences directly, or their translations (amino acid sequences).  Both methods result in an aligned set of DNA sequences, unless the argument \Rfunarg{asAAStringSet} is \code{TRUE} in \Rfunction{AlignTranslation}.  A quick inspection reveals that the method of translating before alignment yields a more appealing result.  In particular, the reading frame is maintained when aligning the translations.  However, if the dna did not code for a protein then the only option would be to use \Rfunction{AlignSeqs} because the translation would be meaningless.
+We can align the DNA by either aligning the coding sequences directly, or their translations (amino acid sequences).  Both methods result in an aligned set of DNA sequences, unless the argument \Rfunarg{type} is \code{"AAStringSet"} in \Rfunction{AlignTranslation}.  A quick inspection reveals that the method of translating before alignment yields a more appealing result.  In particular, the reading frame is maintained when aligning the translations.  However, if the dna did not code for a protein then the only option would be to use \Rfunction{AlignSeqs} because the translation would be meaningless.
 
 <<expr2,eval=FALSE,echo=TRUE>>=
-AA <- AlignTranslation(dna, asAAStringSet=TRUE) # align the translation
+AA <- AlignTranslation(dna, type="AAStringSet") # align the translation
 BrowseSeqs(AA, highlight=1) # view the alignment
 
 DNA <- AlignSeqs(dna) # align the sequences directly without translation
@@ -255,7 +255,7 @@ Also, when aligning nucleotide sequences (or their translations), it may be the 
 \section{Example:  Building a Guide Tree}
 %------------------------------------------------------------
 
-The \Rfunction{AlignSeqs} function uses a guide tree to decide in which order to align pairs of sequence profiles.  The \Rfunarg{guideTree} input is a \Rclass{data.frame} with the grouping of each sequence at increasing levels of dissimilarity between the groups.  By default this guide tree is generated directly from the sequences using the order of shared k-mers (i.e., when the argument \Rfunarg{guideTree} is \code{NULL}).  This default guide tree performs very well, but it may desirable or necessary to specify a guide tree when aligning thousands of sequences.  For example, beyond 46,340 sequences an alternative guide tree is always required because this is the largest guide tree that can be constructed by \Rpackage{DECIPHER}.
+The \Rfunction{AlignSeqs} function uses a guide tree to decide the order in which to align pairs of sequence profiles.  The \Rfunarg{guideTree} input is a \Rclass{dendrogram} (tree) object with one leaf per input sequence.  By default this guide tree is generated directly from the input sequences using the order of shared k-mers (i.e., when the argument \Rfunarg{guideTree} is \code{NULL}).  This default guide tree performs very well, but it may be desirable or necessary to specify an input guide tree when aligning thousands of sequences.  For example, beyond 46,340 sequences an alternative guide tree is always required because this is the largest guide tree that can be constructed by \Rpackage{DECIPHER}.
 
 \begin{figure}
 \begin{center}
@@ -264,17 +264,30 @@ The \Rfunction{AlignSeqs} function uses a guide tree to decide in which order to
 \end{center}
 \end{figure}
 
-As the number of sequences being aligned increases beyond a certain point, the performance of the default guide tree tends to diminish.  It has been shown that reasonably accurate alignments of tens of thousands of sequences can be obtained by using a chain guide tree \cite{Boyce:2014}.  With a chained guide tree, sequences are added one-by-one to a growing profile representing all of the aligned sequences.  Figure 6 shows the result of using \Rpackage{DECIPHER} to align increasing numbers of Cytochrome P450 sequences (in accordance with the method in reference \cite{Boyce:2014}), using either a chained guide tree or the default guide tree.  A chained guide tree allows for faster alignment and provides reasonable quality when many thousands of sequences are being aligned.  A chained guide tree can easily be generated, as shown below.
+As the number of sequences being aligned increases beyond a certain point, the performance of the default guide tree tends to diminish.  It has been shown that reasonably accurate alignments of tens of thousands of sequences can be obtained by using a chain guide tree \cite{Boyce:2014}.  With a chained guide tree, sequences are added one-by-one to a growing profile representing all of the aligned sequences.  Figure 6 shows the result of using \Rpackage{DECIPHER} to align increasing numbers of Cytochrome P450 sequences (in accordance with the method in reference \cite{Boyce:2014}), using either a chained guide tree or the default guide tree.  A chained guide tree allows for faster alignment and provides reasonable quality when many thousands of sequences are being aligned.  A chained guide tree can be easily generated, as shown below.
 
 <<expr4,eval=FALSE,echo=TRUE>>=
 # form a chained guide tree
-gT <- data.frame(seq_along(dna))
+gT <- lapply(order(width(dna), decreasing=TRUE),
+	function(x) {
+		attr(x, "height") <- 0
+		attr(x, "label") <- names(dna)[x]
+		attr(x, "members") <- 1L
+		attr(x, "leaf") <- TRUE
+		x
+	})
+attr(gT, "height") <- 0.5
+attr(gT, "members") <- length(dna)
+class(gT) <- "dendrogram"
 
 # use the guide tree as input for alignment
-DNA <- AlignTranslation(dna, guideTree=gT) # align by translation
+DNA <- AlignTranslation(dna,
+	guideTree=gT,
+	iterations=0,
+	refinements=0)
 @
 
-Use of a chained guide tree is recommended when aligning more than ten thousand sequences for purposes other than phylogenetics.  With a moderate number of sequences the automatically generated (default) guide tree tends to provide the best result, especially if the input sequences vary in width considerably.
+Use of a chained guide tree is recommended when aligning more than ten thousand sequences for purposes other than phylogenetics.  With a moderate number of sequences the automatically generated (default) guide tree tends to provide the best result, especially if the input sequences vary in width considerably.  It is also possible to read a Newick formatted tree into \R{} using the function \Rfunction{ReadDendrogram}, and specify this object as the input \Rfunarg{guideTree}.
 
 %------------------------------------------------------------
 \section{Example:  Aligning Two Aligned Sequence Sets}
@@ -287,8 +300,8 @@ half <- floor(length(dna)/2)
 dna1 <- dna[1:half] # first half
 dna2 <- dna[(half + 1):length(dna)] # second half
 
-AA1 <- AlignTranslation(dna1, asAAStringSet=TRUE)
-AA2 <- AlignTranslation(dna2, asAAStringSet=TRUE)
+AA1 <- AlignTranslation(dna1, type="AAStringSet")
+AA2 <- AlignTranslation(dna2, type="AAStringSet")
 AA <- AlignProfiles(AA1, AA2) # align two alignments
 @
 

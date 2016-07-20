@@ -144,6 +144,6 @@ table(unlist(lapply(x[[1]], function(x) {
 # align and display the translations
 AA <- AlignTranslation(x$sequences,
 	readingFrame=1,
-	asAAStringSet=TRUE)
+	type="AAStringSet")
 BrowseSeqs(AA)
 }

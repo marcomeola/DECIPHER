@@ -20,8 +20,8 @@ TerminalChar <- function(myXStringSet,
 		maxW <- max(width(myXStringSet))
 		
 		gaps <- matrix(data=0, nrow=numF, ncol=3,
-		dimnames=list(names(myXStringSet),
-			c("leadingChar","trailingChar","difference")))
+			dimnames=list(names(myXStringSet),
+				c("leadingChar","trailingChar","difference")))
 		myXStringSetRev <- reverse(myXStringSet)
 		
 		lead <- isMatchingAt(char, myXStringSet,

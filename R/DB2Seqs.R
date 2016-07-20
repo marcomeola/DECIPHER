@@ -4,7 +4,7 @@ DB2Seqs <- function(file,
 	identifier="",
 	type="BStringSet",
 	limit=-1,
-	replaceChar="-",
+	replaceChar=NA,
 	nameBy="description",
 	orderBy="row_names",
 	removeGaps="none",
@@ -59,7 +59,7 @@ DB2Seqs <- function(file,
 	if (width < 1)
 		stop("width must be at least 1.")
 	if (width > 20001)
-		stop("width must be at most 20001.")
+		stop("width can be at most 20001.")
 	if (!is.character(sep))
 		stop("sep must be a character string.")
 	if (length(sep)!=1)
@@ -70,7 +70,9 @@ DB2Seqs <- function(file,
 		stop("Invalid removeGaps method.")
 	if (removeGaps == -1)
 		stop("Ambiguous removeGaps method.")
-	if (type==1 || type==5) {
+	if (is.na(replaceChar)) {
+			replaceChar <- NA_character_
+	} else if (type==1 || type==5) {
 		if (is.na(pmatch(replaceChar, DNA_ALPHABET)) && (replaceChar!=""))
 			stop("replaceChar must be a character in the DNA_ALPHABET or empty character.")
 	} else if (type==2 || type==6) {
@@ -140,25 +142,6 @@ DB2Seqs <- function(file,
 		searchExpression <- paste(searchExpression,
 			'order by',
 			orderBy)
-	
-	bz_header <- as.raw(c(0x42, 0x5a, 0x68))
-	xz_header <- as.raw(c(0xfd, 0x37, 0x7a))
-	.decompress <- function(x) {
-		# choose decompression type
-		if (identical(x[1:3], bz_header)) {
-			memDecompress(x,
-				type="bzip2",
-				asChar=TRUE)
-		} else if (identical(x[1:3], xz_header)) {
-			memDecompress(x,
-				type="xz",
-				asChar=TRUE)
-		} else { # variable header
-			memDecompress(x,
-				type="gzip",
-				asChar=TRUE)
-		}
-	}
 	
 	if (verbose)
 		pBar <- txtProgressBar(style=3)
@@ -237,8 +220,7 @@ DB2Seqs <- function(file,
 		
 		if (type > 4) {
 			# decompress the resulting qualities
-			searchResult2$quality <- unlist(lapply(searchResult2$quality,
-				.decompress))
+			searchResult2$quality <- Codec(searchResult2$quality)
 		}
 		
 		if (type==1 || type==5) {

@@ -1,13 +1,19 @@
 Codec <- function(x,
-	compression="auto",
+	compression=c("nbit", "gzip"),
 	compressRepeats=FALSE,
 	processors=1) {
 	
 	# error checking
-	if (length(compression) != 1 || !is.character(compression))
-		stop("compression must be a single character string.")
-	if (!(compression %in% c("auto", "nbit", "gzip", "bzip2", "xz")))
+	if (length(compression)==2) {
+		if (compression[1] != "nbit" && compression[1] != "qbit")
+			stop("The first element of compression must be 'nbit' or 'qbit' when two elements are provided.")
+		if (!(compression[2] %in% c("gzip", "bzip2", "xz")))
+			stop("The second element of compression must be  'gzip', 'bzip2', or 'xz' when two elements are provided.")
+	} else if (length(compression) != 1 || !is.character(compression)) {
+		stop("compression must be a character string.")
+	} else if (!(compression %in% c("nbit", "qbit", "gzip", "bzip2", "xz"))) {
 		stop("Invalid type of compression.")
+	}
 	if (typeof(x)=="list") {
 		if (length(x)==0)
 			return(character())
@@ -33,24 +39,35 @@ Codec <- function(x,
 	}
 	
 	if (typeof(x)=="character") {
-		if (compression=="auto" || compression=="nbit") {
-			y <- .Call("nbit",
+		if (compression[1]=="nbit") {
+			y <- .Call(compression[1],
 				x,
-				ifelse(compression=="nbit", 1L, 0L),
+				2L - length(compression),
 				compressRepeats,
 				processors,
 				PACKAGE="DECIPHER")
-			compression <- "gzip"
+			if (length(compression)==2) {
+				w <- which(lengths(y)==0)
+				for (i in w)
+					y[[i]] <- memCompress(x[i],
+						compression[2])
+			}
+		} else if (compression[1]=="qbit") {
+			y <- .Call(compression[1],
+				x,
+				2L - length(compression),
+				processors,
+				PACKAGE="DECIPHER")
+			if (length(compression)==2) {
+				w <- which(lengths(y)==0)
+				for (i in w)
+					y[[i]] <- memCompress(x[i],
+						compression[2])
+			}
 		} else {
-			y <- rep(list(raw(0)),
-				length(x))
-		}
-		
-		if (compression != "nbit") {
-			w <- which(unlist(lapply(y, length))==0)
-			for (i in w)
-				y[[i]] <- memCompress(x[i],
-					compression)
+			y <- lapply(x,
+				memCompress,
+				compression)
 		}
 	} else { # x is a list
 		y <- .Call("decompress",

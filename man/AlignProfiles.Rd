@@ -40,10 +40,10 @@ A numeric vector of weights for each sequence in the pattern to use in generatin
 A numeric vector of weights for each sequence in the subject to use in generating a profile, or a single number implying equal weights.
 }
   \item{p.struct}{
-Either \code{NULL} (the default), or a list of matrices with one list element per sequence in the pattern.  (See details section below.)
+Either \code{NULL} (the default), a matrix, or a list of matrices with one list element per sequence in the pattern.  (See details section below.)
 }
   \item{s.struct}{
-Either \code{NULL} (the default), or a list of matrices with one list element per sequence in the subject.  (See details section below.)
+Either \code{NULL} (the default), a matrix, or a list of matrices with one list element per sequence in the subject.  (See details section below.)
 }
   \item{perfectMatch}{
 Numeric giving the reward for aligning two matching nucleotides in the alignment.  Only used for \code{DNAStringSet} or \code{RNAStringSet} inputs.
@@ -76,7 +76,7 @@ Numeric giving the exponent that controls the degree of normalization applied to
 Either a substitution matrix representing the substitution scores for an alignment or the name of the amino acid substitution matrix to use in alignment.  The latter may be one of the following:  ``BLOSUM45'', ``BLOSUM50'', ``BLOSUM62'', ``BLOSUM80'', ``BLOSUM100'', ``PAM30'', ``PAM40'', ``PAM70'', ``PAM120'', ``PAM250'', or ``MIQS''.  The default (NULL) will use the \code{perfectMatch} and \code{misMatch} penalties for DNA/RNA or ``MIQS'' for AA.  (See examples section below.)
 }
   \item{structureMatrix}{
-A structure matrix if \code{p.struct} and \code{s.struct} are supplied, or \code{NULL} otherwise.  (See examples section below.)
+A structure matrix if \code{p.struct} and \code{s.struct} are supplied, or \code{NULL} otherwise.
 }
   \item{processors}{
 The number of processors to use, or \code{NULL} to automatically detect and use all available processors.
@@ -85,13 +85,13 @@ The number of processors to use, or \code{NULL} to automatically detect and use 
 \details{
 Profiles are aligned using dynamic programming, a variation of the Needleman-Wunsch algorithm for global alignment.  The dynamic programming method requires order \code{N*M} time and memory space where \code{N} and \code{M} are the width of the pattern and subject.  This method works by filling in a matrix of the possible ``alignment space'' by considering all matches, insertions, and deletions between two sequence profiles.  The highest scoring alignment is then used to add gaps to each of the input sequence sets.
 
-Heuristics can be useful to improve performance on long input sequences.  The \code{restrict} parameter can be used to dynamically constrain the possible ``alignment space'' to only paths that will likely include the final alignment, which in the best case can improve the speed from quadratic time to linear time.  The degree of restriction is important, and if the sequences are not mostly overlapping then \code{restrict} should be relaxed (more negative than the default).  For example, if aligning a pattern to a much longer subject then restrict should be set to \code{-1e10} to prevent restriction.
+Heuristics can be useful to improve performance on long input sequences.  The \code{restrict} parameter can be used to dynamically constrain the possible ``alignment space'' to only paths that will likely include the final alignment, which in the best case can improve the speed from quadratic time to linear time.  The degree of restriction is important, and if the sequences are not mostly overlapping then \code{restrict} should be relaxed (more negative than the default).  For example, if aligning a pattern to a much longer subject then restrict should be set to \code{-1e10} to effectively prevent restriction.
 
-The argument \code{anchor} can be used to split the global alignment into multiple sub-alignments.  This can greatly decrease the memory requirement for long sequences when appropriate anchor points can be found.  Anchors are 15-mer (for DNA/RNA) or 7-mer (for AA) subsequences that are shared between at least \code{anchor} fraction of \code{pattern}(s) and \code{subject}(s).  Anchored ranges are extended along the length of each sequence in a manner designed to split the alignment into sub-alignments that can be separately solved.  For most input sequences \code{anchor} has no effect on accuracy, but anchoring can be disabled by setting \code{anchor=NA}.
+The argument \code{anchor} can be used to split the global alignment into multiple sub-alignments.  This can greatly decrease the memory requirement for long sequences when appropriate anchor points can be found.  Anchors are 15-mer (for DNA/RNA) or 7-mer (for AA) subsequences that are shared between at least \code{anchor} fraction of \code{pattern}(s) and \code{subject}(s).  Anchored ranges are extended along the length of each sequence in a manner designed to split the alignment into sub-alignments that can be separately solved.  For most input sequences, the default anchoring has no effect on accuracy, but anchoring can be disabled by setting \code{anchor=NA}.
 
 Alternatively, \code{anchor} can be a matrix with \code{4} rows and one column per anchor.  The first two rows correspond to the anchor start and end positions in the pattern sequence(s), and the second two rows are the equivalent anchor region in the subject sequence(s).  Anchors specified in this manner must be strictly increasing (non-overlapping) in both sequences, and have an anchor width of at least two positions.  Note that the anchors do not have to be equal length, in which case the anchor regions will also be aligned.  Manually splitting the alignment into more subtasks can sometimes make it more efficient, but typically automatic anchoring is effective.
 
-The arguments \code{p.struct} and \code{s.struct} may be used to provide secondary structure probabilities.  Each list element must contain a matrix with dimensions \code{q*w}, where \code{q} is the number of possible secondary structure states, and \code{w} is the width of the unaligned pattern sequence.  Values in each matrix represent the probability of the given state at that position in the sequence.  A \code{structureMatrix} must be supplied along with the structures.  The function \code{PredictHEC} can be used to predict secondary structure probabilities in the format required by \code{AlignProfiles}.
+The arguments \code{p.struct} and \code{s.struct} may be used to provide secondary structure probabilities in the form of a list containing matrices or a single matrix.  If the input is a list, then each list element must contain a matrix with dimensions \code{q*w}, where \code{q} is the number of possible secondary structure states, and \code{w} is the width of the unaligned pattern sequence.  Values in each matrix represent the probability of the given state at that position in the sequence.  Alternatively, a single matrix can be used as input if \code{w} is the width of the entire \code{pattern} or \code{subject} alignment.  A \code{structureMatrix} must be supplied along with the structures.  The functions \code{PredictHEC} and \code{PredictDBN} can be used to predict secondary structure probabilities in the format required by \code{AlignProfiles} (for amino acid and RNA sequences, respectively).
 
 The gap cost function is based on the observation that gap lengths are best approximated by a Zipfian distribution (Chang & Benner, 2004).  The cost of inserting a gap of length \code{L} is equal to:
 \code{gapOpening + gapExtension*sum(seq_len(L - 1)^gapPower)}

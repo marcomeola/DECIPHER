@@ -40,6 +40,7 @@ SEXP replaceChars(SEXP x, SEXP r, SEXP t)
 	int longest = 0;
 	const char *seq;
 	const char *repChar = CHAR(STRING_ELT(r, 0));
+	int fail = (STRING_ELT(r, 0)==NA_STRING);
 	
 	// find longest string
 	for (i = 0; i < n; i++)
@@ -96,7 +97,9 @@ SEXP replaceChars(SEXP x, SEXP r, SEXP t)
 							count++;
 							break;
 						default:
-							if (repChar[0] != '\0') {
+							if (fail) {
+								error("Incompatible character ('%c') found when replaceChar = NA.", seq[j]);
+							} else if (repChar[0] != '\0') {
 								s[count] = repChar[0];
 								count++;
 							}
@@ -125,8 +128,8 @@ SEXP replaceChars(SEXP x, SEXP r, SEXP t)
 						case 'c':
 						case 'G':
 						case 'g':
-						case 'T':
-						case 't':
+						case 'U':
+						case 'u':
 						case 'N':
 						case 'n':
 						case 'M':
@@ -155,7 +158,9 @@ SEXP replaceChars(SEXP x, SEXP r, SEXP t)
 							count++;
 							break;
 						default:
-							if (repChar[0] != '\0') {
+							if (fail) {
+								error("Incompatible character ('%c') found when replaceChar = NA.", seq[j]);
+							} else if (repChar[0] != '\0') {
 								s[count] = repChar[0];
 								count++;
 							}
@@ -309,7 +314,9 @@ SEXP replaceChars(SEXP x, SEXP r, SEXP t)
 						count++;
 						break;
 					default:
-						if (repChar[0] != '\0') {
+						if (fail) {
+							error("Incompatible character ('%c') found when replaceChar = NA.", seq[j]);
+						} else if (repChar[0] != '\0') {
 							s[count] = repChar[0];
 							count++;
 						}
@@ -364,41 +371,6 @@ SEXP replaceChar(SEXP x, SEXP c, SEXP r)
 			}
 		}
 		s[count] = '\0'; // null-terminate
-		SET_STRING_ELT(seqs, i, mkChar(s));
-	}
-	
-	Free(s);
-	
-	UNPROTECT(1);
-	
-	return seqs;
-}
-
-//ans_start <- .Call("trimChar", sequences, numChar, PACKAGE="DECIPHER")
-SEXP trimChar(SEXP x, SEXP y)
-{
-	int i, j, l;
-	int num = asInteger(y);
-	int n = length(x);
-	int longest = 0;
-	const char *seq;
-	
-	// find longest string
-	for (i = 0; i < n; i++)
-		if (length(STRING_ELT(x, i)) > longest)
-			longest = length(STRING_ELT(x, i));
-	
-	SEXP seqs;
-	PROTECT(seqs = allocVector(STRSXP, n));
-	char *s = Calloc(longest + 1 - num, char); // each sequence
-	
-	// write new character vector
-	for (i = 0; i < n; i++) {
-		l = length(STRING_ELT(x, i));
-		seq = CHAR(STRING_ELT(x, i));
-		for (j = 0; j < (l - num); j++)
-			s[j] = seq[j];
-		s[j] = '\0'; // null-terminate
 		SET_STRING_ELT(seqs, i, mkChar(s));
 	}
 	

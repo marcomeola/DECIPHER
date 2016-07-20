@@ -9,6 +9,11 @@ import(RSQLite)
 import(DBI)
 import(parallel)
 
+importFrom("grDevices", "colorRampPalette", "colors", "dev.flush", "dev.hold", "dev.size", "rainbow")
+importFrom("graphics", "abline", "axis", "box", "legend", "mtext", "par", "plot", "points", "rect", "segments", "strheight", "strwidth", "text")
+importFrom("stats", "dendrapply", "dist", "is.leaf", "nlminb", "optimize", "order.dendrogram", "pbinom", "reorder", "setNames", "step", "uniroot")
+importFrom("utils", "browseURL", "data", "flush.console", "object.size", "setTxtProgressBar", "txtProgressBar")
+
 export(
 # interacting with a database:
 Add2DB, Codec, Seqs2DB, SearchDB, DB2Seqs,
@@ -31,7 +36,7 @@ CalculateEfficiencyFISH, DesignProbes,
 # viewing information:
 BrowseSeqs, BrowseDB,
 # sequence analysis/manipulation:
-CorrectFrameshifts, OrientNucleotides, PredictHEC,
+CorrectFrameshifts, OrientNucleotides, PredictHEC, TrimDNA,
 # multiple alignment:
 AdjustAlignment, AlignDB, AlignProfiles, AlignSeqs, AlignTranslation, MaskAlignment, StaggerAlignment,
 # synteny:

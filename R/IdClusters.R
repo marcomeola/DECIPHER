@@ -1094,7 +1094,7 @@ IdClusters <- function(myDistMatrix=NULL,
 	method="UPGMA",
 	cutoff=-Inf,
 	showPlot=FALSE,
-	asDendrogram=FALSE,
+	type="clusters",
 	myXStringSet=NULL,
 	model=MODELS,
 	processors=1,
@@ -1142,14 +1142,18 @@ IdClusters <- function(myDistMatrix=NULL,
 		cutoff <- as.numeric(cutoff)
 	if (!is.logical(showPlot))
 		stop("showPlot must be a logical.")
-	if (!is.logical(asDendrogram))
-		stop("asDendrogram must be a logical.")
+	TYPES <- c("clusters", "dendrogram", "both")
+	type <- pmatch(type[1], TYPES)
+	if (is.na(type))
+		stop("Invalid type.")
+	if (type == -1)
+		stop("Ambiguous type.")
 	if (method==7 && showPlot)
 		stop("showPlot must be FALSE if method is 'inexact'")
-	if (method==7 && asDendrogram)
-		stop("showPlot must be FALSE if method is 'inexact'")
-	if (length(cutoff) > 1 && (showPlot || asDendrogram))
-		stop("Only one cutoff may be specified when showPlot or asDendrogram is TRUE.")
+	if (method==7 && type > 1)
+		stop("type must be 'clusters' when method is 'inexact'")
+	if (length(cutoff) > 1 && type > 1)
+		warning("More than one cutoff specified when type is ", TYPES[type], ".")
 	if (method==7 && any(cutoff < 0))
 		stop("cutoff must be at least zero when method is 'inexact'.")
 	if (method==7 && any(cutoff >= 1))
@@ -1288,12 +1292,12 @@ IdClusters <- function(myDistMatrix=NULL,
 			
 			if (type==3L) { # AAStringSet
 				v <- .Call("enumerateSequenceAA",
-					myXStringSet[o[1:ifelse(l > 999, 999, l)]],
+					.subset(myXStringSet, o[1:ifelse(l > 999, 999, l)]),
 					wordSize,
 					PACKAGE="DECIPHER")
 			} else { # DNAStringSet or RNAStringSet
 				v <- .Call("enumerateSequence",
-					myXStringSet[o[1:ifelse(l > 999, 999, l)]],
+					.subset(myXStringSet, o[1:ifelse(l > 999, 999, l)]),
 					wordSize,
 					PACKAGE="DECIPHER")
 			}
@@ -1308,11 +1312,7 @@ IdClusters <- function(myDistMatrix=NULL,
 			nGroups <- 1L
 			seeds.reps <- v[1L]
 			seeds.nums <- list(v[1L])
-			seeds.seqs <- list(.Call("subsetXStringSet",
-				myXStringSet,
-				o[1],
-				type,
-				processors))
+			seeds.seqs <- list(.subset(myXStringSet, o[1]))
 			seeds.clust <- list(1L)
 			
 			index <- 1L
@@ -1329,12 +1329,12 @@ IdClusters <- function(myDistMatrix=NULL,
 					index <- 1L
 					if (type==3L) { # AAStringSet
 						v <- .Call("enumerateSequenceAA",
-							myXStringSet[o[j:ifelse(j + 999 > l, l, j + 999)]],
+							.subset(myXStringSet, o[j:ifelse(j + 999 > l, l, j + 999)]),
 							wordSize,
 							PACKAGE="DECIPHER")
 					} else { # DNAStringSet or RNAStringSet
 						v <- .Call("enumerateSequence",
-							myXStringSet[o[j:ifelse(j + 999 > l, l, j + 999)]],
+							.subset(myXStringSet, o[j:ifelse(j + 999 > l, l, j + 999)]),
 							wordSize,
 							PACKAGE="DECIPHER")
 					}
@@ -1354,11 +1354,7 @@ IdClusters <- function(myDistMatrix=NULL,
 						nGroups <- 1L
 						seeds.reps <- v[index]
 						seeds.nums <- list(v[index])
-						seeds.seqs <- list(.Call("subsetXStringSet",
-							myXStringSet,
-							o[j],
-							type,
-							processors))
+						seeds.seqs <- list(.subset(myXStringSet, o[j]))
 						seeds.clust <- list(cluster_num)
 						next
 					}
@@ -1389,11 +1385,7 @@ IdClusters <- function(myDistMatrix=NULL,
 					nGroups <- nGroups + 1L
 					seeds.reps[nGroups] <- v[index]
 					seeds.nums[[nGroups]] <- v[index]
-					seeds.seqs[[nGroups]] <- .Call("subsetXStringSet",
-						myXStringSet,
-						o[j],
-						type,
-						processors)
+					seeds.seqs[[nGroups]] <- .subset(myXStringSet, o[j])
 					seeds.clust[[nGroups]] <- cluster_num
 				} else { # part of an existing group
 					if (length(group) > 1)
@@ -1412,11 +1404,7 @@ IdClusters <- function(myDistMatrix=NULL,
 						w <- w[which.max(m[w])]
 						c[o[j], i] <- seeds.clust[[group]][w] + offset
 					} else {
-						pattern <- .Call("subsetXStringSet",
-							myXStringSet,
-							o[j],
-							type,
-							processors)
+						pattern <- .subset(myXStringSet, o[j])
 						
 						weights <- m^3 # emphasize closest sequences
 						weights <- weights/mean(weights)
@@ -1462,7 +1450,7 @@ IdClusters <- function(myDistMatrix=NULL,
 		w1 <- which(is.infinite(myDistMatrix[lower.tri(myDistMatrix, diag=FALSE)]))
 		if (length(w1) > 0) {
 			if (verbose)
-				warning("\n\nDistance Matrix contains infinite values.\n",
+				warning("myDistMatrix contains infinite values.\n",
 					"Replaced infinite values with max distance >= 1.\n")
 			myDistMatrix[lower.tri(myDistMatrix, diag=FALSE)][w1] <- NA
 		}
@@ -1471,7 +1459,7 @@ IdClusters <- function(myDistMatrix=NULL,
 		if (length(w2) > 0) {
 			if (verbose &&
 				length(w2) > length(w1))
-				warning("\n\nDistance Matrix contains NA values.\n",
+				warning("myDistMatrix contains NA values.\n",
 					"Replaced NA values with max distance >= 1.\n")
 			max.dist <- max(myDistMatrix[lower.tri(myDistMatrix, diag=FALSE)], na.rm=TRUE)
 			if (max.dist <= 1) {
@@ -1782,7 +1770,7 @@ IdClusters <- function(myDistMatrix=NULL,
 			}
 		}
 		
-		if (showPlot || asDendrogram) {
+		if (showPlot || type > 1) {
 			# create a dendrogram object
 			myClustersList <- list()
 			if (is.null(dimnames(myDistMatrix)[[1]])) {
@@ -1819,16 +1807,14 @@ IdClusters <- function(myDistMatrix=NULL,
 			}
 			d <- to.dendrogram(myClustersList)
 			
-			if (method==1 || method==3) {
-				# midpoint root the dendrogram
+			if (method==1 || method==3) # midpoint root the dendrogram
 				d <- .midpointRoot(d)
-			}
 			
 			# specify the order of clusters that
 			# will match the plotted dendrogram
 			orderDendrogram <- order.dendrogram(d)
 			
-			myClusters <- .organizeClusters(myClusters, myClustersList$labels, orderDendrogram)
+			c <- .organizeClusters(myClusters, myClustersList$labels, orderDendrogram)
 			
 			# create a visibily different vector of colors
 			cl <- colors()
@@ -1844,11 +1830,12 @@ IdClusters <- function(myDistMatrix=NULL,
 				}
 				n
 			}
-			if (is.finite(cutoff)) {
-				d <- dendrapply(d, colEdge, myClusters, r)
-				d <- reorder(d, myClusters[, 1])
+			if (is.finite(cutoff[1])) {
+				d <- dendrapply(d, colEdge, c, r)
+				d <- reorder(d, c[, 1])
 			}
-		} else { # not plotting
+		}
+		if (type==1 || type==3) {
 			if (is.null(dimnames(myDistMatrix)[[1]])) {
 				dNames <- 1:(dim(myClusters)[1] + 1)
 			} else {
@@ -1863,8 +1850,9 @@ IdClusters <- function(myDistMatrix=NULL,
 				}
 			}
 			
-			# do not number clusters by order of appearance
-			c <- .organizeClustersFast(myClusters, dNames)
+			if (type==1) # do not number clusters by order of appearance
+				c <- .organizeClustersFast(myClusters, dNames)
+			
 			if (length(cutoff) > 1) {
 				names(c) <- paste("cluster",
 					gsub("\\.", "_", cutoff[1]),
@@ -1920,9 +1908,11 @@ IdClusters <- function(myDistMatrix=NULL,
 		cat("\n")
 	}
 	
-	if (asDendrogram) {
+	if (type==1) {
+		return(myClusters)
+	} else if (type==2) {
 		return(d)
 	} else {
-		return(myClusters)
+		return(list(myClusters, d))
 	}
 }

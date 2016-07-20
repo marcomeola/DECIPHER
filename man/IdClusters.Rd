@@ -11,7 +11,7 @@ IdClusters(myDistMatrix = NULL,
            method = "UPGMA",
            cutoff = -Inf,
            showPlot = FALSE,
-           asDendrogram = FALSE,
+           type = "clusters",
            myXStringSet = NULL,
            model = MODELS,
            processors = 1,
@@ -25,13 +25,13 @@ A symmetric \eqn{N} x \eqn{N} distance matrix with the values of dissimilarity b
 An agglomeration method to be used.  This should be (an abbreviation of) one of \code{"complete"}, \code{"single"}, \code{"UPGMA"}, \code{"WPGMA"}, \code{"NJ"}, \code{"ML"}, or \code{"inexact"}.  (See details section below.)
 }
   \item{cutoff}{
-A vector with the maximum edge length separating the sequences in the same cluster.  Multiple cutoffs may be provided in ascending or descending order.  If \code{asDendrogram=TRUE} or \code{showPlot=TRUE} then only one cutoff may be specified.  (See details section below.)
+A vector with the maximum edge length separating the sequences in the same cluster.  Multiple cutoffs may be provided in ascending or descending order.  (See details section below.)
 }
   \item{showPlot}{
 Logical specifying whether or not to plot the resulting dendrogram.  Not applicable if \code{method='inexact'}.
 }
-  \item{asDendrogram}{
-Logical.  If \code{TRUE} then the object returned is of class \code{dendrogram}.  Not applicable if \code{method='inexact'}.
+  \item{type}{
+Character string indicating the type of output desired.  This should be (an abbreviation of) one of \code{"clusters"}, \code{"dendrogram"}, or \code{"both"}.  Not applicable if \code{method='inexact'}.  (See value section below.)
 }
   \item{myXStringSet}{
 If \code{method} is \code{"ML"}, the \code{DNAStringSet} or \code{RNAStringSet} used in the creation of \code{myDistMatrix}.  If \code{method} is \code{"inexact"}, the \code{DNAStringSet}, \code{RNAStringSet}, or \code{AAStringSet} to cluster.  Not applicable for other methods.
@@ -58,8 +58,9 @@ Sequence-only method:  \code{inexact} uses a heuristic algorithm to directly ass
 Multiple cutoffs may be provided if they are in increasing or decreasing order.  If \code{cutoff}s are provided in \emph{descending} order then clustering at each new value of \code{cutoff} is continued within the prior \code{cutoff}'s clusters.  In this way clusters at lower values of \code{cutoff} are completely contained within their umbrella clusters at higher values of \code{cutoff}.  This is useful for defining taxonomy, where lower level groups (e.g., genera) are expected not to straddle multiple higher level groups (e.g., families).  If multiple cutoffs are provided in \emph{ascending} order then clustering at each level of \code{cutoff} is independent of the prior level.  This may result in fewer high-level clusters for \code{NJ} and \code{ML} methods, but will have no impact on ultrametric methods.  Providing \code{cutoff}s in descending order makes \code{inexact} clustering faster, but has negligible impact on the other \code{method}s.
 }
 \value{
-If \code{asDendrogram=FALSE} (the default), then a data.frame is returned with a column for each cutoff specified.  This data.frame has dimensions \eqn{N*M}, where each one of \eqn{N} sequences is assigned to a cluster at the \eqn{M}-level of cutoff.  The row.names of the data.frame correspond to the dimnames of \code{myDistMatrix}.
-If \code{asDendrogram=TRUE}, returns an object of class \code{dendrogram} that can be used for further manipulation and plotting.  Leaves of the dendrogram are randomly colored by cluster number.
+If \code{type} is \code{"clusters"} (the default), then a data.frame is returned with a column for each cutoff specified.  This data.frame has dimensions \eqn{N*M}, where each one of \eqn{N} sequences is assigned to a cluster at the \eqn{M}-level of cutoff.  The row.names of the data.frame correspond to the dimnames of \code{myDistMatrix}.
+If \code{type} is \code{"dendrogram"}, then an object of class \code{dendrogram} is returned that can be used for plotting.  Leaves of the dendrogram are colored by cluster number.
+If \code{type} is \code{"both"} then a list is returned containing both the \code{"clusters"} and \code{"dendrogram"} outputs.
 }
 \references{
 Felsenstein, J. (1981) Evolutionary trees from DNA sequences: a maximum likelihood approach. \emph{Journal of Molecular Evolution}, \bold{17(6)}, 368-376.
@@ -86,7 +87,7 @@ m[7:8,6] <- c(9, 13)
 m[8,7] <- c(8)
 
 # returns an object of class "dendrogram"
-myClusters <- IdClusters(m, cutoff=10, method="NJ", showPlot=TRUE, asDendrogram=TRUE)
+myClusters <- IdClusters(m, cutoff=10, method="NJ", showPlot=TRUE, type="dendrogram")
 
 # example of specifying multiple cutoffs
 IdClusters(m, cutoff=c(2,6,10,20)) # returns a data frame

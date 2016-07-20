@@ -3,11 +3,12 @@ SearchDB <- function(dbFile,
 	identifier="",
 	type="XStringSet",
 	limit=-1,
-	replaceChar="-",
+	replaceChar=NA,
 	nameBy="row_names",
 	orderBy="row_names",
 	countOnly=FALSE,
 	removeGaps="none",
+	quality="Phred",
 	clause="",
 	processors=1,
 	verbose=TRUE) {
@@ -36,6 +37,19 @@ SearchDB <- function(dbFile,
 		stop("orderBy must be a character string.")
 	if (!is.logical(countOnly))
 		stop("countOnly must be a logical.")
+	QUALS <- c("Phred", "Solexa", "Illumina")
+	quality <- pmatch(quality[1], QUALS)
+	if (is.na(quality))
+		stop("Invalid quality.")
+	if (quality == -1)
+		stop("Ambiguous quality.")
+	if (quality==1) {
+		quality <- PhredQuality
+	} else if (quality==2) {
+		quality <- SolexaQuality
+	} else if (quality==3) {
+		quality <- IlluminaQuality
+	}
 	if (!is.character(clause))
 		stop("clause must be a character string.")
 	if (!is.logical(verbose))
@@ -57,7 +71,7 @@ SearchDB <- function(dbFile,
 		if (floor(limit)!=limit)
 				stop("limit must be a whole number or two comma-separated whole numbers specifying offset,limit.")
 	} else {
-		if (!grepl("[0-9],[0-9]", limit, perl=T)) {
+		if (!grepl("[0-9],[0-9]", limit, perl=TRUE)) {
 			limit <- as.numeric(limit)
 			if (floor(limit)!=limit)
 				stop("limit must be a whole number or two comma-separated whole numbers specifying offset,limit.")
@@ -159,25 +173,6 @@ SearchDB <- function(dbFile,
 	searchResult <- fetch(rs, n=-1)
 	dbClearResult(rs)
 	
-	bz_header <- as.raw(c(0x42, 0x5a, 0x68))
-	xz_header <- as.raw(c(0xfd, 0x37, 0x7a))
-	.decompress <- function(x) {
-		# choose decompression type
-		if (identical(x[1:3], bz_header)) {
-			memDecompress(x,
-				type="bzip2",
-				asChar=TRUE)
-		} else if (identical(x[1:3], xz_header)) {
-			memDecompress(x,
-				type="xz",
-				asChar=TRUE)
-		} else { # variable header
-			memDecompress(x,
-				type="gzip",
-				asChar=TRUE)
-		}
-	}
-	
 	if (countOnly) {
 		count <- as.integer(searchResult)
 	} else {
@@ -218,17 +213,19 @@ SearchDB <- function(dbFile,
 					type <- 6
 				}
 			}
-			
-			if (type==1 || type==5) {
-				if (is.na(pmatch(replaceChar, DNA_ALPHABET)) && (replaceChar!=""))
-					stop("replaceChar must be a character in the DNA_ALPHABET or empty character.")
-			} else if (type==2 || type==6) {
-				if (is.na(pmatch(replaceChar, RNA_ALPHABET)) && (replaceChar!=""))
-					stop("replaceChar must be a character in the RNA_ALPHABET or empty character.")
-			} else if (type==3 || type==7) {
-				if (is.na(pmatch(replaceChar, AA_ALPHABET)) && (replaceChar!=""))
-					stop("replaceChar must be a character in the AA_ALPHABET or empty character.")
-			}
+		}
+		
+		if (is.na(replaceChar)) {
+			replaceChar <- NA_character_
+		} else if (type==1 || type==5) {
+			if (is.na(pmatch(replaceChar, DNA_ALPHABET)) && (replaceChar!=""))
+				stop("replaceChar must be a character in the DNA_ALPHABET or empty character.")
+		} else if (type==2 || type==6) {
+			if (is.na(pmatch(replaceChar, RNA_ALPHABET)) && (replaceChar!=""))
+				stop("replaceChar must be a character in the RNA_ALPHABET or empty character.")
+		} else if (type==3 || type==7) {
+			if (is.na(pmatch(replaceChar, AA_ALPHABET)) && (replaceChar!=""))
+				stop("replaceChar must be a character in the AA_ALPHABET or empty character.")
 		}
 		
 		if (type!=4 && type!=8) {
@@ -268,20 +265,19 @@ SearchDB <- function(dbFile,
 		} else if (type==4) {
 			myXStringSet <- BStringSet(searchResult$sequence)
 		} else {
-			searchResult$quality <- unlist(lapply(searchResult$quality,
-				.decompress))
+			searchResult$quality <- Codec(searchResult$quality)
 			if (type==5) {
 				myXStringSet <- QualityScaledDNAStringSet(DNAStringSet(searchResult$sequence),
-					PhredQuality(BStringSet(searchResult$quality)))
+					quality(searchResult$quality))
 			} else if (type==6) {
 				myXStringSet <- QualityScaledRNAStringSet(RNAStringSet(searchResult$sequence),
-					PhredQuality(BStringSet(searchResult$quality)))
+					quality(searchResult$quality))
 			} else if (type==7) {
 				myXStringSet <- QualityScaledAAStringSet(AAStringSet(searchResult$sequence),
-					PhredQuality(BStringSet(searchResult$quality)))
+					quality(searchResult$quality))
 			} else { # type==8
 				myXStringSet <- QualityScaledBStringSet(BStringSet(searchResult$sequence),
-					PhredQuality(BStringSet(searchResult$quality)))
+					quality(searchResult$quality))
 			}
 		}
 		names(myXStringSet) <- searchResult[, 1]

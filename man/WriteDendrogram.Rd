@@ -54,6 +54,6 @@ Erik Wright \email{DECIPHER@cae.wisc.edu}
 dists <- matrix(c(0, 10, 20, 10, 0, 5, 20, 5, 0),
     nrow=3,
     dimnames=list(c("dog", "elephant", "horse")))
-dend <- IdClusters(dists, method="NJ", asDendrogram=TRUE)
+dend <- IdClusters(dists, method="NJ", type="dendrogram")
 WriteDendrogram(dend)
 }

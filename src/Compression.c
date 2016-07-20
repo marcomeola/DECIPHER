@@ -405,7 +405,109 @@ int revcompDiff(const char curr, const char last)
 	return 0;
 }
 
-// compression algorithm
+////////////////////////////////////////////////////
+// nbit compression encoding description
+//
+// First byte:
+// 1aab cdee
+// aa = 10 for nbit
+// b = 0 (start upper case)
+// b = 1 (start lower case)
+// c = 0 (plain ASCII)
+// c = 1 (encoded)
+// d = 0 (DNA letters)
+// d = 1 (RNA letters)
+// ee = number of bytes to store length then CRC:
+// 00 = 1 byte (up to 255 nts)
+// 01 = 2 bytes (up to 65,535 nts)
+// 10 = 3 bytes (up to 16,777,215 nts)
+// 11 = 4 bytes (up to 4,294,967,295 nts)
+//
+// The next bytes provide the length in typical integer format,
+// followed by the CRC-8/16/24/32 in accordance with the length.
+//
+// The next bytes store the sequence in quasi-reverse order:
+// A = 00
+// C = 01
+// G = 10
+// T = 00
+//
+// Examples:
+// AAAC = 01000000
+// AACA = 00010000
+// ACAA = 00000100
+// CAAA = 00000001
+//
+// With the exception of AAAA (0x0), which is the control code.
+// When 0x0 is encountered, switch paths based on the next bit:
+// axxx xxxx
+// a = 0 for path #1
+// a = 1 for path #2
+//
+// Path #1 ('a' = 0):
+// If this byte = 0x0 then assign to "AAAA" and continue;
+// Otherwise, determine the character from the last 5 bits:
+// 0yy0 0001 = A, (length - 1) stored in next byte
+// 0yy0 0010 = C, (length - 1) stored in next byte
+// 0yy0 0011 = G, (length - 1) stored in next byte
+// 0yy0 0100 = T/U, (length - 1) stored in next byte
+// 0yy0 0101 = V, (length - 1) stored in next byte
+// 0yy0 0110 = H, (length - 1) stored in next byte
+// 0yy0 0111 = D, (length - 1) stored in next byte
+// 0yy0 1000 = B, (length - 1) stored in next byte
+// 0yy0 1001 = +, (length - 1) stored in next byte
+// 0yy0 1010 = ., (length - 1) stored in next byte
+// 0yy0 1011 = N, (length - 1) stored in next byte
+// 0yy0 1100 = -, (length - 1) stored in next byte
+// 0yy0 1101 = M, (length - 1) stored in next byte
+// 0yy0 1110 = R, (length - 1) stored in next byte
+// 0yy0 1111 = W, (length - 1) stored in next byte
+// 0yy1 0000 = S, (length - 1) stored in next byte
+// 0yy1 0001 = Y, (length - 1) stored in next byte
+// 0yy1 0010 = K, (length - 1) stored in next byte
+// 0yy1 0011 = a single N
+// 0yy1 0100 = a single -
+// 0yy1 0101 = a single M
+// 0yy1 0110 = a single R
+// 0yy1 0111 = a single W
+// 0yy1 1000 = a single S
+// 0yy1 1001 = a single Y
+// 0yy1 1010 = a single K
+// 0yy1 1011 = +, (length - 1) stored in next two bytes
+// 0yy1 1100 = ., (length - 1) stored in next two bytes
+// 0yy1 1101 = N, (length - 1) stored in next two bytes
+// 0yy1 1110 = -, (length - 1) stored in next two bytes
+// 0yy1 1111 = switch case (upper to lower, or vise-versa)
+//
+// And the yy bits decide which position to start from:
+// yy = 00 for the current position
+// yy = 01 for the (current - 1) position
+// yy = 10 for the (current - 2) position
+// yy = 11 for the (current - 3) position
+//
+// Path #2 ('a' = 1):
+// Three bit encoding until a zero is encountered in the 'a' bit:
+// ACTG- = 1-125 combinations (7 bits required)
+// 0x0 is still used as the control code (does not break out of triplet coding)
+// If the 8-bit is zero then the next byte is no longer triplet code (unless 0x0)
+// A = 0, C = 1, G = 2, T = 3, - = 4
+// first * 25 + second * 5 + third + 1 = 7-bits
+// Examples:
+// AAA = 0*25 + 0*5 + 0 + 1 = 1
+// --- = 4*25 + 4*5 + 4 + 1 = 125
+// A-T = 0*25 + 4*5 + 3 + 1 = 24
+//
+// 126 & 127 are used as control codes meaning the next 2*n bytes contain:
+// start position of the a repeat (n bytes), end position of a repeat
+// 126 means that the repeat is exact, 127 means that it is reverse complement
+// (Note that the first digit is a 1, so 126 is actually 254 and 127 is 255)
+// n = 1 byte, up to position 255
+// n = 2 bytes, up to position 65,535
+// n = 3 bytes, up to position 16,777,215
+// n = 4 bytes, up to position 4,294,967,295
+////////////////////////////////////////////////////
+
+// nbit compression algorithm
 SEXP nbit(SEXP x, SEXP y, SEXP compRepeats, SEXP nThreads)
 {
 	int i, j, k, pos;
@@ -443,17 +545,6 @@ SEXP nbit(SEXP x, SEXP y, SEXP compRepeats, SEXP nThreads)
 				dict = Calloc(65536, unsigned int);
 			}
 		}
-		
-		//////////////////////////////////
-		// HEADER CODE
-		// 110abcde "magic header"
-		// a  = starting case (upper = 0)
-		// b  = encoded (1 = yes, 0 = no)
-		// c  = DNA (0) or RNA (1)
-		// de = number of bytes following
-		//      to encode the length (1-4)
-		//      and encode the CRC value
-		//////////////////////////////////
 		
 		// set 4/7/8-bits to 1
 		p[0] |= 200; // 11001000
@@ -1273,12 +1364,355 @@ SEXP nbit(SEXP x, SEXP y, SEXP compRepeats, SEXP nThreads)
 	return ret;
 }
 
+////////////////////////////////////////////////////
+// qbit compression encoding description
+//
+// First byte:
+// 1aab bbcc
+// aa = 01 for qbit
+// bbb = minimum difference between levels (delta)
+// cc = number of bytes to store length then CRC:
+// 00 = 1 byte (up to 255 nts)
+// 01 = 2 bytes (up to 65,535 nts)
+// 10 = 3 bytes (up to 16,777,215 nts)
+// 11 = 4 bytes (up to 4,294,967,295 nts)
+//
+// The next bytes provide the length in typical integer format,
+// followed by the CRC-8/16/24/32 in accordance with the length.
+//
+// The following seven bits store the starting value.
+//
+// The remaining bits store the transformed quality scores:
+// (1) Record the value of the first element
+// (2) Take the lagged difference of order one
+// (3) Apply a bijection mapping to positive integers
+// (4) Find the minimum value (offset) greater than one
+// (5) Subtract (offset - 1) from all values greater than zero
+// (6) Convert runs of >= 8 ones into 0xFF followed by length - 8
+// (7) Convert longer runs into 0xFFFF followed by length - 8
+// (8) Encode the remainder using Elias gamma encoding
+////////////////////////////////////////////////////
+
+// qbit compression algorithm
+SEXP qbit(SEXP x, SEXP y, SEXP nThreads)
+{
+	int i, j;
+	int n = length(x);
+	int ascii = asInteger(y);
+	int nthreads = asInteger(nThreads);
+	
+	unsigned char leading1[9] = {0, 128, 192, 224, 240, 248, 252, 254, 255};
+	unsigned char trailing1[9] = {255, 127, 63, 31, 15, 7, 3, 1, 0};
+	unsigned char zeros[256] = {
+		0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3,
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+		5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+		5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+		6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+		6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+		6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+		6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+		7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+		7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+		7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+		7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+		7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+		7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+		7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+		7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7
+	};
+	
+	unsigned char *p;
+	unsigned char **ptrs = Calloc(n, unsigned char *); // compressed strings
+	const char *s;
+	const char **strs = Calloc(n, const char *); // uncompressed strings
+	int *l = Calloc(n, int); // lengths
+	
+	// build a vector of thread-safe pointers
+	for (i = 0; i < n; i++) {
+		strs[i] = CHAR(STRING_ELT(x, i));
+		l[i] = length(STRING_ELT(x, i));
+	}
+	
+	// compress the quality scores
+	#pragma omp parallel for private(i,j,k,p,s,pos) schedule(guided) num_threads(nthreads)
+	for (i = 0; i < n; i++) {
+		ptrs[i] = Calloc(l[i] > 3 ? l[i] : 4, unsigned char); // initialized to zero
+		p = ptrs[i];
+		s = strs[i];
+		
+		int success = 1; // successful compression
+		for (j = 0; j < l[i]; j++) {
+			if (s[j] > 126) {
+				success = 0;
+				break;
+			}
+		}
+		
+		// set the header length
+		int c; // byte count
+		// set 1-bit to 2-bit
+		if (l[i] > 16777215) {
+			p[0] |= 3;
+			c = 9;
+			p[4] = (l[i] >> 24) & 0xFF;
+			p[3] = (l[i] >> 16) & 0xFF;
+			p[2] = (l[i] >> 8) & 0xFF;
+			p[1] = l[i] & 0xFF;
+			
+			crc_t crc = 0xffffffff;
+			crc = crc_update32(crc, s, l[i]);
+			p[8] = (unsigned char)((crc >> 24) & 0xFF);
+			p[7] = (unsigned char)((crc >> 16) & 0xFF);
+			p[6] = (unsigned char)((crc >> 8) & 0xFF);
+			p[5] = (unsigned char)(crc & 0xFF);
+		} else if (l[i] > 65535) {
+			p[0] |= 2;
+			c = 7;
+			p[3] = (l[i] >> 16) & 0xFF;
+			p[2] = (l[i] >> 8) & 0xFF;
+			p[1] = l[i] & 0xFF;
+			
+			crc_t crc = 0xb704ce;
+			crc = crc_update24(crc, s, l[i]);
+			p[6] = (unsigned char)((crc >> 16) & 0xFF);
+			p[5] = (unsigned char)((crc >> 8) & 0xFF);
+			p[4] = (unsigned char)(crc & 0xFF);
+		} else if (l[i] > 255) {
+			p[0] |= 1;
+			c = 5;
+			p[2] = (l[i] >> 8) & 0xFF;
+			p[1] = l[i] & 0xFF;
+			
+			crc_t16 crc = 0x0000;
+			crc = crc_update16(crc, s, l[i]);
+			p[4] = (unsigned char)((crc >> 8) & 0xFF);
+			p[3] = (unsigned char)(crc & 0xFF);
+		} else {
+			c = 3;
+			p[1] = l[i] & 0xFF;
+			
+			crc_t8 crc = 0x00;
+			crc = crc_update8(crc, s, l[i]);
+			p[2] = (unsigned char)crc;
+		}
+		
+		if (success) {
+			// set 6/8-bits to 1
+			p[0] |= 160; // 10100000
+		} else {
+			// use the nbit header
+			l[i] = 0;
+			p[0] |= 192; // 11000000
+			continue;
+		}
+		
+		// fill the next 7 bits with the first character
+		if (l[i] > 0) {
+			p[c] = (s[0] << 1) & 0xFF;
+		} else {
+			continue;
+		}
+		
+		char min = 127; // minimum value > 1
+		int temp;
+		l[i]--;
+		unsigned char *t = Calloc(l[i], unsigned char);
+		for (j = 0; j < l[i]; j++) {
+			temp = s[j + 1] - s[j];
+			if (temp > 0) {
+				t[j] = 2*temp;
+			} else {
+				t[j] = -2*temp + 1;
+			}
+			if (t[j] > 1 && t[j] < min)
+				min = t[j];
+		}
+		
+		// record offset and remove
+		if (min != 127 && min != 2) {
+			min -= 2;
+			if (min > 7)
+				min = 7;
+			p[0] |= min << 2;
+			
+			// subtract min from values > 1
+			for (j = 0; j < l[i]; j++) {
+				if (t[j] > 1)
+					t[j] -= min;
+			}
+		}
+		
+		int b = 7; // current bit in byte
+		j = 0; // position in sequence
+		int k = 0; // length of run
+		int pos = 0; // start of run
+		unsigned char byte;
+		while (j < l[i]) {
+			if (j >= pos && t[j] == 1) { // check run length
+				for (k = 1, pos = j + 1; (pos < l[i]) && (k < 65544); k++, pos++) {
+					if (t[j] != t[pos])
+						break;
+				}
+			}
+			
+			if (k > 7) { // run of ones
+				if (k < 263) {
+					if ((c + 2) > l[i]) {
+						success = 0;
+						break;
+					}
+					
+					// add eight ones
+					p[c] |= trailing1[b];
+					c++;
+					p[c] |= leading1[b];
+					
+					byte = k - 8;
+					p[c] |= byte >> b;
+					c++;
+					p[c] |= byte << (8 - b);
+				} else {
+					if ((c + 4) > l[i]) {
+						success = 0;
+						break;
+					}
+					
+					// add eight ones
+					p[c] |= trailing1[b];
+					c++;
+					p[c] = 255;
+					c++;
+					p[c] |= leading1[b];
+					
+					byte = (k - 8) >> 8;
+					p[c] |= byte >> b;
+					c++;
+					p[c] |= byte << (8 - b);
+					byte = k - 8;
+					p[c] |= byte >> b;
+					c++;
+					p[c] |= byte << (8 - b);
+				}
+				
+				j += k;
+				k = 0;
+				continue;
+			}
+			
+			// apply Elias gamma encoding
+			b += zeros[t[j]];
+			if (b > 7) {
+				c++;
+				if (c > l[i]) {
+					success = 0;
+					break;
+				}
+				b -= 8;
+			}
+			
+			temp = 7 - b - zeros[t[j]];
+			if (temp == 0) {
+				p[c] |= t[j];
+				c++;
+				if (c > l[i]) {
+					success = 0;
+					break;
+				}
+				b = 0;
+			} else if (temp > 0) {
+				p[c] |= t[j] << temp;
+				b += zeros[t[j]] + 1;
+			} else {
+				temp *= -1;
+				p[c] |= t[j] >> temp;
+				b += zeros[t[j]] + 1;
+				c++;
+				if (c > l[i]) {
+					success = 0;
+					break;
+				}
+				b -= 8;
+				p[c] |= t[j] << (8 - temp);
+			}
+			
+			j++;
+		}
+		
+		Free(t);
+		
+		if (success==0) {
+			l[i] = 0;
+			p[0] |= 64; // make the 7-bit one
+			p[0] &= 223; // make the 6-bit zero
+		} else {
+			// set the new length
+			if (b==0) {
+				l[i] = c;
+			} else {
+				l[i] = c + 1;
+			}
+		}
+	}
+	
+	Free(strs);
+	
+	SEXP ret, ans;
+	PROTECT(ret = allocVector(VECSXP, n));
+	
+	for (i = 0; i < n; i++) {
+		p = ptrs[i];
+		if (l[i]==0) { // compression failed
+			if (ascii==1) { // keep as ascii
+				l[i] = length(STRING_ELT(x, i));
+				PROTECT(ans = allocVector(RAWSXP, l[i] + 1));
+				// copy header byte
+				RAW(ans)[0] = p[0];
+				// copy characters directly
+				memcpy(RAW(ans) + 1, CHAR(STRING_ELT(x, i)), l[i]);
+			} else { // return empty raw vector
+				PROTECT(ans = allocVector(RAWSXP, l[i]));
+			}
+		} else { // compression succeeded
+			PROTECT(ans = allocVector(RAWSXP, l[i]));
+			memcpy(RAW(ans), p, l[i]);
+		}
+		
+		Free(p);
+		SET_VECTOR_ELT(ret, i, ans);
+		UNPROTECT(1); // ans
+	}
+	
+	Free(ptrs);
+	Free(l);
+	UNPROTECT(1); // ret
+	
+	return ret;
+}
+
 // decompression algorithm
 SEXP decompress(SEXP x, SEXP nThreads)
 {
 	int i;
 	int n = length(x);
 	int nthreads = asInteger(nThreads);
+	
+	unsigned char bit[8] = {128, 64, 32, 16, 8, 4, 2, 1};
+	unsigned char bijection[256] = {
+		0, 0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6, -6, 7, -7, 8, -8, 9, -9,
+		10, -10, 11, -11, 12, -12, 13, -13, 14, -14, 15, -15, 16, -16, 17, -17, 18, -18, 19, -19,
+		20, -20, 21, -21, 22, -22, 23, -23, 24, -24, 25, -25, 26, -26, 27, -27, 28, -28, 29, -29,
+		30, -30, 31, -31, 32, -32, 33, -33, 34, -34, 35, -35, 36, -36, 37, -37, 38, -38, 39, -39,
+		40, -40, 41, -41, 42, -42, 43, -43, 44, -44, 45, -45, 46, -46, 47, -47, 48, -48, 49, -49,
+		50, -50, 51, -51, 52, -52, 53, -53, 54, -54, 55, -55, 56, -56, 57, -57, 58, -58, 59, -59,
+		60, -60, 61, -61, 62, -62, 63, -63, 64, -64, 65, -65, 66, -66, 67, -67, 68, -68, 69, -69,
+		70, -70, 71, -71, 72, -72, 73, -73, 74, -74, 75, -75, 76, -76, 77, -77, 78, -78, 79, -79,
+		80, -80, 81, -81, 82, -82, 83, -83, 84, -84, 85, -85, 86, -86, 87, -87, 88, -88, 89, -89,
+		90, -90, 91, -91, 92, -92, 93, -93, 94, -94, 95, -95, 96, -96, 97, -97, 98, -98, 99, -99,
+		100, -100, 101, -101, 102, -102, 103, -103, 104, -104, 105, -105, 106, -106, 107, -107, 108, -108, 109, -109,
+		110, -110, 111, -111, 112, -112, 113, -113, 114, -114, 115, -115, 116, -116, 117, -117, 118, -118, 119, -119,
+		120, -120, 121, -121, 122, -122, 123, -123, 124, -124, 125, -125, 126, -126, 127, -127
+	};
 	
 	char *s;
 	char **strs = Calloc(n, char *); // uncompressed strings
@@ -1300,8 +1734,12 @@ SEXP decompress(SEXP x, SEXP nThreads)
 		
 		char TU, tu, A, C, G, T;
 		int len, j, k, lower;
-		if ((p[0] & 224)==192) { // nbit compression
-			if ((p[0] & 8)==0) { // ascii
+		unsigned char type, min;
+		
+		type = (p[0] & 224);
+		
+		if (type==192 || type==160) { // nbit or qbit compression
+			if (type==192 && (p[0] & 8)==0) { // ascii
 				s = Calloc(l[i], char); // each sequence
 				memcpy(s, p + 1, l[i] - 1);
 				strs[i] = s;
@@ -1327,7 +1765,8 @@ SEXP decompress(SEXP x, SEXP nThreads)
 					len |= p[1];
 					j = 3;
 				}
-				
+			}
+			if (type==192) { // nbit compression
 				if ((p[0] & 4) > 0) {
 					TU = 'U';
 					tu = 'u';
@@ -1348,6 +1787,8 @@ SEXP decompress(SEXP x, SEXP nThreads)
 					G = 'g';
 					T = tu;
 				}
+			} else { // qbit compression
+				min = (p[0] & 28) >> 2;
 			}
 		} else {
 			l[i] = 0;
@@ -1358,443 +1799,540 @@ SEXP decompress(SEXP x, SEXP nThreads)
 		s = Calloc(len + 4, char); // each sequence
 		strs[i] = s;
 		
-		// decompress
-		int run;
-		char letter;
-		int byte;
-		int c = 0;
-		int threeBit = 0;
-		while (j < l[i]) {
-			if (p[j]==0) { // control code
-				j++;
-				if (j==l[i])
-					error("Corrupted encoding.");
-				if (p[j]==0) { // AAAA
-					s[c++] = A;
-					s[c++] = A;
-					s[c++] = A;
-					s[c++] = A;
-				} else if (p[j]==254 || p[j]==255) { // repeat
-					int rev = (p[j]==254) ? 0 : 1;
-					unsigned int start = 0;
-					unsigned int len = 0;
+		// decompress the payload
+		if (type==192) { // nbit compression
+			int run;
+			char letter;
+			int byte;
+			int c = 0;
+			int threeBit = 0;
+			while (j < l[i]) {
+				if (p[j]==0) { // control code
 					j++;
-					
-					if (c > 16777215) {
-						start |= p[j++] << 24;
-						start |= p[j++] << 16;
-						start |= p[j++] << 8;
-						start |= p[j++];
-						len |= p[j++] << 24;
-						len |= p[j++] << 16;
-						len |= p[j++] << 8;
-						len |= p[j];
-					} else if (c > 65535) {
-						start |= p[j++] << 16;
-						start |= p[j++] << 8;
-						start |= p[j++];
-						len |= p[j++] << 16;
-						len |= p[j++] << 8;
-						len |= p[j];
-					} else if (c > 255) {
-						start |= p[j++] << 8;
-						start |= p[j++];
-						len |= p[j++] << 8;
-						len |= p[j];
-					} else {
-						start |= p[j++];
-						len |= p[j];
-					}
-					
-					if (rev==0) { // exact repeat
-						for (k = 0; k < len; k++, start++, c++)
-							s[c] = s[start];
-					} else { // revcomp repeat
-						for (k = 0; k < len; k++, start--, c++) {
-							switch (s[start]) {
-								case 'A':
-									s[c] = 'T';
-									break;
-								case 'a':
-									s[c] = 't';
-									break;
-								case 'C':
-									s[c] = 'G';
-									break;
-								case 'c':
-									s[c] = 'g';
-									break;
-								case 'G':
-									s[c] = 'C';
-									break;
-								case 'g':
-									s[c] = 'c';
-									break;
-								case 'T':
-									s[c] = 'A';
-									break;
-								case 't':
-									s[c] = 'a';
-									break;
-								case 'U':
-									s[c] = 'A';
-									break;
-								case 'u':
-									s[c] = 'a';
-									break;
+					if (j==l[i])
+						error("Corrupted encoding.");
+					if (p[j]==0) { // AAAA
+						s[c++] = A;
+						s[c++] = A;
+						s[c++] = A;
+						s[c++] = A;
+					} else if (p[j]==254 || p[j]==255) { // repeat
+						int rev = (p[j]==254) ? 0 : 1;
+						unsigned int start = 0;
+						unsigned int len = 0;
+						j++;
+						
+						if (c > 16777215) {
+							start |= p[j++] << 24;
+							start |= p[j++] << 16;
+							start |= p[j++] << 8;
+							start |= p[j++];
+							len |= p[j++] << 24;
+							len |= p[j++] << 16;
+							len |= p[j++] << 8;
+							len |= p[j];
+						} else if (c > 65535) {
+							start |= p[j++] << 16;
+							start |= p[j++] << 8;
+							start |= p[j++];
+							len |= p[j++] << 16;
+							len |= p[j++] << 8;
+							len |= p[j];
+						} else if (c > 255) {
+							start |= p[j++] << 8;
+							start |= p[j++];
+							len |= p[j++] << 8;
+							len |= p[j];
+						} else {
+							start |= p[j++];
+							len |= p[j];
+						}
+						
+						if (rev==0) { // exact repeat
+							for (k = 0; k < len; k++, start++, c++)
+								s[c] = s[start];
+						} else { // revcomp repeat
+							for (k = 0; k < len; k++, start--, c++) {
+								switch (s[start]) {
+									case 'A':
+										s[c] = 'T';
+										break;
+									case 'a':
+										s[c] = 't';
+										break;
+									case 'C':
+										s[c] = 'G';
+										break;
+									case 'c':
+										s[c] = 'g';
+										break;
+									case 'G':
+										s[c] = 'C';
+										break;
+									case 'g':
+										s[c] = 'c';
+										break;
+									case 'T':
+										s[c] = 'A';
+										break;
+									case 't':
+										s[c] = 'a';
+										break;
+									case 'U':
+										s[c] = 'A';
+										break;
+									case 'u':
+										s[c] = 'a';
+										break;
+								}
 							}
 						}
+					} else if (p[j]==31) {
+						goto switchCase;
+					} else if (p[j]==63) {
+						c--;
+						goto switchCase;
+					} else if (p[j]==95) {
+						c -= 2;
+						goto switchCase;
+					} else if (p[j]==127) {
+						c -= 3;
+						goto switchCase;
+					} else if ((p[j] >> 7)==0) { // run
+						c -= p[j] >> 5;
+						byte = (p[j] & 31);
+						if (byte > 18 && byte < 27) {
+							switch (byte) {
+								case 21:
+									if (lower==0) {
+										s[c] = 'M';
+									} else {
+										s[c] = 'm';
+									}
+									break;
+								case 22:
+									if (lower==0) {
+										s[c] = 'R';
+									} else {
+										s[c] = 'r';
+									}
+									break;
+								case 23:
+									if (lower==0) {
+										s[c] = 'W';
+									} else {
+										s[c] = 'w';
+									}
+									break;
+								case 24:
+									if (lower==0) {
+										s[c] = 'S';
+									} else {
+										s[c] = 's';
+									}
+									break;
+								case 25:
+									if (lower==0) {
+										s[c] = 'Y';
+									} else {
+										s[c] = 'y';
+									}
+									break;
+								case 26:
+									if (lower==0) {
+										s[c] = 'K';
+									} else {
+										s[c] = 'k';
+									}
+									break;
+								case 19:
+									if (lower==0) {
+										s[c] = 'N';
+									} else {
+										s[c] = 'n';
+									}
+									break;
+								case 20:
+									s[c] = '-';
+									break;
+								default:
+									error("Unexpected byte.");
+									break;
+							}
+							c++;
+						} else if (byte > 26) {
+							switch (byte) {
+								case 27:
+									letter = '+';
+									break;
+								case 28:
+									letter = '.';
+									break;
+								case 29:
+									if (lower==0) {
+										letter = 'N';
+									} else {
+										letter = 'n';
+									}
+									break;
+								case 30:
+									letter = '-';
+									break;
+								default:
+									error("Unexpected byte.");
+									break;
+							}
+							j++;
+							if (j==l[i])
+								error("Corrupted encoding.");
+							run = p[j] << 8;
+							j++;
+							if (j==l[i])
+								error("Corrupted encoding.");
+							run |= p[j];
+							for (k = 0; k <= run; k++, c++) {
+								s[c] = letter;
+							}
+						} else {
+							switch (byte) {
+								case 1:
+									letter = A;
+									break;
+								case 2:
+									letter = C;
+									break;
+								case 3:
+									letter = G;
+									break;
+								case 4:
+									letter = T;
+									break;
+								case 9:
+									letter = '+';
+									break;
+								case 10:
+									letter = '.';
+									break;
+								case 13:
+									if (lower==0) {
+										letter = 'M';
+									} else {
+										letter = 'm';
+									}
+									break;
+								case 14:
+									if (lower==0) {
+										letter = 'R';
+									} else {
+										letter = 'r';
+									}
+									break;
+								case 15:
+									if (lower==0) {
+										letter = 'W';
+									} else {
+										letter = 'w';
+									}
+									break;
+								case 16:
+									if (lower==0) {
+										letter = 'S';
+									} else {
+										letter = 's';
+									}
+									break;
+								case 17:
+									if (lower==0) {
+										letter = 'Y';
+									} else {
+										letter = 'y';
+									}
+									break;
+								case 18:
+									if (lower==0) {
+										letter = 'K';
+									} else {
+										letter = 'k';
+									}
+									break;
+								case 5:
+									if (lower==0) {
+										letter = 'V';
+									} else {
+										letter = 'v';
+									}
+									break;
+								case 6:
+									if (lower==0) {
+										letter = 'H';
+									} else {
+										letter = 'h';
+									}
+									break;
+								case 7:
+									if (lower==0) {
+										letter = 'D';
+									} else {
+										letter = 'd';
+									}
+									break;
+								case 8:
+									if (lower==0) {
+										letter = 'B';
+									} else {
+										letter = 'b';
+									}
+									break;
+								case 11:
+									if (lower==0) {
+										letter = 'N';
+									} else {
+										letter = 'n';
+									}
+									break;
+								case 12:
+									letter = '-';
+									break;
+								default:
+									error("Unexpected byte.");
+									break;
+							}
+							j++;
+							if (j==l[i])
+								error("Corrupted encoding.");
+							run = p[j];
+							for (k = 0; k <= run; k++, c++) {
+								s[c] = letter;
+							}
+						}
+					} else { // 3-bit encoding
+						threeBit = 1;
+						continue; // don't increment j
 					}
-				} else if (p[j]==31) {
-					goto switchCase;
-				} else if (p[j]==63) {
-					c--;
-					goto switchCase;
-				} else if (p[j]==95) {
-					c -= 2;
-					goto switchCase;
-				} else if (p[j]==127) {
-					c -= 3;
-					goto switchCase;
-				} else if ((p[j] >> 7)==0) { // run
-					c -= p[j] >> 5;
-					byte = (p[j] & 31);
-					if (byte > 18 && byte < 27) {
-						switch (byte) {
-							case 21:
-								if (lower==0) {
-									s[c] = 'M';
-								} else {
-									s[c] = 'm';
-								}
-								break;
-							case 22:
-								if (lower==0) {
-									s[c] = 'R';
-								} else {
-									s[c] = 'r';
-								}
-								break;
-							case 23:
-								if (lower==0) {
-									s[c] = 'W';
-								} else {
-									s[c] = 'w';
-								}
-								break;
-							case 24:
-								if (lower==0) {
-									s[c] = 'S';
-								} else {
-									s[c] = 's';
-								}
-								break;
-							case 25:
-								if (lower==0) {
-									s[c] = 'Y';
-								} else {
-									s[c] = 'y';
-								}
-								break;
-							case 26:
-								if (lower==0) {
-									s[c] = 'K';
-								} else {
-									s[c] = 'k';
-								}
-								break;
-							case 19:
-								if (lower==0) {
-									s[c] = 'N';
-								} else {
-									s[c] = 'n';
-								}
-								break;
-							case 20:
-								s[c] = '-';
-								break;
-							default:
-								error("Unexpected byte.");
-								break;
-						}
-						c++;
-					} else if (byte > 26) {
-						switch (byte) {
-							case 27:
-								letter = '+';
-								break;
-							case 28:
-								letter = '.';
-								break;
-							case 29:
-								if (lower==0) {
-									letter = 'N';
-								} else {
-									letter = 'n';
-								}
-								break;
-							case 30:
-								letter = '-';
-								break;
-							default:
-								error("Unexpected byte.");
-								break;
-						}
-						j++;
-						if (j==l[i])
-							error("Corrupted encoding.");
-						run = p[j] << 8;
-						j++;
-						if (j==l[i])
-							error("Corrupted encoding.");
-						run |= p[j];
-						for (k = 0; k <= run; k++, c++) {
-							s[c] = letter;
-						}
+				} else if (threeBit) { // 3-bit encoding
+					if ((p[j] & 128)==0) {
+						threeBit = 0; // next byte is not 3-bit encoding
+						byte = p[j];
 					} else {
-						switch (byte) {
-							case 1:
-								letter = A;
-								break;
-							case 2:
-								letter = C;
-								break;
-							case 3:
-								letter = G;
-								break;
-							case 4:
-								letter = T;
-								break;
-							case 9:
-								letter = '+';
-								break;
-							case 10:
-								letter = '.';
-								break;
-							case 13:
-								if (lower==0) {
-									letter = 'M';
-								} else {
-									letter = 'm';
-								}
-								break;
-							case 14:
-								if (lower==0) {
-									letter = 'R';
-								} else {
-									letter = 'r';
-								}
-								break;
-							case 15:
-								if (lower==0) {
-									letter = 'W';
-								} else {
-									letter = 'w';
-								}
-								break;
-							case 16:
-								if (lower==0) {
-									letter = 'S';
-								} else {
-									letter = 's';
-								}
-								break;
-							case 17:
-								if (lower==0) {
-									letter = 'Y';
-								} else {
-									letter = 'y';
-								}
-								break;
-							case 18:
-								if (lower==0) {
-									letter = 'K';
-								} else {
-									letter = 'k';
-								}
-								break;
-							case 5:
-								if (lower==0) {
-									letter = 'V';
-								} else {
-									letter = 'v';
-								}
-								break;
-							case 6:
-								if (lower==0) {
-									letter = 'H';
-								} else {
-									letter = 'h';
-								}
-								break;
-							case 7:
-								if (lower==0) {
-									letter = 'D';
-								} else {
-									letter = 'd';
-								}
-								break;
-							case 8:
-								if (lower==0) {
-									letter = 'B';
-								} else {
-									letter = 'b';
-								}
-								break;
-							case 11:
-								if (lower==0) {
-									letter = 'N';
-								} else {
-									letter = 'n';
-								}
-								break;
-							case 12:
-								letter = '-';
-								break;
-							default:
-								error("Unexpected byte.");
-								break;
-						}
-						j++;
-						if (j==l[i])
-							error("Corrupted encoding.");
-						run = p[j];
-						for (k = 0; k <= run; k++, c++) {
-							s[c] = letter;
-						}
+						byte = p[j] & 127; // clear 8-bit
 					}
-				} else { // 3-bit encoding
-					threeBit = 1;
-					continue; // don't increment j
-				}
-			} else if (threeBit) { // 3-bit encoding
-				if ((p[j] & 128)==0) {
-					threeBit = 0; // next byte is not 3-bit encoding
-					byte = p[j];
-				} else {
-					byte = p[j] & 127; // clear 8-bit
+					
+					if (byte > 100) {
+						s[c++] = '-';
+						byte -= 100;
+					} else if (byte > 75) {
+						s[c++] = T;
+						byte -= 75;
+					} else if (byte > 50) {
+						s[c++] = G;
+						byte -= 50;
+					} else if (byte > 25) {
+						s[c++] = C;
+						byte -= 25;
+					} else {
+						s[c++] = A;
+					}
+					if (byte > 20) {
+						s[c++] = '-';
+						byte -= 20;
+					} else if (byte > 15) {
+						s[c++] = T;
+						byte -= 15;
+					} else if (byte > 10) {
+						s[c++] = G;
+						byte -= 10;
+					} else if (byte > 5) {
+						s[c++] = C;
+						byte -= 5;
+					} else {
+						s[c++] = A;
+					}
+					if (byte==5) {
+						s[c++] = '-';
+					} else if (byte==4) {
+						s[c++] = T;
+					} else if (byte==3) {
+						s[c++] = G;
+					} else if (byte==2) {
+						s[c++] = C;
+					} else {
+						s[c++] = A;
+					}
+				} else { // 2-bit encoding
+					switch (p[j] & 3) {
+						case 0:
+							s[c++] = A;
+							break;
+						case 1:
+							s[c++] = C;
+							break;
+						case 2:
+							s[c++] = G;
+							break;
+						case 3:
+							s[c++] = T;
+							break;
+					}
+					switch (p[j] & 12) {
+						case 0:
+							s[c++] = A;
+							break;
+						case 4:
+							s[c++] = C;
+							break;
+						case 8:
+							s[c++] = G;
+							break;
+						case 12:
+							s[c++] = T;
+							break;
+					}
+					switch (p[j] & 48) {
+						case 0:
+							s[c++] = A;
+							break;
+						case 16:
+							s[c++] = C;
+							break;
+						case 32:
+							s[c++] = G;
+							break;
+						case 48:
+							s[c++] = T;
+							break;
+					}
+					switch (p[j] & 192) {
+						case 0:
+							s[c++] = A;
+							break;
+						case 64:
+							s[c++] = C;
+							break;
+						case 128:
+							s[c++] = G;
+							break;
+						case 192:
+							s[c++] = T;
+							break;
+					}
 				}
 				
-				if (byte > 100) {
-					s[c++] = '-';
-					byte -= 100;
-				} else if (byte > 75) {
-					s[c++] = T;
-					byte -= 75;
-				} else if (byte > 50) {
-					s[c++] = G;
-					byte -= 50;
-				} else if (byte > 25) {
-					s[c++] = C;
-					byte -= 25;
+				j++;
+				continue;
+				
+				switchCase:
+				if (lower==0) {
+					lower = 1;
+					A = 'a';
+					C = 'c';
+					G = 'g';
+					T = tu;
 				} else {
-					s[c++] = A;
+					lower = 0;
+					A = 'A';
+					C = 'C';
+					G = 'G';
+					T = TU;
 				}
-				if (byte > 20) {
-					s[c++] = '-';
-					byte -= 20;
-				} else if (byte > 15) {
-					s[c++] = T;
-					byte -= 15;
-				} else if (byte > 10) {
-					s[c++] = G;
-					byte -= 10;
-				} else if (byte > 5) {
-					s[c++] = C;
-					byte -= 5;
-				} else {
-					s[c++] = A;
-				}
-				if (byte==5) {
-					s[c++] = '-';
-				} else if (byte==4) {
-					s[c++] = T;
-				} else if (byte==3) {
-					s[c++] = G;
-				} else if (byte==2) {
-					s[c++] = C;
-				} else {
-					s[c++] = A;
-				}
-			} else { // 2-bit encoding
-				switch (p[j] & 3) {
-					case 0:
-						s[c++] = A;
-						break;
-					case 1:
-						s[c++] = C;
-						break;
-					case 2:
-						s[c++] = G;
-						break;
-					case 3:
-						s[c++] = T;
-						break;
-				}
-				switch (p[j] & 12) {
-					case 0:
-						s[c++] = A;
-						break;
-					case 4:
-						s[c++] = C;
-						break;
-					case 8:
-						s[c++] = G;
-						break;
-					case 12:
-						s[c++] = T;
-						break;
-				}
-				switch (p[j] & 48) {
-					case 0:
-						s[c++] = A;
-						break;
-					case 16:
-						s[c++] = C;
-						break;
-					case 32:
-						s[c++] = G;
-						break;
-					case 48:
-						s[c++] = T;
-						break;
-				}
-				switch (p[j] & 192) {
-					case 0:
-						s[c++] = A;
-						break;
-					case 64:
-						s[c++] = C;
-						break;
-					case 128:
-						s[c++] = G;
-						break;
-					case 192:
-						s[c++] = T;
-						break;
+				j++;
+			}
+		} else { // qbit compression
+			s[0] = (p[j] & 254) >> 1;
+			
+			unsigned char *t = Calloc(len, unsigned char); // t-gaps
+			
+			int c = 0; // position in t
+			int b = 7; // current bit in byte
+			int ones = 0;
+			int zeros = 0;
+			int byte;
+			while (j < l[i]) {
+				if ((p[j] & bit[b])) { // one
+					if (zeros) { // previously zero
+						// record value
+						zeros++; // number of bits in value
+						if ((b + zeros) > 8) { // straddles bytes
+							byte = (unsigned char)(p[j] << b) >> (8 - zeros);
+							j++;
+							if (j==l[i])
+								error("Corrupted encoding.");
+							b += zeros - 8;
+							byte |= p[j] >> (8 - b);
+						} else {
+							byte = (unsigned char)(p[j] << b) >> (8 - zeros);
+							b += zeros;
+							if (b==8) {
+								b = 0;
+								j++;
+							}
+						}
+						t[c++] = byte;
+						zeros = 0;
+					} else {
+						t[c++] = 1;
+						if (b==7) {
+							b = 0;
+							j++;
+						} else {
+							b++;
+						}
+						ones++;
+						if (ones==8) {
+							// run of ones
+							if (j==l[i])
+								error("Corrupted encoding.");
+							byte = (unsigned char)(p[j] << b);
+							j++;
+							if (b > 0) {
+								if (j==l[i])
+									error("Corrupted encoding.");
+								byte |= p[j] >> (8 - b);
+							}
+							if (byte==255) {
+								byte = (unsigned char)(p[j] << b);
+								j++;
+								if (j==l[i])
+									error("Corrupted encoding.");
+								byte |= p[j] >> (8 - b);
+								byte <<= 8;
+								byte |= (unsigned char)(p[j] << b);
+								j++;
+								if (b > 0) {
+									if (j==l[i])
+										error("Corrupted encoding.");
+									byte |= p[j] >> (8 - b);
+								}
+							}
+							for (k = 0; k < byte; k++)
+								t[c++] = 1;
+							ones = 0;
+						}
+					}
+				} else { // zero
+					zeros++;
+					if (ones)
+						ones = 0;
+					if (b==7) {
+						b = 0;
+						j++;
+					} else {
+						b++;
+					}
 				}
 			}
 			
-			j++;
-			continue;
-			
-			switchCase:
-			if (lower==0) {
-				lower = 1;
-				A = 'a';
-				C = 'c';
-				G = 'g';
-				T = tu;
-			} else {
-				lower = 0;
-				A = 'A';
-				C = 'C';
-				G = 'G';
-				T = TU;
+			if (min > 0) {
+				for (k = 0; k < c; k++)
+					if (t[k] > 1)
+						t[k] += min;
 			}
-			j++;
+			
+			// apply the reverse bijection
+			for (k = 1; k < len; k++)
+				s[k] = s[k - 1] + bijection[t[k - 1]];
+			
+			Free(t);
 		}
-		
 		s[len] = '\0'; // null-terminate
 		
 		// Cyclic Redundancy Check

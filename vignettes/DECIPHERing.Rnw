@@ -64,7 +64,7 @@ options(width=80)
 \item Sequence databases: import, maintain, view, and export a massive number of sequences.
 \item Sequence alignment: accurately align thousands of DNA, RNA, or amino acid sequences. Quickly find and align the syntenic regions of multiple genomes.
 \item Oligo design: test oligos in silico, or create new primer and probe sequences optimized for a variety of objectives.
-\item Manipulate sequences: correct frameshifts, reorient nucleotides, determine consensus, or digest with restriction enzymes.
+\item Manipulate sequences: trim low quality regions, correct frameshifts, reorient nucleotides, determine consensus, or digest with restriction enzymes.
 \item Analyze sequences: find chimeras, predict secondary structure, and create phylogenetic trees.
 \end{itemize}
 \Rpackage{DECIPHER} is available under the terms of the \underline{\href{http://www.gnu.org/copyleft/gpl.html}{GNU Public License version 3}}.
@@ -114,7 +114,7 @@ The functions of DECIPHER can be grouped into several categories based on intend
 \item Visualization with a web browser:
 \begin{enumerate} \item \Rfunction{BrowseDB} \item \Rfunction{BrowseSeqs} \end{enumerate}
 \item Manipulating and analyzing sequences:
-\begin{enumerate} \item \Rfunction{CorrectFrameshifts} \item \Rfunction{DigestDNA} \item \Rfunction{Disambiguate} \item \Rfunction{OrientNucleotides} \item \Rfunction{PredictHEC} \end{enumerate}
+\begin{enumerate} \item \Rfunction{CorrectFrameshifts} \item \Rfunction{DigestDNA} \item \Rfunction{Disambiguate} \item \Rfunction{OrientNucleotides} \item \Rfunction{PredictHEC} \item \Rfunction{TrimDNA} \end{enumerate}
 \item Multiple sequence alignment:
 \begin{enumerate} \item \Rfunction{AdjustAlignment} \item \Rfunction{AlignDB} \item \Rfunction{AlignProfiles} \item \Rfunction{AlignSeqs} \item \Rfunction{AlignTranslation} \end{enumerate}
 \item Comparison of sequences that are not collinear (i.e., genomes):

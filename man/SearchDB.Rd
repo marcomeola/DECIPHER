@@ -12,11 +12,12 @@ SearchDB(dbFile,
          identifier = "",
          type = "XStringSet",
          limit = -1,
-         replaceChar = "-",
+         replaceChar = NA,
          nameBy = "row_names",
          orderBy = "row_names",
          countOnly = FALSE,
          removeGaps = "none",
+         quality = "Phred",
          clause = "",
          processors = 1,
          verbose = TRUE)
@@ -38,7 +39,7 @@ The type of \code{XStringSet} (sequences) to return.  This should be (an unambig
 Number of results to display.  The default (\code{-1}) does not limit the number of results.
 }
   \item{replaceChar}{
-Optional character used to replace any characters of the sequence that are not present in the \code{XStringSet}'s alphabet.  Not applicable if \code{type=="BStringSet"}.  (See details section below.)
+Optional character used to replace any characters of the sequence that are not present in the \code{XStringSet}'s alphabet.  Not applicable if \code{type=="BStringSet"}.  The default (\code{NA}) results in an error if an incompatible character exist.  (See details section below.)
 }
   \item{nameBy}{
 Character string giving the column name for naming the \code{XStringSet}.
@@ -55,6 +56,9 @@ Determines how gaps ("-" or "." characters) are removed in the sequences.  This 
   \item{clause}{
 An optional character string to append to the query as part of a ``where clause''.
 }
+  \item{quality}{
+The type of quality object to return if \code{type} is a \code{QualityScaledXStringSet}.  This should be (an unambiguous abbreviation of) one of \code{"Phred"}, \code{"Solexa"}, or \code{"Illumina"}.  Note that recent versions of Illumina software provide \code{"Phred"} formatted quality scores.
+}
   \item{processors}{
 The number of processors to use, or \code{NULL} to automatically detect and use all available processors.
 }
@@ -63,7 +67,7 @@ Logical indicating whether to display queries as they are sent to the database.
 }
 }
 \details{
-If \code{type} is \code{"DNAStringSet"} then all U's are converted to T's before creating the \code{DNAStringSet}, and vise-versa if \code{type} is \code{"RNAStringSet"}.  All remaining characters not in the \code{XStringSet}'s alphabet are converted to \code{replaceChar}.  Quality information is interpreted as \code{PredQuality} scores.
+If \code{type} is \code{"DNAStringSet"} then all U's are converted to T's before creating the \code{DNAStringSet}, and vise-versa if \code{type} is \code{"RNAStringSet"}.  All remaining characters not in the \code{XStringSet}'s alphabet are converted to \code{replaceChar} or removed if \code{replaceChar} is \code{""}.  Note that if \code{replaceChar} is \code{NA} (the default), it will result in an error when an unexpected character is found.  Quality information is interpreted as \code{PredQuality} scores.
 }
 \value{
 An \code{XStringSet} or \code{QualityScaledXStringSet} with the sequences that meet the specified criteria.  The \code{names} of the object correspond to the value in the \code{nameBy} column of the database.

@@ -184,20 +184,10 @@ DigestDNA <- function(sites,
 					IRanges(start=c(1, cut),
 						end=c(cut - 1, ws[i])))
 			} else {
-				top <- .Call("subsetXStringSet",
-					myDNAStringSet,
-					i,
-					1L,
-					processors,
-					PACKAGE="DECIPHER")
+				top <- .subset(myDNAStringSet, i)
 			}
 		} else {
-			top <- .Call("subsetXStringSet",
-				myDNAStringSet,
-				integer(),
-				1L,
-				processors,
-				PACKAGE="DECIPHER")
+			top <- DNAStringSet()
 		}
 		if (strand==1 || strand==3) {
 			cut <- cuts[[i]]$bottom
@@ -206,27 +196,12 @@ DigestDNA <- function(sites,
 					IRanges(start=c(1, cut),
 						end=c(cut - 1, ws[i])))
 			} else {
-				bot <- .Call("subsetXStringSet",
-					rc,
-					i,
-					1L,
-					processors,
-					PACKAGE="DECIPHER")
+				bot <- .subset(rc, i)
 			}
 		} else {
-			bot <- .Call("subsetXStringSet",
-				myDNAStringSet,
-				integer(),
-				1L,
-				processors,
-				PACKAGE="DECIPHER")
+			bot <- DNAStringSet()
 		}
-		fragments[[i]] <- setNames(.Call("appendXStringSets",
-				top,
-				bot,
-				1L,
-				processors,
-				PACKAGE="DECIPHER"),
+		fragments[[i]] <- setNames(.append(top, bot),
 			c(rep("top", length(top)),
 				rep("bottom", length(bot))))
 	}

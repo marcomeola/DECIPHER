@@ -13,7 +13,7 @@ DB2Seqs(file,
          identifier = "",
          type = "BStringSet",
          limit = -1,
-         replaceChar = "-",
+         replaceChar = NA,
          nameBy = "description",
          orderBy = "row_names",
          removeGaps = "none",
@@ -45,7 +45,7 @@ The type of \code{XStringSet} (sequences) to export to a FASTA formatted file or
 Number of results to display.  The default (\code{-1}) does not limit the number of results.
 }
   \item{replaceChar}{
-Optional character used to replace any characters of the sequence that are not present in the \code{XStringSet}'s alphabet.  Not applicable if \code{type=="BStringSet"}.  (See details section below.)
+Optional character used to replace any characters of the sequence that are not present in the \code{XStringSet}'s alphabet.  Not applicable if \code{type=="BStringSet"}.  The default (\code{NA}) results in an error if an incompatible character exist.  (See details section below.)
 }
   \item{nameBy}{
 Character string giving the column name(s) for identifying each sequence record.  If more than one column name is provided, the information in each column is concatenated, separated by \code{sep}, in the order specified.
@@ -81,7 +81,7 @@ Logical indicating whether to display status.
 \details{
 Sequences are exported into either a FASTA or FASTQ file as determined by the \code{type} of sequences.  If \code{type} is an \code{XStringSet} then sequences are exported to FASTA format.  Quality information for \code{QualityScaledXStringSet}s are interpreted as \code{PredQuality} scores before export to FASTQ format.
 
-If \code{type} is \code{"BStringSet"} (the default) then sequences are exported to a FASTA file exactly the same as they were when imported.  If \code{type} is \code{"DNAStringSet"} then all U's are converted to T's before export, and vise-versa if \code{type} is \code{"RNAStringSet"}.  All remaining characters not in the \code{XStringSet}'s alphabet are converted to \code{replaceChar}.
+If \code{type} is \code{"BStringSet"} (the default) then sequences are exported to a FASTA file exactly the same as they were when imported.  If \code{type} is \code{"DNAStringSet"} then all U's are converted to T's before export, and vise-versa if \code{type} is \code{"RNAStringSet"}.  All remaining characters not in the \code{XStringSet}'s alphabet are converted to \code{replaceChar} or removed if \code{replaceChar} is \code{""}.  Note that if \code{replaceChar} is \code{NA} (the default), it will result in an error when an unexpected character is found.
 }
 \value{
 Writes a FASTA or FASTQ formatted file containing the sequence records in the database.

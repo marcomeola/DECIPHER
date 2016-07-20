@@ -4,6 +4,7 @@ AlignSeqs <- function(myXStringSet,
 	refinements=1,
 	gapOpening=c(-16, -12),
 	gapExtension=c(-2, -1),
+	useStructures=TRUE,
 	structures=NULL,
 	FUN=AdjustAlignment,
 	levels=c(0.95, 0.7, 10, 5),
@@ -17,15 +18,36 @@ AlignSeqs <- function(myXStringSet,
 		`RNAStringSet` = 2L,
 		`AAStringSet` = 3L,
 		stop("pattern must be an AAStringSet, DNAStringSet, or RNAStringSet."))
-	if (length(myXStringSet) < 2)
+	l <- length(myXStringSet)
+	if (l < 2)
 		stop("At least two sequences are required.")
 	if (!is.null(guideTree)) {
-		if (!is.data.frame(guideTree))
-			stop("guideTree must be a data.frame.")
-		if (dim(guideTree)[1] != length(myXStringSet))
-			stop("guideTree must have as many rows as sequences in myXStringSet.")
-		if (!all(apply(guideTree, 2, is.numeric)))
-			stop("guideTree must be a data.frame of numerics.")
+		if (class(guideTree)=="dendrogram") {
+			if (attr(guideTree, "height") > 0.501)
+				stop("Total height of guideTree can be at most 0.5.")
+			heights <- rapply(guideTree,
+				function(x)
+					attr(x, "height"))
+			if (any(heights > 0.001) || any(heights < -0.001))
+				stop("All tips of guideTree must have a height of zero.")
+			labels <- rapply(guideTree,
+				function(x)
+					attr(x, "label"))
+			if (any(duplicated(labels)))
+				stop("Leaf labels in guideTree must be unique.")
+			labels <- match(labels, names(myXStringSet))
+			if (any(is.na(labels)))
+				stop("Leaf labels in guideTree must match names of myXStringSet.")
+			guideTree <- dendrapply(guideTree,
+				function(x) {
+					if (is.leaf(x))
+						x[1] <- match(attr(x, "label"),
+							names(myXStringSet))
+					return(x)
+				})
+		} else {
+			stop("guideTree must be a dendrogram object.")
+		}
 	}
 	if (!is.numeric(iterations))
 		stop("iterations must be a numeric.")
@@ -39,6 +61,8 @@ AlignSeqs <- function(myXStringSet,
 		stop("refinements must be a whole number.")
 	if (refinements < 0)
 		stop("refinements must be at least zero.")
+	if (!is.logical(useStructures))
+		stop("useStructures must be a logical.")
 	if (!is.logical(verbose))
 		stop("verbose must be a logical.")
 	a <- vcountPattern("-", myXStringSet)
@@ -111,36 +135,76 @@ AlignSeqs <- function(myXStringSet,
 	gapOpeningSlope <- gapOpeningMax - gapOpeningMin
 	gapExtensionSlope <- gapExtensionMax - gapExtensionMin
 	
-	if (type==3L) {
-		# structures are always used with AA sequences
-		if (is.null(structures)) {
-			structures <- PredictHEC(myXStringSet,
-				type="probabilities")
-		} else {
-			if (length(structures) != length(myXStringSet))
-				stop("structures is not the same length as myXStringSet.")
-			if (typeof(structures) != "list")
-				stop("structures must be a list.")
-		}
-		if (refinements > 0) {
-			w <- which(m=="structureMatrix")
-			if (length(w) > 0) {
-				structureMatrix <- args[[w]]
-				# assume structures and matrix are ordered the same
-				if (!is.double(structureMatrix))
-					stop("structureMatrix must be contain numerics.")
-				if (!is.matrix(structureMatrix))
-					stop("structureMatrix must be a matrix.")
-				if (dim(structureMatrix)[1] != dim(structureMatrix)[2])
-					stop("structureMatrix is not square.")
+	# prepare structures and structure matrix
+	if (useStructures) {
+		if (type==3L) {
+			if (is.null(structures)) {
+				structures <- PredictHEC(myXStringSet,
+					type="probabilities")
 			} else {
-				structureMatrix <- matrix(c(5, 0, -2, 0, 9, -1, -2, -1, 2),
-					nrow=3) # order is H, E, C
+				if (length(structures) != l)
+					stop("structures is not the same length as myXStringSet.")
+				if (typeof(structures) != "list")
+					stop("structures must be a list.")
 			}
-			if (dim(structureMatrix)[1] != dim(structures[[1]])[1])
-				stop("Dimensions of structureMatrix are incompatible with the structures.")
+			if (refinements > 0) {
+				w <- which(m=="structureMatrix")
+				if (length(w) > 0) {
+					structureMatrix <- args[[w]]
+					# assume structures and matrix are ordered the same
+					if (!is.double(structureMatrix))
+						stop("structureMatrix must contain numerics.")
+					if (!is.matrix(structureMatrix))
+						stop("structureMatrix must be a matrix.")
+					if (dim(structureMatrix)[1] != dim(structureMatrix)[2])
+						stop("structureMatrix is not square.")
+				} else {
+					structureMatrix <- matrix(c(5, 0, -2, 0, 9, -1, -2, -1, 2),
+						nrow=3) # order is H, E, C
+				}
+				if (dim(structureMatrix)[1] != dim(structures[[1]])[1])
+					stop("Dimensions of structureMatrix are incompatible with the structures.")
+			}
+		} else {
+			if (!is.null(structures)) {
+				if (length(structures) != l)
+					stop("structures is not the same length as myXStringSet.")
+				if (typeof(structures) != "list")
+					stop("structures must be a list.")
+				
+				w <- which(m=="structureMatrix")
+				if (length(w) > 0) {
+					structureMatrix <- args[[w]]
+					# assume structures and matrix are ordered the same
+					if (!is.double(structureMatrix))
+						stop("structureMatrix must contain numerics.")
+					if (!is.matrix(structureMatrix))
+						stop("structureMatrix must be a matrix.")
+					if (dim(structureMatrix)[1] != dim(structureMatrix)[2])
+						stop("structureMatrix is not square.")
+				} else {
+					stop("structureMatrix must be specified when structures are provided.")
+				}
+				if (dim(structureMatrix)[1] != dim(structures[[1]])[1])
+					stop("Dimensions of structureMatrix are incompatible with the structures.")
+			} else if (type==2L) {
+				# add RNA structure stuff here
+			} else {
+				structureMatrix <- numeric()
+				useStructures <- FALSE
+			}
 		}
-		
+	} else {
+		w <- which(m=="structureMatrix")
+		if (length(w) > 0)
+			stop("structureMatrix provided when useStructures is FALSE.")
+		structureMatrix <- numeric() # needed for colScores
+		if (!is.null(structures))
+			stop("structures provided when useStructures is FALSE.")
+	}
+	
+	# prepare substitution matrix
+	if (type==3L) {
 		subM <- TRUE
 		w <- which(m=="substitutionMatrix")
 		AAs <- c("A", "R", "N", "D", "C", "Q", "E", "G", "H", "I",
@@ -172,40 +236,11 @@ AlignSeqs <- function(myXStringSet,
 				dimnames=list(AAs, AAs))
 		}
 	} else {
-		if (is.null(structures)) {
-			subM <- FALSE
-			w <- which(m=="structureMatrix")
-			if (length(w) > 0)
-				stop("structureMatrix provided without structures.")
-			structureMatrix <- numeric() # needed for colScores
-		} else {
-			subM <- TRUE
-			if (length(structures) != length(myXStringSet))
-				stop("structures is not the same length as myXStringSet.")
-			if (typeof(structures) != "list")
-				stop("structures must be a list.")
-			
-			w <- which(m=="structureMatrix")
-			if (length(w) > 0) {
-				structureMatrix <- args[[w]]
-				# assume structures and matrix are ordered the same
-				if (!is.double(structureMatrix))
-					stop("structureMatrix must be contain numerics.")
-				if (!is.matrix(structureMatrix))
-					stop("structureMatrix must be a matrix.")
-				if (dim(structureMatrix)[1] != dim(structureMatrix)[2])
-					stop("structureMatrix is not square.")
-			} else {
-				stop("structureMatrix must be specified when structures are provided.")
-			}
-			if (dim(structureMatrix)[1] != dim(structures[[1]])[1])
-				stop("Dimensions of structureMatrix are incompatible with the structures.")
-		}
-		
 		bases <- c("A", "C", "G",
 			ifelse(type==2L, "U", "T"))
 		w <- which(m=="substitutionMatrix")
 		if (length(w) > 0) {
+			subM <- TRUE
 			sM <- args[[w]]
 			args[w] <- NULL
 			if (is.matrix(sM)) {
@@ -218,6 +253,7 @@ AlignSeqs <- function(myXStringSet,
 				stop("substitutionMatrix must be NULL or a matrix.")
 			}
 		} else {
+			subM <- FALSE
 			w <- which(m=="perfectMatch")
 			if (length(w) > 0) {
 				PM <- args[[w]]
@@ -259,10 +295,7 @@ AlignSeqs <- function(myXStringSet,
 			wordSize <- 5
 	}
 	
-	cluster <- FALSE
 	if (is.null(guideTree)) {
-		cluster <- TRUE
-		
 		if (verbose) {
 			cat("Determining distance matrix based on shared ",
 				wordSize,
@@ -308,271 +341,195 @@ AlignSeqs <- function(myXStringSet,
 			cat("\nClustering into groups by similarity:\n")
 			flush.console()
 		}
-		cutoffs <- sort(unique(c(seq(0, 1, 0.01),
-			round(quantile(d, seq(0, 1, 0.01), na.rm=TRUE), 5))))
 		dimnames(d) <- NULL
 		suppressWarnings(guideTree <- IdClusters(d,
 			method="single",
-			cutoff=cutoffs,
+			type="dendrogram",
 			verbose=verbose,
 			processors=processors))
-	} else {
-		cutoffs <- rep(1, dim(guideTree)[2])
 	}
-	guideTree$Top <- 1
-	guideTree <- as.matrix(guideTree)
-	guideTree[, 1] <- 1:dim(guideTree)[1]
-	cutoffs <- c(cutoffs, 1)
-	
-	# calculate weights based on branch lengths
-	lastSplit <- numeric(dim(guideTree)[1])
-	weights <- numeric(dim(guideTree)[1])
-	numGroups <- 1
-	for (i in (dim(guideTree)[2] - 1):1) {
-		if (length(unique(guideTree[, i])) > numGroups) {
-			if (numGroups==1) { # mid-point root of tree
-				lastSplit[] <- cutoffs[i]
-			} else {
-				for (j in unique(guideTree[, i + 1])) {
-					w <- which(guideTree[, i + 1]==j)
-					if (length(unique(guideTree[w, i])) > 1) {
-						weights[w] <- weights[w] + (lastSplit[w] - cutoffs[i])/length(w)
-						lastSplit[w] <- cutoffs[i]
-					}
-				}
-			}
-			numGroups <- length(unique(guideTree[, i]))
-		}
-	}
-	weights <- weights + lastSplit
-	weights <- ifelse(weights==0, 1, weights)
-	weights <- weights/mean(weights)
 	
 	if (verbose) {
 		time.1 <- Sys.time()
 		cat("Aligning Sequences:\n")
 		flush.console()
 		pBar <- txtProgressBar(style=3, max=100)
-		percentComplete <- before <- 0L
+		before <- steps <- 0L
+		nsteps <- l - 1L
 	}
 	
-	# determine the number of steps
-	seqs <- seqs_original <- myXStringSet
-	ns <- names(myXStringSet)
-	steps <- 0
-	for (i in 1:dim(guideTree)[2]) {
-		for (u in unique(guideTree[, i])) {
-			w <- which(guideTree[, i]==u) # groups
-			if (length(w)==1)
-				next
-			if (i==1) {
-				for (j in 2:length(w)) {
-					if (length(which(duplicated(seqs[w[1:j]]))) == (j - 1))
-						next
-					steps <- steps + 1
+	.align <- function(dend) {
+		l <- length(dend)
+		inherit <- attr(dend, "inherit")
+		if (!is.null(inherit)) {
+			if (inherit) {
+				u <- unlist(dend)
+				seqs <<- .replace(seqs,
+					.Call("removeCommonGaps",
+						.subset(seqs_prev, u),
+						type,
+						processors,
+						PACKAGE="DECIPHER"),
+					u)
+				
+				if (verbose) {
+					steps <<- steps + 1L
+					percentComplete <- as.integer(100L*steps/nsteps)
+					if (percentComplete > before) {
+						setTxtProgressBar(pBar, percentComplete)
+						before <<- percentComplete
+					}
 				}
-			} else {
-				g <- unique(guideTree[w, i - 1]) # sub-groups
-				steps <- steps + length(g) - 1
 			}
-		}
-	}
-	l <- steps
-	steps <- 0
-	mergers <- character(l)
-	
-	GO <- gapOpeningMin + gapOpeningSlope*cutoffs
-	GE <- gapExtensionMin + gapExtensionSlope*cutoffs
-	
-	for (i in 1:dim(guideTree)[2]) {
-		for (u in unique(guideTree[, i])) {
-			w <- which(guideTree[, i]==u) # groups
-			if (length(w)==1)
-				next
-			if (i==1) {
-				for (j in 2:length(w)) {
-					if (length(which(duplicated(seqs[w[1:j]]))) == (j - 1))
-						next
-					
-					p.weight <- weights[w[1:(j - 1)]]
-					p.weight <- p.weight/mean(p.weight)
-					s.weight <- weights[w[j]]
-					s.weight <- s.weight/mean(s.weight)
-					
-					if (subM) {
-						pattern <- .Call("subsetXStringSet",
-							seqs,
-							w[1:(j - 1)],
-							type,
-							processors)
-						subject <- .Call("subsetXStringSet",
-							seqs,
-							w[j],
-							type,
-							processors)
-						seqs[w[1:j]] <- do.call(AlignProfiles,
-							args=c(list(pattern=pattern,
-									subject=subject,
-									p.weight=p.weight,
-									s.weight=s.weight,
-									p.struct=structures[w[1:(j - 1)]],
-									s.struct=structures[w[j]],
-									substitutionMatrix=sM,
-									processors=processors,
-									gapOpening=GO[i],
-									gapExtension=GE[i]),
-								args))
-					} else { # do not need to specify substitutionMatrix
-						pattern <- .Call("subsetXStringSet",
-							seqs,
-							w[1:(j - 1)],
-							type,
-							processors)
-						subject <- .Call("subsetXStringSet",
-							seqs,
-							w[j],
-							type,
-							processors)
-						seqs[w[1:j]] <- AlignProfiles(pattern=pattern,
-							subject=subject,
-							p.weight=p.weight,
-							s.weight=s.weight,
-							processors=processors,
-							gapOpening=GO[i],
-							gapExtension=GE[i],
-							...)
-					}
-					
-					steps <- steps + 1
-					x <- grep(w[1], mergers[1:steps], fixed=TRUE)
-					if (length(x) > 0) {
-						mergers[steps] <- paste(x[length(x)],
-							w[j],
-							sep="|")
-					} else {
-						mergers[steps] <- paste(paste(w[1:(j - 1)], collapse=","),
-							w[j],
-							sep="|")
-					}
-					
-					if (verbose) {
-						percentComplete <- as.integer(100*steps/l)
-						if (percentComplete > before) {
-							setTxtProgressBar(pBar, percentComplete)
-							before <- percentComplete
-						}
-					}
+			
+			if (l > 1) {
+				for (i in seq_len(l))
+					.align(dend[[i]])
+				
+				h <- attr(dend, "height")
+				for (i in seq_len(l)) {
+					m <- unlist(dend[i])
+					weights[m] <<- weights[m] + (h - heights[m])/length(m)
+					heights[m] <<- h
 				}
+			} else if (is.leaf(dend)) {
+				heights[unlist(dend)] <- attr(dend, "height")
 			} else {
-				g <- unique(guideTree[w, i - 1]) # sub-groups
-				if (length(g)==1)
-					next
-				g <- g[order(width(myXStringSet)[match(g, guideTree[w, i - 1])],
-					decreasing=TRUE)] # sort sub-groups by increasing width
-				g1 <- which(guideTree[w, i - 1]==g[1])
-				for (j in 2:length(g)) {
-					g2 <- which(guideTree[w, i - 1]==g[j])
-					
-					p.weight <- weights[w[g1]]
-					p.weight <- p.weight/mean(p.weight)
-					s.weight <- weights[w[g2]]
-					s.weight <- s.weight/mean(s.weight)
-					
-					if (subM) {
-						pattern <- .Call("subsetXStringSet",
-							seqs,
-							w[g1],
-							type,
-							processors)
-						subject <- .Call("subsetXStringSet",
-							seqs,
-							w[g2],
-							type,
-							processors)
+				.align(dend[[1]])
+			}
+		} else if (l > 1) {
+			for (i in seq_len(l))
+				.align(dend[[i]])
+			
+			h <- attr(dend, "height")
+			members <- vector("list", l)
+			for (i in seq_len(l)) {
+				m <- unlist(dend[i])
+				weights[m] <<- weights[m] + (h - heights[m])/length(m)
+				heights[m] <<- h
+				members[[i]] <- m
+			}
+			
+			h <- h*2 # total length of sub-tree
+			GO <- h*gapOpeningSlope + gapOpeningMin
+			GE <- h*gapExtensionSlope + gapExtensionMin
+			
+			for (i in 2:length(dend)) {
+				x <- unlist(members[1:(i - 1)])
+				y <- members[[i]]
+				combo <- c(x, y)
+				
+				p.weight <- weights[x]
+				w <- which(p.weight <= 0)
+				if (length(w) > 0)
+					p.weight[w] <- 1
+				p.weight <- p.weight/mean(p.weight)
+				s.weight <- weights[y]
+				w <- which(s.weight <= 0)
+				if (length(w) > 0)
+					s.weight[w] <- 1
+				s.weight <- s.weight/mean(s.weight)
+				
+				pattern <- .subset(seqs, x)
+				subject <- .subset(seqs, y)
+				
+				if (subM) {
+					if (useStructures) {
 						temp <- do.call(AlignProfiles,
 							args=c(list(pattern=pattern,
 									subject=subject,
 									p.weight=p.weight,
 									s.weight=s.weight,
-									p.struct=structures[w[g1]],
-									s.struct=structures[w[g2]],
+									p.struct=structures[x],
+									s.struct=structures[y],
 									substitutionMatrix=sM,
 									processors=processors,
-									gapOpening=GO[i],
-									gapExtension=GE[i]),
+									gapOpening=GO,
+									gapExtension=GE),
 								args))
-					} else { # do not need to specify substitutionMatrix
-						pattern <- .Call("subsetXStringSet",
-							seqs,
-							w[g1],
-							type,
-							processors)
-						subject <- .Call("subsetXStringSet",
-							seqs,
-							w[g2],
-							type,
-							processors)
-						temp <- AlignProfiles(pattern=pattern,
-							subject=subject,
-							p.weight=p.weight,
-							s.weight=s.weight,
-							processors=processors,
-							gapOpening=GO[i],
-							gapExtension=GE[i],
-							...)
-					}
-					if (cutoffs[i] <= levels[1] ||
-						(length(g1) + length(g2)) < levels[4]) {
-						seqs[w[c(g1, g2)]] <- temp
 					} else {
-						if (type==3L) { # AAStringSet
-							seqs[w[c(g1, g2)]] <- FUN(temp,
-								substitutionMatrix=sM,
-								weight=weights[w[c(g1, g2)]]/mean(weights[w[c(g1, g2)]]),
-								processors=processors)
-						} else { # DNAStringSet or RNAStringSet
-							seqs[w[c(g1, g2)]] <- FUN(temp,
-								weight=weights[w[c(g1, g2)]]/mean(weights[w[c(g1, g2)]]),
-								processors=processors)
-						}
+						temp <- do.call(AlignProfiles,
+							args=c(list(pattern=pattern,
+									subject=subject,
+									p.weight=p.weight,
+									s.weight=s.weight,
+									substitutionMatrix=sM,
+									processors=processors,
+									gapOpening=GO,
+									gapExtension=GE),
+								args))
 					}
+				} else {
+					if (useStructures) {
+						temp <- do.call(AlignProfiles,
+							args=c(list(pattern=pattern,
+									subject=subject,
+									p.weight=p.weight,
+									s.weight=s.weight,
+									p.struct=structures[x],
+									s.struct=structures[y],
+									processors=processors,
+									gapOpening=GO,
+									gapExtension=GE),
+								args))
+					} else {
+						temp <- do.call(AlignProfiles,
+							args=c(list(pattern=pattern,
+									subject=subject,
+									p.weight=p.weight,
+									s.weight=s.weight,
+									processors=processors,
+									gapOpening=GO,
+									gapExtension=GE),
+								args))
+					}
+				}
+				
+				if (h > LEVEL ||
+					length(temp) < levels[4]) {
+					weight <- weights[combo]
+					w <- which(weight <= 0)
+					if (length(w) > 0)
+						weight[w] <- 1
+					weight <- weight/mean(weight)
 					
-					steps <- steps + 1
-					x <- grep(w[g1[1]], mergers[1:steps], fixed=TRUE)
-					y <- grep(w[g2[1]], mergers[1:steps], fixed=TRUE)
-					if (!(length(x) > 0 && nchar(mergers[x[length(x)]]) > 1000) &&
-						!(length(y) > 0 && nchar(mergers[y[length(y)]]) > 1000)) {
-						if (length(x) > 0 && length(y) > 0) {
-							mergers[steps] <- paste(mergers[x[length(x)]],
-								mergers[y[length(y)]],
-								sep="|")
-						} else if (length(x) > 0) {
-							mergers[steps] <- paste(mergers[x[length(x)]],
-								paste(w[g2], collapse=","),
-								sep="|")
-						} else if (length(y) > 0) {
-							mergers[steps] <- paste(paste(w[g1], collapse=","),
-								mergers[y[length(y)]],
-								sep="|")
-						} else {
-							mergers[steps] <- paste(paste(w[g1], collapse=","),
-								paste(w[g2], collapse=","),
-								sep="|")
-						}
+					if (subM) {
+						temp <- FUN(temp,
+							substitutionMatrix=sM,
+							weight=weight,
+							processors=processors)
+					} else {
+						temp <- FUN(temp,
+							weight=weight,
+							processors=processors)
 					}
-					
-					if (verbose) {
-						percentComplete <- as.integer(100*steps/l)
-						if (percentComplete > before) {
-							setTxtProgressBar(pBar, percentComplete)
-							before <- percentComplete
-						}
+				}
+				
+				seqs <<- .replace(seqs,
+					temp,
+					combo)
+				
+				if (verbose) {
+					steps <<- steps + 1L
+					percentComplete <- as.integer(100L*steps/nsteps)
+					if (percentComplete > before) {
+						setTxtProgressBar(pBar, percentComplete)
+						before <<- percentComplete
 					}
-					g1 <- c(g1, g2)
 				}
 			}
+		} else if (is.leaf(dend)) {
+			heights[unlist(dend)] <- attr(dend, "height")
+		} else {
+			.align(dend[[1]])
 		}
 	}
+	
+	ns <- names(myXStringSet)
+	seqs <- myXStringSet
+	weights <- heights <- numeric(l)
+	LEVEL <- levels[1]
+	.align(guideTree)
 	
 	if (refinements==0 && iterations==0) {
 		if (verbose) {
@@ -591,8 +548,76 @@ AlignSeqs <- function(myXStringSet,
 		return(seqs)
 	}
 	
+	if (iterations > 0) {
+		LEVEL <- levels[2]
+		
+		.order <- function(dend) {
+			l <- length(dend)
+			if (l > 1) {
+				j <<- j + 1L
+				orders[[j]] <<- unlist(dend)
+				
+				for (i in seq_len(l))
+					.order(dend[[i]])
+			} else if (!is.leaf(dend)) {
+				.order(dend[[1]])
+			}
+		}
+		
+		j <- 0L
+		orders <- vector("list", l - 1L)
+		guideTree <- reorder(guideTree, seq_len(l), min)
+		guideTree <- reorder(guideTree, rep(1L, l), sum)
+		.order(guideTree)
+		
+		.compare <- function(dend, found=FALSE) {
+			l <- length(dend)
+			if (found) {
+				if (l > 1) {
+					if (verbose)
+						nsteps <<- nsteps - 1L
+					
+					j <<- j + 1L
+					orders[[j]] <<- unlist(dend)
+					
+					attr(dend, "inherit") <- FALSE
+					
+					for (i in seq_len(l))
+						dend[[i]] <- .compare(dend[[i]], found)
+				} else if (!is.leaf(dend)) {
+					dend[[1]] <- .compare(dend[[1]], found)
+				}
+			} else if (l > 1) {
+				o <- unlist(dend)
+				j <<- j + 1L
+				orders[[j]] <<- o
+				
+				found <- FALSE
+				w <- which(ls==length(o))
+				for (i in seq_along(w)) {
+					if (all(orders_prev[[w[i]]]==o)) {
+						found <- TRUE
+						break
+					}
+				}
+				
+				if (found)
+					attr(dend, "inherit") <- TRUE
+				
+				for (i in seq_len(l))
+					dend[[i]] <- .compare(dend[[i]], found)
+			} else if (!is.leaf(dend)) {
+				dend[[i]] <- .compare(dend[[1]], found)
+			}
+			
+			return(dend)
+		}
+	}
+	
 	for (it in seq_len(iterations)) {
-		myXStringSet <- seqs_original
+		seqs_prev <- seqs
+		ls <- lengths(orders)
+		orders_prev <- orders
 		
 		if (verbose) {
 			setTxtProgressBar(pBar, 100)
@@ -615,10 +640,10 @@ AlignSeqs <- function(myXStringSet,
 			flush.console()
 		}
 		
-		suppressWarnings(d <- DistanceMatrix(seqs,
+		d <- DistanceMatrix(seqs,
 			verbose=verbose,
 			processors=processors,
-			includeTerminalGaps=TRUE))
+			includeTerminalGaps=TRUE)
 		
 		if (verbose) {
 			cat("Reclustering into groups by similarity")
@@ -632,46 +657,14 @@ AlignSeqs <- function(myXStringSet,
 			cat(":\n")
 			flush.console()
 		}
+		
 		orgTree <- guideTree
-		cutoffs <- sort(unique(c(seq(0, 1, 0.01),
-			round(quantile(d, seq(0, 1, 0.01), na.rm=TRUE), 5))))
 		dimnames(d) <- NULL
 		suppressWarnings(guideTree <- IdClusters(d,
-			cutoff=cutoffs,
-			verbose=verbose,
 			method="UPGMA",
+			type="dendrogram",
+			verbose=verbose,
 			processors=processors))
-		guideTree$Top <- 1
-		guideTree <- as.matrix(guideTree)
-		guideTree[, 1] <- 1:dim(guideTree)[1]
-		cutoffs <- c(cutoffs, 1)
-		w <- which(is.na(d))
-		if (length(w) > 0)
-			d[w] <- 1
-		
-		# calculate weights based on branch lengths
-		lastSplit <- numeric(dim(guideTree)[1])
-		weights <- numeric(dim(guideTree)[1])
-		numGroups <- 1
-		for (i in (dim(guideTree)[2] - 1):1) {
-			if (length(unique(guideTree[, i])) > numGroups) {
-				if (numGroups==1) { # mid-point root of tree
-					lastSplit[] <- cutoffs[i]
-				} else {
-					for (j in unique(guideTree[, i + 1])) {
-						w <- which(guideTree[, i + 1]==j)
-						if (length(unique(guideTree[w, i])) > 1) {
-							weights[w] <- weights[w] + (lastSplit[w] - cutoffs[i])/length(w)
-							lastSplit[w] <- cutoffs[i]
-						}
-					}
-				}
-				numGroups <- length(unique(guideTree[, i]))
-			}
-		}
-		weights <- weights + lastSplit
-		weights <- ifelse(weights==0, 1, weights)
-		weights <- weights/mean(weights)
 		
 		if (verbose) {
 			time.1 <- Sys.time()
@@ -686,259 +679,26 @@ AlignSeqs <- function(myXStringSet,
 			cat(":\n")
 			flush.console()
 			pBar <- txtProgressBar(style=3, max=100)
-			percentComplete <- before <- 0L
+			before <- steps <- 0L
+			nsteps <- l - 1L
 		}
 		
-		# determine the number of steps
-		steps <- 0
-		for (i in 1:dim(guideTree)[2]) {
-			for (u in unique(guideTree[, i])) {
-				w <- which(guideTree[, i]==u) # groups
-				if (length(w)==1)
-					next
-				if (i==1) {
-					for (j in 2:length(w)) {
-						if (length(which(duplicated(myXStringSet[w[1:j]]))) == (j - 1))
-							next
-						steps <- steps + 1
-					}
-				} else {
-					g <- unique(guideTree[w, i - 1]) # sub-groups
-					steps <- steps + length(g) - 1
-				}
-			}
-		}
-		l <- steps
-		steps <- 0
-		mergers2 <- character(l)
-		
-		GO <- gapOpeningMin + gapOpeningSlope*cutoffs
-		GE <- gapExtensionMin + gapExtensionSlope*cutoffs
-		
-		for (i in 1:dim(guideTree)[2]) {
-			for (u in unique(guideTree[, i])) {
-				w <- which(guideTree[, i]==u) # groups
-				if (length(w)==1)
-					next
-				
-				if (i==1) {
-					for (j in 2:length(w)) {
-						if (length(which(duplicated(myXStringSet[w[1:j]]))) == (j - 1))
-							next
-						
-						steps <- steps + 1
-						x <- grep(w[1], mergers2[1:steps], fixed=TRUE)
-						if (length(x) > 0) {
-							mergers2[steps] <- paste(x[length(x)],
-								w[j],
-								sep="|")
-						} else {
-							mergers2[steps] <- paste(paste(w[1:(j - 1)], collapse=","),
-								w[j],
-								sep="|")
-						}
-						if (length(grep(mergers2[steps], mergers, fixed=TRUE)) > 0) {
-							myXStringSet[w[1:j]] <- .Call("removeCommonGaps",
-								seqs[w[1:j]],
-								type,
-								processors,
-								PACKAGE="DECIPHER")
-							next
-						}
-						
-						p.weight <- weights[w[1:(j - 1)]]
-						p.weight <- p.weight/mean(p.weight)
-						s.weight <- weights[w[j]]
-						s.weight <- s.weight/mean(s.weight)
-						
-						if (subM) {
-							pattern <- .Call("subsetXStringSet",
-								myXStringSet,
-								w[1:(j - 1)],
-								type,
-								processors)
-							subject <- .Call("subsetXStringSet",
-								myXStringSet,
-								w[j],
-								type,
-								processors)
-							myXStringSet[w[1:j]] <- do.call(AlignProfiles,
-								args=c(list(pattern=pattern,
-										subject=subject,
-										p.weight=p.weight,
-										s.weight=s.weight,
-										p.struct=structures[w[1:(j - 1)]],
-										s.struct=structures[w[j]],
-										substitutionMatrix=sM,
-										processors=processors,
-										gapOpening=GO[i],
-										gapExtension=GE[i]),
-									args))
-						} else { # do not need to specify substitutionMatrix
-							pattern <- .Call("subsetXStringSet",
-								myXStringSet,
-								w[1:(j - 1)],
-								type,
-								processors)
-							subject <- .Call("subsetXStringSet",
-								myXStringSet,
-								w[j],
-								type,
-								processors)
-							myXStringSet[w[1:j]] <- AlignProfiles(pattern=pattern,
-								subject=subject,
-								p.weight=p.weight,
-								s.weight=s.weight,
-								processors=processors,
-								gapOpening=GO[i],
-								gapExtension=GE[i],
-								...)
-						}
-						
-						if (verbose) {
-							percentComplete <- as.integer(100*steps/l)
-							if (percentComplete > before) {
-								setTxtProgressBar(pBar, percentComplete)
-								before <- percentComplete
-							}
-						}
-					}
-				} else {
-					g <- unique(guideTree[w, i - 1]) # sub-groups
-					if (length(g)==1)
-						next
-					g <- g[order(width(myXStringSet)[match(g, guideTree[w, i - 1])],
-						decreasing=TRUE)] # sort sub-groups by increasing width
-					g1 <- which(guideTree[w, i - 1]==g[1])
-					for (j in 2:length(g)) {
-						g2 <- which(guideTree[w, i - 1]==g[j])
-						
-						steps <- steps + 1
-						x <- grep(w[g1[1]], mergers2[1:steps], fixed=TRUE)
-						y <- grep(w[g2[1]], mergers2[1:steps], fixed=TRUE)
-						if (!(length(x) > 0 && nchar(mergers2[x[length(x)]]) > 1000) &&
-							!(length(y) > 0 && nchar(mergers2[y[length(y)]]) > 1000)) {
-							if (length(x) > 0 && length(y) > 0) {
-								mergers2[steps] <- paste(mergers2[x[length(x)]],
-									mergers2[y[length(y)]],
-									sep="|")
-							} else if (length(x) > 0) {
-								mergers2[steps] <- paste(mergers2[x[length(x)]],
-									paste(w[g2], collapse=","),
-									sep="|")
-							} else if (length(y) > 0) {
-								mergers2[steps] <- paste(paste(w[g1], collapse=","),
-									mergers2[y[length(y)]],
-									sep="|")
-							} else {
-								mergers2[steps] <- paste(paste(w[g1], collapse=","),
-									paste(w[g2], collapse=","),
-									sep="|")
-							}
-							if (length(grep(mergers2[steps], mergers, fixed=TRUE)) > 0) {
-								myXStringSet[c(w[g1], w[g2])] <- .Call("removeCommonGaps",
-									seqs[c(w[g1], w[g2])],
-									type,
-									processors,
-									PACKAGE="DECIPHER")
-								
-								if (verbose) {
-									percentComplete <- as.integer(100*steps/l)
-									if (percentComplete > before) {
-										setTxtProgressBar(pBar, percentComplete)
-										before <- percentComplete
-									}
-								}
-								g1 <- c(g1, g2)
-								next
-							}
-						}
-						
-						p.weight <- weights[w[g1]]
-						p.weight <- p.weight/mean(p.weight)
-						s.weight <- weights[w[g2]]
-						s.weight <- s.weight/mean(s.weight)
-						
-						if (subM) {
-							pattern <- .Call("subsetXStringSet",
-								myXStringSet,
-								w[g1],
-								type,
-								processors)
-							subject <- .Call("subsetXStringSet",
-								myXStringSet,
-								w[g2],
-								type,
-								processors)
-							temp <- do.call(AlignProfiles,
-								args=c(list(pattern=pattern,
-										subject=subject,
-										p.weight=p.weight,
-										s.weight=s.weight,
-										p.struct=structures[w[g1]],
-										s.struct=structures[w[g2]],
-										substitutionMatrix=sM,
-										processors=processors,
-										gapOpening=GO[i],
-										gapExtension=GE[i]),
-									args))
-						} else { # do not need to specify substitutionMatrix
-							pattern <- .Call("subsetXStringSet",
-								myXStringSet,
-								w[g1],
-								type,
-								processors)
-							subject <- .Call("subsetXStringSet",
-								myXStringSet,
-								w[g2],
-								type,
-								processors)
-							temp <- AlignProfiles(pattern=pattern,
-								subject=subject,
-								p.weight=p.weight,
-								s.weight=s.weight,
-								processors=processors,
-								gapOpening=GO[i],
-								gapExtension=GE[i],
-								...)
-						}
-						if (cutoffs[i] <= levels[2] ||
-							(length(g1) + length(g2)) < levels[4]) {
-							myXStringSet[w[c(g1, g2)]] <- temp
-						} else {
-							if (type==3L) { # AAStringSet
-								myXStringSet[w[c(g1, g2)]] <- FUN(temp,
-									substitutionMatrix=sM,
-									weight=weights[w[c(g1, g2)]]/mean(weights[w[c(g1, g2)]]),
-									processors=processors)
-							} else { # DNAStringSet or RNAStringSet
-								myXStringSet[w[c(g1, g2)]] <- FUN(temp,
-									weight=weights[w[c(g1, g2)]]/mean(weights[w[c(g1, g2)]]),
-									processors=processors)
-							}
-						}
-						
-						if (verbose) {
-							percentComplete <- as.integer(100*steps/l)
-							if (percentComplete > before) {
-								setTxtProgressBar(pBar, percentComplete)
-								before <- percentComplete
-							}
-						}
-						g1 <- c(g1, g2)
-					}
-				}
-			}
-		}
-		
-		if (it < iterations && all(seqs==myXStringSet))
-			break
+		j <- 0L
+		orders <- vector("list", l - 1L)
+		guideTree <- reorder(guideTree, seq_len(l), min)
+		guideTree <- reorder(guideTree, rep(1L, l), sum)
+		guideTree <- .compare(guideTree)
 		
 		seqs <- myXStringSet
-		mergers <- mergers2
+		weights <- heights <- numeric(l)
+		.align(guideTree)
+		
+		if (it < iterations && all(seqs==seqs_prev))
+			break
 	}
 	
 	myXStringSet <- seqs
+	weights <- weights/mean(weights)
 	
 	if (verbose) {
 		setTxtProgressBar(pBar, 100)
@@ -955,9 +715,8 @@ AlignSeqs <- function(myXStringSet,
 				ifelse(iterations - it > 1,
 					"iterations.\n",
 					"iteration.\n"))
-			if (refinements==0)
-				cat("\n")
 		}
+		cat("\n")
 	}
 	
 	if (refinements > 0) {
@@ -966,130 +725,149 @@ AlignSeqs <- function(myXStringSet,
 		} else {
 			functionCall <- "colScores"
 		}
-		GO <- gapOpeningMax/2
+		
+		GO <- gapOpeningMax/2 # applied at both ends
 		colScores <- function(seqs, structs, weights) {
 			scores <- .Call(functionCall,
 				seqs,
 				sM,
 				GO,
 				gapExtensionMax,
-				weights/mean(weights),
+				weights,
 				structs,
 				structureMatrix)
 			return(sum(scores))
 		}
 		
 		# define trustworthy groups
-		if (cluster || iterations > 0) {
-			if (type==3L) { # AAStringSet
-				w <- which(cutoffs < ifelse(iterations > 0,
-					0.7, # fraction identical
-					0.9)) # fraction ordered k-mers
-			} else { # DNAStringSet or RNAStringSet
-				w <- which(cutoffs < ifelse(iterations > 0,
-					0.4, # fraction identical
-					0.7)) # fraction ordered k-mers
-			}
-			groups <- guideTree[, w[length(w)]]
-		} else { # the only guideTree was provided as input
-			groups <- seq_along(myXStringSet)
+		if (type==3L) { # AAStringSet
+			cutoff <- ifelse(iterations > 0,
+				0.35, # (fraction identical)/2
+				0.45) # (fraction ordered k-mers)/2
+		} else { # DNAStringSet or RNAStringSet
+			cutoff <- ifelse(iterations > 0,
+				0.2, # (fraction identical)/2
+				0.35) # (fraction ordered k-mers)/2
 		}
+		guideTree <- cut(guideTree, cutoff)$lower
 		
 		# refinement
-		u <- unique(groups)
-		if (verbose) {
-			time.1 <- Sys.time()
-			cat("\nRefining the alignment:\n")
-			flush.console()
-			pBar <- txtProgressBar(style=3)
-		}
-		if (length(u) > 2) { # more than 2 groups
+		n <- length(guideTree)
+		if (n > 2) { # more than 2 groups
+			if (verbose) {
+				time.1 <- Sys.time()
+				cat("Refining the alignment:\n")
+				flush.console()
+				pBar <- txtProgressBar(style=3)
+			}
+			
 			score <- colScores(myXStringSet, structures, weights)
+			vec <- seq_along(myXStringSet)
+			
 			for (ref in seq_len(refinements)) {
 				org_score <- score
 				count <- 0L
-				for (i in seq_along(u)) {
-					w <- which(groups==u[i])
-					seqs1 <- .Call("subsetXStringSet",
-						myXStringSet,
-						seq_len(length(myXStringSet))[-w],
-						type,
-						processors)
-					seqs1 <- .Call("removeCommonGaps",
-						seqs1,
+				for (i in seq_len(n)) {
+					x <- unlist(guideTree[[i]])
+					y <- vec[-x]
+					o <- c(x, y)
+					
+					pattern <- .subset(myXStringSet, x)
+					pattern <- .Call("removeCommonGaps",
+						pattern,
 						type,
 						processors,
 						PACKAGE="DECIPHER")
-					seqs2 <- .Call("subsetXStringSet",
-						myXStringSet,
-						w,
-						type,
-						processors)
-					seqs2 <- .Call("removeCommonGaps",
-						seqs2,
+					subject <- .subset(myXStringSet, y)
+					subject <- .Call("removeCommonGaps",
+						subject,
 						type,
 						processors,
 						PACKAGE="DECIPHER")
 					
-					p.weight <- weights[-w]
+					p.weight <- weights[x]
 					p.weight <- p.weight/mean(p.weight)
-					s.weight <- weights[w]
+					s.weight <- weights[y]
 					s.weight <- s.weight/mean(s.weight)
 					
 					if (subM) {
-						temp <- do.call(AlignProfiles,
-							args=c(list(pattern=seqs1,
-									subject=seqs2,
-									p.weight=p.weight,
-									s.weight=s.weight,
-									p.struct=structures[seq_len(length(myXStringSet))[-w]],
-									s.struct=structures[w],
-									substitutionMatrix=sM,
-									processors=processors,
-									gapOpening=gapOpeningMax,
-									gapExtension=gapExtensionMax),
-								args))
+						if (useStructures) {
+							temp <- do.call(AlignProfiles,
+								args=c(list(pattern=pattern,
+										subject=subject,
+										p.weight=p.weight,
+										s.weight=s.weight,
+										p.struct=structures[x],
+										s.struct=structures[y],
+										substitutionMatrix=sM,
+										processors=processors,
+										gapOpening=gapOpeningMax,
+										gapExtension=gapExtensionMax),
+									args))
+						} else {
+							temp <- do.call(AlignProfiles,
+								args=c(list(pattern=pattern,
+										subject=subject,
+										p.weight=p.weight,
+										s.weight=s.weight,
+										substitutionMatrix=sM,
+										processors=processors,
+										gapOpening=gapOpeningMax,
+										gapExtension=gapExtensionMax),
+									args))
+						}
 					} else {
-						temp <- AlignProfiles(pattern=seqs1,
-							subject=seqs2,
-							p.weight=p.weight,
-							s.weight=s.weight,
-							processors=processors,
-							gapOpening=gapOpeningMax,
-							gapExtension=gapExtensionMax,
-							...)
+						if (useStructures) {
+							temp <- do.call(AlignProfiles,
+								args=c(list(pattern=pattern,
+										subject=subject,
+										p.weight=p.weight,
+										s.weight=s.weight,
+										p.struct=structures[x],
+										s.struct=structures[y],
+										processors=processors,
+										gapOpening=gapOpeningMax,
+										gapExtension=gapExtensionMax),
+									args))
+						} else {
+							temp <- do.call(AlignProfiles,
+								args=c(list(pattern=pattern,
+										subject=subject,
+										p.weight=p.weight,
+										s.weight=s.weight,
+										processors=processors,
+										gapOpening=gapOpeningMax,
+										gapExtension=gapExtensionMax),
+									args))
+						}
 					}
 					
-					if (is.null(structures)) {
-						temp_score <- colScores(temp, structures, c(weights[-w], weights[w]))
+					if (useStructures) {
+						temp_score <- colScores(temp, structures[o], weights[o])
 					} else {
-						temp_score <- colScores(temp, structures[c((1:length(myXStringSet))[-w], w)], c(weights[-w], weights[w]))
+						temp_score <- colScores(temp, NULL, weights[o])
 					}
+					
 					if (temp_score > score) {
 						score <- temp_score
-						myXStringSet <- .Call("subsetXStringSet",
-							temp,
-							order(c((1:length(myXStringSet))[-w], w)),
-							type,
-							processors)
+						myXStringSet <- .subset(temp, order(o))
 						
 						count <- count + 1L
 						if (count %% levels[3] ||
-							length(myXStringSet) < levels[4])
+							l < levels[4])
 							next # refine every nth change
 						
-						if (type==3L) { # AAStringSet
+						if (subM) {
 							temp <- FUN(myXStringSet,
 								substitutionMatrix=sM,
 								weight=weights,
 								processors=processors)
-							temp_score <- colScores(temp, structures, weights)
-						} else { # DNAStringSet or RNAStringSet
+						} else {
 							temp <- FUN(myXStringSet,
 								weight=weights,
 								processors=processors)
-							temp_score <- colScores(temp, structures, weights)
 						}
+						temp_score <- colScores(temp, structures, weights)
 						
 						if (temp_score > score) {
 							score <- temp_score
@@ -1099,43 +877,41 @@ AlignSeqs <- function(myXStringSet,
 					
 					if (verbose)
 						setTxtProgressBar(pBar,
-							(i + length(u)*(ref - 1))/(length(u)*refinements))
+							(i + n*(ref - 1))/(n*refinements))
 				}
 				
 				if (org_score==score) # no changes
 					break
 			}
-		} else {
-			ref <- 1
-		}
-		
-		if (verbose) {
-			setTxtProgressBar(pBar, 1)
-			close(pBar)
-			cat("\n")
-			time.2 <- Sys.time()
-			print(round(difftime(time.2,
-				time.1,
-				units='secs'),
-				digits=2))
-			cat("\n")
 			
-			if (refinements > 0 && ref < refinements)
-				cat("Alignment converged - skipping remaining",
-					ifelse(refinements - ref > 1,
-						"refinements.\n\n",
-						"refinement.\n\n"))
+			if (verbose) {
+				setTxtProgressBar(pBar, 1)
+				close(pBar)
+				cat("\n")
+				time.2 <- Sys.time()
+				print(round(difftime(time.2,
+					time.1,
+					units='secs'),
+					digits=2))
+				cat("\n")
+				
+				if (refinements > 0 && ref < refinements)
+					cat("Alignment converged - skipping remaining",
+						ifelse(refinements - ref > 1,
+							"refinements.\n\n",
+							"refinement.\n\n"))
+			}
 		}
 	}
 	
-	if (length(myXStringSet) >= levels[4]) {
+	if (l >= levels[4]) {
 		# apply a final adjustment
-		if (type==3L) { # AAStringSet
+		if (subM) {
 			myXStringSet <- FUN(myXStringSet,
 				substitutionMatrix=sM,
 				weight=weights,
 				processors=processors)
-		} else { # DNAStringSet or RNAStringSet
+		} else {
 			myXStringSet <- FUN(myXStringSet,
 				weight=weights,
 				processors=processors)

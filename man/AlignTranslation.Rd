@@ -11,7 +11,7 @@ AlignTranslation(myXStringSet,
                  sense = "+",
                  direction = "5' to 3'",
                  readingFrame = NA,
-                 asAAStringSet = FALSE,
+                 type = class(myXStringSet),
                  geneticCode = GENETIC_CODE,
                  \dots)
 }
@@ -28,23 +28,23 @@ Direction of the input sequences, either \code{"5' to 3'"} or \code{"3' to 5'"}.
   \item{readingFrame}{
 Numeric vector giving a single reading frame for all of the sequences, or an individual reading frame for each sequence in \code{myXStringSet}.  The \code{readingFrame} can be either \code{1}, \code{2}, \code{3} to begin translating on the first, second, and third nucleotide position, or \code{NA} (the default) to guess the reading frame.  (See details section below.)
 }
-  \item{asAAStringSet}{
-Logical determining whether to return the aligned translation as an \code{AAStringSet} rather than the input type.  Incomplete starting and ending codons will be translated into the mask character ("+").
+  \item{type}{
+Character string indicating the type of output desired.  This should be (an abbreviation of) one of \code{"DNAStringSet"}, \code{"RNAStringSet"}, \code{"AAStringSet"}, or \code{"both"}.  (See value section below.)
 }
   \item{geneticCode}{
 Named character vector in the same format as \code{GENETIC_CODE} (the default), which represents the standard genetic code.
 }
   \item{\dots}{
-Further arguments to be passed directly to \code{\link{AlignSeqs}}, including \code{gapOpening}, \code{gapExtension}, \code{gapPower}, \code{terminalGap}, \code{restrict}, \code{anchor}, \code{normPower}, \code{substitutionMatrix}, \code{structureMatrix}, \code{guideTree}, \code{iterations}, \code{refinements}, \code{structures}, \code{FUN}, and \code{levels}.
+Further arguments to be passed directly to \code{\link{AlignSeqs}}, including \code{gapOpening}, \code{gapExtension}, \code{gapPower}, \code{terminalGap}, \code{restrict}, \code{anchor}, \code{normPower}, \code{substitutionMatrix}, \code{structureMatrix}, \code{guideTree}, \code{iterations}, \code{refinements}, \code{useStructures}, \code{structures}, \code{FUN}, and \code{levels}.
 }
 }
 \details{
-Alignment of proteins is often more accurate than alignment of their coding nucleic acid sequences.  This function aligns the input nucleic acid sequences via aligning their translated amino acid sequences.  First, the input sequences are translated according to the specified \code{sense}, \code{direction}, and \code{readingFrame}.  The resulting amino acid sequences are aligned using \code{AlignSeqs}, and this alignment is reverse translated into the original sequence type, \code{sense}, and \code{direction}.  Not only is alignment of protein sequences more accurate, but aligning translations will ensure that the reading frame is maintained in the nucleotide sequences.
+Alignment of proteins is often more accurate than alignment of their coding nucleic acid sequences.  This function aligns the input nucleic acid sequences via aligning their translated amino acid sequences.  First, the input sequences are translated according to the specified \code{sense}, \code{direction}, and \code{readingFrame}.  The resulting amino acid sequences are aligned using \code{AlignSeqs}, and this alignment is (conceptually) reverse translated into the original sequence type, \code{sense}, and \code{direction}.  Not only is alignment of protein sequences generally more accurate, but aligning translations will ensure that the reading frame is maintained in the nucleotide sequences.
 
-If the \code{readingFrame} is \code{NA} (the default) then an attempt is made to guess the reading frame of each sequence based on the number of stop codons in the translated amino acids.  For each sequence, the first reading frame will be chosen (either \code{1}, \code{2}, or \code{3}) without stop codons, except in the last position.  If the number of stop codons is inconclusive for a sequence then the reading frame will default to \code{1}.  The entire length of each sequence is translated in spite of any stop codons identified.  Note that this method is only constructive in circumstances where there is a substantially long coding sequence with at most a single stop codon expected in the final position, and therefore it is preferable to specify the reading frame of each sequence if it is known.
+If the \code{readingFrame} is \code{NA} (the default) then an attempt is made to guess the reading frame of each sequence based on the number of stop codons in the translated amino acids.  For each sequence, the first reading frame will be chosen (either \code{1}, \code{2}, or \code{3}) without stop codons, except in the final position.  If the number of stop codons is inconclusive for a sequence then the reading frame will default to \code{1}.  The entire length of each sequence is translated in spite of any stop codons identified.  Note that this method is only constructive in circumstances where there is a substantially long coding sequence with at most a single stop codon expected in the final position, and therefore it is preferable to specify the reading frame of each sequence if it is known.
 }
 \value{
-An \code{XStringSet} matching the input type.
+An \code{XStringSet} of the class specified by \code{type}, or a list of two components (nucleotides and amino acids) if \code{type} is \code{"both"}.  Note that incomplete starting and ending codons will be translated into the mask character ("+") if the result includes an \code{AAStringSet}.
 }
 \references{
 ES Wright (2015) "DECIPHER: harnessing local sequence context to improve protein multiple sequence alignment". BMC Bioinformatics, doi:10.1186/s12859-015-0749-z.
@@ -66,8 +66,11 @@ RNA
 RNA <- AlignTranslation(rna, verbose=FALSE)
 RNA
 
-AA <- AlignTranslation(rna, asAAStringSet=TRUE, verbose=FALSE)
+AA <- AlignTranslation(rna, type="AAStringSet", verbose=FALSE)
 AA
+
+BOTH <- AlignTranslation(rna, type="both", verbose=FALSE)
+BOTH
 
 # example of aligning many protein coding sequences:
 fas <- system.file("extdata", "50S_ribosomal_protein_L2.fas", package="DECIPHER")

@@ -26,7 +26,7 @@ BrowseDB <- function(dbFile,
 		if (floor(limit)!=limit)
 				stop("limit must be a whole number or two comma-separated whole numbers specifying offset,limit.")
 	} else {
-		if (!grepl("[0-9],[0-9]", limit, perl=T)) {
+		if (!grepl("[0-9],[0-9]", limit, perl=TRUE)) {
 			limit <- as.numeric(limit)
 			if (floor(limit)!=limit)
 				stop("limit must be a whole number or two comma-separated whole numbers specifying offset,limit.")

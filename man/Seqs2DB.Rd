@@ -51,7 +51,7 @@ The number of processors to use, or \code{NULL} to automatically detect and use 
 Logical indicating whether to display each query as it is sent to the database.
 }
   \item{\dots}{
-Further arguments to be passed directly to \code{\link{Codec}}.
+Further arguments to be passed directly to \code{\link{Codec}} for compressing sequence information.
 }
 }
 \details{

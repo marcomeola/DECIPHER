@@ -43,6 +43,8 @@ Add2DB <- function(myData,
 		stop("clause must be a character string.")
 	if (!is.logical(verbose))
 		stop("verbose must be a logical.")
+	if (ncol(myData)==0)
+		stop("myData contains no columns.")
 	if (any(grepl(".", names(myData), fixed=TRUE)))
 		stop("Column names cannot contain periods.")
 	
@@ -102,7 +104,7 @@ Add2DB <- function(myData,
 			}
 			
 			# next update the column with new data
-			expression2 <- paste("update or replace ",
+			expression2 <- paste("update ",
 				tblName,
 				" set ",
 				colName,
@@ -123,10 +125,12 @@ Add2DB <- function(myData,
 					"\n\n",
 					sep="")
 			dbBegin(dbConn)
-			dbGetPreparedQuery(dbConn,
-				expression2,
-				bind.data=myData)
-			if (!dbCommit(dbConn)) {
+			t <- try(dbGetPreparedQuery(dbConn,
+					expression2,
+					bind.data=myData),
+				silent=TRUE)
+			dbCommit(dbConn)
+			if (class(t)=="try-error") {
 				warning("Unsucessful transaction!")
 				invisible(FALSE)
 			}

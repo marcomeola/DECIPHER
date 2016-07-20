@@ -179,10 +179,6 @@ Seqs2DB <- function(seqs,
 		}
 	}
 	
-	.compress <- function(x) {
-		memCompress(x, "gzip")
-	}
-	
 	if (type==1) { # FASTA
 		if (is.character(seqs)) {
 			if (substr(seqs, 1, 7)=="http://" ||
@@ -439,8 +435,9 @@ Seqs2DB <- function(seqs,
 				sequence=I(Codec(r[descriptions + 1L],
 					processors=processors,
 					...)),
-				quality=I(lapply(r[descriptions + 3L],
-					.compress)))
+				quality=I(Codec(r[descriptions + 3L],
+					compression=c("qbit", "gzip"),
+					processors=processors)))
 			
 			# add database columns to the data frame
 			if (length(f) > 0) {
@@ -681,8 +678,9 @@ Seqs2DB <- function(seqs,
 			description=names(seqs))
 		
 		if (type > 8) {
-			quality <- lapply(as.character(quality(seqs)),
-				.compress)
+			quality <- Codec(as.character(quality(seqs)),
+				compression=c("qbit", "gzip"),
+				processors=processors)
 		} else {
 			quality <- raw(length(seqs))
 		}

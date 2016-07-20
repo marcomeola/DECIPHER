@@ -55,10 +55,28 @@ AlignProfiles <- function(pattern,
 	}
 	if (is.null(p.struct) != is.null(s.struct))
 		stop("Both p.struct and s.struct must be specified.")
-	if (!is.null(p.struct) && length(p.struct) != length(pattern))
-		stop("p.struct is not the same length as pattern.")
-	if (!is.null(s.struct) && length(s.struct) != length(subject))
-		stop("s.struct is not the same length as subject.")
+	if (!is.null(p.struct)) {
+		if (is.matrix(p.struct)) {
+			if (dim(p.struct)[2] != w.p)
+				stop("The number of columns in p.struct does not match the width of the pattern.")
+		} else if (is.list(p.struct)) {
+			if (length(p.struct) != length(pattern))
+				stop("p.struct is not the same length as the pattern.")
+		} else {
+			stop("p.struct must be a matrix or list.")
+		}
+	}
+	if (!is.null(s.struct)) {
+		if (is.matrix(s.struct)) {
+			if (dim(s.struct)[2] != w.s)
+				stop("The number of columns in s.struct does not match the width of the subject.")
+		} else if (is.list(s.struct)) {
+			if (length(s.struct) != length(subject))
+				stop("s.struct is not the same length as the subject.")
+		} else {
+			stop("s.struct must be a matrix or list.")
+		}
+	}
 	if (!is.numeric(perfectMatch))
 		stop("perfectMatch must be a numeric.")
 	if (!is.numeric(misMatch))
@@ -176,86 +194,83 @@ AlignProfiles <- function(pattern,
 	}
 	
 	if (type==3L) {
-		if (is.null(p.struct)) {
-			p.profile <- .Call("consensusProfileAA",
-				pattern,
-				p.weight,
-				NULL,
-				PACKAGE="DECIPHER")
-			s.profile <- .Call("consensusProfileAA",
-				subject,
-				s.weight,
-				NULL,
-				PACKAGE="DECIPHER")
-		} else {
-			if (is.null(structureMatrix)) {
+		consensusProfile <- "consensusProfileAA"
+	} else {
+		consensusProfile <- "consensusProfile"
+	}
+	if (is.null(p.struct)) {
+		p.profile <- .Call(consensusProfile,
+			pattern,
+			p.weight,
+			NULL,
+			PACKAGE="DECIPHER")
+		s.profile <- .Call(consensusProfile,
+			subject,
+			s.weight,
+			NULL,
+			PACKAGE="DECIPHER")
+	} else {
+		if (is.null(structureMatrix)) {
+			if (type==3L) {
 				# assume structures from PredictHEC
 				structureMatrix <- matrix(c(5, 0, -2, 0, 9, -1, -2, -1, 2),
 					nrow=3) # order is H, E, C
 			} else {
-				# assume structures and matrix are ordered the same
-				if (!is.double(structureMatrix))
-					stop("structureMatrix must be contain numerics.")
-				if (!is.matrix(structureMatrix))
-					stop("structureMatrix must be a matrix.")
-				if (dim(structureMatrix)[1] != dim(structureMatrix)[2])
-					stop("structureMatrix is not square.")
-			}
-			if (dim(structureMatrix)[1] != dim(p.struct[[1]])[1])
-				stop("Dimensions of structureMatrix are incompatible with p.struct.")
-			if (dim(structureMatrix)[1] != dim(s.struct[[1]])[1])
-				stop("Dimensions of structureMatrix are incompatible with s.struct.")
-			
-			p.profile <- .Call("consensusProfileAA",
-				pattern,
-				p.weight,
-				p.struct,
-				PACKAGE="DECIPHER")
-			s.profile <- .Call("consensusProfileAA",
-				subject,
-				s.weight,
-				s.struct,
-				PACKAGE="DECIPHER")
-		}
-	} else {
-		if (is.null(p.struct)) {
-			p.profile <- .Call("consensusProfile",
-				pattern,
-				p.weight,
-				NULL,
-				PACKAGE="DECIPHER")
-			s.profile <- .Call("consensusProfile",
-				subject,
-				s.weight,
-				NULL,
-				PACKAGE="DECIPHER")
-		} else {
-			if (is.null(structureMatrix)) {
+				# assume structures from PredictDBN
+				####################### replace with RNA structure matrix
 				stop("structureMatrix must be specified if structures are provided.")
-			} else {
-				# assume structures and matrix are ordered the same
-				if (!is.double(structureMatrix))
-					stop("structureMatrix must be contain numerics.")
-				if (!is.matrix(structureMatrix))
-					stop("structureMatrix must be a matrix.")
-				if (dim(structureMatrix)[1] != dim(structureMatrix)[2])
-					stop("structureMatrix is not square.")
 			}
+		} else {
+			# assume structures and matrix are ordered the same
+			if (!is.double(structureMatrix))
+				stop("structureMatrix must be contain numerics.")
+			if (!is.matrix(structureMatrix))
+				stop("structureMatrix must be a matrix.")
+			if (dim(structureMatrix)[1] != dim(structureMatrix)[2])
+				stop("structureMatrix is not square.")
+		}
+		
+		if (is.list(p.struct)) {
 			if (dim(structureMatrix)[1] != dim(p.struct[[1]])[1])
 				stop("Dimensions of structureMatrix are incompatible with p.struct.")
-			if (dim(structureMatrix)[1] != dim(s.struct[[1]])[1])
-				stop("Dimensions of structureMatrix are incompatible with s.struct.")
 			
-			p.profile <- .Call("consensusProfile",
+			p.profile <- .Call(consensusProfile,
 				pattern,
 				p.weight,
 				p.struct,
 				PACKAGE="DECIPHER")
-			s.profile <- .Call("consensusProfile",
+		} else { # p.struct is a matrix
+			if (dim(structureMatrix)[1] != dim(p.struct)[1])
+				stop("Dimensions of structureMatrix are incompatible with p.struct.")
+			
+			p.profile <- .Call(consensusProfile,
+				pattern,
+				p.weight,
+				NULL,
+				PACKAGE="DECIPHER")
+			
+			p.profile <- rbind(p.profile, p.struct)
+		}
+		if (is.list(s.struct)) {
+			if (dim(structureMatrix)[1] != dim(s.struct[[1]])[1])
+				stop("Dimensions of structureMatrix are incompatible with s.struct.")
+			
+			s.profile <- .Call(consensusProfile,
 				subject,
 				s.weight,
 				s.struct,
 				PACKAGE="DECIPHER")
+		} else { # s.struct is a matrix
+			if (dim(structureMatrix)[1] != dim(s.struct)[1])
+				stop("Dimensions of structureMatrix are incompatible with s.struct.")
+			
+			s.profile <- .Call(consensusProfile,
+				subject,
+				s.weight,
+				NULL,
+				PACKAGE="DECIPHER")
+			
+			s.profile <- rbind(s.profile, s.struct)
 		}
 	}
 	
@@ -533,12 +548,7 @@ AlignProfiles <- function(pattern,
 			PACKAGE="DECIPHER")
 	}
 	
-	result <- .Call("appendXStringSets",
-		pattern,
-		subject,
-		type,
-		processors,
-		PACKAGE="DECIPHER")
+	result <- .append(pattern, subject)
 	names(result) <- ns
 	
 	return(result)

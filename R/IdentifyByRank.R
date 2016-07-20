@@ -40,6 +40,13 @@ IdentifyByRank <- function(dbFile,
 	x <- fetch(rs, n=-1)
 	dbClearResult(rs)
 	
+	.change <- function(id) {
+		id <- .Call("replaceChar", id, '"', "", PACKAGE="DECIPHER")
+		id <- .Call("replaceChar", id, "'", "", PACKAGE="DECIPHER")
+		id <- gsub("^\\s+|\\s+$", "", id)
+		return(id)
+	}
+	
 	z <- x
 	if (level==0) {
 		x <- strsplit(x$rank, "\n", fixed=TRUE)
@@ -47,7 +54,7 @@ IdentifyByRank <- function(dbFile,
 			function (x) {
 				x <- paste(x[-1], collapse=" ")
 			}))
-		z$identifier <- unlist(lapply(x, `[`, 1L))
+		z$identifier <- .change(unlist(lapply(x, `[`, 1L)))
 	} else {
 		x$rank <- unlist(lapply(strsplit(x$rank,
 				"\n",
@@ -74,12 +81,8 @@ IdentifyByRank <- function(dbFile,
 			z$origin[j] <- unlist(strsplit(as.character(x$rank[j]),
 				id,
 				fixed=TRUE))[1]
-			id <- .Call("replaceChar", id, ";", "", PACKAGE="DECIPHER")
-			id <- .Call("replaceChar", id, ".", "", PACKAGE="DECIPHER")
-			id <- .Call("replaceChar", id, '"', "", PACKAGE="DECIPHER")
-			id <- .Call("replaceChar", id, "'", "", PACKAGE="DECIPHER")
-			id <- .Call("replaceChar", id, " ", "", PACKAGE="DECIPHER")
-			z$identifier[j] <- as.character(id)
+			
+			z$identifier[j] <- .change(id)
 		}
 	}
 	
@@ -89,13 +92,11 @@ IdentifyByRank <- function(dbFile,
 		if (verbose)
 			cat("\nUpdating column: \"identifier\"...")
 		
-		searchExpression <- paste("update or replace ",
+		searchExpression <- paste("update ",
 			ifelse(is.character(add2tbl),add2tbl,tblName),
 			" set identifier = (select identifier from taxa where ",
 			ifelse(is.character(add2tbl),add2tbl,tblName),
-			".rank = taxa.rank) where ",
-			ifelse(is.character(add2tbl),add2tbl,tblName),
-			".rank in (select rank from taxa)",
+			".rank = taxa.rank)",
 			sep="")
 		dbGetQuery(dbConn, searchExpression)
 		

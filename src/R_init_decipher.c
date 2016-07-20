@@ -44,7 +44,6 @@ static const R_CallMethodDef callMethods[] = { // method call, pointer, num args
 	{"multiMatchCharNotNA", (DL_FUNC) &multiMatchCharNotNA, 1},
 	{"replaceChars", (DL_FUNC) &replaceChars, 3},
 	{"replaceChar", (DL_FUNC) &replaceChar, 3},
-	{"trimChar", (DL_FUNC) &trimChar, 2},
 	{"intMatch", (DL_FUNC) &intMatch, 3},
 	{"firstMatchUpper", (DL_FUNC) &firstMatchUpper, 3},
 	{"terminalMismatch", (DL_FUNC) &terminalMismatch, 5},
@@ -79,8 +78,6 @@ static const R_CallMethodDef callMethods[] = { // method call, pointer, num args
 	{"shiftGaps", (DL_FUNC) &shiftGaps, 8},
 	{"shiftGapsAA", (DL_FUNC) &shiftGapsAA, 8},
 	{"removeCommonGaps", (DL_FUNC) &removeCommonGaps, 3},
-	{"subsetXStringSet", (DL_FUNC) &subsetXStringSet, 4},
-	{"appendXStringSets", (DL_FUNC) &appendXStringSets, 4},
 	{"predictHEC", (DL_FUNC) &predictHEC, 6},
 	{"clearIns", (DL_FUNC) &clearIns, 1},
 	{"all", (DL_FUNC) &all, 1},
@@ -104,6 +101,9 @@ static const R_CallMethodDef callMethods[] = { // method call, pointer, num args
 	{"decompress", (DL_FUNC) &decompress, 2},
 	{"extractFields", (DL_FUNC) &extractFields, 4},
 	{"intDiff", (DL_FUNC) &intDiff, 1},
+	{"qbit", (DL_FUNC) &qbit, 3},
+	{"movAvg", (DL_FUNC) &movAvg, 6},
+	{"getPools", (DL_FUNC) &getPools, 1},
 	{NULL, NULL, 0}
 };
 

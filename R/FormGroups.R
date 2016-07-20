@@ -56,6 +56,13 @@ FormGroups <- function(dbFile,
 	if (verbose)
 		pBar <- txtProgressBar(style=3)
 	
+	.change <- function(id) {
+		id <- .Call("replaceChar", id, '"', "", PACKAGE="DECIPHER")
+		id <- .Call("replaceChar", id, "'", "", PACKAGE="DECIPHER")
+		id <- gsub("^\\s+|\\s+$", "", id)
+		return(id)
+	}
+	
 	rank <- unlist(lapply(strsplit(searchResult$rank,
 			"\n",
 			fixed=TRUE),
@@ -81,14 +88,10 @@ FormGroups <- function(dbFile,
 									searchResult$count[w2[w3]] <- -abs(searchResult$count[w2[w3]])									w <- c(w, w2[w3])
 								}							}
 						}					}
-										searchResult$origin[w] <- origin										# remove some punctuation					lineage[j] <- gsub('"', '', lineage[j], fixed=TRUE)					lineage[j] <- gsub('.', '', lineage[j], fixed=TRUE)					searchResult$identifier[w] <- gsub("^\\s+|\\s+$", "", lineage[j])
+										searchResult$origin[w] <- origin					searchResult$identifier[w] <- .change(lineage[j])
 					break				} else if (j==1 && counts < goalSize) {
 					searchResult$origin[i] <- ""
-					
-					# remove some punctuation
-					lineage[j] <- gsub('"', '', lineage[j], fixed=TRUE)
-					lineage[j] <- gsub('.', '', lineage[j], fixed=TRUE)
-					searchResult$identifier[i] <- gsub("^\\s+|\\s+$", "", lineage[j])
+					searchResult$identifier[i] <- .change(lineage[j])
 				}
 			}		}
 		if (verbose)
@@ -96,13 +99,11 @@ FormGroups <- function(dbFile,
 	
 	if (is.character(add2tbl) || add2tbl) {		dbWriteTable(dbConn, "taxa", searchResult)		
 		if (verbose)
-			cat("\nUpdating column: \"identifier\"...")		searchExpression <- paste("update or replace ",
+			cat("\nUpdating column: \"identifier\"...")		searchExpression <- paste("update ",
 			tblName,
 			" set identifier = (select identifier from taxa where ",
 			ifelse(is.character(add2tbl), add2tbl, tblName),
-			".rank = taxa.rank) where ",
-			ifelse(is.character(add2tbl), add2tbl, tblName),
-			".rank in (select rank from taxa)",
+			".rank = taxa.rank)",
 			sep="")		dbGetQuery(dbConn, searchExpression)		
 		if (is.na(match("origin",
 			dbListFields(dbConn,
@@ -112,13 +113,11 @@ FormGroups <- function(dbFile,
 				sep="")			dbGetQuery(dbConn, searchExpression)		}
 		
 		if (verbose)
-			cat("\nUpdating column: \"origin\"...")		searchExpression <- paste("update or replace ",
+			cat("\nUpdating column: \"origin\"...")		searchExpression <- paste("update ",
 			ifelse(is.character(add2tbl), add2tbl, tblName),
 			" set origin = (select origin from taxa where ",
 			ifelse(is.character(add2tbl), add2tbl, tblName),
-			".rank = taxa.rank) where ",
-			ifelse(is.character(add2tbl), add2tbl, tblName),
-			".rank in (select rank from taxa)",
+			".rank = taxa.rank)",
 			sep="")		dbGetQuery(dbConn, searchExpression)				searchExpression <- "drop table taxa"		dbGetQuery(dbConn, searchExpression)	}
 	
 	if (verbose) {
