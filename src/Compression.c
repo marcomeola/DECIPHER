@@ -1435,7 +1435,7 @@ SEXP qbit(SEXP x, SEXP y, SEXP nThreads)
 	}
 	
 	// compress the quality scores
-	#pragma omp parallel for private(i,j,k,p,s,pos) schedule(guided) num_threads(nthreads)
+	#pragma omp parallel for private(i,j,p,s) schedule(guided) num_threads(nthreads)
 	for (i = 0; i < n; i++) {
 		ptrs[i] = Calloc(l[i] > 3 ? l[i] : 4, unsigned char); // initialized to zero
 		p = ptrs[i];
