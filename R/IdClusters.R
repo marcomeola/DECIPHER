@@ -1864,12 +1864,12 @@ IdClusters <- function(myDistMatrix=NULL,
 			org.options <- options(expressions=5e5)
 			on.exit(options(org.options))
 			
-			# convert bifurcating tree to multifurcating
-			d <- .collapse(d)
-			
 			# midpoint root the dendrogram
 			if (method==1 || method==3)
 				d <- .midpointRoot(d)
+			
+			# convert bifurcating tree to multifurcating
+			d <- .collapse(d)
 			
 			# specify the order of clusters that
 			# will match the plotted dendrogram
