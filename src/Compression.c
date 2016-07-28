@@ -24,11 +24,11 @@
 /* for Calloc/Free */
 #include <R_ext/RS.h>
 
-// DECIPHER header file
-#include "DECIPHER.h"
-
 // stdint library
 #include "stdint.h"
+
+// DECIPHER header file
+#include "DECIPHER.h"
 
 ////////////////////////////////////////////////////
 // modified CRC calculators from https://pycrc.org/

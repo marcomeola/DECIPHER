@@ -16,7 +16,9 @@ TrimDNA(myDNAStringSet,
         minOverlap = 5,
         allowInternal = TRUE,
         alpha = 0.2,
-        threshold = 0.01,
+        threshold = 0.02,
+        maxAverageError = threshold/2,
+        maxAmbiguities = 0.01,
         minWidth = 36,
         verbose = TRUE)
 }
@@ -51,6 +53,12 @@ Numeric between zero and one giving the smoothing parameter for an exponential m
   \item{threshold}{
 Numeric between zero and one specifying the threshold above which to trim the poor quality regions of the sequence.  Higher values allow more sequence to be preserved at the expense of a greater error rate.
 }
+  \item{maxAverageError}{
+Numeric between zero and \code{threshold} indicating the maximum average error rate of the trimmed region of the sequence.  Trimmed sequences with average error rates above \code{maxAverageError} will be rejected.  Note that the expected number of errors in a sequence is equal to the average error rate multiplied by the length of the sequence.
+}
+  \item{maxAmbiguities}{
+Numeric between zero and one giving the maximum fraction of ambiguous (e.g., \code{"N"}) positions that are tolerated within the trimmed region of the sequence.  Trimmed sequences with a greater fraction of ambiguities than \code{maxAmbiguities} will be rejected.
+}
   \item{minWidth}{
 Integer giving the minimum number of nucleotides a pattern must overlap the sequence to initiate trimming.
 }
@@ -61,7 +69,7 @@ Logical indicating whether to display progress.
 \details{
 After a sequencing run, it is often necessary to trim the resulting sequences to the high quality region located between a set of patterns.  \code{TrimDNA} works as follows:  first left and right patterns are identified within the sequences if \code{allowInternal} is \code{TRUE} (the default).  If the patterns are not found internally, then a search is conducted at the flanking ends for patterns that partially overlap the sequence.  The region between the \code{leftPatterns} and \code{rightPatterns} is then returned, unless quality information is provided.
 
-If \code{quality} contains quality scores, these are converted to error probabilities and an exponential moving average is applied to smooth the signal.  The longest region between the \code{leftPatterns} and \code{rightPatterns} where the average error probability is below \code{threshold} is then returned.
+If \code{quality} contains quality scores, these are converted to error probabilities and an exponential moving average is applied to smooth the signal.  The longest region between the \code{leftPatterns} and \code{rightPatterns} where the average error probability is below \code{threshold} is then returned, so long as it has an average error rate of at most \code{maxAverageError}.
 }
 \value{
 \code{TrimDNA} can return two \code{type}s of results: \code{IRanges} that can be used for trimming \code{myDNAStringSet}, or a trimmed \code{DNAStringSet} containing only those sequences over \code{minWidth} nucleotides after trimming.  Note that ambiguity codes (\code{IUPAC_CODE_MAP}) are supported in the \code{leftPatterns} and \code{rightPatterns}, but not in \code{myDNAStringSet} to prevent trivial matches (e.g., runs of N's).

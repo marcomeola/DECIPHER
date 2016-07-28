@@ -35,7 +35,7 @@
 // DECIPHER header file
 #include "DECIPHER.h"
 
-SEXP movAvg(SEXP x, SEXP type, SEXP alpha, SEXP thresh, SEXP start, SEXP end)
+SEXP movAvg(SEXP x, SEXP type, SEXP alpha, SEXP thresh, SEXP maxAvg, SEXP start, SEXP end)
 {
 	int i, j, m;
 	double p;
@@ -45,6 +45,7 @@ SEXP movAvg(SEXP x, SEXP type, SEXP alpha, SEXP thresh, SEXP start, SEXP end)
 	double t = asReal(thresh);
 	t *= 2; // moving average is doubled
 	int k = asInteger(type);
+	double mA = asReal(maxAvg);
 	
 	SEXP lefts, rights;
 	PROTECT(lefts = duplicate(start));
@@ -64,57 +65,33 @@ SEXP movAvg(SEXP x, SEXP type, SEXP alpha, SEXP thresh, SEXP start, SEXP end)
 		if (m==0)
 			continue;
 		
+		// initialize array of error probabilities
+		double *p = Calloc(m, double); // initialized to zero
+		
 		// initialize arrays of weighted averages
 		double *s1 = Calloc(m, double); // initialized to zero
 		double *s2 = Calloc(m, double); // initialized to zero
 		
-		// trailing moving average
 		if (k==1) { // Phred
-			p = (double)x_i.ptr[0] - 33;
-			s1[0] = pow(10, -p/10);
-			for (j = 1; j < m; j++) {
-				p = (double)x_i.ptr[j] - 33;
-				s1[j] = a*pow(10, -p/10) + b*s1[j - 1];
-			}
+			for (j = 0; j < m; j++)
+				p[j] = pow(10, ((double)x_i.ptr[j] - 33)/-10);
 		} else if (k==2) { // Solexa
-			p = (double)x_i.ptr[0] - 64;
-			s1[0] = 1 - 1/(1 + pow(10, -p/10));
-			for (j = 1; j < m; j++) {
-				p = (double)x_i.ptr[j] - 64;
-				s1[j] = a*(1 - 1/(1 + pow(10, -p/10))) + b*s1[j - 1];
-			}
+			for (j = 0; j < m; j++)
+				p[j] = 1 - 1/(1 + pow(10, ((double)x_i.ptr[j] - 64)/-10));
 		} else { // Illumina
-			p = (double)x_i.ptr[0] - 64;
-			s1[0] = pow(10, -p/10);
-			for (j = 1; j < m; j++) {
-				p = (double)x_i.ptr[j] - 64;
-				s1[j] = a*pow(10, -p/10) + b*s1[j - 1];
-			}
+			for (j = 0; j < m; j++)
+				p[j] = pow(10, ((double)x_i.ptr[j] - 64)/-10);
 		}
 		
+		// trailing moving average
+		s1[0] = p[0];
+		for (j = 1; j < m; j++)
+			s1[j] = a*p[j] + b*s1[j - 1];
+		
 		// leading moving average
-		if (k==1) { // Phred
-			p = (double)x_i.ptr[m - 1] - 33;
-			s2[m - 1] = pow(10, -p/10);
-			for (j = m - 2; j >= 0; j--) {
-				p = (double)x_i.ptr[j] - 33;
-				s2[j] = a*pow(10, -p/10) + b*s2[j + 1];
-			}
-		} else if (k==2) { // Solexa
-			p = (double)x_i.ptr[m - 1] - 64;
-			s2[m - 1] = 1 - 1/(1 + pow(10, -p/10));
-			for (j = m - 2; j >= 0; j--) {
-				p = (double)x_i.ptr[j] - 64;
-				s2[j] = a*(1 - 1/(1 + pow(10, -p/10))) + b*s2[j + 1];
-			}
-		} else { // Illumina
-			p = (double)x_i.ptr[m - 1] - 64;
-			s2[m - 1] = pow(10, -p/10);
-			for (j = m - 2; j >= 0; j--) {
-				p = (double)x_i.ptr[j] - 64;
-				s2[j] = a*pow(10, -p/10) + b*s2[j + 1];
-			}
-		}
+		s2[m - 1] = p[m - 1];
+		for (j = m - 2; j >= 0; j--)
+			s2[j] = a*p[j] + b*s2[j + 1];
 		
 		// combined moving average
 		for (j = 0; j < m; j++)
@@ -145,8 +122,20 @@ SEXP movAvg(SEXP x, SEXP type, SEXP alpha, SEXP thresh, SEXP start, SEXP end)
 		Free(s1);
 		
 		right[i] = bestEnd + 1;
-		if (longest==0)
+		if (longest==0) {
 			left[i] = 0;
+		} else {
+			double avgError = 0;
+			for (j = left[i] - 1; j <= bestEnd; j++)
+				avgError += p[j];
+			avgError /= bestEnd - left[i] + 2;
+			if (avgError > mA) {
+				left[i] = 0;
+				right[i] = -1;
+			}
+		}
+		
+		Free(p);
 	}
 	
 	SEXP ret_list;

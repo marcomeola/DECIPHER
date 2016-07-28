@@ -21,8 +21,8 @@
 #include <omp.h>
 #endif
 
-// DECIPHER header file
-#include "DECIPHER.h"
+// strcpy
+#include <string.h>
 
 /*
  * Biostrings_interface.h is needed for the DNAencode(), get_XString_asRoSeq(),
@@ -32,8 +32,8 @@
 #include "Biostrings_interface.h"
 #include "XVector_interface.h"
 
-// strcpy
-#include <string.h>
+// DECIPHER header file
+#include "DECIPHER.h"
 
 //ans_start <- .Call("removeCommonGaps", sequences, type, processors, PACKAGE="DECIPHER")
 SEXP removeCommonGaps(SEXP x, SEXP type, SEXP nThreads)

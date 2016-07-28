@@ -102,7 +102,7 @@ static const R_CallMethodDef callMethods[] = { // method call, pointer, num args
 	{"extractFields", (DL_FUNC) &extractFields, 4},
 	{"intDiff", (DL_FUNC) &intDiff, 1},
 	{"qbit", (DL_FUNC) &qbit, 3},
-	{"movAvg", (DL_FUNC) &movAvg, 6},
+	{"movAvg", (DL_FUNC) &movAvg, 7},
 	{"getPools", (DL_FUNC) &getPools, 1},
 	{NULL, NULL, 0}
 };

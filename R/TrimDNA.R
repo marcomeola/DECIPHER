@@ -7,7 +7,9 @@ TrimDNA <- function(myDNAStringSet,
 	minOverlap=5,
 	allowInternal=TRUE,
 	alpha=0.2,
-	threshold=0.01,
+	threshold=0.02,
+	maxAverageError=threshold/2,
+	maxAmbiguities=0.01,
 	minWidth=36,
 	verbose=TRUE) {
 	
@@ -52,14 +54,22 @@ TrimDNA <- function(myDNAStringSet,
 		stop("minOverlap must be at least one.")
 	if (!is.logical(allowInternal))
 		stop("allowInternal must be a logical.")
-	if (!is.numeric(threshold))
-		stop("threshold must be a numeric.")
-	if (threshold >= 1 || threshold <= 0)
-		stop("threshold must be between zero and one.")
 	if (!is.numeric(alpha))
 		stop("alpha must be a numeric.")
 	if (alpha > 1 || alpha <= 0)
 		stop("alpha must be between zero and one.")
+	if (!is.numeric(threshold))
+		stop("threshold must be a numeric.")
+	if (threshold >= 1 || threshold <= 0)
+		stop("threshold must be between zero and one.")
+	if (!is.numeric(maxAverageError))
+		stop("maxAverageError must be a numeric.")
+	if (maxAverageError > threshold || maxAverageError <= 0)
+		stop("maxAverageError must be between zero and threshold.")
+	if (!is.numeric(maxAmbiguities))
+		stop("maxAmbiguities must be a numeric.")
+	if (maxAmbiguities >= 1 || maxAmbiguities <= 0)
+		stop("maxAmbiguities must be between zero and one.")
 	if (!is.numeric(minWidth))
 		stop("minWidth must be a numeric.")
 	if (minWidth < 0)
@@ -196,6 +206,7 @@ TrimDNA <- function(myDNAStringSet,
 					"IlluminaQuality")),
 			alpha,
 			threshold,
+			maxAverageError,
 			as.integer(lefts),
 			as.integer(rights),
 			PACKAGE="DECIPHER")
@@ -219,21 +230,30 @@ TrimDNA <- function(myDNAStringSet,
 		rights[w] <- 0L
 	}
 	
+	w <- which(lefts <= rights)
+	if (length(w) > 0) {
+		myDNAStringSet <- dna[w]
+		myDNAStringSet <- subseq(myDNAStringSet,
+			lefts[w],
+			rights[w])
+		
+		a <- alphabetFrequency(dna, as.prob=TRUE, baseOnly=TRUE)
+		x <- which(a[, "other"] > maxAmbiguities)
+		if (length(x) > 0) {
+			myDNAStringSet <- myDNAStringSet[-x]
+			if (type==1 || type==3) {
+				lefts[w[x]] <- 1L
+				rights[w[x]] <- 0L
+			}
+		}
+	} else {
+		myDNAStringSet <- DNAStringSet()
+	}
+	
 	if (type==1 || type==3)
 		ranges <- IRanges(start=lefts,
 			end=rights,
 			names=names(myDNAStringSet))
-	if (type==2 || type==3) {
-		w <- which(lefts <= rights)
-		if (length(w) > 0) {
-			myDNAStringSet <- dna[w]
-			myDNAStringSet <- subseq(myDNAStringSet,
-				lefts[w],
-				rights[w])
-		} else {
-			myDNAStringSet <- DNAStringSet()
-		}
-	}
 	
 	if (verbose) {
 		cat("\n\n")

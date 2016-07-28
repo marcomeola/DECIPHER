@@ -21,9 +21,6 @@
 #include <omp.h>
 #endif
 
-// DECIPHER header file
-#include "DECIPHER.h"
-
 /*
  * Biostrings_interface.h is needed for the DNAencode(), get_XString_asRoSeq(),
  * init_match_reporting(), report_match() and reported_matches_asSEXP()
@@ -34,6 +31,9 @@
 
 // strcpy
 #include <string.h>
+
+// DECIPHER header file
+#include "DECIPHER.h"
 
 //ans_start <- .Call("insertGaps", sequences, positions, lengths, type, processors, PACKAGE="DECIPHER")
 SEXP insertGaps(SEXP x, SEXP positions, SEXP lengths, SEXP type, SEXP nThreads)

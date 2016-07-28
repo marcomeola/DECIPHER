@@ -16,9 +16,6 @@
  */
 #include <R_ext/Rdynload.h>
 
-// DECIPHER header file
-#include "DECIPHER.h"
-
 /*
  * Biostrings_interface.h is needed for the DNAencode(), get_XString_asRoSeq(),
  * init_match_reporting(), report_match() and reported_matches_asSEXP()
@@ -26,6 +23,9 @@
  */
 #include "Biostrings_interface.h"
 #include "XVector_interface.h"
+
+// DECIPHER header file
+#include "DECIPHER.h"
 
 SEXP consolidateGaps(SEXP x, SEXP type)
 {

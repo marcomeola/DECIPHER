@@ -30,9 +30,6 @@
 #include <omp.h>
 #endif
 
-// for calloc/free
-#include <stdlib.h>
-
 /*
  * Biostrings_interface.h is needed for the DNAencode(), get_XString_asRoSeq(),
  * init_match_reporting(), report_match() and reported_matches_asSEXP()
@@ -432,8 +429,8 @@ SEXP clusterML(SEXP x, SEXP y, SEXP model, SEXP branches, SEXP lengths, SEXP nTh
 		#pragma omp parallel for private(i,j,y_i,row) schedule(guided) num_threads(nthreads)
 		for (i = 0; i < maxWidth; i++) { // for each position
 			//double *Ls = (double *) R_alloc(length*8, sizeof(double));
-			//double *Ls = Calloc(length*8*(altL + 1), double); // initialized to zero
-			double *Ls = (double *) calloc(length*8*(altL + 1), sizeof(double)); // initialized to zero
+			double *Ls = Calloc(length*8*(altL + 1), double); // initialized to zero
+			//double *Ls = (double *) calloc(length*8*(altL + 1), sizeof(double)); // initialized to zero
 			
 			for (j = 0; j < (length - 1); j++) { // for each node
 				// if first branch is leaf then its base L is 1
@@ -565,7 +562,8 @@ SEXP clusterML(SEXP x, SEXP y, SEXP model, SEXP branches, SEXP lengths, SEXP nTh
 					*(m + 2) * *(Ls + 2*length + j + length*8*o) +
 					*(m + 3) * *(Ls + 3*length + j + length*8*o)) * *(m + numRates + k + 6);
 			}
-			free(Ls);
+			Free(Ls);
+			//free(Ls);
 		}
 		Free(P);
 		R_CheckUserInterrupt();

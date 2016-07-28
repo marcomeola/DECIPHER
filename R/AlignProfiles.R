@@ -213,7 +213,7 @@ AlignProfiles <- function(pattern,
 		if (is.null(structureMatrix)) {
 			if (type==3L) {
 				# assume structures from PredictHEC
-				structureMatrix <- matrix(c(5, 0, -2, 0, 9, -1, -2, -1, 2),
+				structureMatrix <- matrix(c(4, 1, -3, 1, 10, -1, -3, -1, 2),
 					nrow=3) # order is H, E, C
 			} else {
 				# assume structures from PredictDBN

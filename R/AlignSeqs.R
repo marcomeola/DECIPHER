@@ -159,7 +159,7 @@ AlignSeqs <- function(myXStringSet,
 					if (dim(structureMatrix)[1] != dim(structureMatrix)[2])
 						stop("structureMatrix is not square.")
 				} else {
-					structureMatrix <- matrix(c(5, 0, -2, 0, 9, -1, -2, -1, 2),
+					structureMatrix <- matrix(c(4, 1, -3, 1, 10, -1, -3, -1, 2),
 						nrow=3) # order is H, E, C
 				}
 				if (dim(structureMatrix)[1] != dim(structures[[1]])[1])
@@ -277,18 +277,26 @@ AlignSeqs <- function(myXStringSet,
 			diag(sM) <- PM
 		}
 	}
+	
+	# need to maximize the recursion depth temporarily
+	org.options <- options(expressions=5e5)
+	on.exit(options(org.options))
+	
 	if (length(args)==0)
 		args <- NULL
 	
 	if (verbose)
 		time.1 <- Sys.time()
 	
+	w.x <- width(myXStringSet)
 	if (type==3L) {
-		wordSize <- ceiling(mean(width(myXStringSet))^0.2)
-		if (wordSize > 7)
-			wordSize <- 7
+		wordSize <- ceiling(log(100*mean(w.x), 9))
+		if (wordSize > 10)
+			wordSize <- 10
+		if (wordSize < 1)
+			wordSize <- 1
 	} else {
-		wordSize <- ceiling(mean(width(myXStringSet))^0.22)
+		wordSize <- ceiling(log(100*mean(w.x), 4))
 		if (wordSize > 15)
 			wordSize <- 15
 		if (wordSize < 5)
@@ -308,9 +316,12 @@ AlignSeqs <- function(myXStringSet,
 		}
 		
 		if (type==3L) {
-			v <- .Call("enumerateSequenceAA",
+			v <- .Call("enumerateSequenceReducedAA",
 				myXStringSet,
 				wordSize,
+				c(A=2L, R=7L, N=6L, D=8L, C=3L, Q=4L, E=8L,
+					G=5L, H=4L, I=1L, L=1L, K=7L, M=0L, F=0L,
+					P=4L, S=6L, T=6L, W=4L, Y=4L, V=1L),
 				PACKAGE="DECIPHER")
 		} else { # DNAStringSet or RNAStringSet
 			v <- .Call("enumerateSequence",
@@ -525,6 +536,28 @@ AlignSeqs <- function(myXStringSet,
 		}
 	}
 	
+	.reorder <- function(dend) {
+		l <- length(dend)
+		if (l > 1) {
+			for (i in seq_len(l))
+				dend[[i]] <- .reorder(dend[[i]])
+			
+			members <- lapply(dend, unlist)
+			# sort tree by descending width
+			o <- order(sapply(members,
+					function(x)
+						max(w.x[x])),
+				lengths(members),
+				sapply(members, min),
+				decreasing=TRUE)
+			dend[] <- dend[o]
+		} else if (!is.leaf(dend)) {
+			dend[[1]] <- .reorder(dend[[1]])
+		}
+		return(dend)
+	}
+	guideTree <- .reorder(guideTree)
+	
 	ns <- names(myXStringSet)
 	seqs <- myXStringSet
 	weights <- heights <- numeric(l)
@@ -564,10 +597,9 @@ AlignSeqs <- function(myXStringSet,
 			}
 		}
 		
+		# record the alignment order in the original tree
 		j <- 0L
 		orders <- vector("list", l - 1L)
-		guideTree <- reorder(guideTree, seq_len(l), min)
-		guideTree <- reorder(guideTree, rep(1L, l), sum)
 		.order(guideTree)
 		
 		.compare <- function(dend, found=FALSE) {
@@ -685,8 +717,7 @@ AlignSeqs <- function(myXStringSet,
 		
 		j <- 0L
 		orders <- vector("list", l - 1L)
-		guideTree <- reorder(guideTree, seq_len(l), min)
-		guideTree <- reorder(guideTree, rep(1L, l), sum)
+		guideTree <- .reorder(guideTree)
 		guideTree <- .compare(guideTree)
 		
 		seqs <- myXStringSet

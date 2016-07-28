@@ -214,7 +214,7 @@ SEXP intDiff(SEXP x);
 
 // MovingAverage.c
 
-SEXP movAvg(SEXP x, SEXP type, SEXP alpha, SEXP thresh, SEXP start, SEXP end);
+SEXP movAvg(SEXP x, SEXP type, SEXP alpha, SEXP thresh, SEXP maxAvg, SEXP start, SEXP end);
 
 // GetPools.c
 

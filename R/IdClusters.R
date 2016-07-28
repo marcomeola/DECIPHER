@@ -9,11 +9,11 @@
 }
 
 # below function modified from stats package
-to.dendrogram <- function (object) {
-	
+to.dendrogram <- function(object) {
 	z <- list()
 	oHgts <- object$lengths
-	nMerge <- length(oHgt <- object$height)
+	oHgt <- object$height
+	nMerge <- length(oHgt)
 	if (nMerge != nrow(object$merge))
 		stop("'merge' and 'height' do not fit!")
 	hMax <- oHgt[nMerge]
@@ -25,47 +25,99 @@ to.dendrogram <- function (object) {
 		x <- as.integer(object$merge[k, ])
 		neg <- x < 0
 		if (all(neg)) { # two leaves
-			    zk <- as.list(-x)
-			    attr(zk, "members") <- two
-			    attr(zk, "midpoint") <- 0.5 # mean(c(0,1))
-			    objlabels <- object$labels[-x]
-			    attr(zk[[1L]], "label") <- objlabels[1L]
-			    attr(zk[[2L]], "label") <- objlabels[2L]
-			    attr(zk[[1L]], "members") <- attr(zk[[2L]], "members") <- one
-			    attr(zk[[1L]], "height") <- oHgt[k] - oHgts[k,1]
-			    attr(zk[[2L]], "height") <- oHgt[k] - oHgts[k,2]
-			    attr(zk[[1L]], "leaf") <- attr(zk[[2L]], "leaf") <- TRUE
-			} else if (any(neg)) { # one leaf, one node
-			    X <- as.character(x)
-			    isL <- x[1L] < 0 # is leaf left?
-			    zk <-
-				if(isL) {
-					list(-x[1L], z[[X[2L]]])
-				} else {
-					list(z[[X[1L]]], -x[2L])
-				}
-			    attr(zk, "members") <- attr(z[[X[1 + isL]]], "members") + one
-			    attr(zk, "midpoint") <-
-	        	        (.memberDend(zk[[1L]]) + attr(z[[X[1 + isL]]], "midpoint"))/2
-			   	attr(zk[[2 - isL]], "members") <- one
-			    attr(zk[[2 - isL]], "height") <- oHgt[k] - oHgts[k,2 - isL]
-			    attr(zk[[2 - isL]], "label") <- object$labels[-x[2 - isL]]
-			    attr(zk[[2 - isL]], "leaf") <- TRUE
-			} else {	 # two nodes
-		    		x <- as.character(x)
-		    		zk <- list(z[[x[1L]]], z[[x[2L]]])
-		    		attr(zk, "members") <- attr(z[[x[1L]]], "members") +
-					attr(z[[x[2L]]], "members")
-					attr(zk, "midpoint") <- (attr(z[[x[1L]]], "members") +
-						attr(z[[x[1L]]], "midpoint") +
-						attr(z[[x[2L]]], "midpoint"))/2
+			zk <- as.list(-x)
+			attr(zk, "members") <- two
+			attr(zk, "midpoint") <- 0.5 # mean(c(0,1))
+			objlabels <- object$labels[-x]
+			attr(zk[[1L]], "label") <- objlabels[1L]
+			attr(zk[[2L]], "label") <- objlabels[2L]
+			attr(zk[[1L]], "members") <- attr(zk[[2L]], "members") <- one
+			attr(zk[[1L]], "height") <- oHgt[k] - oHgts[k, 1]
+			attr(zk[[2L]], "height") <- oHgt[k] - oHgts[k, 2]
+			attr(zk[[1L]], "leaf") <- attr(zk[[2L]], "leaf") <- TRUE
+		} else if (any(neg)) { # one leaf, one node
+			X <- as.character(x)
+			isL <- x[1L] < 0 # is leaf left?
+			zk <-
+			if (isL) {
+				list(-x[1L], z[[X[2L]]])
+			} else {
+				list(z[[X[1L]]], -x[2L])
+			}
+			attr(zk, "members") <- attr(z[[X[1 + isL]]], "members") + one
+			attr(zk, "midpoint") <- (.memberDend(zk[[1L]]) + attr(z[[X[1 + isL]]], "midpoint"))/2
+			attr(zk[[2 - isL]], "members") <- one
+			attr(zk[[2 - isL]], "height") <- oHgt[k] - oHgts[k, 2 - isL]
+			attr(zk[[2 - isL]], "label") <- object$labels[-x[2 - isL]]
+			attr(zk[[2 - isL]], "leaf") <- TRUE
+		} else { # two nodes
+			x <- as.character(x)
+			zk <- list(z[[x[1L]]], z[[x[2L]]])
+			attr(zk, "members") <- attr(z[[x[1L]]], "members") + attr(z[[x[2L]]], "members")
+			attr(zk, "midpoint") <- (attr(z[[x[1L]]], "members") + attr(z[[x[1L]]], "midpoint") + attr(z[[x[2L]]], "midpoint"))/2
 		}
 		attr(zk, "height") <- oHgt[k]
-		z[[k <- as.character(k)]] <- zk
+		k <- as.character(k)
+		z[[k]] <- zk
 	}
 	z <- z[[k]]
 	class(z) <- "dendrogram"
 	z
+}
+
+.collapse <- function(dend) {
+	if (is.leaf(dend))
+		return(dend)
+	
+	dend[[1]] <- .collapse(dend[[1]])
+	dend[[2]] <- .collapse(dend[[2]])
+	
+	if (!is.leaf(dend[[1]])) {
+		h1 <- attr(dend[[1]], "height")
+	} else {
+		h1 <- -Inf
+	}
+	if (!is.leaf(dend[[2]])) {
+		h2 <- attr(dend[[2]], "height")
+	} else {
+		h2 <- -Inf
+	}
+	
+	h <- attr(dend, "height")
+	
+	if (h==h1 || h==h2) { # make multifurcating
+		m1 <- attr(dend[[1]], "members")
+		m2 <- attr(dend[[2]], "members")
+		m <- m1 + m2
+		if (h==h1 && h==h2) {
+			l1 <- length(dend[[1]])
+			l2 <- length(dend[[2]])
+			x <- vector("list", l1 + l2)
+			for (i in seq_len(l1))
+				x[i] <- dend[[1]][i]
+			for (i in seq_len(l2))
+				x[i + l1] <- dend[[2]][i]
+		} else if (h==h1) {
+			l <- length(dend[[1]])
+			x <- vector("list", l + 1)
+			for (i in seq_len(l))
+				x[i] <- dend[[1]][i]
+			x[l + 1] <- dend[-1]
+		} else if (h==h2) {
+			l <- length(dend[[2]])
+			x <- vector("list", l + 1)
+			x[1] <- dend[-2]
+			for (i in seq_len(l))
+				x[i + 1] <- dend[[2]][i]
+		}
+		dend <- x
+		attr(dend, "height") <- h
+		attr(dend, "members") <- m
+		attr(dend, "midpoint") <- (m - 1)/2
+		class(dend) <- "dendrogram"
+	}
+	
+	return(dend)
 }
 
 .organizeClusters <- function(myClusters,
@@ -1805,9 +1857,18 @@ IdClusters <- function(myDistMatrix=NULL,
 			} else {
 				leaves <- "perpendicular"
 			}
+			
 			d <- to.dendrogram(myClustersList)
 			
-			if (method==1 || method==3) # midpoint root the dendrogram
+			# need to maximize the recursion depth temporarily
+			org.options <- options(expressions=5e5)
+			on.exit(options(org.options))
+			
+			# convert bifurcating tree to multifurcating
+			d <- .collapse(d)
+			
+			# midpoint root the dendrogram
+			if (method==1 || method==3)
 				d <- .midpointRoot(d)
 			
 			# specify the order of clusters that
@@ -1832,7 +1893,25 @@ IdClusters <- function(myDistMatrix=NULL,
 			}
 			if (is.finite(cutoff[1])) {
 				d <- dendrapply(d, colEdge, c, r)
-				d <- reorder(d, c[, 1])
+				
+				.reorder <- function(dend) {
+					l <- length(dend)
+					if (l > 1) {
+						for (i in seq_len(l))
+							dend[[i]] <- .reorder(dend[[i]])
+						
+						members <- lapply(dend, unlist)
+						# sort tree by ascending cluster number
+						o <- sort.list(sapply(members,
+								function(x)
+									min(c[x, 1])))
+						dend[] <- dend[o]
+					} else if (!is.leaf(dend)) {
+						dend[[1]] <- .reorder(dend[[1]])
+					}
+					return(dend)
+				}
+				d <- .reorder(d)
 			}
 		}
 		if (type==1 || type==3) {

@@ -19,11 +19,11 @@
 // for math functions
 #include <math.h>
 
-// DECIPHER header file
-#include "DECIPHER.h"
-
 // for div_t div
 #include <stdlib.h>
+
+// DECIPHER header file
+#include "DECIPHER.h"
 
 // decode integer vector
 // NOTE:  Zeros the elements of SEXP x
