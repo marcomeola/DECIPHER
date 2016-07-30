@@ -66,6 +66,7 @@ Erik Wright \email{DECIPHER@cae.wisc.edu}
 \examples{
 db <- system.file("extdata", "Bacteria_175seqs.sqlite", package="DECIPHER")
 dna <- SearchDB(db)
+BrowseSeqs(dna)
 BrowseSeqs(dna, colWidth=100, highlight=1)
 
 # color bases in alternating groups with a different color scheme

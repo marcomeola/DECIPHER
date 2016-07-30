@@ -2,7 +2,7 @@ ConsensusSequence <- function(myXStringSet,
 	threshold=0.05,
 	ambiguity=TRUE,
 	noConsensusChar="+",
-	minInformation=0.75,
+	minInformation=1 - threshold,
 	ignoreNonBases=FALSE,
 	includeTerminalGaps=FALSE) {
 	
@@ -14,15 +14,15 @@ ConsensusSequence <- function(myXStringSet,
 	if (!is.numeric(threshold))
 		stop("threshold must be a numeric.")
 	if (threshold >= 1)
-		stop("threshold must be less than 1.")
+		stop("threshold must be less than one.")
 	if (threshold < 0)
 		stop("threshold cannot be negative.")
 	if (!is.numeric(minInformation))
 		stop("minInformation must be a numeric.")
 	if (minInformation > 1)
-		stop("minInformation cannot be greater than 1.")
+		stop("minInformation cannot be greater than one.")
 	if (minInformation <= 0)
-		stop("minInformation must be at least zero.")
+		stop("minInformation must be greater than zero.")
 	if (is(myXStringSet, "DNAStringSet") && is.na(pmatch(noConsensusChar, DNA_ALPHABET)))
 		stop("noConsensusChar must be a character in the DNA_ALPHABET.")
 	if (is(myXStringSet, "RNAStringSet") && is.na(pmatch(noConsensusChar, RNA_ALPHABET)))
