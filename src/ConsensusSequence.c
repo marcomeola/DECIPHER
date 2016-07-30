@@ -812,160 +812,6 @@ static void makeConsensus(double *bits, char *seq, int seqLength, int x_length, 
 					information = percentMask;
 				}
 			}
-		} else if (percentC >= threshold/2 && percentT >= threshold/2 && percentC > percentA && percentC > percentG && percentT > percentA && percentT > percentG) {
-			if ((percentC + percentT) >= percentGap &&
-				(percentC + percentT) >= percentMask) {
-				*(seq + j) = 'Y';
-				information = percentC + percentT;
-			} else {
-				if (percentGap >= percentMask) {
-					*(seq + j) = '-';
-					information = percentGap;
-				} else {
-					*(seq + j) = '+';
-					information = percentMask;
-				}
-			}
-		} else if (percentG >= threshold/2 && percentT >= threshold/2 && percentG > percentA && percentG > percentC && percentT > percentA && percentT > percentC) {
-			if ((percentG + percentT) >= percentGap &&
-				(percentG + percentT) >= percentMask) {
-				*(seq + j) = 'K';
-				information = percentG + percentT;
-			} else {
-				if (percentGap >= percentMask) {
-					*(seq + j) = '-';
-					information = percentGap;
-				} else {
-					*(seq + j) = '+';
-					information = percentMask;
-				}
-			}
-		} else if (percentA >= threshold/2 && percentT >= threshold/2 && percentA > percentC && percentA > percentG && percentT > percentC && percentT > percentG) {
-			if ((percentA + percentT) >= percentGap &&
-				(percentA + percentT) >= percentMask) {
-				*(seq + j) = 'W';
-				information = percentA + percentT;
-			} else {
-				if (percentGap >= percentMask) {
-					*(seq + j) = '-';
-					information = percentGap;
-				} else {
-					*(seq + j) = '+';
-					information = percentMask;
-				}
-			}
-		} else if (percentC >= threshold/2 && percentG >= threshold/2 && percentC > percentA && percentC > percentT && percentG > percentA && percentG > percentT) {
-			if ((percentC + percentG) >= percentGap &&
-				(percentC + percentG) >= percentMask) {
-				*(seq + j) = 'S';
-				information = percentC + percentG;
-			} else {
-				if (percentGap >= percentMask) {
-					*(seq + j) = '-';
-					information = percentGap;
-				} else {
-					*(seq + j) = '+';
-					information = percentMask;
-				}
-			}
-		} else if (percentA >= threshold/2 && percentG >= threshold/2 && percentA > percentC && percentA > percentT && percentG > percentC && percentG > percentT) {
-			if ((percentA + percentG) >= percentGap &&
-				(percentA + percentG) >= percentMask) {
-				*(seq + j) = 'R';
-				information = percentA + percentG;
-			} else {
-				if (percentGap >= percentMask) {
-					*(seq + j) = '-';
-					information = percentGap;
-				} else {
-					*(seq + j) = '+';
-					information = percentMask;
-				}
-			}
-		} else if (percentA >= threshold/2 && percentC >= threshold/2 && percentA > percentG && percentA > percentT && percentC > percentG && percentC > percentT) {
-			if ((percentA + percentC) >= percentGap &&
-				(percentA + percentC) >= percentMask) {
-				*(seq + j) = 'M';
-				information = percentA + percentC;
-			} else {
-				if (percentGap >= percentMask) {
-					*(seq + j) = '-';
-					information = percentGap;
-				} else {
-					*(seq + j) = '+';
-					information = percentMask;
-				}
-			}
-		} else if (percentC >= threshold/3 && percentG >= threshold/3 && percentT >= threshold/3 && percentC > percentA && percentG > percentA && percentT > percentA) {
-			if ((percentC + percentG + percentT) >= percentGap &&
-				(percentC + percentG + percentT) >= percentMask) {
-				*(seq + j) = 'B';
-				information = percentC + percentG + percentT;
-			} else {
-				if (percentGap >= percentMask) {
-					*(seq + j) = '-';
-					information = percentGap;
-				} else {
-					*(seq + j) = '+';
-					information = percentMask;
-				}
-			}
-		} else if (percentA >= threshold/3 && percentG >= threshold/3 && percentT >= threshold/3 && percentA > percentC && percentG > percentC && percentT > percentC) {
-			if ((percentA + percentG + percentT) >= percentGap &&
-				(percentA + percentG + percentT) >= percentMask) {
-				*(seq + j) = 'D';
-				information = percentA + percentG + percentT;
-			} else {
-				if (percentGap >= percentMask) {
-					*(seq + j) = '-';
-					information = percentGap;
-				} else {
-					*(seq + j) = '+';
-					information = percentMask;
-				}
-			}
-		} else if (percentA >= threshold/3 && percentC >= threshold/3 && percentT >= threshold/3 && percentA > percentG && percentC > percentG && percentT > percentG) {
-			if ((percentA + percentC + percentT) >= percentGap &&
-				(percentA + percentC + percentT) >= percentMask) {
-				*(seq + j) = 'H';
-				information = percentA + percentC + percentT;
-			} else {
-				if (percentGap >= percentMask) {
-					*(seq + j) = '-';
-					information = percentGap;
-				} else {
-					*(seq + j) = '+';
-					information = percentMask;
-				}
-			}
-		} else if (percentA >= threshold/3 && percentC >= threshold/3 && percentG >= threshold/3 && percentA > percentT && percentC > percentT && percentG > percentT) {
-			if ((percentA + percentC + percentG) >= percentGap &&
-				(percentA + percentC + percentG) >= percentMask) {
-				*(seq + j) = 'V';
-				information = percentA + percentC + percentG;
-			} else {
-				if (percentGap >= percentMask) {
-					*(seq + j) = '-';
-					information = percentGap;
-				} else {
-					*(seq + j) = '+';
-					information = percentMask;
-				}
-			}
-		} else if (percentA >= threshold/4 && percentC >= threshold/4 && percentG >= threshold/4 && percentT >= threshold/4) {
-			if ((percentA + percentC + percentG + percentT) >= percentGap &&
-				(percentA + percentC + percentG + percentT) >= percentMask) {
-				*(seq + j) = 'N';
-				information = percentA + percentC + percentG + percentT;
-			} else {
-				if (percentGap >= percentMask) {
-					*(seq + j) = '-';
-					information = percentGap;
-				} else {
-					*(seq + j) = '+';
-					information = percentMask;
-				}
-			}
 		} else if ((percentC + percentT) >= threshold && percentC > percentA && percentC > percentG && percentT > percentA && percentT > percentG) {
 			if ((percentC + percentT) >= percentGap &&
 				(percentC + percentT) >= percentMask) {
@@ -1138,7 +984,7 @@ static void makeConsensus(double *bits, char *seq, int seqLength, int x_length, 
 
 static void makeConsensusAA(double *bits, char *seq, int seqLength, int x_length, double threshold, double minInfo, int tGaps)
 {
-	int j, i, M;
+	int j, i, M, tied;
 	double information, AAs[23], S, percentGap, percentMask;
 	
 	for (j = 0; j < seqLength; j++) {
@@ -1151,19 +997,24 @@ static void makeConsensusAA(double *bits, char *seq, int seqLength, int x_length
 		// find the percentage of each base in position j
 		S = 0; // sum
 		M = 0; // position of max
+		tied = 0;
 		for (i = 0; i < 23; i++) {
 			AAs[i] = (double)(*(bits + i*seqLength + j))/(*(bits + 25*seqLength + j));
 			S += AAs[i];
 			
-			if (AAs[i] > AAs[M])
+			if (AAs[i] > AAs[M]) {
+				tied = 1;
 				M = i;
+			} else if (AAs[i]==AAs[M]) {
+				tied++;
+			}
 		}
 		percentGap = (double)(*(bits + 23*seqLength + j))/(*(bits + 25*seqLength + j));
 		percentMask = (double)(*(bits + 24*seqLength + j))/(*(bits + 25*seqLength + j));
 		information = 0;
 		
 		// determine the most common base over the threshold percentage
-		if (M==0 && AAs[0] >= threshold) {
+		if (M==0 && tied==1 && AAs[0] >= threshold) {
 			if (AAs[0] >= percentGap &&
 				AAs[0] >= percentMask) {
 				*(seq + j) = 'A';
@@ -1177,7 +1028,7 @@ static void makeConsensusAA(double *bits, char *seq, int seqLength, int x_length
 					information = percentMask;
 				}
 			}
-		} else if (M==1 && AAs[1] >= threshold) {
+		} else if (M==1 && tied==1 && AAs[1] >= threshold) {
 			if (AAs[1] >= percentGap &&
 				AAs[1] >= percentMask) {
 				*(seq + j) = 'R';
@@ -1191,7 +1042,7 @@ static void makeConsensusAA(double *bits, char *seq, int seqLength, int x_length
 					information = percentMask;
 				}
 			}
-		} else if (M==2 && AAs[2] >= threshold && AAs[2] > AAs[3]) {
+		} else if (M==2 && tied==1 && AAs[2] >= threshold) {
 			if (AAs[2] >= percentGap &&
 				AAs[2] >= percentMask) {
 				*(seq + j) = 'N';
@@ -1205,7 +1056,7 @@ static void makeConsensusAA(double *bits, char *seq, int seqLength, int x_length
 					information = percentMask;
 				}
 			}
-		} else if (M==3 && AAs[3] >= threshold && AAs[3] > AAs[2]) {
+		} else if (M==3 && tied==1 && AAs[3] >= threshold) {
 			if (AAs[3] >= percentGap &&
 				AAs[3] >= percentMask) {
 				*(seq + j) = 'D';
@@ -1219,7 +1070,7 @@ static void makeConsensusAA(double *bits, char *seq, int seqLength, int x_length
 					information = percentMask;
 				}
 			}
-		} else if (M==4 && AAs[4] >= threshold) {
+		} else if (M==4 && tied==1 && AAs[4] >= threshold) {
 			if (AAs[4] >= percentGap &&
 				AAs[4] >= percentMask) {
 				*(seq + j) = 'C';
@@ -1233,7 +1084,7 @@ static void makeConsensusAA(double *bits, char *seq, int seqLength, int x_length
 					information = percentMask;
 				}
 			}
-		} else if (M==5 && AAs[5] >= threshold && AAs[5] > AAs[6]) {
+		} else if (M==5 && tied==1 && AAs[5] >= threshold) {
 			if (AAs[5] >= percentGap &&
 				AAs[5] >= percentMask) {
 				*(seq + j) = 'Q';
@@ -1247,7 +1098,7 @@ static void makeConsensusAA(double *bits, char *seq, int seqLength, int x_length
 					information = percentMask;
 				}
 			}
-		} else if (M==6 && AAs[6] >= threshold && AAs[5] > AAs[6]) {
+		} else if (M==6 && tied==1 && AAs[6] >= threshold) {
 			if (AAs[6] >= percentGap &&
 				AAs[6] >= percentMask) {
 				*(seq + j) = 'E';
@@ -1261,7 +1112,7 @@ static void makeConsensusAA(double *bits, char *seq, int seqLength, int x_length
 					information = percentMask;
 				}
 			}
-		} else if (M==7 && AAs[7] >= threshold) {
+		} else if (M==7 && tied==1 && AAs[7] >= threshold) {
 			if (AAs[7] >= percentGap &&
 				AAs[7] >= percentMask) {
 				*(seq + j) = 'G';
@@ -1275,7 +1126,7 @@ static void makeConsensusAA(double *bits, char *seq, int seqLength, int x_length
 					information = percentMask;
 				}
 			}
-		} else if (M==8 && AAs[8] >= threshold) {
+		} else if (M==8 && tied==1 && AAs[8] >= threshold) {
 			if (AAs[8] >= percentGap &&
 				AAs[8] >= percentMask) {
 				*(seq + j) = 'H';
@@ -1289,7 +1140,7 @@ static void makeConsensusAA(double *bits, char *seq, int seqLength, int x_length
 					information = percentMask;
 				}
 			}
-		} else if (M==9 && AAs[9] >= threshold && AAs[9] > AAs[10]) {
+		} else if (M==9 && tied==1 && AAs[9] >= threshold) {
 			if (AAs[9] >= percentGap &&
 				AAs[9] >= percentMask) {
 				*(seq + j) = 'I';
@@ -1303,7 +1154,7 @@ static void makeConsensusAA(double *bits, char *seq, int seqLength, int x_length
 					information = percentMask;
 				}
 			}
-		} else if (M==10 && AAs[10] >= threshold && AAs[10] > AAs[9]) {
+		} else if (M==10 && tied==1 && AAs[10] >= threshold) {
 			if (AAs[10] >= percentGap &&
 				AAs[10] >= percentMask) {
 				*(seq + j) = 'L';
@@ -1317,7 +1168,7 @@ static void makeConsensusAA(double *bits, char *seq, int seqLength, int x_length
 					information = percentMask;
 				}
 			}
-		} else if (M==11 && AAs[11] >= threshold) {
+		} else if (M==11 && tied==1 && AAs[11] >= threshold) {
 			if (AAs[11] >= percentGap &&
 				AAs[11] >= percentMask) {
 				*(seq + j) = 'K';
@@ -1331,7 +1182,7 @@ static void makeConsensusAA(double *bits, char *seq, int seqLength, int x_length
 					information = percentMask;
 				}
 			}
-		} else if (M==12 && AAs[12] >= threshold) {
+		} else if (M==12 && tied==1 && AAs[12] >= threshold) {
 			if (AAs[12] >= percentGap &&
 				AAs[12] >= percentMask) {
 				*(seq + j) = 'M';
@@ -1345,7 +1196,7 @@ static void makeConsensusAA(double *bits, char *seq, int seqLength, int x_length
 					information = percentMask;
 				}
 			}
-		} else if (M==13 && AAs[13] >= threshold) {
+		} else if (M==13 && tied==1 && AAs[13] >= threshold) {
 			if (AAs[13] >= percentGap &&
 				AAs[13] >= percentMask) {
 				*(seq + j) = 'F';
@@ -1359,7 +1210,7 @@ static void makeConsensusAA(double *bits, char *seq, int seqLength, int x_length
 					information = percentMask;
 				}
 			}
-		} else if (M==14 && AAs[14] >= threshold) {
+		} else if (M==14 && tied==1 && AAs[14] >= threshold) {
 			if (AAs[14] >= percentGap &&
 				AAs[14] >= percentMask) {
 				*(seq + j) = 'P';
@@ -1373,7 +1224,7 @@ static void makeConsensusAA(double *bits, char *seq, int seqLength, int x_length
 					information = percentMask;
 				}
 			}
-		} else if (M==15 && AAs[15] >= threshold) {
+		} else if (M==15 && tied==1 && AAs[15] >= threshold) {
 			if (AAs[15] >= percentGap &&
 				AAs[15] >= percentMask) {
 				*(seq + j) = 'S';
@@ -1387,7 +1238,7 @@ static void makeConsensusAA(double *bits, char *seq, int seqLength, int x_length
 					information = percentMask;
 				}
 			}
-		} else if (M==16 && AAs[16] >= threshold) {
+		} else if (M==16 && tied==1 && AAs[16] >= threshold) {
 			if (AAs[16] >= percentGap &&
 				AAs[16] >= percentMask) {
 				*(seq + j) = 'T';
@@ -1401,7 +1252,7 @@ static void makeConsensusAA(double *bits, char *seq, int seqLength, int x_length
 					information = percentMask;
 				}
 			}
-		} else if (M==17 && AAs[17] >= threshold) {
+		} else if (M==17 && tied==1 && AAs[17] >= threshold) {
 			if (AAs[17] >= percentGap &&
 				AAs[17] >= percentMask) {
 				*(seq + j) = 'W';
@@ -1415,7 +1266,7 @@ static void makeConsensusAA(double *bits, char *seq, int seqLength, int x_length
 					information = percentMask;
 				}
 			}
-		} else if (M==18 && AAs[18] >= threshold) {
+		} else if (M==18 && tied==1 && AAs[18] >= threshold) {
 			if (AAs[18] >= percentGap &&
 				AAs[18] >= percentMask) {
 				*(seq + j) = 'Y';
@@ -1429,7 +1280,7 @@ static void makeConsensusAA(double *bits, char *seq, int seqLength, int x_length
 					information = percentMask;
 				}
 			}
-		} else if (M==19 && AAs[19] >= threshold) {
+		} else if (M==19 && tied==1 && AAs[19] >= threshold) {
 			if (AAs[19] >= percentGap &&
 				AAs[19] >= percentMask) {
 				*(seq + j) = 'V';
@@ -1443,7 +1294,7 @@ static void makeConsensusAA(double *bits, char *seq, int seqLength, int x_length
 					information = percentMask;
 				}
 			}
-		} else if (M==20 && AAs[20] >= threshold) {
+		} else if (M==20 && tied==1 && AAs[20] >= threshold) {
 			if (AAs[20] >= percentGap &&
 				AAs[20] >= percentMask) {
 				*(seq + j) = 'U';
@@ -1457,7 +1308,7 @@ static void makeConsensusAA(double *bits, char *seq, int seqLength, int x_length
 					information = percentMask;
 				}
 			}
-		} else if (M==21 && AAs[21] >= threshold) {
+		} else if (M==21 && tied==1 && AAs[21] >= threshold) {
 			if (AAs[21] >= percentGap &&
 				AAs[21] >= percentMask) {
 				*(seq + j) = 'O';
@@ -1471,7 +1322,7 @@ static void makeConsensusAA(double *bits, char *seq, int seqLength, int x_length
 					information = percentMask;
 				}
 			}
-		} else if (M==22 && AAs[22] >= threshold) {
+		} else if (M==22 && tied==1 && AAs[22] >= threshold) {
 			if (AAs[22] >= percentGap &&
 				AAs[22] >= percentMask) {
 				*(seq + j) = '*';
@@ -1485,7 +1336,7 @@ static void makeConsensusAA(double *bits, char *seq, int seqLength, int x_length
 					information = percentMask;
 				}
 			}
-		} else if ((AAs[2] + AAs[3]) >= threshold) {
+		} else if (M==2 && ((tied==2 && AAs[2]==AAs[3]) || tied==1) && (AAs[2] + AAs[3]) >= threshold) {
 			if ((AAs[2] + AAs[3]) >= percentGap &&
 				(AAs[2] + AAs[3]) >= percentMask) {
 				*(seq + j) = 'B'; // B = N (2) or D (3)
@@ -1499,7 +1350,7 @@ static void makeConsensusAA(double *bits, char *seq, int seqLength, int x_length
 					information = percentMask;
 				}
 			}
-		} else if ((AAs[5] + AAs[6]) >= threshold) {
+		} else if (M==5 && ((tied==2 && AAs[5]==AAs[6]) || tied==1) && (AAs[5] + AAs[6]) >= threshold) {
 			if ((AAs[5] + AAs[6]) >= percentGap &&
 				(AAs[5] + AAs[6]) >= percentMask) {
 				*(seq + j) = 'Z'; // Z = Q (5) or E (6)
@@ -1513,7 +1364,7 @@ static void makeConsensusAA(double *bits, char *seq, int seqLength, int x_length
 					information = percentMask;
 				}
 			}
-		} else if ((AAs[9] + AAs[10]) >= threshold) {
+		} else if (M==9 && ((tied==2 && AAs[9]==AAs[10]) || tied==1) && (AAs[9] + AAs[10]) >= threshold) {
 			if ((AAs[9] + AAs[10]) >= percentGap &&
 				(AAs[9] + AAs[10]) >= percentMask) {
 				*(seq + j) = 'J'; // J = I (9) or L (10)
