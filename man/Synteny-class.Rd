@@ -32,6 +32,7 @@ Syntenic blocks are DNA segments composed of conserved hits occurring in the sam
      labels = abbreviate(rownames(x), 9),
      cex.labels = NULL,
      width = 0.7,
+     scaleBar = TRUE,
      \dots)
 
 \method{print}{Synteny}(x,
@@ -69,6 +70,9 @@ Character vector providing names corresponding to each ``identifier'' for labels
 }
   \item{width}{
 Numeric giving the fractional width of each bar between zero and one.
+}
+  \item{scaleBar}{
+Logical controlling whether a scale bar is drawn when \code{colorBy} is ``frequency''.  The scale bar displays the mapping between color and the level of sequence conservation.  Not applicable when \code{colorBy} is a value other than ``frequency''.
 }
   \item{gap}{
 Distance between subplots, in margin lines.
@@ -137,9 +141,11 @@ synteny[j, i][[1]] # blocks between i & j
 
 # plotting
 pairs(synteny) # dot plots
+pairs(synteny, boxBlocks=TRUE) # boxes around blocks
 
 plot(synteny) # bar view colored by position in genome 1
 plot(synteny, barColor="#268FD6") # emphasize missing regions
 plot(synteny, "frequency") # most regions are shared by all
-plot(synteny, "neighbor")
+plot(synteny, "frequency", colorRamp=rainbow) # change the colors
+plot(synteny, "neighbor") # connect neighbors
 }

@@ -128,6 +128,11 @@ AlignDB <- function(dbFile,
 			} else {
 				stop("substitutionMatrix must be NULL or a matrix.")
 			}
+		} else if (type==2L && missing(perfectMatch) && missing(misMatch)) {
+			substitutionMatrix <- matrix(c(11, 3, 5, 4, 3, 12, 3, 6, 5, 3, 12, 3, 4, 6, 3, 10),
+				nrow=4,
+				ncol=4,
+				dimnames=list(bases, bases))
 		}
 	}
 	
@@ -279,6 +284,7 @@ AlignDB <- function(dbFile,
 		inserts <- .Call("alignProfiles",
 			p.profile,
 			s.profile,
+			type,
 			substitutionMatrix,
 			numeric(),
 			perfectMatch,

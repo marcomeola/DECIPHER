@@ -1,7 +1,7 @@
 \name{DesignArray}
 \alias{DesignArray}
 \title{
-Design a set of DNA Microarray Probes for Detecting Sequences
+Design a Set of DNA Microarray Probes for Detecting Sequences
 }
 \description{
 Chooses the set of microarray probes maximizing sensitivity and specificity to each target consensus sequence.

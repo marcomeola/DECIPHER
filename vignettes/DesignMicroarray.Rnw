@@ -33,9 +33,7 @@
 %\setkeys{Gin}{width=0.55\textwidth}
 
 \title{Design Microarray Probes}
-\author{Erik S. Wright \\
-  University of Wisconsin \\
-  Madison, WI}
+\author{Erik S. Wright}
 \date{\today}
 \maketitle
 

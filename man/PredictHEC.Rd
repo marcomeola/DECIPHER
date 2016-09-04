@@ -1,7 +1,7 @@
 \name{PredictHEC}
 \alias{PredictHEC}
 \title{
-Predict Protein Secondary Structure
+Predict Protein Secondary Structure as Helix, Beta-Sheet, or Coil
 }
 \description{
 Predicts 3-state protein secondary structure based on the primary (amino acid) sequence using the GOR IV method (Garnier et al., 1996).
@@ -40,7 +40,7 @@ The GOR (Garnier-Osguthorpe-Robson) method is an information-theory method for p
 \value{
 If \code{type} is \code{"states"} (the default), then the output is a character vector with the secondary structure assignment ("H", "E", or "C") for each residue in \code{myAAStringSet}.
 
-Otherwise, the output is a list with one element for each sequence in \code{myAAStringSet}.  Each list element contains a matrix with dimensions 3 (H, E, or C) by the number of residues in the sequence.  If \code{type} is \code{"scores"}, then values in the matrix represent log-odds ``scores''.  If \code{type} is \code{"probabilities"} then the values represent the normalized probabilities of the three states at a position.
+Otherwise, the output is a list with one element for each sequence in \code{myAAStringSet}.  Each list element contains a matrix of dimension 3 (H, E, or C) by the number of residues in the sequence.  If \code{type} is \code{"scores"}, then values in the matrix represent log-odds ``scores''.  If \code{type} is \code{"probabilities"} then the values represent the normalized probabilities of the three states at a position.
 }
 \references{
 Garnier, J., Gibrat, J. F., & Robson, B. (1996). GOR method for predicting protein secondary structure from amino acid sequence. \emph{Methods in Enzymology}, \bold{266}, 540-553.
@@ -49,7 +49,7 @@ Garnier, J., Gibrat, J. F., & Robson, B. (1996). GOR method for predicting prote
 Erik Wright \email{DECIPHER@cae.wisc.edu}
 }
 \seealso{
-\code{\link{HEC_MI1}}, \code{\link{HEC_MI2}}
+\code{\link{HEC_MI1}}, \code{\link{HEC_MI2}}, \code{\link{PredictDBN}}
 }
 \examples{
 fas <- system.file("extdata", "50S_ribosomal_protein_L2.fas", package="DECIPHER")

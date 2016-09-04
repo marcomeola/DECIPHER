@@ -2170,7 +2170,7 @@ SEXP shiftGaps(SEXP x, SEXP subMatrix, SEXP go, SEXP ge, SEXP gl, SEXP sc, SEXP 
 	int x_length, i, j, k, seqLength, weight, pos, bound, end;
 	char p;
 	unsigned long long int temp;
-	int maxSize = sizeof(unsigned long long int)*8; // number of bits in an int
+	int maxSize = sizeof(unsigned long long int)*8 - 1; // number of bits in an int
 	double *subM = REAL(subMatrix);
 	double *w = REAL(weights);
 	double GO = asReal(go); // gap opening
@@ -2188,11 +2188,11 @@ SEXP shiftGaps(SEXP x, SEXP subMatrix, SEXP go, SEXP ge, SEXP gl, SEXP sc, SEXP 
 	seqLength = x_i.length; // sequences are assumed to be aligned (equal length)
 	
 	// return the number of gap-event shifts made to the sequences
-	SEXP ans;
-	double *rans;
-	PROTECT(ans = allocVector(REALSXP, 1));
-	rans = REAL(ans);
-	*(rans) = 0; // initialize to zero changes
+//	SEXP ans;
+//	double *rans;
+//	PROTECT(ans = allocVector(REALSXP, 1));
+//	rans = REAL(ans);
+//	*(rans) = 0; // initialize to zero changes
 	
 	// initialize an array of encoded base counts
 	double *bases = Calloc(7*seqLength, double); // initialized to zero
@@ -2226,7 +2226,7 @@ SEXP shiftGaps(SEXP x, SEXP subMatrix, SEXP go, SEXP ge, SEXP gl, SEXP sc, SEXP 
 				pos = j - pos + 1; // change in position
 				if (pos > maxSize) // bigger gap than can be stored
 					pos = maxSize;
-				gaps[j] |= (unsigned long long int)1 << pos; // encode length of gap
+				gaps[j] |= ((unsigned long long int)1 << pos); // encode length of gap
 				pos = 0;
 			}
 		}
@@ -2294,7 +2294,6 @@ SEXP shiftGaps(SEXP x, SEXP subMatrix, SEXP go, SEXP ge, SEXP gl, SEXP sc, SEXP 
 	//    if gaps remained the same length then do nothing
 	//   gapCount[size]--
 	//   break when gapCount[size]==0
-	// return the number of changes made
 	
 	int count, correct, size, min, left, right;
 	for (size = 1; size <= maxSize; size++) { // each gap size
@@ -2344,7 +2343,7 @@ SEXP shiftGaps(SEXP x, SEXP subMatrix, SEXP go, SEXP ge, SEXP gl, SEXP sc, SEXP 
 			if (gapNumber[min]==0) // no gap events found
 				break;
 			
-			// find all sequences to with this gap event
+			// find all sequences with this gap event
 			int *seqNumbers = Calloc(x_length, int); // initialized to zero
 			j = position[min];
 			count = 0;
@@ -2811,7 +2810,7 @@ SEXP shiftGaps(SEXP x, SEXP subMatrix, SEXP go, SEXP ge, SEXP gl, SEXP sc, SEXP 
 			
 			// commit the best shift if above threshold
 			if (bestScore > threshold) {
-				*(rans) = *(rans) + 1; // another change made
+//				*(rans) = *(rans) + 1; // another change made
 				if (bestShift < 0) { // left shift
 					// apply shift to sequences
 					bestShift *= -1;
@@ -2930,9 +2929,9 @@ SEXP shiftGaps(SEXP x, SEXP subMatrix, SEXP go, SEXP ge, SEXP gl, SEXP sc, SEXP 
 	Free(scores);
 	Free(gapCount);
 	
-	UNPROTECT(1);
+//	UNPROTECT(1);
 	
-	return ans;
+	return x;
 }
 
 SEXP shiftGapsAA(SEXP x, SEXP subMatrix, SEXP go, SEXP ge, SEXP gl, SEXP sc, SEXP thresh, SEXP weights)
@@ -2942,7 +2941,7 @@ SEXP shiftGapsAA(SEXP x, SEXP subMatrix, SEXP go, SEXP ge, SEXP gl, SEXP sc, SEX
 	int x_length, i, j, k, seqLength, weight, pos, bound, end;
 	char p;
 	unsigned long long int temp;
-	int maxSize = sizeof(unsigned long long int)*8; // number of bits in an int
+	int maxSize = sizeof(unsigned long long int)*8 - 1; // number of bits in an int
 	double *subM = REAL(subMatrix);
 	double *w = REAL(weights);
 	double GO = asReal(go); // gap opening
@@ -2960,11 +2959,11 @@ SEXP shiftGapsAA(SEXP x, SEXP subMatrix, SEXP go, SEXP ge, SEXP gl, SEXP sc, SEX
 	seqLength = x_i.length; // sequences are assumed to be aligned (equal length)
 	
 	// return the number of gap-event shifts made to the sequences
-	SEXP ans;
-	double *rans;
-	PROTECT(ans = allocVector(REALSXP, 1));
-	rans = REAL(ans);
-	*(rans) = 0; // initialize to zero changes
+//	SEXP ans;
+//	double *rans;
+//	PROTECT(ans = allocVector(REALSXP, 1));
+//	rans = REAL(ans);
+//	*(rans) = 0; // initialize to zero changes
 	
 	// initialize an array of encoded base counts
 	double *bases = Calloc(26*seqLength, double); // initialized to zero
@@ -2998,7 +2997,7 @@ SEXP shiftGapsAA(SEXP x, SEXP subMatrix, SEXP go, SEXP ge, SEXP gl, SEXP sc, SEX
 				pos = j - pos + 1; // change in position
 				if (pos > maxSize) // bigger gap than can be stored
 					pos = maxSize;
-				gaps[j] |= (unsigned long long int)1 << pos; // encode length of gap
+				gaps[j] |= ((unsigned long long int)1 << pos); // encode length of gap
 				pos = 0;
 			}
 		}
@@ -3074,7 +3073,6 @@ SEXP shiftGapsAA(SEXP x, SEXP subMatrix, SEXP go, SEXP ge, SEXP gl, SEXP sc, SEX
 	//    if gaps remained the same length then do nothing
 	//   gapCount[size]--
 	//   break when gapCount[size]==0
-	// return the number of changes made
 	
 	int count, correct, size, min, left, right;
 	for (size = 1; size <= maxSize; size++) { // each gap size
@@ -3132,7 +3130,7 @@ SEXP shiftGapsAA(SEXP x, SEXP subMatrix, SEXP go, SEXP ge, SEXP gl, SEXP sc, SEX
 				break;
 			
 //			Rprintf("\n\nSize = %d Position = %d\n", size, position[min]);
-			// find all sequences to with this gap event
+			// find all sequences with this gap event
 //			int *seqNumbers = Calloc(gapNumber[min], int); // initialized to zero
 			int *seqNumbers = Calloc(x_length, int); // initialized to zero
 			j = position[min];
@@ -3656,7 +3654,7 @@ SEXP shiftGapsAA(SEXP x, SEXP subMatrix, SEXP go, SEXP ge, SEXP gl, SEXP sc, SEX
 			
 			// commit the best shift if above threshold
 			if (bestScore > threshold) {
-				*(rans) = *(rans) + 1; // another change made
+//				*(rans) = *(rans) + 1; // another change made
 				if (bestShift < 0) { // left shift
 					// apply shift to sequences
 					bestShift *= -1;
@@ -3783,7 +3781,7 @@ SEXP shiftGapsAA(SEXP x, SEXP subMatrix, SEXP go, SEXP ge, SEXP gl, SEXP sc, SEX
 	Free(scores);
 	Free(gapCount);
 	
-	UNPROTECT(1);
+//	UNPROTECT(1);
 	
-	return ans;
+	return x;
 }

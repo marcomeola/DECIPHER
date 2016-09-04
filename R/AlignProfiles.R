@@ -190,6 +190,11 @@ AlignProfiles <- function(pattern,
 			} else {
 				stop("substitutionMatrix must be NULL or a matrix.")
 			}
+		} else if (type==2L && missing(perfectMatch) && missing(misMatch)) {
+			sM <- matrix(c(11, 3, 5, 4, 3, 12, 3, 6, 5, 3, 12, 3, 4, 6, 3, 10),
+				nrow=4,
+				ncol=4,
+				dimnames=list(bases, bases))
 		}
 	}
 	
@@ -213,12 +218,11 @@ AlignProfiles <- function(pattern,
 		if (is.null(structureMatrix)) {
 			if (type==3L) {
 				# assume structures from PredictHEC
-				structureMatrix <- matrix(c(4, 1, -3, 1, 10, -1, -3, -1, 2),
+				structureMatrix <- matrix(c(5, 0, -2, 0, 9, -1, -2, -1, 2),
 					nrow=3) # order is H, E, C
 			} else {
-				# assume structures from PredictDBN
-				####################### replace with RNA structure matrix
-				stop("structureMatrix must be specified if structures are provided.")
+				structureMatrix <- matrix(c(0, 1, 1, 1, 10, -5, 1, -5, 10),
+					nrow=3) # order is ., (, )
 			}
 		} else {
 			# assume structures and matrix are ordered the same
@@ -326,6 +330,7 @@ AlignProfiles <- function(pattern,
 				t <- .Call("alignProfiles",
 					p.profile,
 					s.profile,
+					type,
 					substitutionMatrix,
 					numeric(),
 					perfectMatch,
@@ -343,6 +348,7 @@ AlignProfiles <- function(pattern,
 				t <- .Call("alignProfiles",
 					p.profile,
 					s.profile,
+					type,
 					substitutionMatrix,
 					structureMatrix,
 					perfectMatch,

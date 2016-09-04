@@ -1,7 +1,7 @@
 \name{OrientNucleotides}
 \alias{OrientNucleotides}
 \title{
-Orient nucleotide sequences
+Orient Nucleotide Sequences
 }
 \description{
 Orients nucleotide sequences to match the directionality and complementarity of specified reference sequences.

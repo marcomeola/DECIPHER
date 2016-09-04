@@ -33,18 +33,13 @@
 %\setkeys{Gin}{width=0.55\textwidth}
 
 \title{Design Group-Specific FISH Probes}
-\author{Erik S. Wright \\
-  University of Wisconsin \\
-  Madison, WI}
+\author{Erik S. Wright}
 \date{\today}
 \maketitle
 
 \newenvironment{centerfig}
 {\begin{figure}[htp]\centering}
 {\end{figure}}
-\newlength\tindent
-\setlength{\tindent}{\parindent}
-\setlength{\parindent}{0pt}
 \renewcommand{\indent}{\hspace*{\tindent}}
 \DefineVerbatimEnvironment{Sinput}{Verbatim} {xleftmargin=2em} \DefineVerbatimEnvironment{Soutput}{Verbatim}{xleftmargin=2em} \DefineVerbatimEnvironment{Scode}{Verbatim}{xleftmargin=2em} \fvset{listparameters={\setlength{\topsep}{0pt}}} \renewenvironment{Schunk}{\vspace{\topsep}}{\vspace{\topsep}}
 \SweaveOpts{keep.source=TRUE}
@@ -59,7 +54,7 @@ options(width=80)
 \section{Introduction}
 %------------------------------------------------------------
 
-This document describes how to design group-specific FISH probes using the \Rpackage{DECIPHER} package through the use of the \Rfunction{DesignProbes} function.  Fluorescent In-Situ Hybridization (FISH) is an laboratory technique that enables visualizing specific microorganisms in their natural environment using fluorescent microscopy.  As a case study, this tutorial focuses on the small-subunit ribosomal RNA (SSU rRNA) from a collection of bacteria found in drinking water.  Here we describe how to design probes targeting a group of interest that will not cross-hybridize with other bacteria from the same sample.  A similar strategy could be used with any set of aligned sequences that are separated into groups.  For example, genus-specific probes designed with this program that target all named bacteria and archaea genera are provided online at \underline{\url{http://DECIPHER.cee.wisc.edu/16SOligos.html}}.
+This document describes how to design group-specific FISH probes using the \Rpackage{DECIPHER} package through the use of the \Rfunction{DesignProbes} function.  Fluorescent In-Situ Hybridization (FISH) is an laboratory technique that enables visualizing specific microorganisms in their natural environment using fluorescent microscopy.  As a case study, this tutorial focuses on the small-subunit ribosomal RNA (SSU rRNA) from a collection of bacteria found in drinking water.  Here we describe how to design probes targeting a group of interest that will not cross-hybridize with other bacteria from the same sample.  A similar strategy could be used with any set of aligned sequences that are separated into groups.  For example, genus-specific probes designed with this program that target all named bacteria and archaea genera are provided online at \underline{\url{http://DECIPHER.codes/16SOligos.html}}.
 
 A database of aligned DNA sequences separated into groups is used as input to the program.  First the function \Rfunction{TileSeqs} is used to pre-process the sequences into overlapping tiles, which will serve as the template DNA for probe design.  Second, the \Rfunction{DesignProbes} function determines the set of all possible probes that meet certain design constraints, such as the ability to hybridize with the group of interest under specified experimental conditions.  Next, the complete set of probes is scored by its potential to cross-hybridize with sequences from other groups including a comprehensive database of non-target sequences.  Finally, the optimal set of dual probes is chosen that could be used in a FISH experiment to identify the microbes of interest.
 

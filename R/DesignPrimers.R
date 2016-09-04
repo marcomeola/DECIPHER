@@ -596,7 +596,7 @@ DesignPrimers <- function(tiles,
 							rep(NA, l))
 					}
 					if (ragged5Prime) # correct starting position
-						primers$start_forward[i] <- primers$start_forward[i] + max_w - max(nchar(primers$forward_primer[i,]))
+						primers$start_forward[i] <- primers$start_forward[i] + max_w - max(nchar(primers$forward_primer[i,]), na.rm=TRUE)
 				}
 				if (p != pr) {
 					primers$permutations_reverse[i] <- 0
@@ -621,7 +621,7 @@ DesignPrimers <- function(tiles,
 							rep(NA, l))
 					}
 					if (ragged5Prime) # correct starting position
-						primers$start_reverse[i] <- primers$start_reverse[i] - max_w + max(nchar(primers$reverse_primer[i,]))
+						primers$start_reverse[i] <- primers$start_reverse[i] - max_w + max(nchar(primers$reverse_primer[i,]), na.rm=TRUE)
 				}
 			}
 		}

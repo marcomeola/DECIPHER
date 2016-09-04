@@ -33,18 +33,13 @@
 %\setkeys{Gin}{width=0.55\textwidth}
 
 \title{Design Group-Specific Primers}
-\author{Erik S. Wright \\
-  University of Wisconsin \\
-  Madison, WI}
+\author{Erik S. Wright}
 \date{\today}
 \maketitle
 
 \newenvironment{centerfig}
 {\begin{figure}[htp]\centering}
 {\end{figure}}
-\newlength\tindent
-\setlength{\tindent}{\parindent}
-\setlength{\parindent}{0pt}
 \renewcommand{\indent}{\hspace*{\tindent}}
 \DefineVerbatimEnvironment{Sinput}{Verbatim} {xleftmargin=2em} \DefineVerbatimEnvironment{Soutput}{Verbatim}{xleftmargin=2em} \DefineVerbatimEnvironment{Scode}{Verbatim}{xleftmargin=2em} \fvset{listparameters={\setlength{\topsep}{0pt}}} \renewenvironment{Schunk}{\vspace{\topsep}}{\vspace{\topsep}}
 \SweaveOpts{keep.source=TRUE}
@@ -59,7 +54,7 @@ options(width=80)
 \section{Introduction}
 %------------------------------------------------------------
 
-This document describes how to design group-specific primers using the \Rpackage{DECIPHER} package through the use of the \Rfunction{DesignPrimers} function.  As a case study, this tutorial focuses on the Internal Transcribed Spacer (ITS) of fully sequenced genomes belonging to different species of the genus \textit{Streptomyces}.  The ITS resides on the chromosome between the genes coding for the 16S and 23S ribosomal RNA.  The examples in this document are directed towards finding primers that target a single species of \textit{Streptomyces} amongst a number of closely related \textit{Streptomyces} species.  However, a similar strategy could be used with any set of aligned sequences that are separated into groups.  For example, genus-specific primers targeting the 16S gene that have been designed with this program are provided online at \underline{\url{http://DECIPHER.cee.wisc.edu}}.
+This document describes how to design group-specific primers using the \Rpackage{DECIPHER} package through the use of the \Rfunction{DesignPrimers} function.  As a case study, this tutorial focuses on the Internal Transcribed Spacer (ITS) of fully sequenced genomes belonging to different species of the genus \textit{Streptomyces}.  The ITS resides on the chromosome between the genes coding for the 16S and 23S ribosomal RNA.  The examples in this document are directed towards finding primers that target a single species of \textit{Streptomyces} amongst a number of closely related \textit{Streptomyces} species.  However, a similar strategy could be used with any set of aligned sequences that are separated into groups.  For example, genus-specific primers targeting the 16S gene that have been designed with this program are provided online at \underline{\url{http://DECIPHER.codes}}.
 
 A database of aligned DNA sequences separated into groups is used as input to the program.  First the function \Rfunction{TileSeqs} is used to pre-process the sequences into overlapping tiles, which will serve as the template DNA for primer design.  Second, the \Rfunction{DesignPrimers} function determines the set of all possible primers that meet certain design constraints, such as the ability to efficiently amplify the group of interest under specified experimental conditions.  Next, the complete set of primers is scored for its predicted potential to cross-amplify with DNA belonging to other groups.  Finally, the optimal set of forward and reverse primers is chosen that could be used in a PCR experiment to enrich for the DNA of interest in a sample containing DNA from multiple groups.
 
@@ -228,32 +223,28 @@ primers[1,]
 @
 \begin{Schunk}
 \begin{Sinput}
-   identifier start_forward start_reverse start_aligned_forward start_aligned_reverse
-1 avermitilis             1            27                     1                    28
-  permutations_forward permutations_reverse score_forward score_reverse
-1                    1                    1  -13.5861....  -15.0868....
-   forward_primer.1 forward_primer.2 forward_primer.3 forward_primer.4  reverse_primer.1
-1 GCCCGTCACGTCACGAA             <NA>             <NA>             <NA> GACGGGCGGTGTGTACA
-  reverse_primer.2 reverse_primer.3 reverse_primer.4 forward_efficiency.1
-1             <NA>             <NA>             <NA>            0.8441239
-  forward_efficiency.2 forward_efficiency.3 forward_efficiency.4 reverse_efficiency.1
-1                   NA                   NA                   NA            0.8874629
-  reverse_efficiency.2 reverse_efficiency.3 reverse_efficiency.4 forward_coverage.1
-1                   NA                   NA                   NA                  1
-  forward_coverage.2 forward_coverage.3 forward_coverage.4 reverse_coverage.1
-1                 NA                 NA                 NA                  1
-  reverse_coverage.2 reverse_coverage.3 reverse_coverage.4
-1                 NA                 NA                 NA
+   identifier start_forward start_reverse start_aligned_forward
+1 avermitilis            11            17                     1
+  start_aligned_reverse permutations_forward permutations_reverse score_forward
+1                    28                    1                    1  -13.5426....
+  score_reverse  forward_primer.1 forward_primer.2 forward_primer.3
+1  -15.0868.... GCCCGTCACGTCACGAA             <NA>             <NA>
+  forward_primer.4  reverse_primer.1 reverse_primer.2 reverse_primer.3
+1             <NA> GACGGGCGGTGTGTACA             <NA>             <NA>
+  reverse_primer.4 forward_efficiency.1 forward_efficiency.2
+1             <NA>            0.8441239                   NA
+  forward_efficiency.3 forward_efficiency.4 reverse_efficiency.1
+1                   NA                   NA            0.8874629
+  reverse_efficiency.2 reverse_efficiency.3 reverse_efficiency.4
+1                   NA                   NA                   NA
+  forward_coverage.1 forward_coverage.2 forward_coverage.3 forward_coverage.4
+1                  1                 NA                 NA                 NA
+  reverse_coverage.1 reverse_coverage.2 reverse_coverage.3 reverse_coverage.4
+1                  1                 NA                 NA                 NA
                                                                                                                                                                                                                                                                                    mismatches_forward
-1 albus (84.4%) clavuligerus (84.4%) ghanaensis (84.4%) griseoflavus (84.4%) lividans
-(84.4%) pristinaespiralis (84.4%) Mg1 (84.4%) AA4 (8.02%) SPB74 (84.4%) SirexAA-E
-(84.4%) scabiei (84.4%) griseus (84.4%) coelicolor (84.4%) cattleya (84.4%)
-bingchenggensis (84.4%) C (84.4%) Tu6071 (84.4%) 
+1 albus (84.4%) clavuligerus (84.4%) ghanaensis (84.4%) griseoflavus (84.4%) lividans (84.4%) pristinaespiralis (84.4%) Mg1 (84.4%) AA4 (3.67%) SPB74 (84.4%) SirexAA-E (84.4%) scabiei (84.4%) griseus (84.4%) coelicolor (84.4%) cattleya (84.4%) bingchenggensis (84.4%) C (84.4%) Tu6071 (84.4%) 
                                                                                                                                                                                                                                                                                    mismatches_reverse
-1 albus (88.7%) clavuligerus (88.7%) ghanaensis (88.7%) griseoflavus (88.7%) lividans
-(88.7%) pristinaespiralis (88.7%) Mg1 (88.7%) AA4 (88.7%) SPB74 (88.7%) SirexAA-E
-(88.7%) scabiei (88.7%) griseus (88.7%) coelicolor (88.7%) cattleya (88.7%)
-bingchenggensis (88.7%) C (88.7%) Tu6071 (88.7%)
+1 albus (88.7%) clavuligerus (88.7%) ghanaensis (88.7%) griseoflavus (88.7%) lividans (88.7%) pristinaespiralis (88.7%) Mg1 (88.7%) AA4 (88.7%) SPB74 (88.7%) SirexAA-E (88.7%) scabiei (88.7%) griseus (88.7%) coelicolor (88.7%) cattleya (88.7%) bingchenggensis (88.7%) C (88.7%) Tu6071 (88.7%)
 \end{Sinput}
 \end{Schunk}
 
@@ -286,41 +277,41 @@ head(primers)
 \begin{Schunk}
 \begin{Sinput}
    identifier start_forward start_reverse product_size start_aligned_forward
-1 avermitilis           245           326           82                   247
-2 avermitilis           249           326           78                   248
-3 avermitilis           245           325           81                   247
-4 avermitilis           249           325           77                   248
-5 avermitilis           245           328           84                   247
+1 avermitilis           245           325           81                   247
+2 avermitilis           245           322           78                   247
+3 avermitilis           245           326           82                   247
+4 avermitilis           245           324           80                   247
+5 avermitilis           245           324           80                   247
   start_aligned_reverse permutations_forward permutations_reverse score_forward
-1                   351                    1                    1             0
-2                   351                    1                    1             0
-3                   350                    1                    1             0
-4                   350                    1                    1             0
-5                   353                    1                    1             0
+1                   350                    1                    1             0
+2                   347                    1                    1             0
+3                   351                    1                    1             0
+4                   349                    1                    1             0
+5                   348                    1                    1             0
   score_reverse score_set         forward_primer.1 forward_primer.2
-1  -3.64000....         0 CGTTGATTATTCGGCACACTCGAC             <NA>
-2  -3.64000....         0    GATTATTCGGCACACTCGACC             <NA>
-3  -4.06252....         0 CGTTGATTATTCGGCACACTCGAC             <NA>
-4  -4.06252....         0    GATTATTCGGCACACTCGACC             <NA>
-5  -0.00036....         0 CGTTGATTATTCGGCACACTCGAC             <NA>
-  forward_primer.3 forward_primer.4  reverse_primer.1 reverse_primer.2
-1             <NA>             <NA> ACCCTCGCCCTCCCATG             <NA>
-2             <NA>             <NA> ACCCTCGCCCTCCCATG             <NA>
-3             <NA>             <NA> CCCTCGCCCTCCCATGT             <NA>
-4             <NA>             <NA> CCCTCGCCCTCCCATGT             <NA>
-5             <NA>             <NA> ACACCCTCGCCCTCCCA             <NA>
+1  -9.89275....         0 CGTTGATTATTCGGCACACTCGAC             <NA>
+2  -1.73715....         0 CGTTGATTATTCGGCACACTCGAC             <NA>
+3  -3.64000....         0 CGTTGATTATTCGGCACACTCGAC             <NA>
+4  -7.75520....         0 CGTTGATTATTCGGCACACTCGAC             <NA>
+5  -9.21065....         0 CGTTGATTATTCGGCACACTCGAC             <NA>
+  forward_primer.3 forward_primer.4   reverse_primer.1 reverse_primer.2
+1             <NA>             <NA>  CCCTCGCCCTCCCATGT             <NA>
+2             <NA>             <NA>  TCGCCCTCCCATGTTCG             <NA>
+3             <NA>             <NA>  ACCCTCGCCCTCCCATG             <NA>
+4             <NA>             <NA>  CCTCGCCCTCCCATGTT             <NA>
+5             <NA>             <NA> CCTCGCCCTCCCATGTTC             <NA>
   reverse_primer.3 reverse_primer.4 forward_efficiency.1 forward_efficiency.2
 1             <NA>             <NA>         0.954290....                   NA
-2             <NA>             <NA>         0.815524....                   NA
+2             <NA>             <NA>         0.954290....                   NA
 3             <NA>             <NA>         0.954290....                   NA
-4             <NA>             <NA>         0.815524....                   NA
+4             <NA>             <NA>         0.954290....                   NA
 5             <NA>             <NA>         0.954290....                   NA
   forward_efficiency.3 forward_efficiency.4 reverse_efficiency.1
-1                   NA                   NA         0.944266....
-2                   NA                   NA         0.944266....
-3                   NA                   NA         0.925497....
-4                   NA                   NA         0.925497....
-5                   NA                   NA         0.969813....
+1                   NA                   NA         0.925497....
+2                   NA                   NA         0.846634....
+3                   NA                   NA         0.944266....
+4                   NA                   NA         0.906760....
+5                   NA                   NA         0.933138....
   reverse_efficiency.2 reverse_efficiency.3 reverse_efficiency.4
 1                   NA                   NA                   NA
 2                   NA                   NA                   NA
@@ -358,7 +349,7 @@ After choosing forward and reverse primers we can graph their melt curves in ord
 
 <<expr12,eval=FALSE>>=
 temp_range <- 60:75
-ps <- c("CGTTGATTATTCGGCACACTCGAC", "ACCCTCGCCCTCCCATG") # forward and reverse
+ps <- c("CGTTGATTATTCGGCACACTCGAC", "CCCTCGCCCTCCCATGT") # forward and reverse
 f <- function(temp) {
 	CalculateEfficiencyPCR(ps, reverseComplement(DNAStringSet(ps)),
 		temp, P=4e-7, ions=.225)
@@ -405,7 +396,7 @@ amplicon <- c(amplicon[w], amplicon[-w])
 Then we can use the function \Rfunction{BrowseSeqs} to visualize the target site for each primer in the amplicon.  This command will open a new window in the default web browser.  The top sequence shows the target (\textit{S. avermitilis}), and each primer's target site is colored.  We can highlight the target sequence so that only mismatches are colored in the non-target sequences.  It is clear why this target site was chosen, because all other \textit{Streptomyces} species have multiple mismatches to both the forward and reverse primers.  The non-target mismatches, especially those located nearest the 3' end (towards the center of the amplicon), will act to lower both hybridization and elongation efficiency of non-target amplification.
 
 <<expr14,eval=FALSE>>=
-BrowseSeqs(amplicon, colorPatterns=c(4, 27, 77, 95), highlight=1)
+BrowseSeqs(amplicon, colorPatterns=c(4, 27, 76, 94), highlight=1)
 @
 
 \begin{figure}

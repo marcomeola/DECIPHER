@@ -51,7 +51,7 @@ deltaHrules              Change in Enthalpy of Hybridization of Primer/Target
                          Quadruplets in Solution
 deltaSrules              Change in Entropy of Hybridization of Primer/Target
                          Quadruplets in Solution
-DesignArray              Design a set of DNA Microarray Probes for Detecting
+DesignArray              Design a Set of DNA Microarray Probes for Detecting
                          Sequences
 DesignPrimers            Design Primers Targeting a Specific Group of
                          Sequences
@@ -79,8 +79,11 @@ MIQS                     MIQS Amino Acid Substitution Matrix
 MODELS                   Available Models of DNA Evolution
 NNLS                     Sequential Coordinate-wise Algorithm for the
                          Non-negative Least Squares Problem
-OrientNucleotides        Orient nucleotide sequences
-PredictHEC               Predict Protein Secondary Structure
+OrientNucleotides        Orient Nucleotide Sequences
+PredictDBN               Predict RNA Secondary Structure in Dot-Bracket
+                         Notation
+PredictHEC               Predict Protein Secondary Structure as Helix,
+                         Beta-Sheet, or Coil
 Read Dendrogram          Read a Dendrogram from a Newick Formatted File
 RESTRICTION_ENZYMES      Common Restriction Enzyme's Cut Sites
 SearchDB                 Obtain Specific Sequences from a Database
@@ -89,6 +92,8 @@ StaggerAlignment         Produce a Staggered Alignment
 Synteny-class            Synteny blocks and hits
 TerminalChar             Determine the Number of Terminal Characters
 TileSeqs                 Form a Set of Tiles for Each Group of Sequences
+TrimDNA                  Trims DNA Sequences to the High Quality Region
+                         Between Patterns
 WriteDendrogram          Write a Dendrogram to Newick Format
 }
 }

@@ -45,3 +45,15 @@
 	ans
 }
 
+.switch <- function(x) {
+	if (class(x)=="DNAStringSet") {
+		ans <- new("RNAStringSet")
+	} else {
+		ans <- new("DNAStringSet")
+	}
+	ans@pool <- x@pool
+	ans@ranges@group <- x@ranges@group
+	ans@ranges@start <- x@ranges@start
+	ans@ranges@width <- x@ranges@width
+	ans
+}

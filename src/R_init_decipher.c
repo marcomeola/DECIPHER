@@ -51,7 +51,7 @@ static const R_CallMethodDef callMethods[] = { // method call, pointer, num args
 	{"sparseMult", (DL_FUNC) &sparseMult, 6},
 	{"calculateDeltaG", (DL_FUNC) &calculateDeltaG, 3},
 	{"calculateFISH", (DL_FUNC) &calculateFISH, 2},
-	{"alignProfiles", (DL_FUNC) &alignProfiles, 14},
+	{"alignProfiles", (DL_FUNC) &alignProfiles, 15},
 	{"alignProfilesAA", (DL_FUNC) &alignProfilesAA, 12},
 	{"consensusProfile", (DL_FUNC) &consensusProfile, 3},
 	{"consensusProfileAA", (DL_FUNC) &consensusProfileAA, 3},
@@ -104,6 +104,7 @@ static const R_CallMethodDef callMethods[] = { // method call, pointer, num args
 	{"qbit", (DL_FUNC) &qbit, 3},
 	{"movAvg", (DL_FUNC) &movAvg, 7},
 	{"getPools", (DL_FUNC) &getPools, 1},
+	{"predictDBN", (DL_FUNC) &predictDBN, 13},
 	{NULL, NULL, 0}
 };
 

@@ -6,9 +6,6 @@ DistanceMatrix <- function(myXStringSet,
 	processors=1,
 	verbose=TRUE) {
 	
-	# initialize variables
-	time.1 <- Sys.time()
-	
 	# error checking
 	CORRECTIONS <- c("none", "Jukes-Cantor", "JC")
 	correction <- pmatch(correction, CORRECTIONS)
@@ -44,11 +41,10 @@ DistanceMatrix <- function(myXStringSet,
 	
 	maxW <- unique(width(myXStringSet))
 	if (length(maxW)!=1) {
-		if (verbose)
-			warning("\n",
-				length(maxW),
-				" different sequence lengths.\n",
-				"Using shorter length in each comparison.\n")
+		warning("\n",
+			length(maxW),
+			" different sequence lengths.\n",
+			"Using shorter length in each comparison.\n")
 	}
 	numF <- length(myXStringSet)
 	if (numF < 2) {
@@ -58,6 +54,7 @@ DistanceMatrix <- function(myXStringSet,
 	# initialize a progress bar
 	if (verbose) {
 		pBar <- txtProgressBar(min=0, max=100, initial=0, style=3)
+		time.1 <- Sys.time()
 	} else {
 		pBar <- NULL
 	}

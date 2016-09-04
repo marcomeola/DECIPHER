@@ -110,7 +110,7 @@ SEXP calculateFISH(SEXP probes, SEXP targets);
 
 // AlignProfiles.c
 
-SEXP alignProfiles(SEXP p, SEXP s, SEXP subMatrix, SEXP dbnMatrix, SEXP pm, SEXP mm, SEXP go, SEXP ge, SEXP exp, SEXP power, SEXP endGapPenaltyLeft, SEXP endGapPenaltyRight, SEXP boundary, SEXP nThreads);
+SEXP alignProfiles(SEXP p, SEXP s, SEXP type, SEXP subMatrix, SEXP dbnMatrix, SEXP pm, SEXP mm, SEXP go, SEXP ge, SEXP exp, SEXP power, SEXP endGapPenaltyLeft, SEXP endGapPenaltyRight, SEXP boundary, SEXP nThreads);
 
 SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP hecMatrix, SEXP go, SEXP ge, SEXP exp, SEXP power, SEXP endGapPenaltyLeft, SEXP endGapPenaltyRight, SEXP boundary, SEXP nThreads);
 
@@ -219,3 +219,7 @@ SEXP movAvg(SEXP x, SEXP type, SEXP alpha, SEXP thresh, SEXP maxAvg, SEXP start,
 // GetPools.c
 
 SEXP getPools(SEXP x);
+
+// PredictDBN.c
+
+SEXP predictDBN(SEXP x, SEXP output, SEXP minOccupancy, SEXP impact, SEXP avgProdCorr, SEXP slope, SEXP shift, SEXP weights, SEXP pseudoknots, SEXP threshold, SEXP verbose, SEXP pBar, SEXP nThreads);

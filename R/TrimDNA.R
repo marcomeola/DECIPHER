@@ -60,7 +60,7 @@ TrimDNA <- function(myDNAStringSet,
 		stop("alpha must be between zero and one.")
 	if (!is.numeric(threshold))
 		stop("threshold must be a numeric.")
-	if (threshold >= 1 || threshold <= 0)
+	if (threshold > 1 || threshold <= 0)
 		stop("threshold must be between zero and one.")
 	if (!is.numeric(maxAverageError))
 		stop("maxAverageError must be a numeric.")
@@ -68,7 +68,7 @@ TrimDNA <- function(myDNAStringSet,
 		stop("maxAverageError must be between zero and threshold.")
 	if (!is.numeric(maxAmbiguities))
 		stop("maxAmbiguities must be a numeric.")
-	if (maxAmbiguities >= 1 || maxAmbiguities <= 0)
+	if (maxAmbiguities > 1 || maxAmbiguities < 0)
 		stop("maxAmbiguities must be between zero and one.")
 	if (!is.numeric(minWidth))
 		stop("minWidth must be a numeric.")
@@ -137,7 +137,7 @@ TrimDNA <- function(myDNAStringSet,
 		if (verbose) {
 			n <- length(left) - length(x) - n
 			cat(round(n/length(left)*100, 1),
-				"% flanking",
+				"% flanking\n",
 				sep="")
 			flush.console()
 		}
@@ -216,7 +216,7 @@ TrimDNA <- function(myDNAStringSet,
 			cat(100*round(length(wl)/length(lefts), 1),
 				"% left, ",
 				100*round(length(wr)/length(rights), 1),
-				"% right",
+				"% right\n",
 				sep="")
 			flush.console()
 		}
@@ -237,7 +237,7 @@ TrimDNA <- function(myDNAStringSet,
 			lefts[w],
 			rights[w])
 		
-		a <- alphabetFrequency(dna, as.prob=TRUE, baseOnly=TRUE)
+		a <- alphabetFrequency(myDNAStringSet, as.prob=TRUE, baseOnly=TRUE)
 		x <- which(a[, "other"] > maxAmbiguities)
 		if (length(x) > 0) {
 			myDNAStringSet <- myDNAStringSet[-x]
@@ -256,7 +256,7 @@ TrimDNA <- function(myDNAStringSet,
 			names=names(myDNAStringSet))
 	
 	if (verbose) {
-		cat("\n\n")
+		cat("\n")
 		time.2 <- Sys.time()
 		print(round(difftime(time.2,
 			time.1,

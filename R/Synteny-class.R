@@ -279,6 +279,7 @@ plot.Synteny <- function(x,
 	labels=abbreviate(rownames(x), 9),
 	cex.labels=NULL,
 	width=0.7,
+	scaleBar=TRUE,
 	...) {
 	
 	d <- dim(x)
@@ -317,18 +318,20 @@ plot.Synteny <- function(x,
 	}
 	if (typeof(colorRamp) != "closure")
 		stop("colorRamp must be a function.")
+	if (!is.logical(scaleBar))
+		stop("scaleBar must be a logical.")
 	
 	dev.hold()
 	on.exit(dev.flush(),
 		add=TRUE)
 	
 	if (colorBy > 0) {
-		dev_width <- dev.size("px")[1]
+		dev_width <- ceiling(dev.size("px")[1])
 		c0 <- c(0L, c[[colorBy]])
 		gradient <- colorRamp(dev_width + 1)
 		endpoint <- seq(1, c0[length(c0)], length.out=dev_width + 1)
 	} else if (colorBy == -2) {
-		dev_width <- dev.size("px")[1]
+		dev_width <- ceiling(dev.size("px")[1])
 		gradient <- colorRamp(dev_width + 1)
 	}
 	
@@ -683,6 +686,38 @@ plot.Synteny <- function(x,
 		} else {
 			rect(x0, y0, x1, y1, col="black")
 		}
+	}
+	
+	if (colorBy==-2 && # frequency
+		scaleBar) {
+		xs <- seq(usr[1], usr[2], length.out=102)
+		ys <- usr[4] - (usr[3] - usr[4])*c(0.06, 0.08, 0.095)
+		rect(xs[-102],
+			ys[1],
+			xs[-1],
+			ys[2],
+			col=c(barColor, colorRamp(100)),
+			border=NA,
+			xpd=TRUE)
+		rect(xs[1],
+			ys[1],
+			xs[102],
+			ys[2],
+			xpd=TRUE)
+		tenths <- mapply(sum,
+			xs[-102],
+			xs[-1])/2
+		tenths <- tenths[seq(1, 101, 10)]
+		segments(tenths,
+			ys[2],
+			tenths,
+			ys[3],
+			xpd=TRUE)
+		text(tenths[c(1, 6, 11)],
+			ys[3],
+			paste(seq(0, 100, 50), "%", sep=""),
+			pos=3,
+			xpd=TRUE)
 	}
 	
 	invisible(NULL)

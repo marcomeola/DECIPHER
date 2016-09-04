@@ -36,7 +36,7 @@ CalculateEfficiencyFISH, DesignProbes,
 # viewing information:
 BrowseSeqs, BrowseDB,
 # sequence analysis/manipulation:
-CorrectFrameshifts, OrientNucleotides, PredictHEC, TrimDNA,
+CorrectFrameshifts, OrientNucleotides, PredictDBN, PredictHEC, TrimDNA,
 # multiple alignment:
 AdjustAlignment, AlignDB, AlignProfiles, AlignSeqs, AlignTranslation, MaskAlignment, StaggerAlignment,
 # synteny:

@@ -102,5 +102,5 @@ SEXP consolidateGaps(SEXP x, SEXP type)
 		}
 	}
 	
-	return R_NilValue;
+	return x;
 }

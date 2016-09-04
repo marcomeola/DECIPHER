@@ -183,7 +183,7 @@ SEXP predictHEC(SEXP x, SEXP windowSize, SEXP background, SEXP HEC_MI1, SEXP HEC
 		if (o == 1) {
 			states = Calloc(l + 1, char); // last position is for null terminating
 		} else  {
-			PROTECT(ans = allocMatrix(REALSXP, 3, l)); // [temp][pos]
+			PROTECT(ans = allocMatrix(REALSXP, 3, l)); // [state][pos]
 			rans = REAL(ans);
 		}
 		

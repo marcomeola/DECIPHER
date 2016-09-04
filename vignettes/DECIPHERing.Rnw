@@ -36,9 +36,7 @@
 %\setkeys{Gin}{width=0.55\textwidth}
 
 \title{Getting Started DECIPHERing}
-\author{Erik S. Wright \\
-  University of Wisconsin \\
-  Madison, WI}
+\author{Erik S. Wright}
 \date{\today}
 \maketitle
 
@@ -93,7 +91,7 @@ Other time consuming tasks are handled efficiently.  The function \Rfunction{Fin
 
 It is no longer necessary to store related data in several different files.  \Rpackage{DECIPHER} is enabled by \Rpackage{RSQLite}, which is an \R{} interface to \underline{\href{http://www.sqlite.org/}{SQLite databases}}.  \Rpackage{DECIPHER} creates an organized collection of sequences and their associated information known as a sequence database.  \term{SQLite} databases are flat files, meaning they can be handled just like any other file.  There is no setup required since \term{SQLite} does not require a server, unlike other client database engines.  These attributes of \term{SQLite} databases make storing, backing-up, and sharing sequence databases relatively straightforward.
 
-Separate projects can be stored in distinct tables in the same sequence database.  Each new table is structured to include every sequence's description, identifier, and a unique key called the \term{row_name} all in one place.  The sequences are referenced by their \term{row_names} or \term{identifier} throughout most functions in the package.  Using \term{row_names}, new information created using \Rpackage{DECIPHER} functions is added as additional database columns to their respective sequences' rows in the database table.  To prevent the database from seeming like a black box there is a function named \Rfunction{BrowseDB} that facilitates viewing of the database contents in a web browser.  A similar function is available to view sequences called \Rfunction{BrowseSeqs}.
+Separate projects can be stored in distinct tables in the same sequence database.  Each new table is structured to include every sequence's description, identifier, and a unique key called the \term{row_name} all in one place.  The sequences are referenced by their \term{row_names} or \term{identifier} throughout most functions in the package.  Using \term{row_names}, new information created with \Rpackage{DECIPHER} functions can be added as additional database columns to their respective sequences' rows in the database table.  To prevent the database from seeming like a black box there is a function named \Rfunction{BrowseDB} that facilitates viewing of the database contents in a web browser.  A similar function is available to view sequences called \Rfunction{BrowseSeqs}.
 
 The amount of DNA sequence information available is currently increasing at a phenomenal rate.  \Rpackage{DECIPHER} stores individual sequences using a custom compression format, called \term{nbit}, so that the database file takes up much less drive space than a standard text file of sequences.  The compressed sequences are stored in a hidden table that is linked to the information table.  For example, by default sequence information is stored in the table ``Seqs'', and the associated sequences are stored in the table ``_Seqs''.  Storing the sequences in a separate table greatly improves access speed when there is a large amount of sequence information.  Separating projects into distinct tables further increases query speed over that of storing every project in a single table.
 
@@ -113,8 +111,10 @@ The functions of DECIPHER can be grouped into several categories based on intend
 \begin{enumerate} \item \Rfunction{DistanceMatrix} \item \Rfunction{IdClusters} \item \Rfunction{MaskAlignment} \item \Rfunction{ReadDendrogram} \item \Rfunction{StaggerAlignment} \item \Rfunction{WriteDendrogram} \end{enumerate}
 \item Visualization with a web browser:
 \begin{enumerate} \item \Rfunction{BrowseDB} \item \Rfunction{BrowseSeqs} \end{enumerate}
-\item Manipulating and analyzing sequences:
-\begin{enumerate} \item \Rfunction{CorrectFrameshifts} \item \Rfunction{DigestDNA} \item \Rfunction{Disambiguate} \item \Rfunction{OrientNucleotides} \item \Rfunction{PredictHEC} \item \Rfunction{TrimDNA} \end{enumerate}
+\item Manipulating sequences:
+\begin{enumerate} \item \Rfunction{CorrectFrameshifts} \item \Rfunction{OrientNucleotides} \item \Rfunction{TrimDNA} \end{enumerate}
+\item Analyzing sequences:
+\begin{enumerate} \item \Rfunction{DigestDNA} \item \Rfunction{PredictDBN} \item \Rfunction{PredictHEC} \end{enumerate}
 \item Multiple sequence alignment:
 \begin{enumerate} \item \Rfunction{AdjustAlignment} \item \Rfunction{AlignDB} \item \Rfunction{AlignProfiles} \item \Rfunction{AlignSeqs} \item \Rfunction{AlignTranslation} \end{enumerate}
 \item Comparison of sequences that are not collinear (i.e., genomes):
@@ -184,7 +184,7 @@ The functions of DECIPHER can be grouped into several categories based on intend
 > biocLite("RSQLite")
 \end{Sinput}
 \end{Schunk}
-\item Download \Rpackage{DECIPHER} from \underline{\url{http://DECIPHER.cee.wisc.edu}}.
+\item Download \Rpackage{DECIPHER} from \underline{\url{http://DECIPHER.codes}}.
 \end{enumerate}
 
 \subsubsection{Mac OS X}
@@ -261,7 +261,7 @@ Help for any function can be accessed through a command such as:
 \end{Sinput}
 \end{Schunk}
 
-To begin, we can import a FASTA, FASTQ, or GenBank file into a sequence database.  In this example, we will use a GenBank file that is included with \Rpackage{DECIPHER} installation.  We must set the sequences' \term{identifier} when importing with \Rfunction{Seqs2DB}.  Here we will identify the sequences with the word ``Bacteria''.  The \term{identifier} is used by many \Rpackage{DECIPHER} functions to reference a specific set of sequences in the database, and can be reset at a later time using a number of different methods:
+To begin, we can import a FASTA, FASTQ, or GenBank file into a sequence database.  In this example, we will use a GenBank file that is included with \Rpackage{DECIPHER} installation.  We must set the sequences' \term{identifier} when importing with \Rfunction{Seqs2DB}.  Here we will identify the sequences with the word ``Bacteria''.  The \term{identifier} is used by many \Rpackage{DECIPHER} functions to reference a specific subset of sequences in the database, and can be reset at a later time using a number of different methods:
 <<expr1>>=
 # access a sequence file included in the package:
 gen <- system.file("extdata", "Bacteria_175seqs.gen", package="DECIPHER")

@@ -33,7 +33,7 @@
 // DECIPHER header file
 #include "DECIPHER.h"
 
-SEXP alignProfiles(SEXP p, SEXP s, SEXP subMatrix, SEXP dbnMatrix, SEXP pm, SEXP mm, SEXP go, SEXP ge, SEXP exp, SEXP power, SEXP endGapPenaltyLeft, SEXP endGapPenaltyRight, SEXP boundary, SEXP nThreads)
+SEXP alignProfiles(SEXP p, SEXP s, SEXP type, SEXP subMatrix, SEXP dbnMatrix, SEXP pm, SEXP mm, SEXP go, SEXP ge, SEXP exp, SEXP power, SEXP endGapPenaltyLeft, SEXP endGapPenaltyRight, SEXP boundary, SEXP nThreads)
 {
 	int i, j, k, start, end, *rans, count, z;
 	double *pprofile, *sprofile, gp, gs, S, M, GP, GS;
@@ -51,6 +51,7 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP subMatrix, SEXP dbnMatrix, SEXP pm, SEXP
 	double bound = asReal(boundary);
 	double egpL = asReal(endGapPenaltyLeft);
 	double egpR = asReal(endGapPenaltyRight);
+	int RNA = asInteger(type);
 	
 	double *subM;
 	int do_subM;
@@ -78,6 +79,100 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP subMatrix, SEXP dbnMatrix, SEXP pm, SEXP
 	R_len_t lp = length(p)/size;
 	R_len_t ls = length(s)/size;
 	int l = lp + ls;
+	
+	// create array of normalization factors (coverge^POW)
+	double *pnorm = Calloc(lp, double); // initialized to zero
+	double *snorm = Calloc(ls, double); // initialized to zero
+	for (i = 0; i < lp; i++)
+		if (pprofile[7 + size*i] > 0)
+			pnorm[i] = pow(pprofile[7 + size*i], POW);
+	for (i = 0; i < ls; i++)
+		if (sprofile[7 + size*i] > 0)
+			snorm[i] = pow(sprofile[7 + size*i], POW);
+	
+	// substitution matrix for pairs of nucleotides
+	double subD[256] = {
+		+0.2,-0.5,-0.4,-0.7,-0.7,-1.1,-0.9,-1.3,-0.4,-1.2,-1.5,-1.4,-0.6,-0.9,-1.4,-0.7, // AA
+		-0.5,+0.5,-0.8,-0.4,-0.2,-0.8,-0.2,-1.0,-0.8,-0.2,-1.1,-1.0,-0.5,-0.8,-1.1,-1.4, // AC
+		-0.4,-0.8,+0.5,-0.8,-0.9,-1.1,-0.4,-1.2,-0.8,-0.9,-0.2,-0.9,-0.9,-1.1,-1.0,-1.2, // AG
+		-0.7,-0.4,-0.8,+0.2,-0.8,-1.6,-0.4,-0.9,-1.3,-1.3,-1.2,-0.1,-0.3,-1.3,-1.0,-0.7, // AU
+		-0.7,-0.2,-0.9,-0.8,+0.2,-1.0,-0.1,-1.0,-1.0,-0.6,-1.2,-0.9,-0.3,-0.9,-1.2,-1.3, // CA
+		-1.1,-0.8,-1.1,-1.6,-1.0,+0.3,-0.4,-0.6,-1.2,-0.8,-0.5,-1.2,-1.5,-0.4,-1.5,-1.7, // CC
+		-0.9,-0.2,-0.4,-0.4,-0.1,-0.4,+0.9,-0.7,-0.7,+0.3,-0.2,+0.1,-0.5,-0.6,-0.2,-0.9, // CG
+		-1.3,-1.0,-1.2,-0.9,-1.0,-0.6,-0.7,+0.1,-1.3,-1.1,-0.9,-0.7,-1.3,-1.1,-1.2,-0.7, // CU
+		-0.4,-0.8,-0.8,-1.3,-1.0,-1.2,-0.7,-1.3,+0.6,-0.8,-0.2,-0.8,-0.7,-0.8,-1.0,-0.9, // GA
+		-1.2,-0.2,-0.9,-1.3,-0.6,-0.8,+0.3,-1.1,-0.8,+0.3,-0.6,-0.1,-0.7,-0.8,-0.5,-1.4, // GC
+		-1.5,-1.1,-0.2,-1.2,-1.2,-0.5,-0.2,-0.9,-0.2,-0.6,+0.7,-0.5,-1.1,-0.7,-0.8,-0.9, // GG
+		-1.4,-1.0,-0.9,-0.1,-0.9,-1.2,+0.1,-0.7,-0.8,-0.1,-0.5,+0.7,-0.5,-0.9,-0.3,-0.6, // GU
+		-0.6,-0.5,-0.9,-0.3,-0.3,-1.5,-0.5,-1.3,-0.7,-0.7,-1.1,-0.5,+0.7,-0.5,-0.2,-0.4, // UA
+		-0.9,-0.8,-1.1,-1.3,-0.9,-0.4,-0.6,-1.1,-0.8,-0.8,-0.7,-0.9,-0.5,+0.3,-0.9,-0.6, // UC
+		-1.4,-1.1,-1.0,-1.0,-1.2,-1.5,-0.2,-1.2,-1.0,-0.5,-0.8,-0.3,-0.2,-0.9,+0.2,-0.9, // UG
+		-0.7,-1.4,-1.2,-0.7,-1.3,-1.7,-0.9,-0.7,-0.9,-1.4,-0.9,-0.6,-0.4,-0.6,-0.9,-0.0, // UU
+	};
+	int N16[16] = {0, 16, 32, 48, 64, 80, 96, 112, 128, 144, 160, 176, 192, 208, 224, 240};
+	int *Op, *Os;
+	double *Pp, *Ps;
+	if (RNA==2) { // prepare for scoring pairs
+		// initialize arrays of pair frequencies
+		Pp = Calloc(lp*16, double); // initialized to zero
+		Ps = Calloc(ls*16, double); // initialized to zero
+		
+		for (i = 1; i < lp; i++) {
+			z = 0;
+			for (j = 0; j < 4; j++) {
+				for (k = 0; k < 4; k++) {
+					tot = sqrt(pnorm[i - 1]*pnorm[i]);
+					if (tot > 0)
+						Pp[z + i*16] = pprofile[j + size*(i - 1)]*pprofile[k + size*i]*tot;
+					z++;
+				}
+			}
+		}
+		for (i = 1; i < ls; i++) {
+			z = 0;
+			for (j = 0; j < 4; j++) {
+				for (k = 0; k < 4; k++) {
+					tot = sqrt(snorm[i - 1]*snorm[i]);
+					if (tot > 0)
+						Ps[z + i*16] = sprofile[j + size*(i - 1)]*sprofile[k + size*i]*tot;
+					z++;
+				}
+			}
+		}
+		
+		// initialize arrays of nucleotide orders
+		Op = Calloc(lp*16, int); // initialized to zero
+		Os = Calloc(ls*16, int); // initialized to zero
+		
+		for (i = 0; i < lp; i++) {
+			k = 0;
+			z = -1;
+			for (j = 0; j < 16; j++) {
+				if (Pp[j + i*16] > 0) {
+					Op[k + i*16] = j;
+					k++;
+				} else if (z==-1) {
+					z = j;
+				}
+			}
+			if (z!=-1)
+				Op[k + i*16] = z;
+		}
+		for (i = 0; i < ls; i++) {
+			k = 0;
+			z = -1;
+			for (j = 0; j < 16; j++) {
+				if (Ps[j + i*16] > 0) {
+					Os[k + i*16] = j;
+					k++;
+				} else if (z==-1) {
+					z = j;
+				}
+			}
+			if (z!=-1)
+				Os[k + i*16] = z;
+		}
+	}
 	
 	float *m = Calloc((lp+1)*(ls+1), float); // initialized to zero
 	int *o = Calloc(lp*ls, int); // initialized to zero
@@ -146,14 +241,6 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP subMatrix, SEXP dbnMatrix, SEXP pm, SEXP
 		if (i < (ls - 1))
 			sstops[i] += sstops[i + 1];
 	}
-	
-	// normalize profile positions to coverge^POW
-	for (i = 0; i < lp; i++)
-		if (pprofile[7 + size*i] > 0)
-			pprofile[7 + size*i] = pow(pprofile[7 + size*i], POW);
-	for (i = 0; i < ls; i++)
-		if (sprofile[7 + size*i] > 0)
-			sprofile[7 + size*i] = pow(sprofile[7 + size*i], POW);
 	
 	if (egpL != 0) {
 		*(m + 1) = egpL*sstarts[0];
@@ -303,8 +390,8 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP subMatrix, SEXP dbnMatrix, SEXP pm, SEXP
 			GS = gs*tot;
 			GP = gp*tot;
 			
-			if (sprofile[7 + SIZEJ] > 0 && pprofile[7 + SIZEI] > 0) {
-				tot = sqrt(sprofile[7 + SIZEJ]*pprofile[7 + SIZEI]); // normalization factor
+			if (pnorm[i] > 0 && snorm[j] > 0) {
+				tot = sqrt(pnorm[i]*snorm[j]); // normalization factor
 			} else {
 				tot = 0;
 			}
@@ -333,6 +420,26 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP subMatrix, SEXP dbnMatrix, SEXP pm, SEXP
 					S += pprofile[n + SIZEI]*sprofile[n + SIZEJ];
 				}
 				M = S*PM + ((1 - pprofile[4 + SIZEI])*(1 - sprofile[4 + SIZEJ]) - S)*MM; // % mismatched = (% ungapped) - (% matched)
+			}
+			
+			double pFreq, sFreq;
+			if (RNA==2) {
+				// score aligning pairs of nucleotides
+				for (int n = 0; n < 16; n++) {
+					pFreq = Pp[Op[n + i*16] + i*16];
+					if (pFreq!=0) {
+						for (int p = 0; p < 16; p++) {
+							sFreq = Ps[Os[p + j*16] + j*16];
+							if (sFreq!=0) {
+								M += pFreq*sFreq*subD[N16[Op[n + i*16]] + Os[p + j*16]];
+							} else {
+								break;
+							}
+						}
+					} else {
+						break;
+					}
+				}
 			}
 			
 			if (do_DBN) {
@@ -376,6 +483,16 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP subMatrix, SEXP dbnMatrix, SEXP pm, SEXP
 			if (*(m + (i + 1)*(ls + 1) + j + 1) > max)
 				max = *(m + (i + 1)*(ls + 1) + j + 1);
 		}
+	}
+	
+	Free(pnorm);
+	Free(snorm);
+	
+	if (RNA==2) {
+		Free(Pp);
+		Free(Ps);
+		Free(Op);
+		Free(Os);
 	}
 	
 	if (egpR != 0) {
@@ -843,13 +960,15 @@ SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP hecMatrix, SEXP go, SE
 			sstops[i] += sstops[i + 1];
 	}
 	
-	// normalize profile positions to coverge^POW
+	// create array of normalization factors (coverge^POW)
+	double *pnorm = Calloc(lp, double); // initialized to zero
+	double *snorm = Calloc(ls, double); // initialized to zero
 	for (i = 0; i < lp; i++)
 		if (pprofile[26 + size*i] > 0)
-			pprofile[26 + size*i] = pow(pprofile[26 + size*i], POW);
+			pnorm[i] = pow(pprofile[26 + size*i], POW);
 	for (i = 0; i < ls; i++)
 		if (sprofile[26 + size*i] > 0)
-			sprofile[26 + size*i] = pow(sprofile[26 + size*i], POW);
+			snorm[i] = pow(sprofile[26 + size*i], POW);
 	
 	if (egpL != 0) {
 		*(m + 1) = egpL*sstarts[0];
@@ -1003,8 +1122,8 @@ SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP hecMatrix, SEXP go, SE
 			GS = gs*tot;
 			GP = gp*tot;
 			
-			if (sprofile[26 + SIZEJ] > 0 && pprofile[26 + SIZEI] > 0) {
-				tot = sqrt(sprofile[26 + SIZEJ]*pprofile[26 + SIZEI]); // normalization factor
+			if (pnorm[i] > 0 && snorm[j] > 0) {
+				tot = sqrt(pnorm[i]*snorm[j]); // normalization factor
 			} else {
 				tot = 0;
 			}
@@ -1086,6 +1205,9 @@ SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP hecMatrix, SEXP go, SE
 				max = *(m + (i + 1)*(ls + 1) + j + 1);
 		}
 	}
+	
+	Free(pnorm);
+	Free(snorm);
 	
 	if (egpR != 0) {
 		GP = egpR*sstops[ls - 1];

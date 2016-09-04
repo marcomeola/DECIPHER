@@ -33,18 +33,13 @@
 %\setkeys{Gin}{width=0.55\textwidth}
 
 \title{Design Primers That Yield Group-Specific Signatures}
-\author{Erik S. Wright \\
-  University of Wisconsin \\
-  Madison, WI}
+\author{Erik S. Wright}
 \date{\today}
 \maketitle
 
 \newenvironment{centerfig}
 {\begin{figure}[htp]\centering}
 {\end{figure}}
-\newlength\tindent
-\setlength{\tindent}{\parindent}
-\setlength{\parindent}{0pt}
 \renewcommand{\indent}{\hspace*{\tindent}}
 \DefineVerbatimEnvironment{Sinput}{Verbatim} {xleftmargin=2em} \DefineVerbatimEnvironment{Soutput}{Verbatim}{xleftmargin=2em} \DefineVerbatimEnvironment{Scode}{Verbatim}{xleftmargin=2em} \fvset{listparameters={\setlength{\topsep}{0pt}}} \renewenvironment{Schunk}{\vspace{\topsep}}{\vspace{\topsep}}
 \SweaveOpts{keep.source=TRUE}
@@ -61,7 +56,7 @@ options(width=80)
 
 The \Rpackage{DECIPHER} function \Rfunction{DesignSignatures} was created to perform the most common primer design task:  to efficiently amplify a shared region of DNA that will produce maximal amplicon diversity.  This goal is independent of the method being used to differentiate amplicons, although some of the design details may depend on the technique being employed.  \Rfunction{DesignSignatures} supports three common methods for distinguishing amplicons:  sequencing, High Resolution Melting (HRM) analysis, and Fragment Length Polymorphism (FLP) analysis.  As a case study, this tutorial focuses on designing primers to differentiate SNP alleles using HRM analysis.  However, the methods described here can easily be adjusted to the other experimental techniques.
 
-As input, we will use known sequence variants of the Isocitrate Dehydrogenase 2 (\underline{\href{https://en.wikipedia.org/wiki/IDH2}{\textit{IDH2}}}) gene that have been implicated in human gliomas.  First, a database is constructed where the variants are identified by their unique name.  Next, this database is used to design primers that will yield maximal amplicon diversity.  The top scoring primers are further investigated to determine whether they can easily be distinguished experimentally.  Finally, the process is repeated using a restriction enzyme to further diversify the amplicons' signatures.  Note that much of the functionality described here is accessible via a web tool at \underline{\url{http://DECIPHER.cee.wisc.edu}}.
+As input, we will use known sequence variants of the Isocitrate Dehydrogenase 2 (\underline{\href{https://en.wikipedia.org/wiki/IDH2}{\textit{IDH2}}}) gene that have been implicated in human gliomas.  First, a database is constructed where the variants are identified by their unique name.  Next, this database is used to design primers that will yield maximal amplicon diversity.  The top scoring primers are further investigated to determine whether they can easily be distinguished experimentally.  Finally, the process is repeated using a restriction enzyme to further diversify the amplicons' signatures.  Note that much of the functionality described here is accessible via a web tool at \underline{\url{http://DECIPHER.codes}}.
 
 %------------------------------------------------------------
 \section{Getting Started}
@@ -324,7 +319,8 @@ f_primer <- DNAString(primers$forward_primer[PSET])
 r_primer <- DNAString(primers$reverse_primer[PSET])
 r_primer <- reverseComplement(r_primer)
 
-ids <- dbGetQuery(dbConn, "select distinct id from Seqs")$id
+ids <- dbGetQuery(dbConn, "select distinct identifier from Seqs")
+ids <- ids$identifier
 
 if (TYPE=="sequence") {
     signatures <- matrix(0, nrow=4^RESOLUTION, ncol=length(ids))

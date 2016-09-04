@@ -259,6 +259,14 @@ SEXP enumerateSequenceAA(SEXP x, SEXP wordSize)
 	return ret_list;
 }
 
+int pop(unsigned int x)
+{
+	x = x - ((x >> 1) & 0x55555555);
+	x = (x & 0x33333333) + ((x >> 2) & 0x33333333);
+	x = x + (x >> 4) & 0xF0F0F0F;
+	return((x*0x1010101) >> 24);
+}
+
 //ans_start <- .Call("enumerateGappedSequence", myDNAStringSet, wordSize, ordering, PACKAGE="DECIPHER")
 SEXP enumerateGappedSequence(SEXP x, SEXP wordSize, SEXP ordering)
 {
@@ -295,6 +303,9 @@ SEXP enumerateGappedSequence(SEXP x, SEXP wordSize, SEXP ordering)
 			int *ANS = Calloc(x_i.length - wS + 1, int); // initialized to zero
 			int bases[wS];
 			int count = 0;
+			int repeat[66] = {-1}; // array of previous occurrences
+			int values[66];
+			int bitCount, temp;
 			for (j = 0; j < x_i.length; j++) {
 				if (count < wS - 1) {
 					if (x_i.ptr[j] != 16 && x_i.ptr[j] != 64) { // not gap
@@ -337,7 +348,29 @@ SEXP enumerateGappedSequence(SEXP x, SEXP wordSize, SEXP ordering)
 					if (*(ANS + j) == -1) {
 						*(rans + j) = NA_INTEGER;
 					} else {
-						*(rans + j) = *(ANS + j);
+						temp = *(ANS + j);
+						
+						// determine the k-mer's signature
+						bitCount = pop((unsigned int)temp);
+						if (temp < 0)
+							bitCount += 33;
+						
+						// set all recent repeats to NA
+						if (repeat[bitCount] < 0) {
+							// initialize repeat
+							repeat[bitCount] = j;
+							values[bitCount] = temp;
+							*(rans + j) = temp;
+						} else { // check for a repeat
+							if (values[bitCount]==temp) {
+								*(rans + j) = NA_INTEGER;
+								*(rans + repeat[bitCount]) = NA_INTEGER;
+							} else { // not a recent repeat
+								repeat[bitCount] = j;
+								values[bitCount] = temp;
+								*(rans + j) = temp;
+							}
+						}
 					}
 					*(p + j) = *(POS + j);
 				}
@@ -392,6 +425,9 @@ SEXP enumerateGappedSequenceAA(SEXP x, SEXP wordSize, SEXP ordering)
 			int *ANS = Calloc(x_i.length - wS + 1, int); // initialized to zero
 			int bases[wS];
 			int count = 0;
+			int repeat[66] = {-1}; // array of previous occurrences
+			int values[66];
+			int bitCount, temp;
 			for (j = 0; j < x_i.length; j++) {
 				if (count < wS - 1) {
 					if (x_i.ptr[j] != 45 && x_i.ptr[j] != 46) { // not gap
@@ -434,7 +470,29 @@ SEXP enumerateGappedSequenceAA(SEXP x, SEXP wordSize, SEXP ordering)
 					if (*(ANS + j) == -1) {
 						*(rans + j) = NA_INTEGER;
 					} else {
-						*(rans + j) = *(ANS + j);
+						temp = *(ANS + j);
+						
+						// determine the k-mer's signature
+						bitCount = pop((unsigned int)temp);
+						if (temp < 0)
+							bitCount += 33;
+						
+						// set all recent repeats to NA
+						if (repeat[bitCount] < 0) {
+							// initialize repeat
+							repeat[bitCount] = j;
+							values[bitCount] = temp;
+							*(rans + j) = temp;
+						} else { // check for a repeat
+							if (values[bitCount]==temp) {
+								*(rans + j) = NA_INTEGER;
+								*(rans + repeat[bitCount]) = NA_INTEGER;
+							} else { // not a recent repeat
+								repeat[bitCount] = j;
+								values[bitCount] = temp;
+								*(rans + j) = temp;
+							}
+						}
 					}
 					*(p + j) = *(POS + j);
 				}

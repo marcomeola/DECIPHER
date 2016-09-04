@@ -1,15 +1,6 @@
 # below function modified from stats package
-.memberDend <- function(x) {
-	
-	r <- attr(x, "members")
-	if(is.null(r))
-		r <- 1L
-	
-	return(r)
-}
-
-# below function modified from stats package
 to.dendrogram <- function(object) {
+	
 	z <- list()
 	oHgts <- object$lengths
 	oHgt <- object$height
@@ -27,7 +18,6 @@ to.dendrogram <- function(object) {
 		if (all(neg)) { # two leaves
 			zk <- as.list(-x)
 			attr(zk, "members") <- two
-			attr(zk, "midpoint") <- 0.5 # mean(c(0,1))
 			objlabels <- object$labels[-x]
 			attr(zk[[1L]], "label") <- objlabels[1L]
 			attr(zk[[2L]], "label") <- objlabels[2L]
@@ -45,7 +35,6 @@ to.dendrogram <- function(object) {
 				list(z[[X[1L]]], -x[2L])
 			}
 			attr(zk, "members") <- attr(z[[X[1 + isL]]], "members") + one
-			attr(zk, "midpoint") <- (.memberDend(zk[[1L]]) + attr(z[[X[1 + isL]]], "midpoint"))/2
 			attr(zk[[2 - isL]], "members") <- one
 			attr(zk[[2 - isL]], "height") <- oHgt[k] - oHgts[k, 2 - isL]
 			attr(zk[[2 - isL]], "label") <- object$labels[-x[2 - isL]]
@@ -54,7 +43,6 @@ to.dendrogram <- function(object) {
 			x <- as.character(x)
 			zk <- list(z[[x[1L]]], z[[x[2L]]])
 			attr(zk, "members") <- attr(z[[x[1L]]], "members") + attr(z[[x[2L]]], "members")
-			attr(zk, "midpoint") <- (attr(z[[x[1L]]], "members") + attr(z[[x[1L]]], "midpoint") + attr(z[[x[2L]]], "midpoint"))/2
 		}
 		attr(zk, "height") <- oHgt[k]
 		k <- as.character(k)
@@ -65,12 +53,13 @@ to.dendrogram <- function(object) {
 	z
 }
 
-.collapse <- function(dend) {
+.collapse <- function(dend, collapse=collapse) {
+	
 	if (is.leaf(dend))
 		return(dend)
 	
-	dend[[1]] <- .collapse(dend[[1]])
-	dend[[2]] <- .collapse(dend[[2]])
+	dend[[1]] <- .collapse(dend[[1]], collapse)
+	dend[[2]] <- .collapse(dend[[2]], collapse)
 	
 	if (!is.leaf(dend[[1]])) {
 		h1 <- attr(dend[[1]], "height")
@@ -85,11 +74,12 @@ to.dendrogram <- function(object) {
 	
 	h <- attr(dend, "height")
 	
-	if (h==h1 || h==h2) { # make multifurcating
+	if ((h - h1) <= collapse || (h - h2) <= collapse) {
+		# make multifurcating
 		m1 <- attr(dend[[1]], "members")
 		m2 <- attr(dend[[2]], "members")
 		m <- m1 + m2
-		if (h==h1 && h==h2) {
+		if ((h - h1) <= collapse && (h - h2) <= collapse) {
 			l1 <- length(dend[[1]])
 			l2 <- length(dend[[2]])
 			x <- vector("list", l1 + l2)
@@ -97,13 +87,13 @@ to.dendrogram <- function(object) {
 				x[i] <- dend[[1]][i]
 			for (i in seq_len(l2))
 				x[i + l1] <- dend[[2]][i]
-		} else if (h==h1) {
+		} else if ((h - h1) <= collapse) {
 			l <- length(dend[[1]])
 			x <- vector("list", l + 1)
 			for (i in seq_len(l))
 				x[i] <- dend[[1]][i]
 			x[l + 1] <- dend[-1]
-		} else if (h==h2) {
+		} else if ((h - h2) <= collapse) {
 			l <- length(dend[[2]])
 			x <- vector("list", l + 1)
 			x[1] <- dend[-2]
@@ -111,9 +101,10 @@ to.dendrogram <- function(object) {
 				x[i + 1] <- dend[[2]][i]
 		}
 		dend <- x
+		
 		attr(dend, "height") <- h
 		attr(dend, "members") <- m
-		attr(dend, "midpoint") <- (m - 1)/2
+		
 		class(dend) <- "dendrogram"
 	}
 	
@@ -742,7 +733,6 @@ to.dendrogram <- function(object) {
 .swapBranches <- function(myClusters, r1, c1, r2, c2) {
 	
 	# swap branch [r1, c1] with [r2, c2]
-	
 	temp <- myClusters[r1, c1]
 	myClusters[r1, c1] <- myClusters[r2, c2]
 	myClusters[r2, c2] <- temp
@@ -878,6 +868,7 @@ MODELS <- c("JC69",
 	"TN93+G4")
 
 .splitClusters <- function(x, y) {
+	
 	clusterNum <- 0L
 	X <- integer(length(x))
 	u.y <- unique(y)
@@ -929,7 +920,9 @@ MODELS <- c("JC69",
 	.findMax <- function(x, height=NA) {
 		if (is.leaf(x)) {
 			dist <- 2*height - attr(x, "height")
-			if (!is.na(dist) && dist >= .maxDist) {
+			if (!is.na(dist) &&
+				(dist > .maxDist ||
+				isTRUE(all.equal(dist, .maxDist)))) {
 				.maxDist <<- dist
 				.maxLeaf <<- as.integer(x)
 			}
@@ -983,17 +976,35 @@ MODELS <- c("JC69",
 	# midpoint root the tree
 	.findMidpoint <- function(x) {
 		if (is.leaf(x)) {
-			if (attr(x, "containsZero") &&
-				attr(x, "height") >= .maxDist/2) {
+			if (attr(x, "containsZero")) {
 				attr(x, "containsRoot") <- TRUE
 				attr(x, "isRoot") <- TRUE
 			} else {
 				attr(x, "containsRoot") <- FALSE
 			}
-		} else if (attr(x, "height") >= .maxDist/2 &&
+		} else if ((attr(x, "height") > .maxDist/2 ||
+			isTRUE(all.equal(attr(x, "height"), .maxDist/2))) &&
 			attr(x, "containsZero")) {
-			x[[1]] <- .findMidpoint(x[[1]])
-			x[[2]] <- .findMidpoint(x[[2]])
+			if (is.leaf(x[[1]])) {
+				if (attr(x[[1]], "containsZero")) {
+					attr(x[[1]], "containsRoot") <- TRUE
+					attr(x[[1]], "isRoot") <- TRUE
+				} else {
+					attr(x[[1]], "containsRoot") <- FALSE
+				}
+			} else {
+				x[[1]] <- .findMidpoint(x[[1]])
+			}
+			if (is.leaf(x[[2]])) {
+				if (attr(x[[2]], "containsZero")) {
+					attr(x[[2]], "containsRoot") <- TRUE
+					attr(x[[2]], "isRoot") <- TRUE
+				} else {
+					attr(x[[2]], "containsRoot") <- FALSE
+				}
+			} else {
+				x[[2]] <- .findMidpoint(x[[2]])
+			}
 			if (attr(x[[1]], "height") < .maxDist/2 &&
 				attr(x[[1]], "containsZero") &&
 				!attr(x[[1]], "containsMax")) {
@@ -1109,22 +1120,7 @@ MODELS <- c("JC69",
 	if (length(tree[[2]])==0)
 		tree[[2]] <- upper[[1]]
 	
-	# correct midpoints on new tree
-	.adjustMidpoints <- function(x) {
-		if (is.leaf(x[[1]]) && is.leaf(x[[2]])) {
-			attr(x, "midpoint") <- 0.5
-		} else if (is.leaf(x[[1]])) {
-			x[[2]] <- .adjustMidpoints(x[[2]])
-			attr(x, "midpoint") <- (1L + attr(x[[2]], "midpoint"))/2
-		} else if (is.leaf(x[[2]])) {
-			x[[1]] <- .adjustMidpoints(x[[1]])
-			attr(x, "midpoint") <- (attr(x[[1]], "midpoint") + attr(x[[1]], "members"))/2
-		} else {
-			x[[1]] <- .adjustMidpoints(x[[1]])
-			x[[2]] <- .adjustMidpoints(x[[2]])
-			attr(x, "midpoint") <- (attr(x[[1]], "members") + attr(x[[1]], "midpoint") + attr(x[[2]], "midpoint"))/2
-		}
-		
+	.removeAttributes <- function(x) {
 		if (!is.null(attr(x, "isRoot")))
 			attr(x, "isRoot") <- NULL
 		if (!is.null(attr(x, "containsRoot")))
@@ -1137,7 +1133,7 @@ MODELS <- c("JC69",
 		return(x)
 	}
 	
-	rooted <- .adjustMidpoints(tree)
+	rooted <- .removeAttributes(tree)
 	
 	return(rooted)
 }
@@ -1149,6 +1145,7 @@ IdClusters <- function(myDistMatrix=NULL,
 	type="clusters",
 	myXStringSet=NULL,
 	model=MODELS,
+	collapse=0,
 	processors=1,
 	verbose=TRUE) {
 	
@@ -1218,6 +1215,8 @@ IdClusters <- function(myDistMatrix=NULL,
 			ASC <- FALSE
 		}
 	}
+	if (!is.numeric(collapse))
+		stop("collapse must be a numeric.")
 	if (!is.logical(verbose))
 		stop("verbose must be a logical.")
 	if (!is.null(processors) && !is.numeric(processors))
@@ -1256,7 +1255,7 @@ IdClusters <- function(myDistMatrix=NULL,
 	}
 	
 	if (method == 7) {
-		type <- switch(class(myXStringSet),
+		typeX <- switch(class(myXStringSet),
 			`DNAStringSet` = 1L,
 			`RNAStringSet` = 2L,
 			`AAStringSet` = 3L,
@@ -1277,7 +1276,7 @@ IdClusters <- function(myDistMatrix=NULL,
 			lastValue <- 0
 			pBar <- txtProgressBar(style=3)
 		}
-		if (type==3L) { # AAStringSet
+		if (typeX==3L) { # AAStringSet
 			wordSize <- ceiling(log(100*mean(width(myXStringSet)), 20))
 			if (wordSize > 7)
 				wordSize <- 7
@@ -1342,7 +1341,7 @@ IdClusters <- function(myDistMatrix=NULL,
 					decreasing=TRUE)]
 			}
 			
-			if (type==3L) { # AAStringSet
+			if (typeX==3L) { # AAStringSet
 				v <- .Call("enumerateSequenceAA",
 					.subset(myXStringSet, o[1:ifelse(l > 999, 999, l)]),
 					wordSize,
@@ -1379,7 +1378,7 @@ IdClusters <- function(myDistMatrix=NULL,
 				
 				if (j %% 1000 == 0) {
 					index <- 1L
-					if (type==3L) { # AAStringSet
+					if (typeX==3L) { # AAStringSet
 						v <- .Call("enumerateSequenceAA",
 							.subset(myXStringSet, o[j:ifelse(j + 999 > l, l, j + 999)]),
 							wordSize,
@@ -1469,7 +1468,7 @@ IdClusters <- function(myDistMatrix=NULL,
 							processors=processors)
 						d <- .Call("distMatrix",
 							temp,
-							type,
+							typeX,
 							FALSE, # includeTerminalGaps
 							FALSE, # penalizeGapGapMatches
 							TRUE, # penalizeGapLetterMatches
@@ -1869,7 +1868,8 @@ IdClusters <- function(myDistMatrix=NULL,
 				d <- .midpointRoot(d)
 			
 			# convert bifurcating tree to multifurcating
-			d <- .collapse(d)
+			if (collapse >= 0)
+				d <- .collapse(d, collapse)
 			
 			# specify the order of clusters that
 			# will match the plotted dendrogram
@@ -1913,6 +1913,40 @@ IdClusters <- function(myDistMatrix=NULL,
 				}
 				d <- .reorder(d)
 			}
+			
+			# add midpoints to the tree
+			.applyMidpoints <- function(x) {
+				if (is.leaf(x))
+					return(x)
+				
+				l <- length(x)
+				for (i in seq_len(l))
+					x[[i]] <- .applyMidpoints(x[[i]])
+				
+				members <- sapply(x,
+					function(x) {
+						m <- attr(x, "members")
+						if (is.null(m)) {
+							return(1L)
+						} else {
+							return(m)
+						}
+					})
+				
+				if (is.leaf(x[[1]]) && is.leaf(x[[l]])) {
+					attr(x, "midpoint") <- (sum(members) - 1)/2
+				} else if (is.leaf(x[[1]])) {
+					attr(x, "midpoint") <- (sum(members[-l]) + attr(x[[l]], "midpoint"))/2
+				} else if (is.leaf(x[[l]])) {
+					attr(x, "midpoint") <- (attr(x[[1]], "midpoint") + sum(members[-l]))/2
+				} else {
+					attr(x, "midpoint") <- (sum(members[-l]) + attr(x[[1]], "midpoint") + attr(x[[l]], "midpoint"))/2
+				}
+				
+				return(x)
+			}
+			
+			d <- .applyMidpoints(d)
 		}
 		if (type==1 || type==3) {
 			if (is.null(dimnames(myDistMatrix)[[1]])) {

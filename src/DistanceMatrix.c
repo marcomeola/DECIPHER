@@ -227,7 +227,6 @@ static int endTerminalGapsAA(const Chars_holder *P)
 	return gaps;
 }
 
-//ans_start <- .Call("distMatrix", myDNAStringSet, pBar, PACKAGE="DECIPHER")
 SEXP distMatrix(SEXP x, SEXP t, SEXP terminalGaps, SEXP penalizeGapGaps, SEXP penalizeGapLetters, SEXP fullMatrix, SEXP verbose, SEXP pBar, SEXP nThreads)
 {
 	XStringSet_holder x_set;

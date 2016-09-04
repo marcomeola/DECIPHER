@@ -33,9 +33,7 @@
 %\setkeys{Gin}{width=0.55\textwidth}
 
 \title{Finding Chimeric Sequences}
-\author{Erik S. Wright \\
-  University of Wisconsin \\
-  Madison, WI}
+\author{Erik S. Wright}
 \date{\today}
 \maketitle
 
@@ -53,7 +51,7 @@ options(width=80)
 \section{Introduction}
 %------------------------------------------------------------
 
-This document illustrates how to detect chimeric sequences using the \Rpackage{DECIPHER} package through the use of the \Rfunction{FindChimeras} function.  The function finds chimeric sequences present in a database (\Rfunarg{dbFile}) of sequences by making use of a reference database (\Rfunarg{dbFileReference}) of good sequences.  The examples in this document are directed towards finding chimeric 16S rRNA sequences, although a similar strategy could be used with any type of sequence.  For 16S sequences the functionality of \Rfunction{FindChimeras} is implemented as a web tool available at \underline{\url{http://DECIPHER.cee.wisc.edu}}.
+This document illustrates how to detect chimeric sequences using the \Rpackage{DECIPHER} package through the use of the \Rfunction{FindChimeras} function.  The function finds chimeric sequences present in a database (\Rfunarg{dbFile}) of sequences by making use of a reference database (\Rfunarg{dbFileReference}) of good sequences.  The examples in this document are directed towards finding chimeric 16S rRNA sequences, although a similar strategy could be used with any type of sequence.  For 16S sequences the functionality of \Rfunction{FindChimeras} is implemented as a web tool available at \underline{\url{http://DECIPHER.codes}}.
 
 %------------------------------------------------------------
 \section{Chimera Finding Problems}
@@ -97,7 +95,7 @@ If \Rpackage{DECIPHER} is installed on your system, the code in each example can
 \section{Obtaining/Building A Reference Database}
 %------------------------------------------------------------
 
-The first step necessary to use \Rfunction{FindChimeras} is to obtain a reference database (\Rfunarg{dbFileReference}) of good sequences.  In order for the algorithm to work accurately, it is crucial that the reference database is free of any chimeras.  The examples given in this document use 16S rRNA sequences, and a suitable reference database can be found at \underline{\url{http://DECIPHER.cee.wisc.edu/Download.html}}.  The 16S reference database must be unzipped after download.
+The first step necessary to use \Rfunction{FindChimeras} is to obtain a reference database (\Rfunarg{dbFileReference}) of good sequences.  In order for the algorithm to work accurately, it is crucial that the reference database is free of any chimeras.  The examples given in this document use 16S rRNA sequences, and a suitable reference database can be found at \underline{\url{http://DECIPHER.codes/Download.html}}.  The 16S reference database must be unzipped after download.
 
 If a reference database is not present then it is feasible to create a one if a significantly large repository of sequences is available.  By using the input database as the reference database it is possible to remove chimeras from the database.  Iteratively repeating the process can eventually result in a clean reference database that is chimera free.
 
@@ -150,10 +148,10 @@ Added to DNA:  "bases", "nonbases", and "width".
 
 > groups <- FormGroups(dbConn, add2tbl=TRUE)
   |===============================================================| 100%
-Updating column: "id"...
+Updating column: "identifier"...
 Updating column: "origin"...
 Formed 72 distinct groups.
-Added to table DNA: "id", "origin".
+Added to table DNA: "identifier", "origin".
 Time difference of 917.76 secs
 
 > chimeras <- FindChimeras(dbConn, dbFileReference=dbConn, add2tbl=TRUE)
@@ -201,13 +199,13 @@ Next we need to determine which groups are present in the reference database and
 
 <<expr3,eval=FALSE>>=
 dbRef <- dbConnect(SQLite(), '<<path to reference database>>')
-t <- dbGetQuery(dbRef, "select distinct rank, id from Seqs group by rank")
-y <- dbGetQuery(dbRef, paste("select distinct id,
-	count(*) as count from Seqs", "where chimera is null group by id"))
+t <- dbGetQuery(dbRef, "select distinct rank, identifier from Seqs group by rank")
+y <- dbGetQuery(dbRef, paste("select distinct identifier,
+	count(*) as count from Seqs", "where chimera is null group by identifier"))
 
 t$count <- 0
 for (i in 1:dim(t)[1])
-t$count[i] <- y$count[which(y$id==t$id[i])]
+t$count[i] <- y$count[which(y$identifier==t$identifier[i])]
 @
 
 \subsubsection{Assign to Groups}
@@ -249,7 +247,7 @@ for (i in 1:length(r)) {
 	if (length(index) == 0)
 		z$identifier[i] <- "unknown_lineage"
 	else
-		z$identifier[i] <- as.character(t$id[index[1]])
+		z$identifier[i] <- as.character(t$identifier[index[1]])
 }
 @
 

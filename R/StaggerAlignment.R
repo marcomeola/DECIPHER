@@ -60,6 +60,8 @@ StaggerAlignment <- function(myXStringSet,
 			stop("fullLength is not length 1 or the same length as myXStringSet.")
 		}
 	}
+	if (!is.logical(verbose))
+		stop("verbose must be a logical.")
 	if (!is.null(processors) && !is.numeric(processors))
 		stop("processors must be a numeric.")
 	if (!is.null(processors) && floor(processors)!=processors)
@@ -71,6 +73,8 @@ StaggerAlignment <- function(myXStringSet,
 	} else {
 		processors <- as.integer(processors)
 	}
+	
+	v <- seq_along(myXStringSet)
 	
 	if (is.null(tree)) {
 		if (verbose) {
@@ -91,12 +95,13 @@ StaggerAlignment <- function(myXStringSet,
 		suppressWarnings(tree <- IdClusters(d,
 			method="NJ",
 			type="dendrogram",
+			collapse=-1, # bifurcating
 			processors=processors,
 			verbose=verbose))
 	} else {
 		if (class(tree)!="dendrogram")
 			stop("tree must be a dendrogram.")
-		if (!all(unlist(tree) %in% seq_along(myXStringSet)))
+		if (!all(unlist(tree) %in% v))
 			stop("tree is incompatible with myXStringSet.")
 	}
 	
@@ -193,7 +198,7 @@ StaggerAlignment <- function(myXStringSet,
 	s <- matrix(nrow=length(myXStringSet),
 		ncol=u)
 	t <- TerminalChar(myXStringSet)
-	for (i in seq_along(myXStringSet)) {
+	for (i in v) {
 		x <- .subset(myXStringSet, i)
 		x <- strsplit(as.character(x), "", fixed=TRUE)[[1]]
 		s[i,] <- x=="-" | x=="."
@@ -205,7 +210,6 @@ StaggerAlignment <- function(myXStringSet,
 			s[i, (u - t[i, 2] + 1):u] <- NA
 	}
 	
-	v <- seq_along(myXStringSet)
 	ns <- names(myXStringSet)
 	pos <- u # start at end
 	changeMade <- FALSE
@@ -260,7 +264,7 @@ StaggerAlignment <- function(myXStringSet,
 							type,
 							processors,
 							PACKAGE="DECIPHER"),
-						seq_along(myXStringSet)[-g])
+						v[-g])
 					seqs <- .subset(myXStringSet, g)
 					myXStringSet <- .replace(myXStringSet,
 						.Call("insertGaps",
@@ -287,8 +291,8 @@ StaggerAlignment <- function(myXStringSet,
 	}
 	
 	if (changeMade)
-		zzz <- .Call("consolidateGaps",
-			myXStringSet,
+		myXStringSet <- .Call("consolidateGaps",
+			myXStringSet, # in-place change of myXStringSet (requires previous temporary copy)
 			type,
 			PACKAGE="DECIPHER")
 	

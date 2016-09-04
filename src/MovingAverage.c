@@ -38,7 +38,6 @@
 SEXP movAvg(SEXP x, SEXP type, SEXP alpha, SEXP thresh, SEXP maxAvg, SEXP start, SEXP end)
 {
 	int i, j, m;
-	double p;
 	
 	double a = asReal(alpha);
 	double b = 1 - a;

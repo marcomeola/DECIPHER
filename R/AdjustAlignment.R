@@ -119,8 +119,8 @@ AdjustAlignment <- function(myXStringSet,
 		PACKAGE="DECIPHER")
 	
 	# adjust the alignment
-	changes <- .Call(functionCall,
-		myXStringSet,
+	myXStringSet <- .Call(functionCall,
+		myXStringSet, # in-place change of myXStringSet (requires previous temporary copy)
 		as.numeric(subMatrix),
 		gapOpening,
 		gapExtension,
