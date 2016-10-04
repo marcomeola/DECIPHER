@@ -57,6 +57,9 @@ Creates an html file containing sequence data and (if \code{openURL} is \code{TR
 
 Returns \code{htmlFile} if the html file was written successfully.
 }
+\references{
+ES Wright (2016) "Using DECIPHER v2.0 to Analyze Big Biological Sequence Data in R". The R Journal, \bold{8(1)}, 352-359.
+}
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}
 }

@@ -3,5 +3,7 @@ bibentry(bibtype = "Article",
          author = as.person("Erik S. Wright"),
          journal = "The R Journal",
          year = "2016",
-         pages = "in Press"
+         volume = "8",
+         number = "1",
+         pages = "352-359"
 )

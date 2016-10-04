@@ -25,7 +25,7 @@ Syntenic blocks are DNA segments composed of conserved hits occurring in the sam
      colorBy = 1,
      colorRamp = colorRampPalette(c("#FCF9EE", "#FFF272",
                                     "#FFAC28", "#EC5931",
-                                    "#EC354D", "#ECA6B1")),
+                                    "#EC354D", "#0D0887")),
      barColor = "#CCCCCC",
      barSides = ifelse(nrow(x) < 100, TRUE, FALSE),
      horizontal = TRUE,
@@ -101,7 +101,7 @@ Objects of class \code{Synteny} are stored as square matrices of list elements w
 
 The \code{pairs} method creates a scatterplot matrix from a \code{Synteny} object.  Dot plots above the diagonal show hits between identifier \emph{i} and \emph{j}, where forward hits are colored in black, and hits to the reverse strand of identifier \emph{j} are colored in red.  Plots below the diagonal show blocks of synteny colored by their score, from green (highest scoring) to blue to magenta (lowest scoring).
 
-The \code{plot} method displays a bar view of the sequences in the same order as the input object (\code{x}).  The coloring scheme of each bar is determined by the  \code{colorBy} argument, and the color palette is set by \code{colorRamp}.  When \code{colorBy} is an index, the sequences are colored according to regions of shared homology with the specified reference sequence (by default \code{1}).  If \code{colorBy} is ``neighbor'' then shared syntenic blocks are connected between neighboring sequences.  If \code{colorBy} is ``frequency'' then positions in each sequence are colored based on the degree of conservation with the other sequences.  In each case, regions that have no correspondence in a sequence are colored \code{barColor}.
+The \code{plot} method displays a bar view of the sequences in the same order as the input object (\code{x}).  The coloring scheme of each bar is determined by the  \code{colorBy} argument, and the color palette is set by \code{colorRamp}.  When \code{colorBy} is an index, the sequences are colored according to regions of shared homology with the specified reference sequence (by default \code{1}).  If \code{colorBy} is ``neighbor'' then shared syntenic blocks are connected between neighboring sequences.  If \code{colorBy} is ``frequency'' then positions in each sequence are colored based on the degree of conservation with the other sequences.  In each case, regions that have no correspondence in the other sequence(s) are colored \code{barColor}.
 }
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}

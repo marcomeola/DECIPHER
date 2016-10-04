@@ -45,6 +45,9 @@ Logical indicating whether to display progress.
 \value{
 A \code{data.frame} with the number of \code{bases} (``A'', ``C'', ``G'', or ``T''), \code{nonbases}, and \code{width} of each sequence.  The \code{width} is defined as the sum of \code{bases} and \code{nonbases} in each sequence.  The \code{row.names} of the \code{data.frame} correspond to the "row_names" in the \code{tblName} of the \code{dbFile}.
 }
+\references{
+ES Wright (2016) "Using DECIPHER v2.0 to Analyze Big Biological Sequence Data in R". The R Journal, \bold{8(1)}, 352-359.
+}
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}
 }

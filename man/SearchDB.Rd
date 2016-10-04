@@ -72,6 +72,9 @@ If \code{type} is \code{"DNAStringSet"} then all U's are converted to T's before
 \value{
 An \code{XStringSet} or \code{QualityScaledXStringSet} with the sequences that meet the specified criteria.  The \code{names} of the object correspond to the value in the \code{nameBy} column of the database.
 }
+\references{
+ES Wright (2016) "Using DECIPHER v2.0 to Analyze Big Biological Sequence Data in R". The R Journal, \bold{8(1)}, 352-359.
+}
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}
 }

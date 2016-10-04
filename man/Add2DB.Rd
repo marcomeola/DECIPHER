@@ -36,6 +36,9 @@ Data contained in \code{myData} will be added to the \code{tblName} by its respe
 \value{
 Returns \code{TRUE} if the data was added successfully, or \code{FALSE} otherwise.
 }
+\references{
+ES Wright (2016) "Using DECIPHER v2.0 to Analyze Big Biological Sequence Data in R". The R Journal, \bold{8(1)}, 352-359.
+}
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}
 }

@@ -272,7 +272,7 @@ pairs.Synteny <- function(x,
 
 plot.Synteny <- function(x,
 	colorBy=1,
-	colorRamp=colorRampPalette(c("#FCF9EE", "#FFF272", "#FFAC28", "#EC5931", "#EC354D", "#ECA6B1")),
+	colorRamp=colorRampPalette(c("#FCF9EE", "#FFF272", "#FFAC28", "#EC5931", "#EC354D", "#0D0887")),
 	barColor="#CCCCCC",
 	barSides=ifelse(nrow(x) < 100, TRUE, FALSE),
 	horizontal=TRUE,
@@ -595,12 +595,16 @@ plot.Synteny <- function(x,
 						if (dim(s)[1] > 0) {
 							s1 <- s[, "start2"] + c1[s[, "index2"]]
 							e1 <- s[, "end2"] + c1[s[, "index2"]]
+						} else {
+							next
 						}
 					} else { # i < k
 						s <- x[k, i][[1]]
 						if (dim(s)[1] > 0) {
 							s1 <- s[, "start1"] + c1[s[, "index1"]]
 							e1 <- s[, "end1"] + c1[s[, "index1"]]
+						} else {
+							next
 						}
 					}
 					

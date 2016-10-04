@@ -60,6 +60,9 @@ Sequences are imported into the database in chunks of lines specified by \code{c
 \value{
 The total number of sequences in the database table is returned after import.
 }
+\references{
+ES Wright (2016) "Using DECIPHER v2.0 to Analyze Big Biological Sequence Data in R". The R Journal, \bold{8(1)}, 352-359.
+}
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}
 }

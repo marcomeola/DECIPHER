@@ -63,7 +63,7 @@ The number of processors to use, or \code{NULL} to automatically detect and use 
 }
 }
 \details{
-Accurate translation of protein coding sequences can be greatly disrupted by one or two nucleotide phase shifts that occasionally occur during DNA sequencing.  These frameshift errors can potentially be corrected through comparison with other unshifted protein sequences.  This function uses a set of reference amino acid sequences (\code{AAStringSet}) to find and correct frameshift errors in a set of nucleotide sequences (\code{myXStringSet}).  First, three frame translation of the nucleotide sequences is performed, and the nearest reference sequence is selected.  Then the optimal reading frame at each position is determined based on a variation of the Guan & Uberbacher method.  Putative insertions and/or deletions (indels) are returned in the result, typically with close proximity to the true indel locations.
+Accurate translation of protein coding sequences can be greatly disrupted by one or two nucleotide phase shifts that occasionally occur during DNA sequencing.  These frameshift errors can potentially be corrected through comparison with other unshifted protein sequences.  This function uses a set of reference amino acid sequences (\code{AAStringSet}) to find and correct frameshift errors in a set of nucleotide sequences (\code{myXStringSet}).  First, three frame translation of the nucleotide sequences is performed, and the nearest reference sequence is selected.  Then the optimal reading frame at each position is determined based on a variation of the Guan & Uberbacher (1996) method.  Putative insertions and/or deletions (indels) are returned in the result, typically with close proximity to the true indel locations.  For a comparison of this method to others, see Wang et al. (2013).
 
 If \code{type} is \code{"sequences"} or \code{"both"}, then frameshifts are corrected by adding \code{N}'s and/or removing nucleotides.  Note that this changes the nucleotide sequence, and the new sequence often has minor errors because the exact location of the indel(s) cannot be determined.  However, the original frameshifts that disrupted the entire downstream sequence are reduced to local perturbations.  All of the returned nucleotide sequences will have a reading frame starting from the first position.  This allows direct translation, and in practice works well if there is a similar reference \code{myAAStringSet} with the correct reading frame.  Hence it is more important that \code{myAAStringSet} contain a wide variety of sequences than it is that it contain a lot of sequences.
 
@@ -91,6 +91,8 @@ If \code{type} is \code{"both"} then the returned object is a list with two comp
 }
 \references{
 Guan, X., & Uberbacher, E. C. (1996). Alignments of DNA and protein sequences containing frameshift errors. Computer Applications in the Biosciences : CABIOS, \bold{12(1)}, 31-40.
+
+Wang, Q., et al. (2013). Ecological Patterns of nifH Genes in Four Terrestrial Climatic Zones Explored with Targeted Metagenomics Using FrameBot, a New Informatics Tool. mBio, \bold{4(5)}, e00592-13-e00592-13.
 }
 \author{
 Erik Wright \email{DECIPHER@cae.wisc.edu}
