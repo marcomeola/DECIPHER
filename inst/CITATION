@@ -1,0 +1,9 @@
+bibentry(bibtype = "Article",
+         title = "Using DECIPHER v2.0 to Analyze Big Biological Sequence Data in R",
+         author = as.person("Erik S. Wright"),
+         journal = "The R Journal",
+         year = "2016",
+         volume = "8",
+         number = "1",
+         pages = "352-359"
+)
