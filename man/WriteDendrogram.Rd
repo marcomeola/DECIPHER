@@ -45,7 +45,7 @@ Logical indicating whether to append to an existing \code{file}.  Only applicabl
 \code{NULL}.
 }
 \author{
-Erik Wright \email{DECIPHER@cae.wisc.edu}
+Erik Wright \email{eswright@pitt.edu}
 }
 \seealso{
 \code{\link{IdClusters}}, \code{\link{ReadDendrogram}}

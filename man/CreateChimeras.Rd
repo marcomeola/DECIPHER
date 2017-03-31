@@ -59,7 +59,7 @@ A \code{DNAStringSet} object containing chimeras.  The \code{names} of the chime
 If \code{includeParents = TRUE} then the parents of the chimeras are included at the end of the result.  The parents are trimmed to the same length as the chimera if \code{randomLengths = TRUE}.  The \code{names} of the parents are specified as "parent #1 name [region] (distance to parent #2, ...)".
 }
 \author{
-Erik Wright \email{DECIPHER@cae.wisc.edu}
+Erik Wright \email{eswright@pitt.edu}
 }
 \seealso{
 \code{\link{FindChimeras}}, \code{\link{Seqs2DB}}

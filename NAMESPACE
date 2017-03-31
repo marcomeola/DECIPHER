@@ -9,7 +9,7 @@ import(RSQLite)
 import(DBI)
 import(parallel)
 
-importFrom("grDevices", "colorRampPalette", "colors", "dev.flush", "dev.hold", "dev.size", "rainbow")
+importFrom("grDevices", "colorRampPalette", "colors", "dev.flush", "dev.hold", "dev.size", "rainbow", "rgb")
 importFrom("graphics", "abline", "axis", "box", "legend", "mtext", "par", "plot", "points", "rect", "segments", "strheight", "strwidth", "text")
 importFrom("stats", "dendrapply", "dist", "is.leaf", "nlminb", "optimize", "order.dendrogram", "pbinom", "reorder", "setNames", "step", "uniroot")
 importFrom("utils", "browseURL", "data", "flush.console", "object.size", "setTxtProgressBar", "txtProgressBar")

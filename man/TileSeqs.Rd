@@ -67,7 +67,7 @@ The \code{coverage} field gives the fraction of sequences containing the tile in
 The final column, \code{target_site}, provides the sequence of the tile.
 }
 \author{
-Erik Wright \email{DECIPHER@cae.wisc.edu}
+Erik Wright \email{eswright@pitt.edu}
 }
 \note{
 If \code{add2tbl} is \code{TRUE} then the tiles will be added to the database table that currently contains the sequences used for tiling.  The added tiles may cause interference when querying a table of sequences.  Therefore, it is recommended to add the tiles to their own table, for example, by using \code{add2tbl="Tiles"}.

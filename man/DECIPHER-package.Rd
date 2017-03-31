@@ -12,7 +12,7 @@ DECIPHER is a software toolset that can be used for deciphering and managing bio
 \tabular{ll}{
 Package: \tab DECIPHER\cr
 Type: \tab Package\cr
-Depends: \tab R (>= 2.13.0), Biostrings (>= 2.35.12), RSQLite (>= 1.0), stats, parallel\cr
+Depends: \tab R (>= 2.13.0), Biostrings (>= 2.35.12), RSQLite (>= 1.1), stats, parallel\cr
 Imports: \tab methods, DBI, S4Vectors, IRanges, XVector\cr
 LinkingTo: \tab Biostrings, RSQLite, S4Vectors, IRanges, XVector\cr
 License: \tab GPL-3\cr
@@ -100,6 +100,6 @@ WriteDendrogram          Write a Dendrogram to Newick Format
 \author{
 Erik Wright
 
-Maintainer: Erik Wright <DECIPHER@cae.wisc.edu>
+Maintainer: Erik Wright <eswright@pitt.edu>
 }
 \keyword{ package }

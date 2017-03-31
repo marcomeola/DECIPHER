@@ -45,7 +45,7 @@ Biological sequences can sometimes have inconsistent orientation that interferes
 \code{OrientNucleotides} can return two types of results:  the relative orientations of sequences and/or the reoriented sequences.  If \code{type} is \code{"sequences"} (the default) then the reoriented sequences are returned.  If \code{type} is \code{"orientations"} then a character vector is returned that specifies whether sequences were reversed (\code{"r"}), complemented (\code{"c"}), reversed complemented (\code{"rc"}), or in the same orientation (\code{""}) as the reference sequences (marked by \code{NA}).  If \code{type} is \code{"both"} then the output is a list with the first component containing the \code{"orientations"} and the second component containing the \code{"sequences"}.
 }
 \author{
-Erik Wright \email{DECIPHER@cae.wisc.edu}
+Erik Wright \email{eswright@pitt.edu}
 }
 \seealso{
 \code{\link{CorrectFrameshifts}}

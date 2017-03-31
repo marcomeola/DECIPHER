@@ -37,7 +37,7 @@ IdentifyByRank <- function(dbFile,
 	
 	searchExpression <- paste("select distinct rank from", tblName)
 	rs <- dbSendQuery(dbConn, searchExpression)
-	x <- fetch(rs, n=-1)
+	x <- dbFetch(rs, n=-1, row.names=FALSE)
 	dbClearResult(rs)
 	
 	.change <- function(id) {

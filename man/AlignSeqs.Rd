@@ -75,10 +75,10 @@ Secondary structures are automatically computed for amino acid and RNA sequences
 An \code{XStringSet} of aligned sequences.
 }
 \references{
-ES Wright (2015) "DECIPHER: harnessing local sequence context to improve protein multiple sequence alignment". BMC Bioinformatics, doi:10.1186/s12859-015-0749-z.
+Wright, E. S. (2015). DECIPHER: harnessing local sequence context to improve protein multiple sequence alignment. BMC Bioinformatics, 16, 322. http://doi.org/10.1186/s12859-015-0749-z
 }
 \author{
-Erik Wright \email{DECIPHER@cae.wisc.edu}
+Erik Wright \email{eswright@pitt.edu}
 }
 \seealso{
 \code{\link{AdjustAlignment}}, \code{\link{AlignDB}}, \code{\link{AlignProfiles}}, \code{\link{AlignSynteny}}, \code{\link{AlignTranslation}}, \code{\link{IdClusters}}, \code{\link{ReadDendrogram}}, \code{\link{StaggerAlignment}}

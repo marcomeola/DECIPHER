@@ -68,7 +68,7 @@ IdConsensus <- function(dbFile,
 			"'",
 			sep="")
 	rs <- dbSendQuery(dbConn, searchExpression)
-	groups <- fetch(rs, n=-1)[,eval(colName)]
+	groups <- dbFetch(rs, n=-1, row.names=FALSE)[,eval(colName)]
 	dbClearResult(rs)
 	
 	# remove any null groups in database

@@ -44,7 +44,7 @@ static const R_CallMethodDef callMethods[] = { // method call, pointer, num args
 	{"multiMatchCharNotNA", (DL_FUNC) &multiMatchCharNotNA, 1},
 	{"replaceChars", (DL_FUNC) &replaceChars, 3},
 	{"replaceChar", (DL_FUNC) &replaceChar, 3},
-	{"intMatch", (DL_FUNC) &intMatch, 3},
+	{"intMatch", (DL_FUNC) &intMatch, 2},
 	{"firstMatchUpper", (DL_FUNC) &firstMatchUpper, 3},
 	{"terminalMismatch", (DL_FUNC) &terminalMismatch, 5},
 	{"NNLS", (DL_FUNC) &NNLS, 10},
@@ -105,6 +105,8 @@ static const R_CallMethodDef callMethods[] = { // method call, pointer, num args
 	{"movAvg", (DL_FUNC) &movAvg, 7},
 	{"getPools", (DL_FUNC) &getPools, 1},
 	{"predictDBN", (DL_FUNC) &predictDBN, 13},
+	{"informationContent", (DL_FUNC) &informationContent, 3},
+	{"informationContentAA", (DL_FUNC) &informationContentAA, 3},
 	{NULL, NULL, 0}
 };
 

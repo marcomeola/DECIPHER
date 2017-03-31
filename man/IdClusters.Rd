@@ -74,7 +74,7 @@ Ghodsi, M., Liu, B., & Pop, M. (2011) DNACLUST. \emph{BMC Bioinformatics}, \bold
 Saitou, N. and Nei, M. (1987) The neighbor-joining method: a new method for reconstructing phylogenetic trees. \emph{Molecular Biology and Evolution}, \bold{4(4)}, 406-425.
 }
 \author{
-Erik Wright \email{DECIPHER@cae.wisc.edu}
+Erik Wright \email{eswright@pitt.edu}
 }
 \seealso{
 \code{\link{DistanceMatrix}}, \code{\link{Add2DB}}, \code{\link{MODELS}}

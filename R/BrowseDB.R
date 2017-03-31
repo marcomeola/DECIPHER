@@ -75,7 +75,7 @@ BrowseDB <- function(dbFile,
 			orderBy)
 	
 	rs <- dbSendQuery(dbConn, searchExpression)
-	count <- as.integer(fetch(rs, n=-1))
+	count <- as.integer(dbFetch(rs, n=-1, row.names=FALSE))
 	dbClearResult(rs)
 	
 	# count is the numer of rows in the table body
@@ -140,7 +140,7 @@ BrowseDB <- function(dbFile,
 				limit)
 		
 		rs <- dbSendQuery(dbConn, searchExpression)
-		searchResult <- fetch(rs, n=-1)
+		searchResult <- dbFetch(rs, n=-1, row.names=FALSE)
 		dbClearResult(rs)
 		
 		# NAs in R are NULLs in SQL

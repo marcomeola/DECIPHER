@@ -47,8 +47,11 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP type, SEXP subMatrix, SEXP dbnMatrix, SE
 	double GO = asReal(go);
 	double GE = asReal(ge);
 	double EX = asReal(exp);
-	double POW = asReal(power);
-	double bound = asReal(boundary);
+	double POW1 = REAL(power)[0];
+	double POW2 = REAL(power)[1];
+	double bound = REAL(boundary)[0];
+	double slope = REAL(boundary)[1]*100.4092;
+	double duration = REAL(boundary)[2];
 	double egpL = asReal(endGapPenaltyLeft);
 	double egpR = asReal(endGapPenaltyRight);
 	int RNA = asInteger(type);
@@ -80,15 +83,15 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP type, SEXP subMatrix, SEXP dbnMatrix, SE
 	R_len_t ls = length(s)/size;
 	int l = lp + ls;
 	
-	// create array of normalization factors (coverge^POW)
+	// create arrays of normalization factors (coverge^POW)
 	double *pnorm = Calloc(lp, double); // initialized to zero
 	double *snorm = Calloc(ls, double); // initialized to zero
 	for (i = 0; i < lp; i++)
 		if (pprofile[7 + size*i] > 0)
-			pnorm[i] = pow(pprofile[7 + size*i], POW);
+			pnorm[i] = pow(pprofile[7 + size*i], POW1)*pow(1 - pprofile[4 + size*i], POW2);
 	for (i = 0; i < ls; i++)
 		if (sprofile[7 + size*i] > 0)
-			snorm[i] = pow(sprofile[7 + size*i], POW);
+			snorm[i] = pow(sprofile[7 + size*i], POW1)*pow(1 - sprofile[4 + size*i], POW2);
 	
 	// substitution matrix for pairs of nucleotides
 	double subD[256] = {
@@ -186,7 +189,7 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP type, SEXP subMatrix, SEXP dbnMatrix, SE
 	double *zip = Calloc(j + 1, double); // initialized to zero
 	for (i = 1; i <= j; i++)
 		zip[i] = pow((double)i, EX);
-	
+		
 	// deterine the fraction of sequences starting or ending
 	double *pstarts = Calloc(lp, double); // initialized to zero
 	double *pstops = Calloc(lp, double); // initialized to zero
@@ -243,16 +246,16 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP type, SEXP subMatrix, SEXP dbnMatrix, SE
 	}
 	
 	if (egpL != 0) {
-		*(m + 1) = egpL*sstarts[0];
-		for (i = 2; i <= ls; i++)
-			*(m + i) = egpL*sstarts[i - 1];
-		*(m + ls + 1) = egpL*pstarts[0];
-		for (i = 2; i <= lp; i++)
-			*(m + (ls + 1)*i) = egpL*pstarts[i - 1];
+		for (i = 1; i <= ls; i++)
+			*(m + i) = egpL*sstarts[i - 1]*snorm[i - 1];
+		for (i = 1; i <= lp; i++)
+			*(m + (ls + 1)*i) = egpL*pstarts[i - 1]*pnorm[i - 1];
 	}
 	
-	int left = 0, top = 0; // boundaries of DP
+	int left = 0, top = 0; // boundaries of DP matrix
 	int START, END; // constrained start and end points
+	int maxi; // location of maximum along diagonal
+	int allow = 0; // allow restriction
 	max = -1e53;
 	for (k = 1; k < l; k++) {
 		if (k > ls) {
@@ -285,7 +288,7 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP type, SEXP subMatrix, SEXP dbnMatrix, SE
 				j = end - i;
 			}
 			//Rprintf("\ni%d j%d top%d START%d start%d value%d", i, j, top, START, start, (int)*(m + i*(ls + 1) + j));
-			if (*(m + i*(ls + 1) + j) < max) {
+			if (allow >= duration && *(m + i*(ls + 1) + j) < max) {
 				if (j < ls && i > 1) {
 					//Rprintf("\n!\ntop %d i %d j %d ls %d lp %d\n!\n", top, i, j, ls, lp);
 					*(o + i*ls + j) = 1;
@@ -313,8 +316,7 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP type, SEXP subMatrix, SEXP dbnMatrix, SE
 			//Rprintf("\ni%d j%d left%d END%d value%d", i, j, left, END, (int)*(m + i*(ls + 1) + j));
 			if (j < left) {
 				i -= left - j;
-				continue;
-			} else if (*(m + i*(ls + 1) + j) < max && i != (lp - 1)) {
+			} else if (allow >= duration && *(m + i*(ls + 1) + j) < max) {
 				left = j;
 				*(o + i*ls + j) = -1;
 				*(m + lp*(ls + 1) + left + 1) = -1e53; // block restricted area from traceback
@@ -329,7 +331,7 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP type, SEXP subMatrix, SEXP dbnMatrix, SE
 			}
 		}
 		if (END < end)
-			*(m + (END + 1)*(ls + 1) + left) = max + 2*GO; // set edge boundary
+			*(m + (END + 1)*(ls + 1) + left) = -1e53; // set edge boundary
 		if (START > start) {
 			if (k >= lp) {
 				if (k >= ls) {
@@ -340,7 +342,7 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP type, SEXP subMatrix, SEXP dbnMatrix, SE
 			} else {
 				j = end - START;
 			}
-			*(m + START*(ls + 1) + j + 1) = max + 2*GO; // set edge boundary
+			*(m + START*(ls + 1) + j + 1) = -1e53; // set edge boundary
 		}
 		//Rprintf("\nk %d START %d END %d start %d end %d top %d left %d", k, START, END, start, end, top, left);
 		max = -1e53;
@@ -450,6 +452,10 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP type, SEXP subMatrix, SEXP dbnMatrix, SE
 				}
 			}
 			
+			M *= tot;
+			GP *= tot;
+			GS *= tot;
+			
 			if (((GS + *(m + i*(ls + 1) + j + 1)) > (M + *(m + i*(ls + 1) + j))) && ((GS + *(m + i*(ls + 1) + j + 1)) > (GP + *(m + (i + 1)*(ls + 1) + j))) && sprofile[4 + SIZEJ] != 1) {
 				if (i > 0) {
 					if (*(o + (i - 1)*ls + j) < 0) {
@@ -461,7 +467,7 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP type, SEXP subMatrix, SEXP dbnMatrix, SE
 					*(o + i*ls + j) = -1;
 				}
 				
-				*(m + (i + 1)*(ls + 1) + j + 1) = GS*tot + *(m + i*(ls + 1) + j + 1);
+				*(m + (i + 1)*(ls + 1) + j + 1) = GS + *(m + i*(ls + 1) + j + 1);
 			} else if ((GP + *(m + (i + 1)*(ls + 1) + j)) > (M + *(m + i*(ls + 1) + j)) && pprofile[4 + SIZEI] != 1) {
 				if (j > 0) {
 					if (*(o + i*ls + j - 1) > 0) {
@@ -473,20 +479,42 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP type, SEXP subMatrix, SEXP dbnMatrix, SE
 					*(o + i*ls + j) = 1;
 				}
 				
-				*(m + (i + 1)*(ls + 1) + j + 1) = GP*tot + *(m + (i + 1)*(ls + 1) + j);
+				*(m + (i + 1)*(ls + 1) + j + 1) = GP + *(m + (i + 1)*(ls + 1) + j);
 			} else {
-				*(m + (i + 1)*(ls + 1) + j + 1) = M*tot + *(m + i*(ls + 1) + j);
+				*(m + (i + 1)*(ls + 1) + j + 1) = M + *(m + i*(ls + 1) + j);
 				*(o + i*ls + j) = 0;
 			}
 			
 			//#pragma omp critical // not necessary because will only underestimate max
-			if (*(m + (i + 1)*(ls + 1) + j + 1) > max)
+			if (*(m + (i + 1)*(ls + 1) + j + 1) > max) {
 				max = *(m + (i + 1)*(ls + 1) + j + 1);
+				maxi = i;
+			}
+		}
+		
+		// determine whether to allow restriction in next iteration
+		if (maxi >= START + 71 &&
+			maxi + 71 <= END) {
+			if (k >= lp) {
+				if (k >= ls) {
+					j = ls - maxi + start - 1;
+				} else {
+					j = end - maxi + 1 - lp + k - 1;
+				}
+			} else {
+				j = end - maxi;
+			}
+			
+			if ((max - *(m + (maxi + 71)*(ls + 1) + j - 71)) >= slope &&
+				(max - *(m + (maxi - 71)*(ls + 1) + j + 71)) >= slope) {
+				allow++; // along a ridge in the DP matrix
+			} else {
+				allow = 0;
+			}
+		} else {
+			allow = 0;
 		}
 	}
-	
-	Free(pnorm);
-	Free(snorm);
 	
 	if (RNA==2) {
 		Free(Pp);
@@ -496,19 +524,18 @@ SEXP alignProfiles(SEXP p, SEXP s, SEXP type, SEXP subMatrix, SEXP dbnMatrix, SE
 	}
 	
 	if (egpR != 0) {
-		GP = egpR*sstops[ls - 1];
-		*(m + lp*(ls + 1) + ls - 1) = *(m + lp*(ls + 1) + ls - 1) + GP;
-		for (i = ls - 2; i > -1; i--) {
-			GP = egpR*sstops[i];
+		for (i = ls - 1; i > -1; i--) {
+			GP = egpR*sstops[i]*snorm[i];
 			*(m + lp*(ls + 1) + i) = *(m + lp*(ls + 1) + i) + GP;
 		}
-		GP = egpR*pstops[lp - 1];
-		*(m + (lp - 1)*(ls + 1) + ls) = *(m + (lp - 1)*(ls + 1) + ls) + GP;
-		for (i = lp - 2; i > -1; i--) {
-			GP = egpR*pstops[i];
+		for (i = lp - 1; i > -1; i--) {
+			GP = egpR*pstops[i]*pnorm[i];
 			*(m + i*(ls + 1) + ls) = *(m + i*(ls + 1) + ls) + GP;
 		}
 	}
+	
+	Free(pnorm);
+	Free(snorm);
 	
 	// find the max scoring alignment
 	int maxp = 0;
@@ -682,8 +709,11 @@ SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP hecMatrix, SEXP go, SE
 	double GO = asReal(go);
 	double GE = asReal(ge);
 	double EX = asReal(exp);
-	double POW = asReal(power);
-	double bound = asReal(boundary);
+	double POW1 = REAL(power)[0];
+	double POW2 = REAL(power)[1];
+	double bound = REAL(boundary)[0];
+	double slope = REAL(boundary)[1]*100.4092;
+	double duration = REAL(boundary)[2];
 	double egpL = asReal(endGapPenaltyLeft);
 	double egpR = asReal(endGapPenaltyRight);
 	double *subM = REAL(subMatrix);
@@ -965,22 +995,22 @@ SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP hecMatrix, SEXP go, SE
 	double *snorm = Calloc(ls, double); // initialized to zero
 	for (i = 0; i < lp; i++)
 		if (pprofile[26 + size*i] > 0)
-			pnorm[i] = pow(pprofile[26 + size*i], POW);
+			pnorm[i] = pow(pprofile[26 + size*i], POW1)*pow(1 - pprofile[23 + size*i], POW2);
 	for (i = 0; i < ls; i++)
 		if (sprofile[26 + size*i] > 0)
-			snorm[i] = pow(sprofile[26 + size*i], POW);
+			snorm[i] = pow(sprofile[26 + size*i], POW1)*pow(1 - sprofile[23 + size*i], POW2);
 	
 	if (egpL != 0) {
-		*(m + 1) = egpL*sstarts[0];
-		for (i = 2; i <= ls; i++)
-			*(m + i) = egpL*sstarts[i - 1];
-		*(m + ls + 1) = egpL*pstarts[0];
-		for (i = 2; i <= lp; i++)
-			*(m + (ls + 1)*i) = egpL*pstarts[i - 1];
+		for (i = 1; i <= ls; i++)
+			*(m + i) = egpL*sstarts[i - 1]*snorm[i - 1];
+		for (i = 1; i <= lp; i++)
+			*(m + (ls + 1)*i) = egpL*pstarts[i - 1]*pnorm[i - 1];
 	}
 	
-	int left = 0, top = 0; // boundaries of DP
+	int left = 0, top = 0; // boundaries of DP matrix
 	int START, END; // constrained start and end points
+	int maxi; // location of maximum along diagonal
+	int allow = 0; // allow restriction
 	max = -1e53;
 	for (k = 1; k < l; k++) {
 		if (k > ls) {
@@ -1012,7 +1042,7 @@ SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP hecMatrix, SEXP go, SE
 			} else {
 				j = end - i;
 			}
-			if (*(m + i*(ls + 1) + j) < max) {
+			if (allow >= duration && *(m + i*(ls + 1) + j) < max) {
 				if (j < ls && i > 1) {
 					*(o + i*ls + j) = 1;
 					*(m + i*(ls + 1) + ls) = -1e53; // block restricted area from traceback
@@ -1038,8 +1068,7 @@ SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP hecMatrix, SEXP go, SE
 			}
 			if (j < left) {
 				i -= left - j;
-				continue;
-			} else if (*(m + i*(ls + 1) + j) < max && i != (lp - 1)) {
+			} else if (allow >= duration && *(m + i*(ls + 1) + j) < max) {
 				left = j;
 				*(o + i*ls + j) = -1;
 				*(m + lp*(ls + 1) + left + 1) = -1e53; // block restricted area from traceback
@@ -1054,7 +1083,7 @@ SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP hecMatrix, SEXP go, SE
 			}
 		}
 		if (END < end)
-			*(m + (END + 1)*(ls + 1) + left) = max + 2*GO; // set edge boundary
+			*(m + (END + 1)*(ls + 1) + left) = -1e53; // set edge boundary
 		if (START > start) {
 			if (k >= lp) {
 				if (k >= ls) {
@@ -1065,7 +1094,7 @@ SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP hecMatrix, SEXP go, SE
 			} else {
 				j = end - START;
 			}
-			*(m + START*(ls + 1) + j + 1) = max + 2*GO; // set edge boundary
+			*(m + START*(ls + 1) + j + 1) = -1e53; // set edge boundary
 		}
 		
 		max = -1e53;
@@ -1130,14 +1159,17 @@ SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP hecMatrix, SEXP go, SE
 			
 			M = 0;
 			double pFreq, sFreq;
+			int po, so;
 			// score aligning letters
 			for (int n = 0; n < 20; n++) { // omit U in 20, O in 21
-				pFreq = pprofile[Op[n + SIZE20I] + SIZEI];
+				po = Op[n + SIZE20I];
+				pFreq = pprofile[po + SIZEI];
 				if (pFreq!=0) {
 					for (int p = 0; p < 20; p++) { // omit U in 20, O in 21
-						sFreq = sprofile[Os[p + SIZE20J] + SIZEJ];
+						so = Os[p + SIZE20J];
+						sFreq = sprofile[so + SIZEJ];
 						if (sFreq!=0) {
-							M += pFreq*sFreq * *(subM + N21[Op[n + SIZE20I]] + Os[p + SIZE20J]);
+							M += pFreq*sFreq * *(subM + N21[po] + so);
 						} else {
 							break;
 						}
@@ -1171,6 +1203,10 @@ SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP hecMatrix, SEXP go, SE
 				}
 			}
 			
+			M *= tot;
+			GP *= tot;
+			GS *= tot;
+			
 			if ((GS + *(m + i*(ls + 1) + j + 1) > M + *(m + i*(ls + 1) + j)) && (GS + *(m + i*(ls + 1) + j + 1) > GP + *(m + (i + 1)*(ls + 1) + j)) && sprofile[23 + SIZEJ] != 1) {
 				if (i > 0) {
 					if (*(o + (i - 1)*ls + j) < 0) {
@@ -1182,7 +1218,7 @@ SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP hecMatrix, SEXP go, SE
 					*(o + i*ls + j) = -1;
 				}
 				
-				*(m + (i + 1)*(ls + 1) + j + 1) = GS*tot + *(m + i*(ls + 1) + j + 1);
+				*(m + (i + 1)*(ls + 1) + j + 1) = GS + *(m + i*(ls + 1) + j + 1);
 			} else if (GP + *(m + (i + 1)*(ls + 1) + j) > M + *(m + i*(ls + 1) + j) && pprofile[23 + SIZEI] != 1) {
 				if (j > 0) {
 					if (*(o + i*ls + j - 1) > 0) {
@@ -1194,35 +1230,56 @@ SEXP alignProfilesAA(SEXP p, SEXP s, SEXP subMatrix, SEXP hecMatrix, SEXP go, SE
 					*(o + i*ls + j) = 1;
 				}
 				
-				*(m + (i + 1)*(ls + 1) + j + 1) = GP*tot + *(m + (i + 1)*(ls + 1) + j);
+				*(m + (i + 1)*(ls + 1) + j + 1) = GP + *(m + (i + 1)*(ls + 1) + j);
 			} else {
-				*(m + (i + 1)*(ls + 1) + j + 1) = M*tot + *(m + i*(ls + 1) + j);
+				*(m + (i + 1)*(ls + 1) + j + 1) = M + *(m + i*(ls + 1) + j);
 				*(o + i*ls + j) = 0;
 			}
 			
 			//#pragma omp critical // not necessary because will only underestimate max
-			if (*(m + (i + 1)*(ls + 1) + j + 1) > max)
+			if (*(m + (i + 1)*(ls + 1) + j + 1) > max) {
 				max = *(m + (i + 1)*(ls + 1) + j + 1);
+				maxi = i;
+			}
+		}
+		
+		// determine whether to allow restriction in next iteration
+		if (maxi >= START + 71 &&
+			maxi + 71 <= END) {
+			if (k >= lp) {
+				if (k >= ls) {
+					j = ls - maxi + start - 1;
+				} else {
+					j = end - maxi + 1 - lp + k - 1;
+				}
+			} else {
+				j = end - maxi;
+			}
+			
+			if ((max - *(m + (maxi + 71)*(ls + 1) + j - 71)) >= slope &&
+				(max - *(m + (maxi - 71)*(ls + 1) + j + 71)) >= slope) {
+				allow++; // along a ridge in the DP matrix
+			} else {
+				allow = 0;
+			}
+		} else {
+			allow = 0;
+		}
+	}
+	
+	if (egpR != 0) {
+		for (i = ls - 1; i > -1; i--) {
+			GP = egpR*sstops[i]*snorm[i];
+			*(m + lp*(ls + 1) + i) = *(m + lp*(ls + 1) + i) + GP;
+		}
+		for (i = lp - 1; i > -1; i--) {
+			GP = egpR*pstops[i]*pnorm[i];
+			*(m + i*(ls + 1) + ls) = *(m + i*(ls + 1) + ls) + GP;
 		}
 	}
 	
 	Free(pnorm);
 	Free(snorm);
-	
-	if (egpR != 0) {
-		GP = egpR*sstops[ls - 1];
-		*(m + lp*(ls + 1) + ls - 1) = *(m + lp*(ls + 1) + ls - 1) + GP;
-		for (i = ls - 2; i > -1; i--) {
-			GP = egpR*sstops[i];
-			*(m + lp*(ls + 1) + i) = *(m + lp*(ls + 1) + i) + GP;
-		}
-		GP = egpR*pstops[lp - 1];
-		*(m + (lp - 1)*(ls + 1) + ls) = *(m + (lp - 1)*(ls + 1) + ls) + GP;
-		for (i = lp - 2; i > -1; i--) {
-			GP = egpR*pstops[i];
-			*(m + i*(ls + 1) + ls) = *(m + i*(ls + 1) + ls) + GP;
-		}
-	}
 	
 	// find the max scoring alignment
 	int maxp = 0;

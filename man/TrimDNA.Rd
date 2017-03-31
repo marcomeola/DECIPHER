@@ -81,7 +81,7 @@ If \code{type} is \code{"sequences"} then the trimmed sequences are returned tha
 If \code{type} is \code{"both"} the output is a list of two components, the first containing the ranges and the second containing the sequences.
 }
 \author{
-Erik Wright \email{DECIPHER@cae.wisc.edu}
+Erik Wright \email{eswright@pitt.edu}
 }
 \seealso{
 \code{\link{CorrectFrameshifts}}

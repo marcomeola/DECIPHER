@@ -114,7 +114,7 @@ FindChimeras <- function(dbFile,
 	searchExpression <- paste("select distinct identifier, origin from",
 		tblNameReference)
 	rs <- dbSendQuery(dbConn2, searchExpression)
-	searchResult <- fetch(rs, n=-1)
+	searchResult <- dbFetch(rs, n=-1, row.names=FALSE)
 	groups <- searchResult$identifier
 	origins <- searchResult$origin
 	dbClearResult(rs)
@@ -122,7 +122,7 @@ FindChimeras <- function(dbFile,
 	searchExpression <- paste("select distinct identifier from",
 		tblName)
 	rs <- dbSendQuery(dbConn1, searchExpression)
-	searchResult <- fetch(rs, n=-1)
+	searchResult <- dbFetch(rs, n=-1, row.names=FALSE)
 	myGroups <- searchResult$identifier
 	dbClearResult(rs)
 	

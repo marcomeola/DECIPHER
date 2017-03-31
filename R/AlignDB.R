@@ -10,7 +10,7 @@ AlignDB <- function(dbFile,
 	gapExtension=-1,
 	gapPower=-1,
 	terminalGap=-5,
-	normPower=1,
+	normPower=c(1, 0),
 	substitutionMatrix=NULL,
 	processors=1,
 	verbose=TRUE,
@@ -41,10 +41,16 @@ AlignDB <- function(dbFile,
 		stop("batchSize must be a whole number.")
 	if (batchSize <= 0)
 		stop("batchSize must be greater than zero.")
-	if (!all(is.numeric(normPower)))
+	if (!is.numeric(normPower))
 		stop("normPower must be a numeric.")
-	if (normPower < 0)
+	if (any(normPower < 0))
 		stop("normPower must be at least zero.")
+	if (length(normPower) < 2) {
+		normPower <- rep(normPower, 2)
+	} else if (length(normPower) > 2) {
+		stop("Length of normPower must be 1 or 2.")
+	}
+	normPower <- as.double(normPower)
 	if (!is.logical(verbose))
 		stop("verbose must be a logical.")
 	
@@ -71,7 +77,7 @@ AlignDB <- function(dbFile,
 		stop("gapExtension must be a numeric.")
 	if (!is.numeric(gapPower))
 		stop("gapPower must be a numeric.")
-	if (!all(is.numeric(terminalGap)))
+	if (!is.numeric(terminalGap))
 		stop("terminalGap must be a numeric.")
 	if (length(terminalGap) > 2 || length(terminalGap) < 1)
 		stop("Length of terminalGap must be 1 or 2.")
@@ -261,10 +267,7 @@ AlignDB <- function(dbFile,
 		}
 	}
 	
-	restrict <- min(perfectMatch,
-		misMatch,
-		gapOpening,
-		gapExtension)*max(uw1, uw2) # unrestricted
+	restrict <- c(-1e10, 1e10, 1e10) # unrestricted
 	if (type==3) { # AAStringSet
 		inserts <- .Call("alignProfilesAA",
 			p.profile,

@@ -39,7 +39,7 @@ In the context of a restriction digest experiment with a known DNA sequence, it 
 If \code{type} is \code{"fragments"} (the default), then the result is a \code{DNAStringSetList}.  Each element of the list contains the \code{top} and/or \code{bottom} strand fragments after digestion of \code{myDNAStringSet}, or the original sequence if no cuts were made.  Sequences are named by whether they originated from the \code{top} or \code{bottom} strand, and list elements are named based on the input DNA sequences.  The \code{top} strand is defined by \code{myDNAStringSet} as it is input, whereas the \code{bottom} strand is its reverse complement.
 }
 \author{
-Erik Wright \email{DECIPHER@cae.wisc.edu}
+Erik Wright \email{eswright@pitt.edu}
 }
 \seealso{
 \code{\link{DesignSignatures}}, \code{\link{RESTRICTION_ENZYMES}}

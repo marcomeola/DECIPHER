@@ -84,7 +84,7 @@ If \code{type} is \code{"states"} or \code{"pairs"}, the secondary structure is 
 In practice the secondary structure prediction is most accurate when the input alignment is of high quality, contains a wide diversity of sequences, the number of sequences is large, no regions are completely conserved across all sequences, and most of the sequences span the entire alignment (i.e., there are few partial/incomplete sequences).
 }
 \value{
-If \code{type} is \code{"states"} (the default), then the output is a character vector with the predicted secondary structure assignment for each position in \code{myXStringSet}.  Standard dot-bracket notation (DBN) is used, where ``.'' signifies an unpaired position, ``('' and ``)'' a paired position, and successive ``[]'', ``\{\}'', and ``<>'' indicate increasing order pseudoknots.
+If \code{type} is \code{"states"} (the default), then the output is a character vector with the predicted secondary structure assignment for each position in \code{myXStringSet}.  Standard dot-bracket notation (DBN) is used, where ``.'' signifies an unpaired position, ``('' and ``)'' a paired position, and successive ``[]'', ``\{\}'', and ``<>'' indicate increasing order pseudoknots.  Columns below \code{minOccupancy} are denoted by the ``-'' character to indicate that they contained too many gaps to be included in the consensus structure.
 
 If \code{type} is \code{"pairs"}, then a matrix is returned with one row for each base pairing and three columns giving the positions of the paired bases and their \code{pseudoknot} order.
 
@@ -100,7 +100,7 @@ Freyhult, E., et al. (2005). Predicting RNA Structure Using Mutual Information. 
 Venkatachalam, B., et al. (2014). Faster algorithms for RNA-folding using the Four-Russians method. Algorithms for Molecular Biology : AMB, \bold{9(1)}, 1-12.
 }
 \author{
-Erik Wright \email{DECIPHER@cae.wisc.edu}
+Erik Wright \email{eswright@pitt.edu}
 }
 \seealso{
 \code{\link{PredictHEC}}
@@ -112,7 +112,7 @@ p <- PredictDBN(rna, "states")
 p
 
 # color paired bases in the sequences
-w <- which(strsplit(p, "")[[1]] != ".")
+w <- which(!(strsplit(p, "")[[1]] \%in\% c(".", "-")))
 BrowseSeqs(c(BStringSet(p), BStringSet(rna)),
            colorPatterns=rep(w, each=2),
            patterns=RNA_BASES)

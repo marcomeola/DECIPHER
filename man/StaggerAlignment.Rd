@@ -46,7 +46,7 @@ An \code{XStringSet} of aligned sequences.
 Coming soon!
 }
 \author{
-Erik Wright \email{DECIPHER@cae.wisc.edu}
+Erik Wright \email{eswright@pitt.edu}
 }
 \seealso{
 \code{\link{AdjustAlignment}}, \code{\link{AlignSeqs}}, \code{\link{IdClusters}}

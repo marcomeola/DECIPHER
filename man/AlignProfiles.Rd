@@ -19,9 +19,9 @@ AlignProfiles(pattern,
               gapExtension = -1,
               gapPower = -1,
               terminalGap = -5,
-              restrict = -1000,
+              restrict = c(-1000, 2, 10),
               anchor = 0.7,
-              normPower = 1,
+              normPower = c(1, 0),
               substitutionMatrix = NULL,
               structureMatrix = NULL,
               processors = 1)
@@ -64,13 +64,13 @@ Numeric specifying the exponent to use in the gap cost function.  (See details s
 Numeric giving the cost for allowing leading and trailing gaps ("-" or "." characters) in the alignment.  Either two numbers, the first for leading gaps and the second for trailing gaps, or a single number for both.
 }
   \item{restrict}{
-Numeric specifying the lowest relative score to consider when aligning.  The default (\code{-1000}) will align most inputs that can reasonably be globally aligned without any loss in accuracy.  Input sequences with high similarity could be more restricted (e.g., \code{-500}), whereas a \code{pattern} and \code{subject} with little overlap should be less restricted (e.g., \code{-10000}).  (See details section below.)
+Numeric vector of length three controlling the degree of restriction around ridge lines in the dynamic programming matrix.  The first element determines the span of the region around a ridge that is considered during alignment.  The default (\code{-1000}) will align most inputs that can reasonably be globally aligned without any loss in accuracy.  Input sequences with high similarity could be more restricted (e.g., \code{-500}), whereas a \code{pattern} and \code{subject} with little overlap could be less restricted (e.g., \code{-10000}).  The second element sets the minimum slope to either side of a ridge that is required to allow restriction at any point.  The third element sets the minimum duration of the ridge required to begin restricting the matrix around the ridge.  The duration of the ridge is defined as the number of consecutive positions meeting the first two conditions for restriction.  (See details section below.)
 }
   \item{anchor}{
 Numeric giving the fraction of sequences with identical k-mers required to become an anchor point, or \code{NA} to not use anchors.  Alternatively, a matrix specifying anchor regions.  (See details section below.)
 }
   \item{normPower}{
-Numeric giving the exponent that controls the degree of normalization applied to scores by column occupancy.  A \code{normPower} of \code{0} does not normalize the scores, which results in all columns of the profiles being weighted equally, and is the optimal value for aligning fragmentary sequences.  A \code{normPower} of \code{1} normalizes the score for aligning two positions by their column occupancy (1 - fraction of gaps).  A \code{normPower} greater than \code{1} more strongly discourages aligning with ``gappy'' regions of the alignment.
+Numeric giving the exponent that controls the degree of normalization applied to scores by column occupancy.  If two numerics are provided, the first controls the normalization power of terminal gaps, while the second controls that of internal gaps.  A \code{normPower} of \code{0} does not normalize the scores, which results in all columns of the profiles being weighted equally, and is the optimal value for aligning fragmentary sequences.  A \code{normPower} of \code{1} normalizes the score for aligning two positions by their column occupancy (1 - fraction of gaps).  A \code{normPower} greater than \code{1} more strongly discourages aligning with ``gappy'' regions of the alignment.  (See details section below.)
 }
   \item{substitutionMatrix}{
 Either a substitution matrix representing the substitution scores for an alignment or the name of the amino acid substitution matrix to use in alignment.  The latter may be one of the following:  ``BLOSUM45'', ``BLOSUM50'', ``BLOSUM62'', ``BLOSUM80'', ``BLOSUM100'', ``PAM30'', ``PAM40'', ``PAM70'', ``PAM120'', ``PAM250'', or ``MIQS''.  The default (NULL) will use the \code{perfectMatch} and \code{misMatch} penalties for DNA/RNA or ``MIQS'' for AA.  (See examples section below.)
@@ -85,11 +85,13 @@ The number of processors to use, or \code{NULL} to automatically detect and use 
 \details{
 Profiles are aligned using dynamic programming, a variation of the Needleman-Wunsch algorithm for global alignment.  The dynamic programming method requires order \code{N*M} time and memory space where \code{N} and \code{M} are the width of the pattern and subject.  This method works by filling in a matrix of the possible ``alignment space'' by considering all matches, insertions, and deletions between two sequence profiles.  The highest scoring alignment is then used to add gaps to each of the input sequence sets.
 
-Heuristics can be useful to improve performance on long input sequences.  The \code{restrict} parameter can be used to dynamically constrain the possible ``alignment space'' to only paths that will likely include the final alignment, which in the best case can improve the speed from quadratic time to linear time.  The degree of restriction is important, and if the sequences are not mostly overlapping then \code{restrict} should be relaxed (more negative than the default).  For example, if aligning a pattern to a much longer subject then restrict should be set to \code{-1e10} to effectively prevent restriction.
+Heuristics can be useful to improve performance on long input sequences.  The \code{restrict} parameter can be used to dynamically constrain the possible ``alignment space'' to only paths that will likely include the final alignment, which in the best case can improve the speed from quadratic time to nearly linear time.  The degree of restriction is important, and the default value of \code{restrict} is reasonable in the vast majority of cases.  It is also possible to prevent restriction by setting \code{restrict} to such extreme values that these requirements will never be met (e.g., \code{c(-1e10, 1e10, 1e10)}).
 
 The argument \code{anchor} can be used to split the global alignment into multiple sub-alignments.  This can greatly decrease the memory requirement for long sequences when appropriate anchor points can be found.  Anchors are 15-mer (for DNA/RNA) or 7-mer (for AA) subsequences that are shared between at least \code{anchor} fraction of \code{pattern}(s) and \code{subject}(s).  Anchored ranges are extended along the length of each sequence in a manner designed to split the alignment into sub-alignments that can be separately solved.  For most input sequences, the default anchoring has no effect on accuracy, but anchoring can be disabled by setting \code{anchor=NA}.
 
 Alternatively, \code{anchor} can be a matrix with \code{4} rows and one column per anchor.  The first two rows correspond to the anchor start and end positions in the pattern sequence(s), and the second two rows are the equivalent anchor region in the subject sequence(s).  Anchors specified in this manner must be strictly increasing (non-overlapping) in both sequences, and have an anchor width of at least two positions.  Note that the anchors do not have to be equal length, in which case the anchor regions will also be aligned.  Manually splitting the alignment into more subtasks can sometimes make it more efficient, but typically automatic anchoring is effective.
+
+The argument \code{normPower} determines how the distribution of information is treated during alignment.  Higher values of \code{normPower} encourage alignment between columns with higher occupancy (1 - fraction of gaps), and de-emphasize the alignment of columns containing many gaps.  A \code{normPower} of \code{0} will treat all columns equally regardless of occupancy, which can be useful when the \code{pattern} or \code{subject} contain many incomplete (fragment) sequences.  For example, \code{normPower} should be set to \code{0} when aligning many short reads to a longer reference sequence.
 
 The arguments \code{p.struct} and \code{s.struct} may be used to provide secondary structure probabilities in the form of a list containing matrices or a single matrix.  If the input is a list, then each list element must contain a matrix with dimensions \code{q*w}, where \code{q} is the number of possible secondary structure states, and \code{w} is the width of the unaligned pattern sequence.  Values in each matrix represent the probability of the given state at that position in the sequence.  Alternatively, a single matrix can be used as input if \code{w} is the width of the entire \code{pattern} or \code{subject} alignment.  A \code{structureMatrix} must be supplied along with the structures.  The functions \code{PredictHEC} and \code{PredictDBN} can be used to predict secondary structure probabilities in the format required by \code{AlignProfiles} (for amino acid and RNA sequences, respectively).
 
@@ -103,12 +105,14 @@ An \code{XStringSet} of aligned sequences.
 \references{
 Chang, M. S. S., & Benner, S. A. (2004). Empirical Analysis of Protein Insertions and Deletions Determining Parameters for the Correct Placement of Gaps in Protein Sequence Alignments. Journal of Molecular Biology, \bold{341(2)}, 617-631.
 
-Needleman S., Wunsch, C. (1970). A general method applicable to the search for similarities in the amino acid sequence of two proteins. Journal of Molecular Biology, \bold{48(3)}, 443-453.
+Needleman, S., & Wunsch, C. (1970). A general method applicable to the search for similarities in the amino acid sequence of two proteins. Journal of Molecular Biology, \bold{48(3)}, 443-453.
 
-ES Wright (2015) "DECIPHER: harnessing local sequence context to improve protein multiple sequence alignment". BMC Bioinformatics, doi:10.1186/s12859-015-0749-z.
+Wright, E. S. (2015). DECIPHER: harnessing local sequence context to improve protein multiple sequence alignment. BMC Bioinformatics, 16, 322. http://doi.org/10.1186/s12859-015-0749-z
+
+Yu, Y.-K., et al. (2015). Log-odds sequence logos. Bioinformatics, 31(3), 324-331. http://doi.org/10.1093/bioinformatics/btu634
 }
 \author{
-Erik Wright \email{DECIPHER@cae.wisc.edu}
+Erik Wright \email{eswright@pitt.edu}
 }
 \seealso{
 \code{\link{AlignDB}}, \code{\link{AlignSeqs}}, \code{\link{AlignSynteny}}, \code{\link{AlignTranslation}}, \code{\link{MIQS}}

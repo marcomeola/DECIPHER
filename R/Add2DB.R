@@ -124,16 +124,10 @@ Add2DB <- function(myData,
 						collapse="\n"),
 					"\n\n",
 					sep="")
-			dbBegin(dbConn)
-			t <- try(dbGetPreparedQuery(dbConn,
-					expression2,
-					bind.data=myData),
-				silent=TRUE)
-			dbCommit(dbConn)
-			if (class(t)=="try-error") {
-				warning("Unsucessful transaction!")
-				invisible(FALSE)
-			}
+			rs <- dbSendQuery(dbConn, expression2)
+			dbBind(rs, myData[, c("row_names", colIDs[i])])
+			dbFetch(rs, n=-1, row.names=FALSE)
+			dbClearResult(rs)
 		}
 		if (verbose) {
 			cat("Added to table ",

@@ -67,7 +67,7 @@ TileSeqs <- function(dbFile,
 	searchExpression <- paste("select distinct identifier from",
 		tblName)
 	rs <- dbSendQuery(dbConn, searchExpression)
-	searchResult <- fetch(rs, n=-1)
+	searchResult <- dbFetch(rs, n=-1, row.names=FALSE)
 	ids <- searchResult$identifier
 	dbClearResult(rs)
 	

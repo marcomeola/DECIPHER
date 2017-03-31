@@ -89,7 +89,7 @@ Long nucleotide sequences, such as genomes, are often not collinear, or may be c
 An object of class ``Synteny''.
 }
 \author{
-Erik Wright \email{DECIPHER@cae.wisc.edu}
+Erik Wright \email{eswright@pitt.edu}
 }
 \seealso{
 \code{\link{AlignSynteny}}, \code{\link{Synteny-class}}

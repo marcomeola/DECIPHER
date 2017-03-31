@@ -23,6 +23,7 @@ MaskAlignment <- function(myXStringSet,
 	windowSize=5,
 	threshold=1.0,
 	maxFractionGaps=0.2,
+	correction=FALSE,
 	showPlot=FALSE) {
 	
 	# error checking
@@ -41,17 +42,8 @@ MaskAlignment <- function(myXStringSet,
 		stop("maxFractionGaps must be a numeric.")
 	if (maxFractionGaps > 1 || maxFractionGaps < 0)
 		stop("maxFractionGaps must be between 0 and 1 inclusive.")
-	
-	f <- function(x) {
-		w <- which(x != 0)
-		if (length(w) > 0) {
-			x <- x[w]/sum(x[w])
-			bits <- MAX + sum(x*log(x, 2))
-		} else {
-			bits <- 0
-		}
-		return(bits)
-	}
+	if (!is.logical(correction))
+		stop("correction must be a logical.")
 	
 	if (is(myXStringSet, "AAStringSet")) {
 		MAX <- 4.321928 # log(20, 2)
@@ -60,7 +52,12 @@ MaskAlignment <- function(myXStringSet,
 			rep(1, length(myXStringSet)),
 			NULL,
 			PACKAGE="DECIPHER")
-		a <- apply(pwm[1:20,], 2, f)
+		cm <- pwm[24,]
+		a <- .Call("informationContentAA",
+			pwm,
+			length(myXStringSet),
+			correction)
+		MAX <- max(a, MAX)
 	} else {
 		MAX <- 2 # log(4, 2)
 		pwm <- .Call("consensusProfile",
@@ -68,10 +65,14 @@ MaskAlignment <- function(myXStringSet,
 			rep(1, length(myXStringSet)),
 			NULL,
 			PACKAGE="DECIPHER")
-		a <- apply(pwm[1:4,], 2, f)
+		cm <- pwm[5,]
+		a <- .Call("informationContent",
+			pwm,
+			length(myXStringSet),
+			correction)
+		MAX <- max(a, MAX)
 	}
 	
-	cm <- consensusMatrix(myXStringSet, as.prob=TRUE)["-",]
 	gaps <- which(cm > maxFractionGaps)
 	
 	if (windowSize*2 + 1 > length(a) - length(gaps))
@@ -227,18 +228,25 @@ MaskAlignment <- function(myXStringSet,
 			par(mar=org_mar)
 		}
 		abline(h=threshold,
-			lty=2,
+			lty=3,
 			col="red")
-		legend("bottomright",
-			c(ifelse(length(gaps) > 0, "Thresholds", "Threshold"),
-				"Moving Avg.",
-				"Kept Position",
-				"Masked Pos.",
-				"Masked Gaps"),
+		text <- c("Kept Position",
+			"Moving Avg.",
+			"Masked Pos.",
+			"Bit Threshold",
+			ifelse(length(gaps) > 0, "Masked Gaps", ""),
+			ifelse(length(gaps) > 0, "Gap threshold", ""))
+		p <- par("usr")
+		legend(0, p[4] + 0.12*(p[4] - p[3]),
+			text,
 			bg="white",
-			lty=c(2, 1, 0, 0, 0),
-			pch=c(NA, NA, 20, 20, 20),
-			col=c(ifelse(length(gaps) > 0, "black", "red"), "black", "green", "red", "orange"))
+			lty=c(0, 1, 0, 3, 0, 2),
+			pch=c(20, NA, 20, NA, 20, NA),
+			col=c("green", "black", "red", "red", rep(ifelse(length(gaps) > 0, "orange", NA), 2)),
+			ncol=3,
+			bty='n',
+			text.width=max(abs(strwidth(text)))*1.2,
+			xpd=TRUE)
 	}
 	
 	return(myXStringSet)

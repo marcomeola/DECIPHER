@@ -47,7 +47,7 @@ Beginning with the least common ranks, the algorithm agglomerates groups with si
 A \code{data.frame} with the \code{rank} and corresponding identifier as \code{identifier}.  Note that quotes are stripped from identifiers to prevent problems that they may cause.  The \code{origin} gives the \code{rank} preceding the \code{identifier}.  If \code{add2tbl} is not \code{FALSE} then the ``identifier'' and ``origin'' columns are updated in \code{dbFile}.
 }
 \author{
-Erik Wright \email{DECIPHER@cae.wisc.edu}
+Erik Wright \email{eswright@pitt.edu}
 }
 \seealso{
 \code{\link{IdentifyByRank}}

@@ -66,7 +66,7 @@ SEXP multiMatchUpper(SEXP x, SEXP y, SEXP z);
 
 SEXP multiMatchCharNotNA(SEXP x);
 
-SEXP intMatch(SEXP x, SEXP y, SEXP nThreads);
+SEXP intMatch(SEXP x, SEXP y);
 
 SEXP firstMatchUpper(SEXP x, SEXP y, SEXP nThreads);
 
@@ -223,3 +223,9 @@ SEXP getPools(SEXP x);
 // PredictDBN.c
 
 SEXP predictDBN(SEXP x, SEXP output, SEXP minOccupancy, SEXP impact, SEXP avgProdCorr, SEXP slope, SEXP shift, SEXP weights, SEXP pseudoknots, SEXP threshold, SEXP verbose, SEXP pBar, SEXP nThreads);
+
+// InformationContent.c
+
+SEXP informationContent(SEXP p, SEXP nS, SEXP correction);
+
+SEXP informationContentAA(SEXP p, SEXP nS, SEXP correction);

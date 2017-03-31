@@ -22,7 +22,7 @@ A single character giving the terminal character to count, or an empty character
 A \code{matrix} containing the results for each sequence in its respective row.  The first column contains the number of leading \code{char}, the second contains the number of trailing \code{char}, and the third contains the total number of characters in-between.
 }
 \author{
-Erik Wright \email{DECIPHER@cae.wisc.edu}
+Erik Wright \email{eswright@pitt.edu}
 }
 \seealso{
 \code{\link{IdLengths}}

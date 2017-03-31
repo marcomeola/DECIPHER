@@ -95,7 +95,7 @@ Guan, X., & Uberbacher, E. C. (1996). Alignments of DNA and protein sequences co
 Wang, Q., et al. (2013). Ecological Patterns of nifH Genes in Four Terrestrial Climatic Zones Explored with Targeted Metagenomics Using FrameBot, a New Informatics Tool. mBio, \bold{4(5)}, e00592-13-e00592-13.
 }
 \author{
-Erik Wright \email{DECIPHER@cae.wisc.edu}
+Erik Wright \email{eswright@pitt.edu}
 }
 \seealso{
 \code{\link{AlignTranslation}}, \code{\link{OrientNucleotides}}

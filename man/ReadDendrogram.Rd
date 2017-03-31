@@ -33,7 +33,7 @@ Logical specifying whether to keep the root node (if one is present) as a dendro
 An object of class \code{dendrogram}.
 }
 \author{
-Erik Wright \email{DECIPHER@cae.wisc.edu}
+Erik Wright \email{eswright@pitt.edu}
 }
 \seealso{
 \code{\link{IdClusters}}, \code{\link{WriteDendrogram}}

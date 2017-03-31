@@ -64,7 +64,7 @@ The total number of sequences in the database table is returned after import.
 ES Wright (2016) "Using DECIPHER v2.0 to Analyze Big Biological Sequence Data in R". The R Journal, \bold{8(1)}, 352-359.
 }
 \author{
-Erik Wright \email{DECIPHER@cae.wisc.edu}
+Erik Wright \email{eswright@pitt.edu}
 }
 \seealso{
 \code{\link{BrowseDB}}, \code{\link{SearchDB}}, \code{\link{DB2Seqs}}

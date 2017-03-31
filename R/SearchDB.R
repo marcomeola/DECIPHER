@@ -170,7 +170,7 @@ SearchDB <- function(dbFile,
 				sep="\n")
 	
 	rs <- dbSendQuery(dbConn, searchExpression)
-	searchResult <- fetch(rs, n=-1)
+	searchResult <- dbFetch(rs, n=-1, row.names=FALSE)
 	dbClearResult(rs)
 	
 	if (countOnly) {
@@ -265,7 +265,15 @@ SearchDB <- function(dbFile,
 		} else if (type==4) {
 			myXStringSet <- BStringSet(searchResult$sequence)
 		} else {
-			searchResult$quality <- Codec(searchResult$quality)
+			w <- which(lengths(searchResult$quality)==0)
+			if (length(w)==length(searchResult$quality)) {
+				stop("All sequences are missing quality scores.")
+			} else if (length(w) > 0) {
+				stop("Some sequences are missing quality scores.")
+			} else {
+				searchResult$quality <- Codec(searchResult$quality)
+			}
+			
 			if (type==5) {
 				myXStringSet <- QualityScaledDNAStringSet(DNAStringSet(searchResult$sequence),
 					quality(searchResult$quality))

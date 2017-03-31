@@ -10,9 +10,9 @@ AlignProfiles <- function(pattern,
 	gapExtension=-1,
 	gapPower=-1,
 	terminalGap=-5,
-	restrict=-1000,
+	restrict=c(-1000, 2, 10),
 	anchor=0.7,
-	normPower=1,
+	normPower=c(1, 0),
 	substitutionMatrix=NULL,
 	structureMatrix=NULL,
 	processors=1) {
@@ -88,7 +88,7 @@ AlignProfiles <- function(pattern,
 		stop("gapExtension must be a numeric.")
 	if (!is.numeric(gapPower))
 		stop("gapPower must be a numeric.")
-	if (!all(is.numeric(terminalGap)))
+	if (!is.numeric(terminalGap))
 		stop("terminalGap must be a numeric.")
 	if (length(terminalGap) > 2 || length(terminalGap) < 1)
 		stop("Length of terminalGap must be 1 or 2.")
@@ -96,10 +96,19 @@ AlignProfiles <- function(pattern,
 		stop("terminalGap must be finite.")
 	if (length(terminalGap)==1)
 		terminalGap[2] <- terminalGap[1]
-	if (!all(is.numeric(restrict)))
+	if (!is.numeric(restrict))
 		stop("restrict must be a numeric.")
-	if (restrict >= 0)
-		stop("restrict must be less than zero.")
+	if (length(restrict)!=3)
+		stop("Length of restrict must be 3.")
+	if (restrict[1] >= 0)
+		stop("restrict[1] must be less than zero.")
+	if (restrict[2] < 0)
+		stop("restrict[2] must be at least zero.")
+	if (restrict[3] <= 0)
+		stop("restrict[3] must be greater than zero.")
+	if (floor(restrict[3])!=restrict[3])
+		stop("restrict[3] must be a whole number.")
+	restrict <- as.double(restrict)
 	if (!is.numeric(anchor) && !is.na(anchor))
 		stop("anchor must be numeric.")
 	if (is.matrix(anchor)) {
@@ -127,10 +136,16 @@ AlignProfiles <- function(pattern,
 		if (is.numeric(anchor) && anchor > 1)
 			stop("anchor must be less than or equal to one.")
 	}
-	if (!all(is.numeric(normPower)))
+	if (!is.numeric(normPower))
 		stop("normPower must be a numeric.")
-	if (normPower < 0)
+	if (any(normPower < 0))
 		stop("normPower must be at least zero.")
+	if (length(normPower) < 2) {
+		normPower <- rep(normPower, 2)
+	} else if (length(normPower) > 2) {
+		stop("Length of normPower must be 1 or 2.")
+	}
+	normPower <- as.double(normPower)
 	if (!is.null(processors) && !is.numeric(processors))
 		stop("processors must be a numeric.")
 	if (!is.null(processors) && floor(processors)!=processors)
@@ -178,10 +193,10 @@ AlignProfiles <- function(pattern,
 		subMatrix <- subMatrix[AAs, AAs]
 		subMatrix <- as.numeric(subMatrix)
 	} else {
+		bases <- c("A", "C", "G",
+			ifelse(type==2L, "U", "T"))
 		if (!is.null(substitutionMatrix)) {
 			if (is.matrix(substitutionMatrix)) {
-				bases <- c("A", "C", "G",
-					ifelse(type==2L, "U", "T"))
 				if (any(!(bases %in% dimnames(substitutionMatrix)[[1]])) ||
 					any(!(bases %in% dimnames(substitutionMatrix)[[2]])))
 					stop("substitutionMatrix is incomplete.")
@@ -287,11 +302,6 @@ AlignProfiles <- function(pattern,
 				format(size, big.mark=","),
 				") than the maximum allowable size (2,147,483,647).",
 				sep=""))
-		if (p.d < 100 || s.d < 100) {
-			res <- -1e10 # do not restrict
-		} else {
-			res <- restrict
-		}
 		
 		if (type==3) { # AAStringSet
 			if (is.null(p.struct)) {
@@ -306,7 +316,7 @@ AlignProfiles <- function(pattern,
 					normPower,
 					tGaps[1],
 					tGaps[2],
-					res,
+					restrict,
 					processors,
 					PACKAGE="DECIPHER")
 			} else {
@@ -321,7 +331,7 @@ AlignProfiles <- function(pattern,
 					normPower,
 					tGaps[1],
 					tGaps[2],
-					res,
+					restrict,
 					processors,
 					PACKAGE="DECIPHER")
 			}
@@ -341,7 +351,7 @@ AlignProfiles <- function(pattern,
 					normPower,
 					tGaps[1],
 					tGaps[2],
-					res,
+					restrict,
 					processors,
 					PACKAGE="DECIPHER")
 			} else {
@@ -359,7 +369,7 @@ AlignProfiles <- function(pattern,
 					normPower,
 					tGaps[1],
 					tGaps[2],
-					res,
+					restrict,
 					processors,
 					PACKAGE="DECIPHER")
 			}

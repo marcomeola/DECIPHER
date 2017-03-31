@@ -126,7 +126,7 @@ DB2Seqs <- function(file,
 		searchExpression1,
 		sep="")
 	rs <- dbSendQuery(dbConn, searchExpression1)
-	count <- as.numeric(fetch(rs, n=-1))
+	count <- as.numeric(dbFetch(rs, n=-1, row.names=FALSE))
 	dbClearResult(rs)
 	
 	if (count < 1)
@@ -169,7 +169,7 @@ DB2Seqs <- function(file,
 		}
 		
 		rs <- dbSendQuery(dbConn, searchExpression1)
-		searchResult <- fetch(rs, n=-1)
+		searchResult <- dbFetch(rs, n=-1, row.names=FALSE)
 		dbClearResult(rs)
 		
 		searchExpression2 <- paste(ifelse(type > 4,
@@ -181,7 +181,7 @@ DB2Seqs <- function(file,
 			")",
 			sep="")
 		rs <- dbSendQuery(dbConn, searchExpression2)
-		searchResult2 <- fetch(rs, n=-1)
+		searchResult2 <- dbFetch(rs, n=-1, row.names=FALSE)
 		dbClearResult(rs)
 		
 		m <- match(searchResult$row_names,

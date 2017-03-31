@@ -47,10 +47,10 @@ If the \code{readingFrame} is \code{NA} (the default) then an attempt is made to
 An \code{XStringSet} of the class specified by \code{type}, or a list of two components (nucleotides and amino acids) if \code{type} is \code{"both"}.  Note that incomplete starting and ending codons will be translated into the mask character ("+") if the result includes an \code{AAStringSet}.
 }
 \references{
-ES Wright (2015) "DECIPHER: harnessing local sequence context to improve protein multiple sequence alignment". BMC Bioinformatics, doi:10.1186/s12859-015-0749-z.
+Wright, E. S. (2015). DECIPHER: harnessing local sequence context to improve protein multiple sequence alignment. BMC Bioinformatics, 16, 322. http://doi.org/10.1186/s12859-015-0749-z
 }
 \author{
-Erik Wright \email{DECIPHER@cae.wisc.edu}
+Erik Wright \email{eswright@pitt.edu}
 }
 \seealso{
 \code{\link{AlignDB}}, \code{\link{AlignProfiles}}, \code{\link{AlignSeqs}}, \code{\link{AlignSynteny}}, \code{\link{CorrectFrameshifts}}

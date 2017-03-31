@@ -44,7 +44,7 @@ FormGroups <- function(dbFile,
 		tblName,
 		"group by rank")
 	rs <- dbSendQuery(dbConn, searchExpression)
-	searchResult <- fetch(rs, n=-1)
+	searchResult <- dbFetch(rs, n=-1, row.names=FALSE)
 	dbClearResult(rs)
 	
 	searchResult <- searchResult[order(searchResult$count,

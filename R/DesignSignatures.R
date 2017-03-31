@@ -316,7 +316,7 @@ DesignSignatures <- function(dbFile,
 	searchExpression <- paste("select distinct identifier from",
 		tblName)
 	rs <- dbSendQuery(dbConn, searchExpression)
-	searchResult <- fetch(rs, n=-1)
+	searchResult <- dbFetch(rs, n=-1, row.names=FALSE)
 	ids <- searchResult$identifier
 	dbClearResult(rs)
 	
@@ -1385,8 +1385,23 @@ DesignSignatures <- function(dbFile,
 	}
 	
 	w <- which(is.na(amplicons[, 1]) | is.na(amplicons[, 5]))
-	if (length(w) > 0)
-		amplicons <- amplicons[-w, ]
+	if (length(w)==dim(amplicons)[1]) {
+		if (verbose) {
+			setTxtProgressBar(pBar, 1)
+			close(pBar)
+		}
+		warning("No primers meet the specified constraints.")
+		primers <- data.frame(forward_primer=I(character(0)),
+			reverse_primer=I(character(0)),
+			score=I(numeric(0)),
+			coverage=I(numeric(0)),
+			products=I(integer(0)),
+			similar_signatures=I(character(0)),
+			missing_signatures=I(character(0)))
+		return(primers)
+	} else if (length(w) > 0) {
+		amplicons <- amplicons[-w, , drop=FALSE]
+	}
 	
 	# find the best combinations of forward and reverse primers
 	if (verbose) {
@@ -1561,12 +1576,13 @@ DesignSignatures <- function(dbFile,
 	
 	if (count < numPrimerSets) {
 		warning("Not enough primers meet the specified constraints.")
+		primers <- primers[seq_len(count),, drop=FALSE]
 		if (verbose)
 			setTxtProgressBar(pBar, 1)
 	}
 	
 	# find the best restriction enzyme to digest the amplicons
-	if (length(enzymes) > 0) {
+	if (length(enzymes) > 0 && count > 0) {
 		amplicons <- cbind(amplicons[unlist(keep),],
 			Primers=unlist(lapply(seq_along(keep),
 				function(x) {
@@ -2027,6 +2043,9 @@ DesignSignatures <- function(dbFile,
 		primers <- primers[o,]
 		
 		rownames(primers) <- seq_len(dim(primers)[1])
+		
+		if (verbose)
+			setTxtProgressBar(pBar, 1)
 	}
 	
 	if (verbose) {

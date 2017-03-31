@@ -173,29 +173,31 @@ SEXP multiMatchCharNotNA(SEXP x)
 	return ans;
 }
 
-// same as x %in% y for integer vectors
-SEXP intMatch(SEXP x, SEXP y, SEXP nThreads)
+// same as x %in% y for ordered integer vectors
+SEXP intMatch(SEXP x, SEXP y)
 {	
 	int *v = INTEGER(x);
 	int *w = INTEGER(y);
 	int i, j;
 	int size_x = length(x);
 	int size_y = length(y);
-	int nthreads = asInteger(nThreads);
 	
 	SEXP ans;
 	PROTECT(ans = allocVector(LGLSXP, size_x));
 	int *rans = INTEGER(ans);
 	
-	#pragma omp parallel for private(i, j) schedule(guided) num_threads(nthreads)
+	int s = 0;
 	for (i = 0; i < size_x; i++) {
 		rans[i] = 0;
-		for (j = 0; j < size_y; j++) {
+		for (j = s; j < size_y; j++) {
 			if (v[i] == w[j]) {
 				rans[i] = 1;
 				break;
+			} else if (v[i] < w[j]) {
+				break;
 			}
 		}
+		s = j;
 	}
 	
 	UNPROTECT(1);

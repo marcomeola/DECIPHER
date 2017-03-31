@@ -140,7 +140,7 @@ A \code{data.frame} with the top-scoring pairs of forward and reverse primers, t
 Wright, E.S. & Vetsigian, K.H. (2016) "DesignSignatures: a tool for designing primers that yields amplicons with distinct signatures." Bioinformatics, doi:10.1093/bioinformatics/btw047.
 }
 \author{
-Erik Wright \email{DECIPHER@cae.wisc.edu}
+Erik Wright \email{eswright@pitt.edu}
 }
 \seealso{
 \code{\link{AmplifyDNA}}, \code{\link{CalculateEfficiencyPCR}}, \code{\link{DesignPrimers}}, \code{\link{DigestDNA}}, \code{\link{Disambiguate}}, \code{\link{MeltDNA}}, \code{\link{RESTRICTION_ENZYMES}}

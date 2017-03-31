@@ -35,7 +35,7 @@ When performing the reverse operation, decompression, the type of \code{compress
 If \code{x} is a character vector to be compressed, the output is a list with one element containing a raw vector per character string.  If \code{x} is a list of raw vectors to be decompressed, then the output is a character vector with one string per list element.
 }
 \author{
-Erik Wright \email{DECIPHER@cae.wisc.edu}
+Erik Wright \email{eswright@pitt.edu}
 }
 \examples{
 fas <- system.file("extdata", "Bacteria_175seqs.fas", package="DECIPHER")

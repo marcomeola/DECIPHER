@@ -51,7 +51,7 @@ If \code{includeNonBases = TRUE} (the default) then gap ("-"), mask ("+"), and u
 An \code{XStringSet} with a single consensus sequence matching the input type.
 }
 \author{
-Erik Wright \email{DECIPHER@cae.wisc.edu}
+Erik Wright \email{eswright@pitt.edu}
 }
 \seealso{
 \code{\link{Disambiguate}}, \code{\link{IdConsensus}}

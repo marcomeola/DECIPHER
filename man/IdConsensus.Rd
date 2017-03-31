@@ -49,7 +49,7 @@ Creates a consensus sequence for each of the distinct groups defined in \code{co
 An \code{XStringSet} object containing the consensus sequence for each group.  The \code{names} of the \code{XStringSet} contain the number of sequences and name of each group.
 }
 \author{
-Erik Wright \email{DECIPHER@cae.wisc.edu}
+Erik Wright \email{eswright@pitt.edu}
 }
 \seealso{
 \code{\link{Seqs2DB}}

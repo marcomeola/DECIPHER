@@ -46,7 +46,7 @@ Otherwise, the output is a list with one element for each sequence in \code{myAA
 Garnier, J., Gibrat, J. F., & Robson, B. (1996). GOR method for predicting protein secondary structure from amino acid sequence. \emph{Methods in Enzymology}, \bold{266}, 540-553.
 }
 \author{
-Erik Wright \email{DECIPHER@cae.wisc.edu}
+Erik Wright \email{eswright@pitt.edu}
 }
 \seealso{
 \code{\link{HEC_MI1}}, \code{\link{HEC_MI2}}, \code{\link{PredictDBN}}

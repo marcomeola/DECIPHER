@@ -289,7 +289,7 @@ Seqs2DB <- function(seqs,
 				sequence=I(Codec(sequence,
 					processors=processors,
 					...)),
-				quality=I(raw(length(sequence))))
+				quality=I(rep(list(raw()), length(sequence))))
 			
 			# add database columns to the data frame
 			if (length(f) > 0) {
@@ -610,7 +610,7 @@ Seqs2DB <- function(seqs,
 				sequence=I(Codec(sequence,
 					processors=processors,
 					...)),
-				quality=I(raw(length(sequence))))
+				quality=I(rep(list(raw()), length(sequence))))
 			
 			# add database columns to the data frame
 			if (length(f) > 0) {
@@ -682,7 +682,7 @@ Seqs2DB <- function(seqs,
 				compression=c("qbit", "gzip"),
 				processors=processors)
 		} else {
-			quality <- raw(length(seqs))
+			quality <- rep(list(raw()), length(seqs))
 		}
 		
 		myData_ <- data.frame(row_names=seq(from=(numSeq + 1),

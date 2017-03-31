@@ -104,7 +104,7 @@ The \code{pairs} method creates a scatterplot matrix from a \code{Synteny} objec
 The \code{plot} method displays a bar view of the sequences in the same order as the input object (\code{x}).  The coloring scheme of each bar is determined by the  \code{colorBy} argument, and the color palette is set by \code{colorRamp}.  When \code{colorBy} is an index, the sequences are colored according to regions of shared homology with the specified reference sequence (by default \code{1}).  If \code{colorBy} is ``neighbor'' then shared syntenic blocks are connected between neighboring sequences.  If \code{colorBy} is ``frequency'' then positions in each sequence are colored based on the degree of conservation with the other sequences.  In each case, regions that have no correspondence in the other sequence(s) are colored \code{barColor}.
 }
 \author{
-Erik Wright \email{DECIPHER@cae.wisc.edu}
+Erik Wright \email{eswright@pitt.edu}
 }
 \seealso{
 \code{\link{AlignSynteny}}, \code{\link{FindSynteny}}

@@ -122,12 +122,12 @@ PredictDBN <- function(myXStringSet,
 	
 	if (type==2L) {
 		s <- strsplit(ans, "")[[1]]
-		n <- sum(s != ".")
+		n <- sum(s != "." & s != "-")
 		c1 <- c2 <- c3 <- integer(n/2)
 		i <- 0L
 		parens <- square <- curly <- straight <- integer()
 		for (j in seq_along(s)) {
-			if (s[j] != ".") {
+			if (s[j] != "." && s[j] != "-") {
 				if (s[j]=="(") {
 					parens <- c(parens, j)
 				} else if (s[j]==")") {
