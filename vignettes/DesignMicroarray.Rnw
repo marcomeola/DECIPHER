@@ -1,0 +1,320 @@
+%\VignetteIndexEntry{Design Microarray Probes}
+%\VignettePackage{DECIPHER}
+
+\documentclass[10pt]{article}
+
+\usepackage{times}
+\usepackage{hyperref}
+\usepackage{underscore}
+
+\textwidth=6.5in
+\textheight=8.5in
+%\parskip=.3cm
+\oddsidemargin=-.1in
+\evensidemargin=-.1in
+\headheight=-.3in
+
+\newcommand{\scscst}{\scriptscriptstyle}
+\newcommand{\scst}{\scriptstyle}
+
+\newcommand{\R}{{\textsf{R}}}
+\newcommand{\code}[1]{{\texttt{#1}}}
+\newcommand{\term}[1]{{\emph{#1}}}
+\newcommand{\Rpackage}[1]{\textsf{#1}}
+\newcommand{\Rfunction}[1]{\texttt{#1}}
+\newcommand{\Robject}[1]{\texttt{#1}}
+\newcommand{\Rclass}[1]{{\textit{#1}}}
+\newcommand{\Rmethod}[1]{{\textit{#1}}}
+\newcommand{\Rfunarg}[1]{{\textit{#1}}}
+
+\bibliographystyle{plainnat}
+
+\begin{document}
+%\setkeys{Gin}{width=0.55\textwidth}
+
+\title{Design Microarray Probes}
+\author{Erik S. Wright}
+\date{\today}
+\maketitle
+
+\newenvironment{centerfig}
+{\begin{figure}[htp]\centering}
+{\end{figure}}
+\renewcommand{\indent}{\hspace*{\tindent}}
+\DefineVerbatimEnvironment{Sinput}{Verbatim} {xleftmargin=2em} \DefineVerbatimEnvironment{Soutput}{Verbatim}{xleftmargin=2em} \DefineVerbatimEnvironment{Scode}{Verbatim}{xleftmargin=2em} \fvset{listparameters={\setlength{\topsep}{0pt}}} \renewenvironment{Schunk}{\vspace{\topsep}}{\vspace{\topsep}}
+\SweaveOpts{keep.source=TRUE}
+<<echo=false>>=
+options(continue=" ")
+options(width=80)
+options(SweaveHooks=list(fig=function()	par(mar=c(4.1, 4.1, 0.3, 0.1))))
+set.seed(123)
+@
+
+\tableofcontents
+
+%------------------------------------------------------------
+\section{Introduction}
+%------------------------------------------------------------
+
+This document describes how to design and validate sequence-specific probes for synthesis onto a DNA microarray.  As a case study, this tutorial focuses on the development of a microarray to identify taxonomic groups based on previously obtained 16S ribosomal RNA sequences.  The same approach could be applied to differentiate sequences representing any number of groups based on any shared region of DNA.  The objective of microarray probe design is straightforward:  to determine a set of probes that will bind to one group of sequences (the target consensus sequence) but no others (the non-targets).  Beginning with a set of aligned DNA sequences, the program chooses the best set of probes for targeting each consensus sequence.  More importantly, the design algorithm is able to predict when potential cross-hybridization of the probes may occur to non-target sequence(s).  An integrated design approach enables characterizing the probe set before fabrication, and then assists with analysis of the experimental results.
+
+%------------------------------------------------------------
+\section{Getting Started}
+%------------------------------------------------------------
+
+\newlength\tindent
+\setlength{\tindent}{\parindent}
+\setlength{\parindent}{0pt}
+
+\subsection{Startup}
+
+To get started we need to load the \Rpackage{DECIPHER} package, which automatically loads several other required packages.
+
+<<startup,results=hide>>=
+library(DECIPHER)
+@
+
+Help for the \Rfunction{DesignArray} function can be accessed through:
+
+\begin{Schunk}
+\begin{Sinput}
+> ? DesignArray
+\end{Sinput}
+\end{Schunk}
+
+If \Rpackage{DECIPHER} is installed on your system, the code in each example can be obtained via:
+
+\begin{Schunk}
+\begin{Sinput}
+> browseVignettes("DECIPHER")
+\end{Sinput}
+\end{Schunk}
+
+\subsection{Creating a Sequence Database}
+
+We begin with a set of aligned sequences belonging to the 16S rRNA of several samples obtained from drinking water distribution systems.  Be sure to change the path names to those on your system by replacing all of the text inside quotes labeled ``$<<$path to ...$>>$'' with the actual path on your system.
+
+<<expr1,eval=TRUE>>=
+# specify the path to your sequence file:
+fas <- "<<path to FASTA file>>"
+# OR find the example sequence file used in this tutorial:
+fas <- system.file("extdata", "Bacteria_175seqs.fas", package="DECIPHER")
+@
+
+Next, there are two options for importing the sequences into a database:  either save a database file or maintain the database in memory.  Here we will build the database in memory because it is a small set of sequences and we do not intend to use the database later:
+
+<<expr2,eval=TRUE>>=
+# specify a path for where to write the sequence database
+dbConn <- "<<path to write sequence database>>"
+# OR create the sequence database in memory
+dbConn <- dbConnect(SQLite(), ":memory:")
+Seqs2DB(fas, "FASTA", dbConn, "uncultured bacterium")
+@
+
+\subsection{Defining Groups}
+
+At this point we need to define groups of related sequences in the database we just created.  In this case we wish to cluster the sequences into groups of at most 3\% distance between sequences.
+
+<<expr3,eval=TRUE>>=
+dna <- SearchDB(dbConn)
+dMatrix <- DistanceMatrix(dna, verbose=FALSE)
+clusters <- IdClusters(dMatrix, cutoff=0.03, method="complete", verbose=FALSE)
+Add2DB(clusters, dbConn, verbose=FALSE)
+@
+
+Now that we have identified 100 operational taxonomic units (OTUs), we must form a set of consensus sequences that represent each OTU.
+
+<<expr4,eval=TRUE>>=
+conSeqs <- IdConsensus(dbConn, colName="cluster", verbose=FALSE)
+dbDisconnect(dbConn)
+# name the sequences by their cluster number
+ns <- lapply(strsplit(names(conSeqs), "_", fixed=TRUE), `[`, 1)
+names(conSeqs) <- gsub("cluster", "", unlist(ns), fixed=TRUE)
+# order the sequences by their cluster number
+o <- order(as.numeric(names(conSeqs)))
+conSeqs <- conSeqs[o]
+@
+
+%------------------------------------------------------------
+\section{Array Design and Validation Steps}
+%------------------------------------------------------------
+
+\subsection{Designing the Probe Set}
+
+Next we will design the optimal set of 20 probes for targeting each OTU.  Since there are 100 OTUs, this process will result in a set of 2,000 probes.  By default, probes are designed to have the optimal length for hybridization at 46$^\circ$C and 10\% (vol/vol) formamide.  We wish to allow up to 2 permutations for each probe, which will potentially require more space on the microarray.  Since not all of the sequences span the alignment, we will design probes between alignment positions 120 and 1,450, which is the region encompassed by most of the sequences.
+
+<<expr5,eval=TRUE>>=
+probes <- DesignArray(conSeqs, maxPermutations=2, numProbes=20,
+	start=120, end=1450, verbose=FALSE)
+dim(probes)
+names(probes)
+@
+
+We can see the probe sequence, target site positioning, melt point (formamide), and predicted cross-hybridization efficiency to non-targets (mismatches).  The first probe targeting the first consensus sequence (OTU \#1) is predicted to have 84\% hybridization efficiency at the formamide concentration used in the experiment (10\%).  This probe is also predicted to cross-hybridize with OTU \#5 with 59\% hybridization efficiency.
+
+<<expr6,eval=TRUE>>=
+probes[1,]
+@
+
+If we wished to have the probe set synthesized onto a microarray, all we would need is the unique set of probes.  Note that the predictive model was calibrated using NimbleGen microarrays.  Although predictions are likely similar for other microarray platforms, hybridization conditions should always be experimentally optimized.
+
+<<expr7,eval=TRUE>>=
+u <- unique(unlist(strsplit(probes$probes, ",", fixed=TRUE)))
+length(u)
+head(u)
+@
+
+\subsection{Validating the Probe Set}
+
+Before fabrication onto a DNA microarray it may be useful to predict whether the probe set will adequately discriminate between the OTUs.  This can be accomplished by simulating the hybridization process multiple times while incorporating error.  We begin by converting the predicted cross-hybridization efficiencies into a sparse matrix that mathematically represents the microarray (\textbf{A}).  Here the rows of the matrix represent each probe, and the columns of the matrix represent each OTU.  The entries of the matrix therefore give the hybridization efficiency of probe \textit{i} with OTU \textit{j}.  We can neglect all hybridization efficiencies less than 5\% because these will likely not hybridize or have insufficient brightness.
+
+<<expr8,eval=TRUE>>=
+A <- Array2Matrix(probes, verbose=FALSE)
+w <- which(A$x < 0.05)
+if (length(w) > 0) {
+	A$i <- A$i[-w]
+	A$j <- A$j[-w]
+	A$x <- A$x[-w]
+}
+@
+
+We then multiply the matrix \textbf{A} by the amount (x) of each OTU present to determine the corresponding brightness (b) values of each probe.  We can add a heteroskedastic error to the brightness values to result in a more accurate simulation (b = \textbf{A}x + error).  Furthermore, we can introduce a 5\% rate of probes that hybridize randomly.
+
+<<expr9,eval=TRUE>>=
+# simulate the case where 10% of the OTUs are present in random amounts
+present <- sample(length(conSeqs), floor(0.1*length(conSeqs)))
+x <- numeric(length(conSeqs))
+x[present] <- abs(rnorm(length(present), sd=2))
+
+# determine the predicted probe brightnesses based on the present OTUS
+background <- 0.2
+b <- matrix(tapply(A$x[A$j]*x[A$j], A$i, sum), ncol=1) + background
+b <- b + rnorm(length(b), sd=0.2*b) # add 20% error
+b <- b - background # background subtracted brightnesses
+
+# add in a 5% false hybridization rate
+bad_hybs <- sample(length(b), floor(0.05*length(b)))
+b[bad_hybs] <- abs(rnorm(length(bad_hybs), sd=max(b)/3))
+@
+
+Finally, we can solve for the amount of each OTU present on the microarray by solving \textbf{A}x = b for x using non-negative (x $\ge$ 0) least squares.  Plotting the expected amount versus the predicted amount shows that this probe set may result in a small number of false positives and false negatives (Fig. 1).  False negatives are the expected observations below the dashed threshold line, which represents the minimum amount required to be considered present.  If this threshold is lowered then false negatives will appear where no amount was expected.
+
+<<expr10,eval=TRUE>>=
+# solve for the predicted amount of each OTU present on the array
+x_out <- NNLS(A, b, verbose=FALSE)
+@
+
+\begin{centerfig}
+<<expr11,eval=TRUE,echo=FALSE,results=hide,fig=TRUE,include=TRUE,height=4,width=4.5>>=
+ranges <- range(c(x_out$x, x))
+ramp <- colorRampPalette(c("white", "yellow", "orange", "red"),
+	space = "rgb")
+smoothScatter(x, x_out$x,
+	xlab="Expected Amount", ylab="Predicted Amount",
+	xlim=ranges, ylim=ranges, nrpoints=1e5,
+	pch=1, cex=0.5, nbin=300, colramp=ramp,
+	transformation=function(x) x, bandwidth=0.4,
+	cex.axis=0.7, cex.lab=0.8)
+abline(a=0, b=1) # identity line
+abline(a=max(x_out$x[which(x==0)]), b=0, lty=2) # threshold
+@
+\caption{Characterization of predicted specificity for the designed probe set.}
+\end{centerfig}
+
+\subsection{Further Improving the Result}
+
+Least squares regression is particularly sensitive outlier observations and heteroskedastic noise.  For this reason we will decrease the effects of outlier observations by using weighted regression.  With each iteration the weights will be refined using the residuals from the prior solution to \textbf{A}x = b.
+
+<<expr12,eval=TRUE>>=
+# initialize weights to one:
+weights <- matrix(1, nrow=nrow(b), ncol=ncol(b))
+# iteratively unweight observations with high residuals:
+for (i in 1:10) { # 10 iterations
+	weights <- weights*exp(-0.1*abs(x_out$residuals))
+	A_weighted <- A
+	A_weighted$x <- A$x*weights[A$i]
+	b_weighted <- b*weights
+	x_out <- NNLS(A_weighted, b_weighted, verbose=FALSE)
+}
+@
+
+\begin{centerfig}
+<<expr13,eval=TRUE,echo=FALSE,results=hide,fig=TRUE,include=TRUE,height=4,width=4.5>>=
+ranges <- range(c(x_out$x, x))
+ramp <- colorRampPalette(c("white", "yellow", "orange", "red"),
+	space = "rgb")
+smoothScatter(x, x_out$x,
+	xlab="Expected Amount", ylab="Predicted Amount",
+	xlim=ranges, ylim=ranges, nrpoints=1e5,
+	pch=1, cex=0.5, nbin=300, colramp=ramp,
+	transformation=function(x) x, bandwidth=0.4,
+	cex.axis=0.7, cex.lab=0.8)
+abline(a=0, b=1) # identity line
+abline(a=max(x_out$x[which(x==0)]), b=0, lty=2) # threshold
+@
+\caption{Improved specificity obtained by down-weighting the outliers.}
+\end{centerfig}
+
+Weighted regression lowered the threshold for detection so that more OTUs would be detectable (Fig. 2).  However, false negatives still remain based on this simulation when a very small amount is expected.  If the threshold is lowered to capture all of the expected OTUs then we can determine the false positive(s) that would result.  These false positive sequences are substantially different from the nearest sequence that is present.
+
+<<expr14,eval=TRUE>>=
+w <- which(x_out$x >= min(x_out$x[present]))
+w <- w[-match(present, w)] # false positives
+dMatrix <- DistanceMatrix(conSeqs, verbose=FALSE)
+# print distances of false positives to the nearest present OTU
+for (i in w)
+	print(min(dMatrix[i, present]))
+@
+
+\subsection{Extending the Simulation}
+
+The above simulation can be repeated multiple times and with different initial conditions to better approximate the expected number of false positives and false negatives (Fig. 3).  In the same manner the design parameters can be iteratively optimized to further improve the predicted specificity of the probe set based on the simulation results.  After fabrication, validation experiments using known samples should be used in replace of the simulated brightness values.
+
+<<expr15,eval=TRUE>>=
+# simulate multiple cases where 10% of the OTUs are present in random amounts
+iterations <- 100
+b <- matrix(0, nrow=dim(b)[1], ncol=iterations)
+x <- matrix(0, nrow=length(conSeqs), ncol=iterations)
+for (i in 1:iterations) {
+	present <- sample(length(conSeqs), floor(0.1*length(conSeqs)))
+	x[present, i] <- abs(rnorm(length(present), sd=2))
+	
+	# determine the predicted probe brightnesses based on the present OTUS
+	b[, i] <- tapply(A$x[A$j]*x[A$j, i], A$i, sum) + background
+	b[, i] <- b[, i] + rnorm(dim(b)[1], sd=0.2*b[, i]) # add 20% error
+	b[, i] <- b[, i] - background # background subtracted brightnesses
+	
+	# add in a 5% false hybridization rate
+	bad_hybs <- sample(dim(b)[1], floor(0.05*length(b[, i])))
+	b[bad_hybs, i] <- abs(rnorm(length(bad_hybs), sd=max(b[, i])/3))
+}
+
+x_out <- NNLS(A, b, verbose=FALSE)
+@
+
+\begin{centerfig}
+<<expr17,eval=TRUE,echo=FALSE,results=hide,fig=TRUE,include=TRUE,height=4,width=4.5>>=
+ranges <- range(c(x_out$x, x))
+ramp <- colorRampPalette(c("white", "yellow", "orange", "red"),
+	space = "rgb")
+smoothScatter(x[], x_out$x[],
+	xlab="Expected Amount", ylab="Predicted Amount",
+	xlim=ranges, ylim=ranges, nrpoints=1e5,
+	pch=1, cex=0.5, nbin=300, colramp=ramp,
+	transformation=function(x) x, bandwidth=0.4,
+	cex.axis=0.7, cex.lab=0.8)
+abline(a=0, b=1) # identity line
+@
+\caption{The combined results of multiple simulations.}
+\end{centerfig}
+
+\clearpage
+
+\section{Session Information}
+All of the output in this vignette was produced under the following conditions:
+
+<<sessinfo,echo=FALSE,results=tex>>=
+toLatex(sessionInfo(), locale=FALSE)
+@
+
+\end{document}
